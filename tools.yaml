@@ -256,12 +256,6 @@ tools:
     check_command: "yamllint --version"
     install_args: []
 
-  yarn:
-    manager: brew
-    type: package
-    check_command: "yarn --version"
-    install_args: []
-
   yq:
     manager: brew
     type: package
