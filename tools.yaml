@@ -1,5 +1,10 @@
 # Package manager configurations and tool specifications
 package_managers:
+  apt:
+    types:
+      - package # apt-get install packages
+    default_type: package
+
   arkade:
     types:
       - get # arkade get tool
@@ -14,15 +19,15 @@ package_managers:
       - tap # brew tap repositories
     default_type: package
 
+  nvm:
+    types:
+      - node # for installing node versions
+    default_type: node
+
   uv:
     types:
       - tool # uv tool install
     default_type: tool
-
-  apt:
-    types:
-      - package # apt-get install packages
-    default_type: package
 
 tools:
   # arkade tools
@@ -74,6 +79,12 @@ tools:
     manager: brew
     type: package
     check_command: "az --version"
+    install_args: []
+
+  bash:
+    manager: brew
+    type: package
+    check_command: "bash --version | grep -q 'version 5'"
     install_args: []
 
   bat:
@@ -158,6 +169,12 @@ tools:
     manager: brew
     type: package
     check_command: "nvim --version"
+    install_args: []
+
+  nvm:
+    manager: brew
+    type: package
+    check_command: "test -f $(brew --prefix nvm)/nvm.sh"
     install_args: []
 
   pulumi:
@@ -287,3 +304,17 @@ tools:
     type: package
     check_command: "which jqp >/dev/null 2>&1"
     install_args: ["noahgorstein/tap/jqp"]
+
+  # nvm
+  node-lts:
+    manager: nvm
+    type: node
+    check_command: "command -v node >/dev/null 2>&1 && node --version | grep -q 'v[0-9]'"
+    install_args: ["--latest-npm", "lts/*"]
+
+  # uv
+  posting:
+    manager: uv
+    type: tool
+    check_command: "which posting >/dev/null 2>&1"
+    install_args: ["--python", "3.12"]

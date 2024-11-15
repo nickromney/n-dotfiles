@@ -170,6 +170,20 @@ install_tool() {
       ;;
     esac
     ;;
+  "nvm")
+    case "$type" in
+    "node")
+      # Source nvm first
+      # shellcheck disable=SC1090
+      . "$(brew --prefix nvm)/nvm.sh" || error "Failed to source nvm"
+      install_cmd="nvm install $install_args"
+      ;;
+    *)
+      info "Skipping $tool: unknown nvm type: $type"
+      return 0
+      ;;
+    esac
+    ;;
   "uv")
     case "$type" in
     "tool")
@@ -221,7 +235,10 @@ main() {
   check_requirements
 
   # Get available package managers
-  mapfile -t AVAILABLE_MANAGERS < <(get_available_managers)
+  AVAILABLE_MANAGERS=()
+  while IFS= read -r manager; do
+    AVAILABLE_MANAGERS+=("$manager")
+  done < <(get_available_managers)
 
   if [ ${#AVAILABLE_MANAGERS[@]} -eq 0 ]; then
     info "No package managers available - nothing to do"
