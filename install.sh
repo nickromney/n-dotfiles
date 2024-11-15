@@ -94,34 +94,31 @@ run_stow() {
     error "stow is not installed. Please install stow first."
   fi
 
-  local stow_args="-v -R"
-  [[ "$FORCE" == "true" ]] && stow_args+=" --adopt"
+  local dotfiles_dir
+  dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-  if [[ "$DRY_RUN" == "true" ]]; then
-    stow_args+=" -n"
-  fi
+  # Debug: Show directory structure
+  info "Dotfiles directory: $dotfiles_dir"
+  info "Directory contents:"
+  ls -la "$dotfiles_dir"
 
-  # First, handle the stow directory itself
-  if ! stow "${stow_args}" stow 2>/dev/null; then
-    info "Skipping stow directory"
-  fi
+  local -a stow_opts=()
+  stow_opts+=("--dir=$dotfiles_dir")
+  stow_opts+=("--target=$HOME")
+  [[ "$FORCE" == "true" ]] && stow_opts+=("--adopt")
+  [[ "$DRY_RUN" == "true" ]] && stow_opts+=("--no")
+  stow_opts+=("--verbose=5") # Maximum verbosity
+  stow_opts+=("-R")
 
-  # Process each directory
   for dir in "${STOW_DIRS[@]}"; do
-    if [[ "$DRY_RUN" == "true" ]]; then
-      info "Would stow $dir with args: $stow_args"
-    else
-      # Remove existing absolute symlinks if force is enabled
-      if [[ "$FORCE" == "true" ]]; then
-        find "$HOME" -type l -lname "$HOME/.dotfiles/*" -delete 2>/dev/null || true
-        find "$HOME" -type l -lname "*/Developer/personal/n-dotfiles/$dir/*" -delete 2>/dev/null || true
-      fi
-
-      if stow "${stow_args}" -t "$HOME" "$dir" 2>/dev/null; then
+    if [[ -d "$dotfiles_dir/$dir" ]]; then
+      if stow "${stow_opts[@]}" "$dir"; then # Removed 2>/dev/null to see errors
         info "✓ Stowed $dir"
       else
-        info "Error stowing $dir"
+        info "× Error stowing $dir"
       fi
+    else
+      info "! Directory $dir not found in $dotfiles_dir"
     fi
   done
 }
