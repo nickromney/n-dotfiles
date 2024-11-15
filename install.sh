@@ -170,20 +170,6 @@ install_tool() {
       ;;
     esac
     ;;
-  "nvm")
-    case "$type" in
-    "node")
-      # Source nvm first
-      # shellcheck disable=SC1090
-      . "$(brew --prefix nvm)/nvm.sh" || error "Failed to source nvm"
-      install_cmd="nvm install $install_args"
-      ;;
-    *)
-      info "Skipping $tool: unknown nvm type: $type"
-      return 0
-      ;;
-    esac
-    ;;
   "uv")
     case "$type" in
     "tool")

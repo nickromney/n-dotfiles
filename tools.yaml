@@ -19,11 +19,6 @@ package_managers:
       - tap # brew tap repositories
     default_type: package
 
-  nvm:
-    types:
-      - node # for installing node versions
-    default_type: node
-
   uv:
     types:
       - tool # uv tool install
@@ -174,7 +169,7 @@ tools:
   nvm:
     manager: brew
     type: package
-    check_command: "test -f $(brew --prefix nvm)/nvm.sh"
+    check_command: "which nvm >/dev/null 2>&1"
     install_args: []
 
   pulumi:
@@ -304,13 +299,6 @@ tools:
     type: package
     check_command: "which jqp >/dev/null 2>&1"
     install_args: ["noahgorstein/tap/jqp"]
-
-  # nvm
-  node-lts:
-    manager: nvm
-    type: node
-    check_command: "command -v node >/dev/null 2>&1 && node --version | grep -q 'v[0-9]'"
-    install_args: ["--latest-npm", "lts/*"]
 
   # uv
   posting:

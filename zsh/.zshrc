@@ -23,6 +23,9 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"                                       # This loads nvm
 [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" # This loads nvm bash_completion
 
+eval "$(uv generate-shell-completion zsh)"
+eval "$(uvx generate-shell-completion zsh)"
+
 # Aliases
 alias gs='git status'
 alias gc='git commit'
