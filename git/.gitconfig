@@ -1,0 +1,40 @@
+[user]
+  email = 26225537+nickromney@users.noreply.github.com
+  name = Nick Romney
+  signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN2fbfayqsGb5sCmf9NANOseF4qBLA1auXkayWEtvYvM
+  # Verified that this is the public key - discoverable at https://api.github.com/users/nickromney/keys
+[alias]
+  prn = remote prune origin
+  pp = push -u origin HEAD
+[color]
+  ui = true
+[commit]
+  gpgsign = true
+[core]
+  excludesfile = ~/.config/git/.gitignore.global
+  autocrlf = input
+  editor = nvim
+[gpg]
+  format = ssh
+[gpg "ssh"]
+  program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
+[init]
+  defaultBranch = main
+[merge]
+  ff = only
+  conflictstyle = diff3
+[pull]
+  rebase = true
+[push]
+  default = simple  
+[rebase]
+  autostash = true
+
+[includeIf "gitdir:~/Developer/work/"]
+  path = ~/Developer/work/.gitconfig_include
+# See https://stackoverflow.com/a/48088291
+# This means that we can create the file ~/Developer/work/.gitconfig_include
+# and it will be included in the global gitconfig when we are in the ~/Developer/work directory.
+# contents of ~/Developer/work/.gitconfig_include
+#   [user]
+#     email = first.last@company.name
