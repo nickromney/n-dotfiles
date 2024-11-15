@@ -4,10 +4,13 @@ set -euo pipefail
 # Configuration
 YAML_FILE="tools.yaml"
 REQUIRED_COMMANDS=("yq" "which")
+STOW_DIRS=(amethyst bat gh git karabiner kitty nvim ssh starship tmux zsh)
 
 # Default values and argument parsing
 DRY_RUN="${DRY_RUN:-false}"
 VERBOSE="${VERBOSE:-false}"
+STOW="${STOW:-false}"
+FORCE="${FORCE:-false}"
 
 command_exists() {
   command -v "$1" >/dev/null 2>&1
@@ -84,6 +87,43 @@ check_requirements() {
   if [ ${#missing_commands[@]} -gt 0 ]; then
     error "Missing required commands: ${missing_commands[*]}"
   fi
+}
+
+run_stow() {
+  if ! command_exists "stow"; then
+    error "stow is not installed. Please install stow first."
+  fi
+
+  local stow_args="-v -R"
+  [[ "$FORCE" == "true" ]] && stow_args+=" --adopt"
+
+  if [[ "$DRY_RUN" == "true" ]]; then
+    stow_args+=" -n"
+  fi
+
+  # First, handle the stow directory itself
+  if ! stow "${stow_args}" stow 2>/dev/null; then
+    info "Skipping stow directory"
+  fi
+
+  # Process each directory
+  for dir in "${STOW_DIRS[@]}"; do
+    if [[ "$DRY_RUN" == "true" ]]; then
+      info "Would stow $dir with args: $stow_args"
+    else
+      # Remove existing absolute symlinks if force is enabled
+      if [[ "$FORCE" == "true" ]]; then
+        find "$HOME" -type l -lname "$HOME/.dotfiles/*" -delete 2>/dev/null || true
+        find "$HOME" -type l -lname "*/Developer/personal/n-dotfiles/$dir/*" -delete 2>/dev/null || true
+      fi
+
+      if stow "${stow_args}" -t "$HOME" "$dir" 2>/dev/null; then
+        info "✓ Stowed $dir"
+      else
+        info "Error stowing $dir"
+      fi
+    fi
+  done
 }
 
 error() {
@@ -217,6 +257,7 @@ is_tool_installed() {
 
 main() {
   [[ "$DRY_RUN" == "true" ]] && info "Running in dry-run mode - no changes will be made"
+  [[ "$FORCE" == "true" ]] && info "Running in force mode - existing files will be overwritten"
 
   check_requirements
 
@@ -250,6 +291,11 @@ main() {
       info "Skipping $tool: $manager not available"
     fi
   done <<<"$tools"
+
+  if [[ "$STOW" == "true" ]]; then
+    info "Running stow..."
+    run_stow
+  fi
 }
 
 usage() {
@@ -257,6 +303,8 @@ usage() {
   echo "Options:"
   echo "  -d, --dry-run       Show what would be installed without making changes"
   echo "  -v, --verbose       Show detailed information and status messages"
+  echo "  -s, --stow          Run stow after installation"
+  echo "  -f, --force         Force stow to adopt existing files"
   echo "  -h, --help          Show this help message"
   exit 1
 }
@@ -269,6 +317,14 @@ while [[ $# -gt 0 ]]; do
     ;;
   -v | --verbose)
     VERBOSE=true
+    shift
+    ;;
+  -s | --stow)
+    STOW=true
+    shift
+    ;;
+  -f | --force)
+    FORCE=true
     shift
     ;;
   -h | --help)
