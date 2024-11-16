@@ -70,6 +70,16 @@ fi
 alias gs='git status'
 alias gc='git commit'
 
+# ZScaler Certs
+if [ -d "$HOME/.zscalerCerts" ]; then
+  export AWS_CA_BUNDLE="$HOME/.zscalerCerts/zscalerCAbundle.pem"
+  export CURL_CA_BUNDLE="$HOME/.zscalerCerts/zscalerCAbundle.pem"
+  export GIT_SSL_CAPATH="$HOME/.zscalerCerts/zscalerCAbundle.pem"
+  export NODE_EXTRA_CA_CERTS="$HOME/.zscalerCerts/zscalerCAbundle.pem"
+  export REQUESTS_CA_BUNDLE="$HOME/.zscalerCerts/azure-cacert.pem"
+  export SSL_CERT_FILE="$HOME/.zscalerCerts/zscalerCAbundle.pem"
+fi
+
 #
 # PATH Management
 #
@@ -87,3 +97,5 @@ done
 
 # De-duplicate PATH
 export PATH=$(echo $PATH | awk -v RS=: '!a[$0]++' | tr "\n" ":")
+
+
