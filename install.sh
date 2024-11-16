@@ -107,7 +107,7 @@ run_stow() {
   stow_opts+=("--target=$HOME")
   [[ "$FORCE" == "true" ]] && stow_opts+=("--adopt")
   [[ "$DRY_RUN" == "true" ]] && stow_opts+=("--no")
-  stow_opts+=("--verbose=5") # Maximum verbosity
+  stow_opts+=("--verbose=1") # Maximum verbosity
   stow_opts+=("-R")
 
   for dir in "${STOW_DIRS[@]}"; do
