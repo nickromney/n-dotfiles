@@ -4,38 +4,65 @@
 # Inserts a blank line between shell prompts
 add_newline = true
 
-format = """\
-$username $hostname\
+format = """
+$kubernetes\
 $directory\
 $git_branch\
-$git_status\
+$git_commit\
 $git_state\
 $git_metrics\
-$all
+$git_status\
+$docker_context\
+$package\
+$helm\
+$nodejs\
+$pulumi\
+$ruby\
+$terraform\
+$vagrant\
+$memory_usage\
+$aws\
+$azure\
+$direnv\
+$env_var\
+$custom\
+$sudo\
+$cmd_duration\
+$line_break\
+$jobs\
+$battery\
+$time\
+$status\
 $os\
+$container\
 $shell\
-$character
-"""
+$character"""
 
 # right_format = """\
 # $battery
 # $nodejs
 # """
 
-
-# Replace the '❯' symbol in the prompt with '➜'
-[character] # The name of the module we are configuring is 'character'
-format = '$symbol '
-success_symbol = '[❯](bold green)'
-error_symbol = '[❯](bold red)'
+[azure]
+format = '[$symbol($subscription)]($style) '
+symbol = "az "
+style = 'blue bold'
 disabled = false
+
+[character]
+success_symbol = "[>](bold green)"
+error_symbol = "[x](bold red)"
+vicmd_symbol = "[<](bold green)"
+
+[fill]
+symbol = '-'
+style = 'bold green'
+
+[git_branch]
+symbol = "git "
 
 [package]
 disabled = true
-
-[cmd_duration]
-min_time = 10_00                     # Show command duration over 10,00 milliseconds (=1 sec)
-format = " took [$duration]($style)"
 
 [battery]
 full_symbol = "🔋"
@@ -43,7 +70,7 @@ charging_symbol = "🔌"
 discharging_symbol = "⚡"
 
 [directory]
-truncation_length = 5
+truncation_length = 3
 truncate_to_repo = false
 fish_style_pwd_dir_length = 0
 use_logical_path = false
@@ -73,17 +100,6 @@ style = "bold red"
 commit_hash_length = 8
 style = "bold white"
 
-[git_state]
-rebase = 'REBASING'
-merge = 'MERGING'
-revert = 'REVERTING'
-cherry_pick = 'CHERRY-PICKING'
-bisect = 'BISECTING'
-am = 'AM'
-am_or_rebase = 'AM/REBASE'
-style = 'bold yellow'
-format = '\([$state( $progress_current/$progress_total)]($style)\)'
-disabled = true
 
 [git_status]
 ahead = "↑${count} "
@@ -107,8 +123,7 @@ format = """\
 """
 
 [kubernetes]
-symbol = '☸ '
-format = '[$symbol$context( \($namespace\))]($style) in '
+format = '[$symbol$context( \($namespace\))]($style) '
 style = 'cyan bold'
 disabled = true
 
@@ -140,6 +155,13 @@ symbols.Windows = ""
 symbols.Macos = ""
 symbols.Debian = " "
 symbols.Unknown = " "
+
+[cmd_duration]
+min_time = 4
+show_milliseconds = false
+disabled = false
+style = "bold italic red"
+format = " [$duration]($style)"
 
 [nodejs]
 format = 'running [$symbol($version )]($style)'
@@ -176,3 +198,8 @@ detect_extensions = []
 disabled = false
 detect_files = ["*.tf"]
 detect_extensions = []
+
+[time]
+disabled = false
+format = '[ $time ]($style)'
+time_format = '%H:%M'

@@ -3,22 +3,59 @@
 #
 # History
 #
-HISTFILE=~/.history
-HISTSIZE=10000
-SAVEHIST=50000
-setopt inc_append_history
+# set the location and filename of the history file
+export HISTFILE="$HOME/.zsh_history"
+
+# set the maximum number of lines to be saved in the history file
+export HISTSIZE="100000"
+export SAVEHIST="$HISTSIZE"
+# enable comments "#" expressions in the prompt shell
+setopt INTERACTIVE_COMMENTS
+# append new history entries to the history file
+setopt APPEND_HISTORY
+# save each command to the history file as soon as it is executed
+setopt INC_APPEND_HISTORY
+# ignore recording duplicate consecutive commands in the history
+setopt HIST_IGNORE_DUPS
+# ignore commands that start with a space in the history
+setopt HIST_IGNORE_SPACE
 
 #
 # Environment
 #
 export EDITOR="nvim"
 export SUDO_EDITOR="$EDITOR"
+export LANG="en_GB.UTF-8"
+export WORDCHARS="" # Specify word boundaries for command line navigation
+
+# Word navigation
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  bindkey "^[^[[C" forward-word  # Option + Right
+  bindkey "^[^[[D" backward-word # Option + Left
+else
+  bindkey "^[[1;5C" forward-word  # Ctrl + Right
+  bindkey "^[[1;5D" backward-word # Ctrl + Left
+fi
+
+# Line navigation
+bindkey "^A" beginning-of-line   # Ctrl + A
+bindkey "^E" end-of-line         # Ctrl + E
+bindkey "^[[H" beginning-of-line # Home
+bindkey "^[[F" end-of-line       # End
+
+# History search
+bindkey "^[[A" history-beginning-search-backward # Up arrow
+bindkey "^[[B" history-beginning-search-forward  # Down arrow
 
 #
 # Tools & Completions
 #
 # Initialize completions
 autoload -Uz compinit && compinit
+
+# Completion menu
+zstyle ':completion:*:*:*:*:*' menu select
+bindkey '^[[Z' reverse-menu-complete
 
 # Starship prompt
 if command -v starship >/dev/null 2>&1; then
@@ -30,8 +67,18 @@ if command -v zoxide >/dev/null 2>&1; then
   eval "$(zoxide init zsh)"
 fi
 
-# FZF
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+# FZF configuration
+if command -v fzf >/dev/null 2>&1; then
+  source <(fzf --zsh)
+  export FZF_DEFAULT_OPTS="--height 100% --layout reverse --preview-window=wrap"
+  export FZF_CTRL_R_OPTS="--preview 'echo {}'"
+  export FZF_CTRL_T_COMMAND="fd --exclude .git --hidden --follow"
+  # Preview file content using bat (https://github.com/sharkdp/bat)
+  export FZF_CTRL_T_OPTS="
+    --walker-skip .git,node_modules,target
+    --preview 'bat -n --color=always {}'
+    --bind 'ctrl-/:change-preview-window(down|hidden|)'"
+fi
 
 # UV tools
 if command -v uv >/dev/null 2>&1; then
@@ -67,6 +114,7 @@ fi
 #
 # Aliases
 #
+alias cdd='cd "$HOME/Developer"'
 alias gs='git status'
 alias gc='git commit'
 
@@ -97,5 +145,3 @@ done
 
 # De-duplicate PATH
 export PATH=$(echo $PATH | awk -v RS=: '!a[$0]++' | tr "\n" ":")
-
-
