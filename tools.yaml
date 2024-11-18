@@ -64,6 +64,12 @@ tools:
     check_command: "op --version"
     install_args: []
 
+  amethyst:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Amethyst.app"'
+    install_args: []
+
   font-jetbrains-mono-nerd-font:
     manager: brew
     type: cask
