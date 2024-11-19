@@ -317,7 +317,7 @@ screen-padding-right: 0
 screen-padding-top: 0
 
 # Padding to apply between windows and the bottom edge of the screen (in px, default 0).
-screen-padding-bottom: 105
+screen-padding-bottom: 0
 
 # true to maintain layout state across application executions (default true).
 restore-layouts-on-launch: true
