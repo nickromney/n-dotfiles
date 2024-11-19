@@ -51,12 +51,6 @@ tools:
     check_command: "test -f $HOME/.arkade/bin/hostctl"
     install_args: []
 
-  mkcert:
-    manager: arkade
-    type: get
-    check_command: "test -f $HOME/.arkade/bin/mkcert"
-    install_args: []
-
   # Cask packages
   1password-cli:
     manager: brew
@@ -64,10 +58,10 @@ tools:
     check_command: "op --version"
     install_args: []
 
-  amethyst:
+  aerospace:
     manager: brew
     type: cask
-    check_command: 'test -d "/Applications/Amethyst.app"'
+    check_command: 'test -d "/Applications/Aerospace.app"'
     install_args: []
 
   font-jetbrains-mono-nerd-font:
@@ -342,12 +336,24 @@ tools:
     check_command: "brew tap | grep -q '^noahgorstein/tap$'"
     install_args: []
 
+  felixkratz/formulae:
+    manager: brew
+    type: tap
+    check_command: "brew tap | grep -q '^felixkratz/formulae$'"
+    install_args: []
+
   # Brew packages from tap repositories
   jqp:
     manager: brew
     type: package
     check_command: "which jqp >/dev/null 2>&1"
     install_args: ["noahgorstein/tap/jqp"]
+
+  jankyborders:
+    manager: brew
+    type: package
+    check_command: "which borders >/dev/null 2>&1"
+    install_args: ["felixkratz/formulae/borders"]
 
   # uv
   posting:
