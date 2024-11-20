@@ -2,7 +2,10 @@
 # https://github.com/joshmedeski/dotfiles/blob/main/.config/aerospace/aerospace.toml
 
 # after-login-command = []
-after-startup-command = []
+# after-startup-command = []
+after-startup-command = [
+'exec-and-forget /opt/homebrew/bin/borders active_color=0xfff5f543 inactive_color=0xff3b8eea width=8.0'
+]
 start-at-login = true
 
 enable-normalization-flatten-containers = true
@@ -46,13 +49,14 @@ alt-l = 'focus right'
 alt-shift-minus = 'resize smart -100'
 alt-shift-equal = 'resize smart +100'
 
-# A huge stretch for mnemonics:
+# A huge stretch for mnemonics, but works with CapsLock as Hyper, plus right hand Qwerty.
 # T = Terminal (currently Kitty), Tmux
 # Y = YDE (VSCode, Webstorm)
 # U = Utilities (Finder, Preview, Snagit)
 # I = Internet (browsers)
-# O = Office (Teams, Outlook, Excel, Word)
+# O = Office (Excel, Word)
 # P = Productivity (helpers like SnagIt)
+# [ = Communication (Teams, Outlook)
 
 # This binds a series of commands - move to workspace U, then change to workspace U
 alt-shift-cmd-ctrl-5 = ['move-node-to-workspace T', 'workspace T']

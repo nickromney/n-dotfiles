@@ -47,11 +47,25 @@ bindkey "^[[F" end-of-line       # End
 bindkey "^[[A" history-beginning-search-backward # Up arrow
 bindkey "^[[B" history-beginning-search-forward  # Down arrow
 
+# aliases
+alias f="fzf"
+alias g="lazygit"
+alias l="eza --oneline"
+alias ll="ls -al"
+alias n="nvim"
+alias o="z"
+alias cd="z"
+alias nf="fzf --preview='bat --color=always --style=numbers --line-range=:500 {}' | xargs nvim"
+alias pf="fzf --preview='bat --color=always --style=numbers --line-range=:500 {}' | pbcopy"
+alias tree="eza --tree"
+
 #
 # Tools & Completions
 #
 # Initialize completions
 autoload -Uz compinit && compinit
+
+[ -f "$HOME/.zsh/aliases.zsh" ] && source "$HOME/.local/bin/env"
 
 # Completion menu
 zstyle ':completion:*:*:*:*:*' menu select
