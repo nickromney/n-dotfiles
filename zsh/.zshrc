@@ -47,18 +47,24 @@ bindkey "^[[F" end-of-line       # End
 bindkey "^[[A" history-beginning-search-backward # Up arrow
 bindkey "^[[B" history-beginning-search-forward  # Down arrow
 
-# aliases
+#
+# Aliases
+#
+alias cdd='cd "$HOME/Developer"'
 alias f="fzf"
 alias g="lazygit"
+alias gs='git status'
+alias gc='git commit'
 alias l="eza --oneline"
 alias ll="ls -al"
 alias n="nvim"
 alias o="z"
 alias cd="z"
+alias bf="fzf --preview='bat --color=always --style=numbers --line-range=:500 {}' | xargs bat"
 alias nf="fzf --preview='bat --color=always --style=numbers --line-range=:500 {}' | xargs nvim"
 alias pf="fzf --preview='bat --color=always --style=numbers --line-range=:500 {}' | pbcopy"
+alias sz="source ~/.zshrc"
 alias tree="eza --tree"
-
 #
 # Tools & Completions
 #
@@ -124,13 +130,6 @@ fi
 # Local Environment
 #
 [ -f "$HOME/.local/bin/env" ] && source "$HOME/.local/bin/env"
-
-#
-# Aliases
-#
-alias cdd='cd "$HOME/Developer"'
-alias gs='git status'
-alias gc='git commit'
 
 # ZScaler Certs
 if [ -d "$HOME/.zscalerCerts" ]; then
