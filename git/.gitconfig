@@ -3,33 +3,86 @@
   name = Nick Romney
   signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN2fbfayqsGb5sCmf9NANOseF4qBLA1auXkayWEtvYvM
   # Verified that this is the public key - discoverable at https://api.github.com/users/nickromney/keys
+
 [alias]
-  prn = remote prune origin
+  aa = add --all
+  br = branch
+  bra = branch --all
+  brd = branch -d
+  brD = branch -D
+  brm = branch -m
+  ; ci = commit # No need for this, because we have `alias gc='git commit'` in .zshrc
+  cia = commit --amend
+  cis = commit --squash
+  co = checkout
+  cob = checkout -b
+  cod = checkout develop
+  com = checkout main
+  f = fetch
+  l = pull
+  last = log --graph --show-signature --pretty=short --max-count=10
+  logd = log --pretty=format:'- %s (%h)' --reverse develop..HEAD
+  logdpr = log --pretty=format:'- %s (%h)%n  %b' --reverse develop..HEAD --grep 'pull request'
+  logm = log --pretty=format:'- %s (%h)' --reverse main..HEAD
+  logmpr = log --pretty=format:'- %s (%h)%n  %b' --reverse main..HEAD --grep 'pull request'
+  p = push
+  pf = push --force-with-lease
   pp = push -u origin HEAD
+  pt = push --tags
+  pso = push --set-upstream origin
+  prn = remote prune origin
+  ra = remote add
+  re = rebase -i
+  rv = remote -v
+  sdiff = !git diff && git submodule foreach 'git diff'
+  spush = push --recurse-submodules=on-demand
+  ; st = status # No need for this, because we have `alias gs='git status'` in .zshrc
+  stal = stash pop
+  stap = stash push
+  supdate = submodule update --init --recursive
+
 [color]
   ui = true
+
 [commit]
   gpgsign = true
+
 [core]
   excludesfile = ~/.config/git/.gitignore.global
   autocrlf = input
   editor = nvim
+
+[filter "lfs"]
+  clean = git-lfs clean -- %f
+  smudge = git-lfs smudge -- %f
+  process = git-lfs filter-process
+  required = true
+
 [gpg]
   format = ssh
+
 [gpg "ssh"]
   program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
+
 [init]
   defaultBranch = main
+
 [merge]
   ff = only
   conflictstyle = diff3
+
 [pull]
   rebase = true
+  autostash = true
+
 [push]
   autoSetupRemote = true
   default = simple
+  recursesubmodules = check
+
 [rebase]
   autostash = true
+  autosquash = true
 
 [includeIf "gitdir:~/Developer/work/"]
   path = ~/Developer/work/.gitconfig_include
