@@ -245,6 +245,12 @@ tools:
     check_command: "sk --version"
     install_args: []
 
+  sshs:
+    manager: brew
+    type: package
+    check_command: "sshs --version"
+    install_args: []
+
   starship:
     manager: brew
     type: package
@@ -324,10 +330,10 @@ tools:
     install_args: []
 
   # Tap repositories
-  felixkratz/formulae:
+  FelixKratz/formulae:
     manager: brew
     type: tap
-    check_command: "brew tap | grep -q '^felixkratz/formulae$'"
+    check_command: "brew tap | grep -q '^FelixKratz/formulae$'"
     install_args: []
 
   nikitabobko/tap:
@@ -349,11 +355,11 @@ tools:
     check_command: 'test -d "/Applications/Aerospace.app"'
     install_args: ["nikitabobko/tap/aerospace"]
 
-  jankyborders:
+  borders: # Changed from jankyborders to match actual package name
     manager: brew
     type: package
-    check_command: "which borders >/dev/null 2>&1"
-    install_args: ["felixkratz/formulae/borders"]
+    check_command: "test -d /opt/homebrew/Cellar/borders"
+    install_args: ["felixkratz/formulae/borders"] # Note lower case
 
   jqp:
     manager: brew
