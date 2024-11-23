@@ -58,12 +58,6 @@ tools:
     check_command: "op --version"
     install_args: []
 
-  aerospace:
-    manager: brew
-    type: cask
-    check_command: 'test -d "/Applications/Aerospace.app"'
-    install_args: []
-
   font-jetbrains-mono-nerd-font:
     manager: brew
     type: cask
@@ -330,30 +324,42 @@ tools:
     install_args: []
 
   # Tap repositories
-  noahgorstein/tap:
-    manager: brew
-    type: tap
-    check_command: "brew tap | grep -q '^noahgorstein/tap$'"
-    install_args: []
-
   felixkratz/formulae:
     manager: brew
     type: tap
     check_command: "brew tap | grep -q '^felixkratz/formulae$'"
     install_args: []
 
-  # Brew packages from tap repositories
-  jqp:
+  nikitabobko/tap:
     manager: brew
-    type: package
-    check_command: "which jqp >/dev/null 2>&1"
-    install_args: ["noahgorstein/tap/jqp"]
+    type: tap
+    check_command: "brew tap | grep -q '^nikitabobko/tap$'"
+    install_args: []
+
+  noahgorstein/tap:
+    manager: brew
+    type: tap
+    check_command: "brew tap | grep -q '^noahgorstein/tap$'"
+    install_args: []
+
+  # Brew packages from tap repositories
+  aerospace:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Aerospace.app"'
+    install_args: ["nikitabobko/tap/aerospace"]
 
   jankyborders:
     manager: brew
     type: package
     check_command: "which borders >/dev/null 2>&1"
     install_args: ["felixkratz/formulae/borders"]
+
+  jqp:
+    manager: brew
+    type: package
+    check_command: "which jqp >/dev/null 2>&1"
+    install_args: ["noahgorstein/tap/jqp"]
 
   # uv
   posting:
