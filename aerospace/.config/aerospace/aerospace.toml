@@ -56,7 +56,8 @@ alt-shift-equal = 'resize smart +100'
 # I = Internet (browsers)
 # O = Office (Excel, Word)
 # P = Productivity (helpers like SnagIt)
-# [ = Communication (Teams, Outlook)
+# [ = Email (HEY, Outlook)
+# ] = Instant Messaging (Messages, Teams, WhatsApp)
 
 # This binds a series of commands - move to workspace U, then change to workspace U
 alt-shift-cmd-ctrl-5 = ['move-node-to-workspace T', 'workspace T']
@@ -66,6 +67,7 @@ alt-shift-cmd-ctrl-8 = ['move-node-to-workspace I', 'workspace I']
 alt-shift-cmd-ctrl-9 = ['move-node-to-workspace O', 'workspace O']
 alt-shift-cmd-ctrl-0 = ['move-node-to-workspace P', 'workspace P']
 alt-shift-cmd-ctrl-minus = ['move-node-to-workspace [', 'workspace [']
+alt-shift-cmd-ctrl-equal = ['move-node-to-workspace ]', 'workspace ]']
 
 alt-shift-cmd-ctrl-t = 'workspace T'
 alt-shift-cmd-ctrl-y = 'workspace Y'
@@ -74,6 +76,7 @@ alt-shift-cmd-ctrl-i = 'workspace I'
 alt-shift-cmd-ctrl-o = 'workspace O'
 alt-shift-cmd-ctrl-p = 'workspace P'
 alt-shift-cmd-ctrl-leftSquareBracket = 'workspace ['
+alt-shift-cmd-ctrl-rightSquareBracket = 'workspace ]'
 
 alt-shift-cmd-ctrl-h = 'workspace-back-and-forth'
 alt-shift-cmd-ctrl-l = 'move-workspace-to-monitor --wrap-around next'
@@ -123,7 +126,15 @@ if.app-id = 'com.jamfsoftware.selfservice.mac'
 run = 'move-node-to-workspace U'
 
 [[on-window-detected]]
+if.app-id = 'com.brave.Browser'
+run = "move-node-to-workspace I"
+
+[[on-window-detected]]
 if.app-id = 'com.google.Chrome'
+run = "move-node-to-workspace I"
+
+[[on-window-detected]]
+if.app-id = 'com.apple.Safari'
 run = "move-node-to-workspace I"
 
 [[on-window-detected]]
@@ -135,13 +146,33 @@ if.app-id = 'com.microsoft.Word'
 run = 'move-node-to-workspace O'
 
 [[on-window-detected]]
+if.app-id = 'com.apple.Notes'
+run = "move-node-to-workspace P"
+
+[[on-window-detected]]
 if.app-id = 'md.obsidian'
 run = "move-node-to-workspace P"
+
+[[on-window-detected]]
+if.app-id = 'com.culturedcode.ThingsMac'
+run = "move-node-to-workspace P"
+
+[[on-window-detected]]
+if.app-id = 'com.hey.app.desktop'
+run = 'move-node-to-workspace ['
 
 [[on-window-detected]]
 if.app-id = 'com.microsoft.Outlook'
 run = 'move-node-to-workspace ['
 
 [[on-window-detected]]
+if.app-id = 'com.apple.MobileSMS'
+run = 'move-node-to-workspace ]'
+
+[[on-window-detected]]
 if.app-id = 'com.microsoft.teams2'
-run = 'move-node-to-workspace ['
+run = 'move-node-to-workspace ]'
+
+[[on-window-detected]]
+if.app-id = 'net.whatsapp.WhatsApp'
+run = 'move-node-to-workspace ]'
