@@ -58,12 +58,6 @@ tools:
     check_command: "op --version"
     install_args: []
 
-  aerospace:
-    manager: brew
-    type: cask
-    check_command: 'test -d "/Applications/Aerospace.app"'
-    install_args: []
-
   font-jetbrains-mono-nerd-font:
     manager: brew
     type: cask
@@ -251,6 +245,12 @@ tools:
     check_command: "sk --version"
     install_args: []
 
+  sshs:
+    manager: brew
+    type: package
+    check_command: "sshs --version"
+    install_args: []
+
   starship:
     manager: brew
     type: package
@@ -330,30 +330,42 @@ tools:
     install_args: []
 
   # Tap repositories
+  FelixKratz/formulae:
+    manager: brew
+    type: tap
+    check_command: "brew tap | grep -q '^FelixKratz/formulae$'"
+    install_args: []
+
+  nikitabobko/tap:
+    manager: brew
+    type: tap
+    check_command: "brew tap | grep -q '^nikitabobko/tap$'"
+    install_args: []
+
   noahgorstein/tap:
     manager: brew
     type: tap
     check_command: "brew tap | grep -q '^noahgorstein/tap$'"
     install_args: []
 
-  felixkratz/formulae:
-    manager: brew
-    type: tap
-    check_command: "brew tap | grep -q '^felixkratz/formulae$'"
-    install_args: []
-
   # Brew packages from tap repositories
+  aerospace:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Aerospace.app"'
+    install_args: ["nikitabobko/tap/aerospace"]
+
+  borders: # Changed from jankyborders to match actual package name
+    manager: brew
+    type: package
+    check_command: "test -d /opt/homebrew/Cellar/borders"
+    install_args: ["felixkratz/formulae/borders"] # Note lower case
+
   jqp:
     manager: brew
     type: package
     check_command: "which jqp >/dev/null 2>&1"
     install_args: ["noahgorstein/tap/jqp"]
-
-  jankyborders:
-    manager: brew
-    type: package
-    check_command: "which borders >/dev/null 2>&1"
-    install_args: ["felixkratz/formulae/borders"]
 
   # uv
   posting:
