@@ -25,8 +25,7 @@ package_managers:
     default_type: tool
 
 tools:
-  # arkade tools
-
+  # Arkade tools
   actions-usage:
     manager: arkade
     type: get
@@ -51,11 +50,17 @@ tools:
     check_command: "test -f $HOME/.arkade/bin/hostctl"
     install_args: []
 
-  # Cask packages
+  # Brew cask packages
   1password-cli:
     manager: brew
     type: cask
     check_command: "op --version"
+    install_args: []
+
+  amethyst:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Amethyst.app"'
     install_args: []
 
   font-jetbrains-mono-nerd-font:
@@ -76,7 +81,7 @@ tools:
     check_command: 'brew list --cask kitty >/dev/null 2>&1 || [ -d "/Applications/kitty.app" ] || which kitty >/dev/null 2>&1'
     install_args: []
 
-  # Regular brew packages
+  # Brew packages
   act:
     manager: brew
     type: package
@@ -329,7 +334,7 @@ tools:
     check_command: "brew list zsh-syntax-highlighting >/dev/null 2>&1"
     install_args: []
 
-  # Tap repositories
+  # Brew tap repositories
   FelixKratz/formulae:
     manager: brew
     type: tap
@@ -349,11 +354,11 @@ tools:
     install_args: []
 
   # Brew packages from tap repositories
-  aerospace:
-    manager: brew
-    type: cask
-    check_command: 'test -d "/Applications/Aerospace.app"'
-    install_args: ["nikitabobko/tap/aerospace"]
+  # aerospace:
+  #   manager: brew
+  #   type: cask
+  #   check_command: 'test -d "/Applications/Aerospace.app"'
+  #   install_args: ["nikitabobko/tap/aerospace"]
 
   borders: # Changed from jankyborders to match actual package name
     manager: brew
