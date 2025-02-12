@@ -4,8 +4,7 @@ set -euo pipefail
 # Configuration
 YAML_FILE="tools.yaml"
 REQUIRED_COMMANDS=("yq" "which")
-# STOW_DIRS=(aerospace bat gh git karabiner kitty nvim ssh starship tmux zsh)
-STOW_DIRS=(aerospace bat gh git karabiner kitty nvim starship tmux zsh)
+STOW_DIRS=(amethyst bat gh git karabiner kitty nvim starship tmux zsh)
 
 # Default values and argument parsing
 DRY_RUN="${DRY_RUN:-false}"
