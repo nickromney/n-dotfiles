@@ -151,10 +151,11 @@ declare -a paths=(
 )
 
 for path_entry in "${paths[@]}"; do
-  if [ -d "$path_entry" ] && ! echo $PATH | grep -q "$path_entry"; then
+  if [ -d "$path_entry" ] && ! echo "$PATH" | grep -q "$path_entry"; then
     export PATH="$path_entry:$PATH"
   fi
 done
 
 # De-duplicate PATH
-export PATH=$(echo $PATH | awk -v RS=: '!a[$0]++' | tr "\n" ":")
+PATH=$(echo "$PATH" | awk -v RS=: '!a[$0]++' | tr "\n" ":")
+export PATH

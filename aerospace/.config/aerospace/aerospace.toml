@@ -50,16 +50,19 @@ alt-shift-minus = 'resize smart -100'
 alt-shift-equal = 'resize smart +100'
 
 # A huge stretch for mnemonics, but works with CapsLock as Hyper, plus right hand Qwerty.
-# T = Terminal (currently Kitty), Tmux
+# W = Work (if using browser profiles)
+# T = Terminal (currently Ghostty), Kitty, Tmux
 # Y = YDE (VSCode, Webstorm)
 # U = Utilities (Finder, Preview, Snagit)
 # I = Internet (browsers)
 # O = Office (Excel, Word)
-# P = Productivity (helpers like SnagIt)
+# P = Productivity (Obsidian, Notes, Things, Spotify, helpers like SnagIt)
 # [ = Email (HEY, Outlook)
 # ] = Instant Messaging (Messages, Teams, WhatsApp)
 
 # This binds a series of commands - move to workspace U, then change to workspace U
+# Uses the keys immediately above the workspace letter
+alt-shift-cmd-ctrl-3 = ['move-node-to-workspace W', 'workspace W']
 alt-shift-cmd-ctrl-5 = ['move-node-to-workspace T', 'workspace T']
 alt-shift-cmd-ctrl-6 = ['move-node-to-workspace Y', 'workspace Y']
 alt-shift-cmd-ctrl-7 = ['move-node-to-workspace U', 'workspace U']
@@ -69,6 +72,7 @@ alt-shift-cmd-ctrl-0 = ['move-node-to-workspace P', 'workspace P']
 alt-shift-cmd-ctrl-minus = ['move-node-to-workspace [', 'workspace [']
 alt-shift-cmd-ctrl-equal = ['move-node-to-workspace ]', 'workspace ]']
 
+alt-shift-cmd-ctrl-w = 'workspace W'
 alt-shift-cmd-ctrl-t = 'workspace T'
 alt-shift-cmd-ctrl-y = 'workspace Y'
 alt-shift-cmd-ctrl-u = 'workspace U'
@@ -96,6 +100,10 @@ l = 'move right'
 f = 'fullscreen'
 t = ['layout floating tiling', 'mode main'] # Toggle between floating and tiling layout
 b = 'balance-sizes'
+
+[[on-window-detected]]
+if.app-id = 'com.mitchellh.ghostty'
+run = 'move-node-to-workspace T'
 
 [[on-window-detected]]
 if.app-id = 'net.kovidgoyal.kitty'
@@ -127,6 +135,12 @@ run = 'move-node-to-workspace U'
 
 [[on-window-detected]]
 if.app-id = 'com.brave.Browser'
+if.window-title-regex-substring = 'Brave – Work'
+run = "move-node-to-workspace W"
+
+[[on-window-detected]]
+if.app-id = 'com.brave.Browser'
+if.window-title-regex-substring = 'Brave – Personal'
 run = "move-node-to-workspace I"
 
 [[on-window-detected]]
@@ -151,6 +165,10 @@ run = "move-node-to-workspace P"
 
 [[on-window-detected]]
 if.app-id = 'md.obsidian'
+run = "move-node-to-workspace P"
+
+[[on-window-detected]]
+if.app-id = 'com.spotify.client'
 run = "move-node-to-workspace P"
 
 [[on-window-detected]]
