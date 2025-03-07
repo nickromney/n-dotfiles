@@ -354,11 +354,11 @@ tools:
     install_args: []
 
   # Brew packages from tap repositories
-  # aerospace:
-  #   manager: brew
-  #   type: cask
-  #   check_command: 'test -d "/Applications/Aerospace.app"'
-  #   install_args: ["nikitabobko/tap/aerospace"]
+  aerospace:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Aerospace.app"'
+    install_args: ["nikitabobko/tap/aerospace"]
 
   borders: # Changed from jankyborders to match actual package name
     manager: brew
