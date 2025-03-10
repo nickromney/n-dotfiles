@@ -69,6 +69,12 @@ tools:
     check_command: 'brew list --cask font-jetbrains-mono-nerd-font >/dev/null 2>&1 || [ -d "$HOME/Library/Fonts/JetBrainsMono" ] || [ -d "/Library/Fonts/JetBrainsMono" ]'
     install_args: []
 
+  ghostty:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Ghostty.app"'
+    install_args: []
+
   karabiner-elements:
     manager: brew
     type: cask
