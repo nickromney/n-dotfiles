@@ -49,6 +49,13 @@ get_available_managers() {
         available+=("brew")
       fi
       ;;
+    "cargo")
+      if ! command_exists "cargo"; then
+        unavailable+=("cargo: please install from https://rustup.rs")
+      else
+        available+=("cargo")
+      fi
+      ;;
     "uv")
       if ! command_exists "uv"; then
         unavailable+=("uv: please install from https://github.com/astral-sh/uv")
@@ -203,6 +210,20 @@ install_tool() {
       ;;
     *)
       info "Skipping $tool: unknown brew type: $type"
+      return 0
+      ;;
+    esac
+    ;;
+  "cargo")
+    case "$type" in
+    "binary")
+      install_cmd="cargo install $install_args $tool"
+      ;;
+    "git")
+      install_cmd="cargo install --git $install_args $tool"
+      ;;
+    *)
+      info "Skipping $tool: unknown cargo type: $type"
       return 0
       ;;
     esac

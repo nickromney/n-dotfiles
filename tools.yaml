@@ -19,6 +19,12 @@ package_managers:
       - tap # brew tap repositories
     default_type: package
 
+  cargo:
+    types:
+      - binary # cargo install [crate]
+      - git # cargo install --git [repo]
+    default_type: binary
+
   uv:
     types:
       - tool # uv tool install
@@ -407,6 +413,12 @@ tools:
     type: package
     check_command: "which jqp >/dev/null 2>&1"
     install_args: ["noahgorstein/tap/jqp"]
+
+  # cargo
+  code2prompt:
+    manager: cargo
+    type: binary
+    check_command: "command -v code2prompt >/dev/null 2>&1"
 
   # uv
   posting:
