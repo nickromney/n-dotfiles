@@ -147,6 +147,7 @@ fi
 declare -a paths=(
   "$HOME/.local/bin"
   "$HOME/.arkade/bin"
+  "$HOME/.cargo/bin"
   "$HOME/.tfenv/bin"
 )
 
