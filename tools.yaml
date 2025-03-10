@@ -87,6 +87,12 @@ tools:
     check_command: 'brew list --cask kitty >/dev/null 2>&1 || [ -d "/Applications/kitty.app" ] || which kitty >/dev/null 2>&1'
     install_args: []
 
+  podman-desktop:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Podman Desktop.app"'
+    install_args: []
+
   # Brew packages
   act:
     manager: brew
@@ -148,6 +154,12 @@ tools:
     check_command: "eza --version"
     install_args: []
 
+  docker:
+    manager: brew
+    type: package
+    check_command: "docker --version"
+    install_args: []
+
   fd:
     manager: brew
     type: package
@@ -176,6 +188,12 @@ tools:
     manager: brew
     type: package
     check_command: "jq --version"
+    install_args: []
+
+  lazydocker:
+    manager: brew
+    type: package
+    check_command: "lazydocker --version"
     install_args: []
 
   lazygit:
@@ -218,6 +236,12 @@ tools:
     manager: brew
     type: package
     check_command: "which nvm >/dev/null 2>&1"
+    install_args: []
+
+  podman:
+    manager: brew
+    type: package
+    check_command: "podman --version"
     install_args: []
 
   pulumi:

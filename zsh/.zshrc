@@ -159,3 +159,7 @@ done
 # De-duplicate PATH
 PATH=$(echo "$PATH" | awk -v RS=: '!a[$0]++' | tr "\n" ":")
 export PATH
+
+# From https://github.com/jesseduffield/lazydocker/issues/4
+DOCKER_HOST=unix://$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}')
+export DOCKER_HOST
