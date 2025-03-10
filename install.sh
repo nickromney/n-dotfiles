@@ -263,14 +263,19 @@ is_tool_installed() {
   check_command=$(yq ".tools.${tool}.check_command" "$YAML_FILE")
 
   if [ "$check_command" = "null" ]; then
-    info "Skipping $tool: no check command specified"
-    return 0
+    info "Skipping check for $tool: no check command specified"
+    return 1 # Tool is not verified as installed if no check command
   fi
 
   # Expand environment variables in check_command
   check_command=$(eval echo "$check_command")
 
-  eval "$check_command" >/dev/null 2>&1
+  # Execute check command and capture its return value
+  if eval "$check_command" >/dev/null 2>&1; then
+    return 0 # Tool is installed
+  else
+    return 1 # Tool is not installed
+  fi
 }
 
 main() {

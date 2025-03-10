@@ -231,6 +231,9 @@ tools:
     type: package
     check_command: "nvim --version"
     install_args: []
+    # add --HEAD to install_args to install the latest version from HEAD
+    # install_args:
+    #   - --HEAD
 
   nushell:
     manager: brew
@@ -419,6 +422,14 @@ tools:
     manager: cargo
     type: binary
     check_command: "command -v code2prompt >/dev/null 2>&1"
+
+  # example of adding a tool from cargo gittools:
+  zellij:
+    manager: cargo
+    type: git
+    install_args:
+      - https://github.com/zellij-org/zellij.git
+    check_command: "command -v zellij >/dev/null 2>&1"
 
   # uv
   posting:
