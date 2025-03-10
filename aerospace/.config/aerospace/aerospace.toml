@@ -53,7 +53,7 @@ alt-shift-equal = 'resize smart +100'
 # W = Work (if using browser profiles)
 # T = Terminal (currently Ghostty), Kitty, Tmux
 # Y = YDE (VSCode, Webstorm)
-# U = Utilities (Finder, Preview, Snagit)
+# U = Utilities (Finder, Preview, Snagit, Podman Desktop)
 # I = Internet (browsers)
 # O = Office (Excel, Word)
 # P = Productivity (Obsidian, Notes, Things, Spotify, helpers like SnagIt)
@@ -126,7 +126,7 @@ if.app-id = 'com.apple.Preview'
 run = 'move-node-to-workspace U'
 
 [[on-window-detected]]
-if.app-id = 'com.electron.dockerdesktop'
+if.app-id = 'io.podmandesktop.PodmanDesktop'
 run = 'move-node-to-workspace U'
 
 [[on-window-detected]]
