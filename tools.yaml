@@ -244,6 +244,12 @@ tools:
     check_command: "podman --version"
     install_args: []
 
+  podman-compose:
+    manager: brew
+    type: package
+    check_command: "podman-compose --version"
+    install_args: []
+
   pulumi:
     manager: brew
     type: package
