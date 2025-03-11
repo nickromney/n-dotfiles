@@ -4,7 +4,7 @@ set -euo pipefail
 # Configuration
 YAML_FILE="tools.yaml"
 REQUIRED_COMMANDS=("yq" "which")
-STOW_DIRS=(amethyst bat gh git karabiner kitty nvim starship tmux zsh)
+STOW_DIRS=(aerospace bat gh git karabiner kitty nvim starship tmux zsh)
 
 # Default values and argument parsing
 DRY_RUN="${DRY_RUN:-false}"
@@ -47,6 +47,13 @@ get_available_managers() {
         unavailable+=("brew: please install from https://brew.sh")
       else
         available+=("brew")
+      fi
+      ;;
+    "cargo")
+      if ! command_exists "cargo"; then
+        unavailable+=("cargo: please install from https://rustup.rs")
+      else
+        available+=("cargo")
       fi
       ;;
     "uv")
@@ -207,6 +214,20 @@ install_tool() {
       ;;
     esac
     ;;
+  "cargo")
+    case "$type" in
+    "binary")
+      install_cmd="cargo install $install_args $tool"
+      ;;
+    "git")
+      install_cmd="cargo install --git $install_args $tool"
+      ;;
+    *)
+      info "Skipping $tool: unknown cargo type: $type"
+      return 0
+      ;;
+    esac
+    ;;
   "uv")
     case "$type" in
     "tool")
@@ -242,14 +263,19 @@ is_tool_installed() {
   check_command=$(yq ".tools.${tool}.check_command" "$YAML_FILE")
 
   if [ "$check_command" = "null" ]; then
-    info "Skipping $tool: no check command specified"
-    return 0
+    info "Skipping check for $tool: no check command specified"
+    return 1 # Tool is not verified as installed if no check command
   fi
 
   # Expand environment variables in check_command
   check_command=$(eval echo "$check_command")
 
-  eval "$check_command" >/dev/null 2>&1
+  # Execute check command and capture its return value
+  if eval "$check_command" >/dev/null 2>&1; then
+    return 0 # Tool is installed
+  else
+    return 1 # Tool is not installed
+  fi
 }
 
 main() {

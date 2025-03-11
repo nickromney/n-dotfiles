@@ -19,6 +19,12 @@ package_managers:
       - tap # brew tap repositories
     default_type: package
 
+  cargo:
+    types:
+      - binary # cargo install [crate]
+      - git # cargo install --git [repo]
+    default_type: binary
+
   uv:
     types:
       - tool # uv tool install
@@ -225,6 +231,9 @@ tools:
     type: package
     check_command: "nvim --version"
     install_args: []
+    # add --HEAD to install_args to install the latest version from HEAD
+    # install_args:
+    #   - --HEAD
 
   nushell:
     manager: brew
@@ -242,6 +251,12 @@ tools:
     manager: brew
     type: package
     check_command: "podman --version"
+    install_args: []
+
+  podman-compose:
+    manager: brew
+    type: package
+    check_command: "podman-compose --version"
     install_args: []
 
   pulumi:
@@ -355,13 +370,13 @@ tools:
   zsh-autosuggestions:
     manager: brew
     type: package
-    check_command: "brew list zsh-autosuggestions >/dev/null 2>&1"
+    check_command: "brew list zsh-autosuggestions"
     install_args: []
 
   zsh-syntax-highlighting:
     manager: brew
     type: package
-    check_command: "brew list zsh-syntax-highlighting >/dev/null 2>&1"
+    check_command: "brew list zsh-syntax-highlighting"
     install_args: []
 
   # Brew tap repositories
@@ -399,12 +414,26 @@ tools:
   jqp:
     manager: brew
     type: package
-    check_command: "which jqp >/dev/null 2>&1"
+    check_command: "which jqp"
     install_args: ["noahgorstein/tap/jqp"]
+
+  # cargo
+  code2prompt:
+    manager: cargo
+    type: binary
+    check_command: "code2prompt --version"
+
+  # example of adding a tool from cargo:
+  # zellij:
+  #   manager: cargo
+  #   type: git
+  #   install_args:
+  #     - https://github.com/zellij-org/zellij.git
+  #   check_command: "zellij --version"
 
   # uv
   posting:
     manager: uv
     type: tool
-    check_command: "which posting >/dev/null 2>&1"
+    check_command: "which posting"
     install_args: ["--python", "3.12"]
