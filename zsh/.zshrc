@@ -48,30 +48,12 @@ bindkey "^[[A" history-beginning-search-backward # Up arrow
 bindkey "^[[B" history-beginning-search-forward  # Down arrow
 
 #
-# Aliases
-#
-alias cdd='cd "$HOME/Developer"'
-alias f="fzf"
-alias g="lazygit"
-alias gs='git status'
-alias gc='git commit'
-alias l="eza --oneline"
-alias ll="ls -al"
-alias n="nvim"
-alias o="z"
-alias cd="z"
-alias bf="fzf --preview='bat --color=always --style=numbers --line-range=:500 {}' | xargs bat"
-alias nf="fzf --preview='bat --color=always --style=numbers --line-range=:500 {}' | xargs nvim"
-alias pf="fzf --preview='bat --color=always --style=numbers --line-range=:500 {}' | pbcopy"
-alias sz="source ~/.zshrc"
-alias tree="eza --tree"
-#
 # Tools & Completions
 #
 # Initialize completions
 autoload -Uz compinit && compinit
 
-[ -f "$HOME/.zsh/aliases.zsh" ] && source "$HOME/.local/bin/env"
+# Local environment will be sourced later in the file
 
 # Completion menu
 zstyle ':completion:*:*:*:*:*' menu select
@@ -83,21 +65,36 @@ if command -v starship >/dev/null 2>&1; then
 fi
 
 # Zoxide
+ZOXIDE_AVAILABLE=false
 if command -v zoxide >/dev/null 2>&1; then
   eval "$(zoxide init zsh)"
+  ZOXIDE_AVAILABLE=true
 fi
 
 # FZF configuration
+FZF_AVAILABLE=false
 if command -v fzf >/dev/null 2>&1; then
-  source <(fzf --zsh)
+  FZF_AVAILABLE=true
+  # Only source fzf completion if it exists
+  if FZF_COMPLETION=$(fzf --zsh 2>/dev/null); then
+    source <(echo "$FZF_COMPLETION")
+  fi
+
   export FZF_DEFAULT_OPTS="--height 100% --layout reverse --preview-window=wrap"
   export FZF_CTRL_R_OPTS="--preview 'echo {}'"
-  export FZF_CTRL_T_COMMAND="fd --exclude .git --hidden --follow"
-  # Preview file content using bat (https://github.com/sharkdp/bat)
-  export FZF_CTRL_T_OPTS="
-    --walker-skip .git,node_modules,target
-    --preview 'bat -n --color=always {}'
-    --bind 'ctrl-/:change-preview-window(down|hidden|)'"
+
+  # Only set FD command if fd/find is available
+  if command -v fd >/dev/null 2>&1; then
+    export FZF_CTRL_T_COMMAND="fd --exclude .git --hidden --follow"
+  fi
+
+  # Preview file content using bat (if available)
+  if command -v bat >/dev/null 2>&1; then
+    export FZF_CTRL_T_OPTS="
+      --walker-skip .git,node_modules,target
+      --preview 'bat -n --color=always {}'
+      --bind 'ctrl-/:change-preview-window(down|hidden|)'"
+  fi
 fi
 
 # UV tools
@@ -117,13 +114,15 @@ ZSH_SYNTAX_HIGHLIGHTING="/opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-
 #
 # NVM Setup
 #
-if command -v brew >/dev/null 2>&1 && [ -d "$(brew --prefix nvm)" ]; then
-  export NVM_DIR="$HOME/.nvm"
-  NVM_SCRIPT="$(brew --prefix nvm)/nvm.sh"
-  NVM_COMPLETION="$(brew --prefix nvm)/etc/bash_completion.d/nvm"
+if command -v brew >/dev/null 2>&1; then
+  if NVM_PREFIX=$(brew --prefix nvm 2>/dev/null) && [ -d "$NVM_PREFIX" ]; then
+    export NVM_DIR="$HOME/.nvm"
+    NVM_SCRIPT="$NVM_PREFIX/nvm.sh"
+    NVM_COMPLETION="$NVM_PREFIX/etc/bash_completion.d/nvm"
 
-  [ -s "$NVM_SCRIPT" ] && source "$NVM_SCRIPT"
-  [ -s "$NVM_COMPLETION" ] && source "$NVM_COMPLETION"
+    [ -s "$NVM_SCRIPT" ] && source "$NVM_SCRIPT"
+    [ -s "$NVM_COMPLETION" ] && source "$NVM_COMPLETION"
+  fi
 fi
 
 #
@@ -132,13 +131,18 @@ fi
 [ -f "$HOME/.local/bin/env" ] && source "$HOME/.local/bin/env"
 
 # ZScaler Certs
-if [ -d "$HOME/.zscalerCerts" ]; then
-  export AWS_CA_BUNDLE="$HOME/.zscalerCerts/zscalerCAbundle.pem"
-  export CURL_CA_BUNDLE="$HOME/.zscalerCerts/zscalerCAbundle.pem"
-  export GIT_SSL_CAPATH="$HOME/.zscalerCerts/zscalerCAbundle.pem"
-  export NODE_EXTRA_CA_CERTS="$HOME/.zscalerCerts/zscalerCAbundle.pem"
-  export REQUESTS_CA_BUNDLE="$HOME/.zscalerCerts/azure-cacert.pem"
-  export SSL_CERT_FILE="$HOME/.zscalerCerts/zscalerCAbundle.pem"
+ZSCALER_CERT_DIR="$HOME/.zscalerCerts"
+if [ -d "$ZSCALER_CERT_DIR" ]; then
+  ZSCALER_CA_BUNDLE="$ZSCALER_CERT_DIR/zscalerCAbundle.pem"
+  AZURE_CA_CERT="$ZSCALER_CERT_DIR/azure-cacert.pem"
+
+  # Only set environment variables if certificate files exist
+  [ -f "$ZSCALER_CA_BUNDLE" ] && export AWS_CA_BUNDLE="$ZSCALER_CA_BUNDLE"
+  [ -f "$ZSCALER_CA_BUNDLE" ] && export CURL_CA_BUNDLE="$ZSCALER_CA_BUNDLE"
+  [ -f "$ZSCALER_CA_BUNDLE" ] && export GIT_SSL_CAPATH="$ZSCALER_CA_BUNDLE"
+  [ -f "$ZSCALER_CA_BUNDLE" ] && export NODE_EXTRA_CA_CERTS="$ZSCALER_CA_BUNDLE"
+  [ -f "$AZURE_CA_CERT" ] && export REQUESTS_CA_BUNDLE="$AZURE_CA_CERT"
+  [ -f "$ZSCALER_CA_BUNDLE" ] && export SSL_CERT_FILE="$ZSCALER_CA_BUNDLE"
 fi
 
 #
@@ -161,6 +165,82 @@ done
 PATH=$(echo "$PATH" | awk -v RS=: '!a[$0]++' | tr "\n" ":")
 export PATH
 
-# From https://github.com/jesseduffield/lazydocker/issues/4
-DOCKER_HOST=unix://$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}')
-export DOCKER_HOST
+# Podman socket for Docker compatibility
+if command -v podman >/dev/null 2>&1; then
+  if PODMAN_SOCKET=$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}' 2>/dev/null) && [ -n "$PODMAN_SOCKET" ]; then
+    export DOCKER_HOST="unix://$PODMAN_SOCKET"
+  fi
+fi
+
+#
+# Aliases
+#
+# Add aliases at the end after all tools are initialized
+
+# Navigation aliases - conditionally created based on available tools
+DEVELOPER_DIR="$HOME/Developer"
+if $ZOXIDE_AVAILABLE; then
+  # If zoxide is available, use it for navigation
+  alias o="z"
+
+  # Only create cdd if the Developer directory exists
+  if [ -d "$DEVELOPER_DIR" ]; then
+    alias cdd='z "$HOME/Developer"'
+  fi
+else
+  # Fallback if zoxide is not available
+  if [ -d "$DEVELOPER_DIR" ]; then
+    alias cdd='cd "$HOME/Developer"'
+  fi
+fi
+
+# Git aliases
+if command -v git >/dev/null 2>&1; then
+  alias gs='git status'
+  alias gc='git commit'
+
+  # Only add lazygit alias if it's available
+  if command -v lazygit >/dev/null 2>&1; then
+    alias g="lazygit"
+  fi
+fi
+
+# File listing aliases
+if command -v eza >/dev/null 2>&1; then
+  alias l="eza --oneline"
+  alias tree="eza --tree"
+else
+  alias l="ls -1"
+fi
+alias ll="ls -al"
+
+# Editor aliases
+if command -v nvim >/dev/null 2>&1; then
+  alias n="nvim"
+fi
+
+# FZF combination aliases - only if required tools are available
+if $FZF_AVAILABLE; then
+  alias f="fzf"
+
+  if command -v bat >/dev/null 2>&1; then
+    alias bf="fzf --preview='bat --color=always --style=numbers --line-range=:500 {}' | xargs bat"
+
+    if command -v nvim >/dev/null 2>&1; then
+      alias nf="fzf --preview='bat --color=always --style=numbers --line-range=:500 {}' | xargs nvim"
+    fi
+
+    if command -v pbcopy >/dev/null 2>&1; then
+      alias pf="fzf --preview='bat --color=always --style=numbers --line-range=:500 {}' | pbcopy"
+    fi
+  fi
+fi
+
+# Utility aliases
+alias sz="source ~/.zshrc"
+
+# AWS Lambda virtual environment alias - check if directory exists first
+AWS_LAMBDA_VENV="$HOME/.venvs/aws-lambda/bin/activate"
+if [ -f "$AWS_LAMBDA_VENV" ]; then
+  alias aws-lambda-env='source "$AWS_LAMBDA_VENV"'
+fi

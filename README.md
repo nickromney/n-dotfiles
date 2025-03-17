@@ -23,13 +23,13 @@ git clone https://github.com/nickromney/n-dotfiles.git ~/.dotfiles
 cd ~/.dotfiles
 ```
 
-2. Install desired package managers:
+1. Install desired package managers:
 
 - `arkade`: Optional, for CLI tools from [alexellis/arkade](https://github.com/alexellis/arkade?tab=readme-ov-file#getting-arkade)
 - `brew`: Optional, for packages and casks from [brew.sh](https://brew.sh/)
 - `uv`: Optional, for Python tools from [astral.sh](https://docs.astral.sh/uv/getting-started/installation/#installing-uv)
 
-3. Run installation and configuration:
+1. Run installation and configuration:
 
 ```bash
 ./install.sh [-d|--dry-run] [-v|--verbose] [-s|--stow] [-f|--force] [-h|--help]
@@ -130,7 +130,7 @@ install_args: Additional installation arguments (optional)
 
 ## Directory Structure
 
-```
+```shell
 .
 ├── install.sh    # Package installation and configuration management
 ├── tools.yaml   # Package definitions
@@ -143,3 +143,4 @@ install_args: Additional installation arguments (optional)
 - [Typecraft Dev](https://github.com/typecraft-dev/dotfiles) - because of the excellent YouTube video walkthroughs - "be a better nerd"
 - [Omer Hamerman / DevOpsToolbox](https://github.com/omerxx/dotfiles) - again, a fan of the YouTube video walkthroughs
 - [Christian Sutter](https://github.com/csutter/punkt) - I used to work with Christian, and learned lots from pair programming with him.
+- [Rob / Tech Craft](https://www.youtube.com/@tech_craft/videos) - Not posted for a while, but excellent videos

@@ -259,6 +259,12 @@ tools:
     check_command: "podman-compose --version"
     install_args: []
 
+  python3-pip:
+    manager: brew
+    type: package
+    check_command: "python3 -m pip --version"
+    install_args: []
+
   pulumi:
     manager: brew
     type: package
