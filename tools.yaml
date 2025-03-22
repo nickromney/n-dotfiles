@@ -277,6 +277,12 @@ tools:
     check_command: "ranger --version"
     install_args: []
 
+  rbenv:
+    manager: brew
+    type: package
+    check_command: "rbenv --version"
+    install_args: []
+
   ripgrep:
     manager: brew
     type: package
