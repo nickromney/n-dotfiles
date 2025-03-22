@@ -64,6 +64,11 @@ if command -v starship >/dev/null 2>&1; then
   eval "$(starship init zsh)"
 fi
 
+# Rbenv
+if command -v rbenv >/dev/null 2>&1; then
+  eval "$(rbenv init -)"
+fi
+
 # Zoxide
 ZOXIDE_AVAILABLE=false
 if command -v zoxide >/dev/null 2>&1; then
