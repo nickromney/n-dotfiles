@@ -50,8 +50,17 @@ bindkey "^[[B" history-beginning-search-forward  # Down arrow
 #
 # Tools & Completions
 #
-# Initialize completions
-autoload -Uz compinit && compinit
+# -Uz ensures that compinit is loaded as a pure function according
+#  to zsh's standards, without interference from any aliases defined.
+#  Then executes it with the -i flag to ignore insecure files.
+autoload -Uz compinit && compinit -i
+
+# Azure CLI completion
+if command -v brew >/dev/null 2>&1 && command -v az >/dev/null 2>&1; then
+  autoload bashcompinit && bashcompinit
+  AZ_COMPLETION="$(brew --prefix)/etc/bash_completion.d/az"
+  [ -f "$AZ_COMPLETION" ] && source "$AZ_COMPLETION"
+fi
 
 # Local environment will be sourced later in the file
 
