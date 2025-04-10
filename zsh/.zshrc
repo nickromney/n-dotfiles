@@ -160,6 +160,33 @@ if [ -d "$ZSCALER_CERT_DIR" ]; then
 fi
 
 #
+# 1Password SSH Agent Setup
+#
+if command -v op >/dev/null 2>&1; then
+  # 1Password CLI is installed
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS
+    OP_SOCKET_PATH="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+    if [ -S "$OP_SOCKET_PATH" ]; then
+      # Create ~/.1password directory if it doesn't exist
+      mkdir -p "$HOME/.1password"
+      # Create symlink for easier access if it doesn't exist or is broken
+      if [ ! -L "$HOME/.1password/agent.sock" ] || [ ! -e "$HOME/.1password/agent.sock" ]; then
+        ln -sf "$OP_SOCKET_PATH" "$HOME/.1password/agent.sock"
+      fi
+      # Set the environment variable
+      export SSH_AUTH_SOCK="$HOME/.1password/agent.sock"
+    fi
+  else
+    # Linux
+    OP_SOCKET_PATH="$HOME/.1password/agent.sock"
+    if [ -S "$OP_SOCKET_PATH" ]; then
+      export SSH_AUTH_SOCK="$OP_SOCKET_PATH"
+    fi
+  fi
+fi
+
+#
 # PATH Management
 #
 declare -a paths=(
