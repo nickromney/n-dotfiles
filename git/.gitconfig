@@ -92,3 +92,7 @@
 # contents of ~/Developer/work/.gitconfig_include
 #   [user]
 #     email = first.last@company.name
+# and when working with a GitHub Enterprise Org, with SAML SSO
+#   [url "github-work-org:org/"]
+#     insteadOf = git@github.com:org/
+#     insteadOf = https://github.com/org/
