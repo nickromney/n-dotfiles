@@ -62,7 +62,7 @@ alt-shift-equal = 'resize smart +100'
 
 # This binds a series of commands - move to workspace U, then change to workspace U
 # Uses the keys immediately above the workspace letter
-alt-shift-cmd-ctrl-3 = ['move-node-to-workspace W', 'workspace W']
+alt-shift-cmd-ctrl-2 = ['move-node-to-workspace W', 'workspace W']
 alt-shift-cmd-ctrl-5 = ['move-node-to-workspace T', 'workspace T']
 alt-shift-cmd-ctrl-6 = ['move-node-to-workspace Y', 'workspace Y']
 alt-shift-cmd-ctrl-7 = ['move-node-to-workspace U', 'workspace U']
