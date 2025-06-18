@@ -16,10 +16,11 @@ command_exists() {
   type "$1" >/dev/null 2>&1
 }
 
+is_root() {
+  [ "$(id -u)" -eq 0 ]
+}
+
 get_available_managers() {
-  # Ensure we always return 0, even if the function is interrupted
-  trap 'return 0' ERR
-  
   local -a available=()
   local -a unavailable=()
 
@@ -29,6 +30,9 @@ get_available_managers() {
   required_managers=$(yq '.tools[].manager' "$YAML_FILE" 2>/dev/null | sort -u || true)
 
   while read -r manager; do
+    # Skip empty lines
+    [[ -z "$manager" ]] && continue
+    
     case "$manager" in
     "apt")
       if ! command_exists "apt-get"; then
@@ -86,7 +90,7 @@ get_available_managers() {
   printf '%s\n' "${available[@]}"
   
   # Always return success - this is an information gathering function
-  return 0 || true
+  return 0
 }
 
 check_requirements() {
@@ -262,10 +266,6 @@ install_tool() {
     eval "$install_cmd"
   fi
   return 0
-}
-
-is_root() {
-  [ "$(id -u)" -eq 0 ]
 }
 
 is_tool_installed() {
