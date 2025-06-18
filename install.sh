@@ -80,6 +80,9 @@ get_available_managers() {
 
   # Export available managers for use in installation (to stdout)
   printf '%s\n' "${available[@]}"
+  
+  # Always return success - this is an information gathering function
+  return 0
 }
 
 check_requirements() {
@@ -285,7 +288,10 @@ main() {
   [[ "$DRY_RUN" == "true" ]] && info "Running in dry-run mode - no changes will be made"
   [[ "$FORCE" == "true" ]] && info "Running in force mode - existing files will be overwritten"
 
-  check_requirements
+  # Check requirements and exit if they're not met
+  if ! check_requirements; then
+    return 1
+  fi
 
   # Get available package managers
   AVAILABLE_MANAGERS=()
