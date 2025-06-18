@@ -134,8 +134,36 @@ install_args: Additional installation arguments (optional)
 .
 ├── install.sh    # Package installation and configuration management
 ├── tools.yaml   # Package definitions
+├── test/        # BATS test suite
+│   ├── install.bats      # Main test file
+│   ├── helpers/mocks.bash # Mock framework
+│   └── fixtures/         # Test data
 └── */           # Tool configurations, where each directory represents a stow target
 ```
+
+## Testing
+
+The repository includes a comprehensive test suite using BATS (Bash Automated Testing System):
+
+```bash
+# Install BATS (required for testing)
+brew install bats-core  # macOS
+sudo apt-get install bats  # Ubuntu/Debian
+
+# Run all tests
+./_test/run_tests.sh
+
+# Run tests with specific filter
+cd _test && bats install.bats --filter "install_tool"
+```
+
+The test suite includes:
+
+- Unit tests for all utility functions
+- Integration tests for package manager detection
+- Installation tests for each package manager type
+- Mocking framework to simulate external commands
+- 37 comprehensive tests covering all major functionality
 
 ## Inspiration
 
