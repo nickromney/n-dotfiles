@@ -1,0 +1,21 @@
+# Test artifacts
+_test/*.log
+_test/tmp/
+.bats/
+coverage/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Temporary files
+*.tmp
+*.bak
+*.cache
