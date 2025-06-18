@@ -158,6 +158,19 @@ esac
 EOF
   chmod +x "$MOCK_BIN_DIR/yq"
   
+  # Make sure required commands exist for check_requirements
+  mock_command "which"
+  
+  # Override command_exists to ensure consistent behavior
+  command_exists() {
+    case "$1" in
+      yq|which) return 0 ;;
+      apt-get|arkade) return 1 ;;  # These should be unavailable
+      *) return 1 ;;
+    esac
+  }
+  export -f command_exists
+  
   run get_available_managers
   [ "$status" -eq 0 ]
   
