@@ -160,6 +160,7 @@ EOF
   
   # Make sure required commands exist for check_requirements
   mock_command "which"
+  mock_id 1000  # Mock id to return non-root
   
   # Override command_exists to ensure consistent behavior
   command_exists() {

@@ -17,79 +17,82 @@ command_exists() {
 }
 
 is_root() {
-  [ "$(id -u)" -eq 0 ]
+  [ "$(id -u 2>/dev/null || echo 1000)" -eq 0 ]
 }
 
 get_available_managers() {
-  local -a available=()
-  local -a unavailable=()
+  # Run the entire function in a subshell to ensure it returns 0
+  (
+    local -a available=()
+    local -a unavailable=()
 
-  # Get unique package managers from YAML
-  local required_managers
-  # Use || true to ensure the command doesn't cause an exit
-  required_managers=$(yq '.tools[].manager' "$YAML_FILE" 2>/dev/null | sort -u || true)
+    # Get unique package managers from YAML
+    local required_managers
+    # Use || true to ensure the command doesn't cause an exit
+    required_managers=$(yq '.tools[].manager' "$YAML_FILE" 2>/dev/null | sort -u || true)
 
-  while read -r manager; do
-    # Skip empty lines
-    [[ -z "$manager" ]] && continue
-    
-    case "$manager" in
-    "apt")
-      if ! command_exists "apt-get"; then
-        unavailable+=("apt: apt-get is not available on this system")
-      elif ! is_root && [[ "$DRY_RUN" == "false" ]]; then
-        unavailable+=("apt: requires root privileges - please run with sudo")
-      else
-        available+=("apt")
-      fi
-      ;;
-    "arkade")
-      if ! command_exists "arkade"; then
-        unavailable+=("arkade: please install from https://github.com/alexellis/arkade")
-      else
-        available+=("arkade")
-      fi
-      ;;
-    "brew")
-      if ! command_exists "brew"; then
-        unavailable+=("brew: please install from https://brew.sh")
-      else
-        available+=("brew")
-      fi
-      ;;
-    "cargo")
-      if ! command_exists "cargo"; then
-        unavailable+=("cargo: please install from https://rustup.rs")
-      else
-        available+=("cargo")
-      fi
-      ;;
-    "uv")
-      if ! command_exists "uv"; then
-        unavailable+=("uv: please install from https://github.com/astral-sh/uv")
-      else
-        available+=("uv")
-      fi
-      ;;
-    *)
-      unavailable+=("unknown package manager: $manager")
-      ;;
-    esac
-  done <<<"$required_managers"
+    while read -r manager; do
+      # Skip empty lines
+      [[ -z "$manager" ]] && continue
+      
+      case "$manager" in
+      "apt")
+        if ! command_exists "apt-get"; then
+          unavailable+=("apt: apt-get is not available on this system")
+        elif ! is_root && [[ "$DRY_RUN" == "false" ]]; then
+          unavailable+=("apt: requires root privileges - please run with sudo")
+        else
+          available+=("apt")
+        fi
+        ;;
+      "arkade")
+        if ! command_exists "arkade"; then
+          unavailable+=("arkade: please install from https://github.com/alexellis/arkade")
+        else
+          available+=("arkade")
+        fi
+        ;;
+      "brew")
+        if ! command_exists "brew"; then
+          unavailable+=("brew: please install from https://brew.sh")
+        else
+          available+=("brew")
+        fi
+        ;;
+      "cargo")
+        if ! command_exists "cargo"; then
+          unavailable+=("cargo: please install from https://rustup.rs")
+        else
+          available+=("cargo")
+        fi
+        ;;
+      "uv")
+        if ! command_exists "uv"; then
+          unavailable+=("uv: please install from https://github.com/astral-sh/uv")
+        else
+          available+=("uv")
+        fi
+        ;;
+      *)
+        unavailable+=("unknown package manager: $manager")
+        ;;
+      esac
+    done <<<"$required_managers"
 
-  # Report available and unavailable package managers to stderr
-  if [ ${#available[@]} -gt 0 ]; then
-    echo "Available package managers: ${available[*]}" >&2
-  fi
-  if [ ${#unavailable[@]} -gt 0 ]; then
-    echo "Unavailable package managers:" >&2
-    printf '  - %s\n' "${unavailable[@]}" >&2
-  fi
+    # Report available and unavailable package managers to stderr
+    if [ ${#available[@]} -gt 0 ]; then
+      echo "Available package managers: ${available[*]}" >&2
+    fi
+    if [ ${#unavailable[@]} -gt 0 ]; then
+      echo "Unavailable package managers:" >&2
+      printf '  - %s\n' "${unavailable[@]}" >&2
+    fi
 
-  # Export available managers for use in installation (to stdout)
-  printf '%s\n' "${available[@]}"
+    # Export available managers for use in installation (to stdout)
+    printf '%s\n' "${available[@]}"
+  ) || true
   
-  # Always return success - this is an information gathering function
+  # Always return success
   return 0
 }
 
