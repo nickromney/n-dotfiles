@@ -19,12 +19,7 @@ setup() {
   # Save the original type builtin
   # Note: We can't actually save builtins, but we can override them
   
-  # Source the install script functions only (not main)
-  set +e  # Temporarily disable errexit
-  source ./install.sh --source-only
-  set -e  # Re-enable errexit
-  
-  # Override type to check our mock directory first
+  # Override type BEFORE sourcing to ensure it's used
   type() {
     local cmd="$1"
     # Redirect output to stderr like builtin type does
@@ -38,6 +33,11 @@ setup() {
     fi
   }
   export -f type
+  
+  # Source the install script functions only (not main)
+  set +e  # Temporarily disable errexit
+  source ./install.sh --source-only
+  set -e  # Re-enable errexit
 }
 
 teardown() {
@@ -119,6 +119,35 @@ teardown() {
   [[ "$output" =~ "brew: please install from https://brew.sh" ]]
   [[ "$output" =~ "arkade: please install from https://github.com/alexellis/arkade" ]]
   [[ "$output" =~ "cargo: please install from https://rustup.rs" ]]
+}
+
+@test "get_available_managers handles unknown package manager" {
+  # Create a custom mock that includes a fake 'foo' manager
+  cat > "$MOCK_BIN_DIR/yq" << 'EOF'
+#!/usr/bin/env bash
+case "$*" in
+  *".tools[].manager"*)
+    echo "brew"
+    echo "foo"
+    echo "arkade"
+    ;;
+  *".tools.\"*\".manager"*)
+    echo "foo"
+    ;;
+  *)
+    echo "null"
+    ;;
+esac
+EOF
+  chmod +x "$MOCK_BIN_DIR/yq"
+  
+  # Mock brew as available
+  mock_command "brew"
+  
+  run get_available_managers
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "Available package managers: brew" ]]
+  [[ "$output" =~ "unknown package manager: foo" ]]
 }
 
 @test "get_available_managers handles apt on non-root user" {
@@ -491,4 +520,59 @@ esac
   [ "$status" -eq 0 ]
   [[ "$output" =~ "Running stow" ]]
   assert_mock_called "stow"
+}
+
+@test "main function handles tools with unknown package managers" {
+  # Create a custom mock that includes a tool with unknown manager
+  cat > "$MOCK_BIN_DIR/yq" << 'EOF'
+#!/usr/bin/env bash
+case "$*" in
+  *".tools[].manager"*)
+    echo "brew"
+    echo "foo"
+    ;;
+  *".tools | keys | .[]"*)
+    echo "tool1"
+    echo "footool"
+    ;;
+  *".tools.tool1.manager"*)
+    echo "brew"
+    ;;
+  *".tools.footool.manager"*)
+    echo "foo"
+    ;;
+  *".tools.tool1.check_command"*)
+    echo "which tool1"
+    ;;
+  *".tools.footool.check_command"*)
+    echo "which footool >/dev/null 2>&1"
+    ;;
+  *)
+    echo "package"
+    ;;
+esac
+EOF
+  chmod +x "$MOCK_BIN_DIR/yq"
+  
+  mock_command "brew"
+  mock_command "tool1"  # Mark tool1 as already installed
+  
+  # Create a smart 'which' mock that checks if commands exist in mock dir
+  cat > "$MOCK_BIN_DIR/which" << 'EOF'
+#!/usr/bin/env bash
+# Smart which mock that actually checks for existence
+cmd="$1"
+if [[ -x "$MOCK_BIN_DIR/$cmd" ]]; then
+  echo "$MOCK_BIN_DIR/$cmd"
+  exit 0
+else
+  exit 1
+fi
+EOF
+  chmod +x "$MOCK_BIN_DIR/which"
+  
+  run main
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "unknown package manager: foo" ]]
+  [[ "$output" =~ "Skipping footool: foo not available" ]]
 }
