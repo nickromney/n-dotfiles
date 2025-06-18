@@ -96,7 +96,7 @@ tools:
   podman-desktop:
     manager: brew
     type: cask
-    check_command: 'test -d "/Applications/Podman Desktop.app"'
+    check_command: "test -d '/Applications/Podman Desktop.app'"
     install_args: []
 
   # Brew packages
@@ -175,7 +175,7 @@ tools:
   fx:
     manager: brew
     type: package
-    check_command: "fx --version"
+    check_command: "which fx >/dev/null 2>&1"
     install_args: []
 
   fzf:
@@ -244,7 +244,7 @@ tools:
   nvm:
     manager: brew
     type: package
-    check_command: "which nvm >/dev/null 2>&1"
+    check_command: "brew --prefix nvm >/dev/null 2>&1 && test -d \"$(brew --prefix nvm)\""
     install_args: []
 
   podman:
@@ -395,7 +395,7 @@ tools:
   FelixKratz/formulae:
     manager: brew
     type: tap
-    check_command: "brew tap | grep -q '^FelixKratz/formulae$'"
+    check_command: "brew tap | grep -qi '^felixkratz/formulae$'"
     install_args: []
 
   nikitabobko/tap:

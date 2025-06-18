@@ -1,0 +1,59 @@
+name: Test Install Script
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  shellcheck:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ShellCheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+
+      - name: Run ShellCheck
+        run: |
+          shellcheck install.sh || true
+          find _test -name "*.bash" -o -name "*.bats" | xargs shellcheck || true
+
+  test:
+    needs: shellcheck
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install BATS (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          # Clone bats-core directly to avoid apt service restart issues
+          git clone https://github.com/bats-core/bats-core.git /tmp/bats-core
+          cd /tmp/bats-core
+          sudo ./install.sh /usr/local
+
+      - name: Install BATS (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install bats-core
+
+      - name: Run tests
+        run: |
+          # Ensure bats is in PATH
+          export PATH="/usr/local/bin:$PATH"
+          which bats
+          bats --version
+          ./_test/run_tests.sh
+
+      - name: Test dry run
+        run: |
+          ./install.sh -d -v
