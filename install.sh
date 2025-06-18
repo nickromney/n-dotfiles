@@ -17,6 +17,11 @@ command_exists() {
 }
 
 get_available_managers() {
+  # Save current errexit setting and disable it for this function
+  local old_errexit
+  old_errexit=$(set +o | grep errexit)
+  set +e
+  
   local -a available=()
   local -a unavailable=()
 
@@ -80,6 +85,9 @@ get_available_managers() {
 
   # Export available managers for use in installation (to stdout)
   printf '%s\n' "${available[@]}"
+  
+  # Restore errexit setting
+  eval "$old_errexit"
   
   # Always return success - this is an information gathering function
   return 0

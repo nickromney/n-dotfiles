@@ -134,10 +134,10 @@ install_args: Additional installation arguments (optional)
 .
 ├── install.sh    # Package installation and configuration management
 ├── tools.yaml   # Package definitions
-├── test/        # BATS test suite
+├── _test/       # BATS test suite
 │   ├── install.bats      # Main test file
 │   ├── helpers/mocks.bash # Mock framework
-│   └── fixtures/         # Test data
+│   └── run_tests.sh      # Test runner script
 └── */           # Tool configurations, where each directory represents a stow target
 ```
 
@@ -163,7 +163,38 @@ The test suite includes:
 - Integration tests for package manager detection
 - Installation tests for each package manager type
 - Mocking framework to simulate external commands
-- 37 comprehensive tests covering all major functionality
+- 39 comprehensive tests covering all major functionality
+
+### Handling `errexit` in Shell Scripts
+
+The `install.sh` script uses `set -euo pipefail` for strict error handling, which is a best practice for production scripts. However, this can cause issues in certain scenarios:
+
+1. **Testing**: When functions are sourced in test environments, commands that normally fail (like checking for non-existent commands) will cause the entire function to exit.
+
+2. **Information Gathering**: Functions that check system state need to handle failures gracefully without exiting.
+
+The script handles this by temporarily disabling `errexit` in functions that need to tolerate failures:
+
+```bash
+get_available_managers() {
+  # Save current errexit setting and disable it
+  local old_errexit
+  old_errexit=$(set +o | grep errexit)
+  set +e
+  
+  # ... function body that may have failing commands ...
+  
+  # Restore errexit setting before returning
+  eval "$old_errexit"
+  return 0
+}
+```
+
+This pattern ensures:
+
+- The function can complete even if some commands fail
+- The original shell options are preserved
+- The script maintains strict error handling elsewhere
 
 ## Inspiration
 

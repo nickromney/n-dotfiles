@@ -125,3 +125,29 @@ The test suite uses mocking to simulate all external commands (brew, apt, cargo,
 - The `<<<` operator always provides at least one line of input, even if empty
 - Info messages must be carefully managed to not interfere with function return values
 - Brew tap names (like `FelixKratz/formulae`) contain `/` and need quotes in yq queries: `.tools."FelixKratz/formulae".manager`
+- Functions that check system state must handle `set -e` properly to avoid early exit on expected failures
+
+### Handling errexit in Functions
+
+The script uses `set -euo pipefail` for safety, but some functions need to tolerate command failures:
+
+```bash
+get_available_managers() {
+  # Save and disable errexit for this function
+  local old_errexit
+  old_errexit=$(set +o | grep errexit)
+  set +e
+  
+  # Function body that may have failing commands
+  # e.g., checking if commands exist
+  
+  # Restore errexit before returning
+  eval "$old_errexit"
+  return 0
+}
+```
+
+This pattern is critical for:
+- Functions that check if commands exist (which return non-zero when not found)
+- Information gathering functions that shouldn't fail the entire script
+- Test compatibility where mocked commands might not exist
