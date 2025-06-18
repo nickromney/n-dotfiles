@@ -19,25 +19,18 @@ setup() {
   # Save the original type builtin
   # Note: We can't actually save builtins, but we can override them
   
-  # Override type BEFORE sourcing to ensure it's used
-  type() {
-    local cmd="$1"
-    # Redirect output to stderr like builtin type does
-    if [[ -x "$MOCK_BIN_DIR/$cmd" ]]; then
-      echo "$cmd is $MOCK_BIN_DIR/$cmd" >&2
-      return 0
-    else
-      # If not in mock dir, assume it doesn't exist
-      # This ensures our tests work regardless of what's installed on the system
-      return 1
-    fi
-  }
-  export -f type
-  
   # Source the install script functions only (not main)
   set +e  # Temporarily disable errexit
   source ./install.sh --source-only
   set -e  # Re-enable errexit
+  
+  # Override command_exists AFTER sourcing to ensure our version is used
+  command_exists() {
+    local cmd="$1"
+    # Only return true if command exists in our mock directory
+    [[ -x "$MOCK_BIN_DIR/$cmd" ]]
+  }
+  export -f command_exists
 }
 
 teardown() {
