@@ -17,17 +17,16 @@ command_exists() {
 }
 
 get_available_managers() {
-  # Save current errexit setting and disable it for this function
-  local old_errexit
-  old_errexit=$(set +o | grep errexit)
-  set +e
+  # Ensure we always return 0, even if the function is interrupted
+  trap 'return 0' ERR
   
   local -a available=()
   local -a unavailable=()
 
   # Get unique package managers from YAML
   local required_managers
-  required_managers=$(yq '.tools[].manager' "$YAML_FILE" | sort -u)
+  # Use || true to ensure the command doesn't cause an exit
+  required_managers=$(yq '.tools[].manager' "$YAML_FILE" 2>/dev/null | sort -u || true)
 
   while read -r manager; do
     case "$manager" in
@@ -86,11 +85,8 @@ get_available_managers() {
   # Export available managers for use in installation (to stdout)
   printf '%s\n' "${available[@]}"
   
-  # Restore errexit setting
-  eval "$old_errexit"
-  
   # Always return success - this is an information gathering function
-  return 0
+  return 0 || true
 }
 
 check_requirements() {

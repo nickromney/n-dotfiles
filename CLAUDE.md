@@ -148,6 +148,7 @@ get_available_managers() {
 ```
 
 This pattern is critical for:
+
 - Functions that check if commands exist (which return non-zero when not found)
 - Information gathering functions that shouldn't fail the entire script
 - Test compatibility where mocked commands might not exist

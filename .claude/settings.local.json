@@ -10,7 +10,8 @@
       "Bash(bats debug_single.bats:*)",
       "Bash(bats:*)",
       "Bash(grep:*)",
-      "Bash(./test/minimal_test.sh:*)"
+      "Bash(./test/minimal_test.sh:*)",
+      "Bash(./_test/run_tests.sh:*)"
     ],
     "deny": []
   }
