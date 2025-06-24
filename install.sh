@@ -11,6 +11,7 @@ DRY_RUN="${DRY_RUN:-false}"
 VERBOSE="${VERBOSE:-false}"
 STOW="${STOW:-false}"
 FORCE="${FORCE:-false}"
+UPDATE="${UPDATE:-false}"
 
 command_exists() {
   type "$1" >/dev/null 2>&1
@@ -300,6 +301,18 @@ main() {
     return 1
   fi
 
+  # Update package manager databases if in update mode
+  if [[ "$UPDATE" == "true" ]]; then
+    if command_exists brew; then
+      info "Updating brew package database..."
+      if [[ "$DRY_RUN" == "true" ]]; then
+        info "Would execute: brew update"
+      else
+        brew update
+      fi
+    fi
+  fi
+
   # Get available package managers
   AVAILABLE_MANAGERS=()
   while IFS= read -r manager; do
@@ -320,13 +333,157 @@ main() {
   if [[ -n "$tools" ]]; then
     while read -r tool; do
       if is_tool_installed "$tool"; then
-        info "✓ $tool is already installed"
-      elif can_install_tool "$tool"; then
-        info "Installing $tool..."
-        if install_tool "$tool"; then
-          info "✓ Successfully installed $tool"
+        if [[ "$UPDATE" == "true" ]]; then
+          manager=$(yq ".tools.${tool}.manager" "$YAML_FILE")
+          type=$(yq ".tools.${tool}.type" "$YAML_FILE")
+          
+          case "$manager" in
+          "brew")
+            case "$type" in
+            "package")
+              if [[ "$DRY_RUN" == "true" ]]; then
+                info "Would check: brew outdated $tool"
+              else
+                if brew outdated --quiet | grep -q "^$tool$"; then
+                  info "Updating $tool (brew package)..."
+                  brew upgrade "$tool"
+                  info "✓ Updated $tool (brew package)"
+                else
+                  info "✓ $tool (brew package) is already up to date"
+                fi
+              fi
+              ;;
+            "cask")
+              if [[ "$DRY_RUN" == "true" ]]; then
+                info "Would check: brew outdated --cask $tool"
+              else
+                if brew outdated --cask --quiet | grep -q "^$tool$"; then
+                  info "Updating $tool (brew cask)..."
+                  brew upgrade --cask "$tool"
+                  info "✓ Updated $tool (brew cask)"
+                else
+                  info "✓ $tool (brew cask) is already up to date"
+                fi
+              fi
+              ;;
+            "tap")
+              info "✓ $tool (brew tap) - taps don't need updating"
+              ;;
+            *)
+              info "✓ $tool (brew $type) is already installed"
+              ;;
+            esac
+            ;;
+          "cargo")
+            if [[ "$FORCE" == "true" ]]; then
+              if [[ "$DRY_RUN" == "true" ]]; then
+                info "Would execute: cargo install --force $tool"
+              else
+                info "Force updating $tool (cargo binary)..."
+                cargo install --force "$tool"
+                info "✓ Force updated $tool (cargo binary)"
+              fi
+            else
+              if [[ "$DRY_RUN" == "true" ]]; then
+                info "Would check: cargo install-update -l | grep $tool"
+              else
+                # Check if cargo-update is installed
+                if cargo install-update --version &>/dev/null; then
+                  if cargo install-update -l | grep -q "^$tool.*Yes$"; then
+                    info "Updating $tool (cargo binary)..."
+                    cargo install-update "$tool"
+                    info "✓ Updated $tool (cargo binary)"
+                  else
+                    info "✓ $tool (cargo binary) is already up to date"
+                  fi
+                else
+                  info "✓ $tool (cargo binary) is installed - install 'cargo-update' to check for updates"
+                  info "  Run: cargo install cargo-update"
+                fi
+              fi
+            fi
+            ;;
+          "uv")
+            if [[ "$FORCE" == "true" ]]; then
+              if [[ "$DRY_RUN" == "true" ]]; then
+                info "Would execute: uv tool install --force $tool"
+              else
+                info "Force updating $tool (uv tool)..."
+                uv tool install --force "$tool"
+                info "✓ Force updated $tool (uv tool)"
+              fi
+            else
+              if [[ "$DRY_RUN" == "true" ]]; then
+                info "Would check: uv tool install --upgrade $tool"
+              else
+                # Check if update is needed by capturing output
+                local uv_output
+                uv_output=$(uv tool install --upgrade "$tool" 2>&1)
+                if echo "$uv_output" | grep -q "Updated"; then
+                  info "Updated $tool (uv tool)"
+                  info "✓ Successfully updated $tool (uv tool)"
+                elif echo "$uv_output" | grep -q "up to date"; then
+                  info "✓ $tool (uv tool) is already up to date"
+                else
+                  # If neither message found, show what happened
+                  info "✓ $tool (uv tool) checked for updates"
+                fi
+              fi
+            fi
+            ;;
+          "arkade")
+            case "$type" in
+            "get")
+              if [[ "$FORCE" == "true" ]]; then
+                if [[ "$DRY_RUN" == "true" ]]; then
+                  info "Would execute: arkade get $tool"
+                else
+                  info "Force updating $tool (arkade get)..."
+                  arkade get "$tool"
+                  info "✓ Force updated $tool (arkade get)"
+                fi
+              else
+                info "✓ $tool (arkade get) - arkade always downloads latest on 'get'"
+              fi
+              ;;
+            *)
+              info "✓ $tool (arkade $type) is already installed - update not supported"
+              ;;
+            esac
+            ;;
+          *)
+            info "✓ $tool ($manager) is already installed - update not supported"
+            ;;
+          esac
         else
-          info "Failed to install $tool"
+          manager=$(yq ".tools.${tool}.manager" "$YAML_FILE")
+          type=$(yq ".tools.${tool}.type" "$YAML_FILE")
+          case "$manager" in
+          "brew")
+            info "✓ $tool (brew $type) is already installed"
+            ;;
+          "arkade")
+            info "✓ $tool (arkade $type) is already installed"
+            ;;
+          "cargo")
+            info "✓ $tool (cargo $type) is already installed"
+            ;;
+          "uv")
+            info "✓ $tool (uv $type) is already installed"
+            ;;
+          *)
+            info "✓ $tool ($manager $type) is already installed"
+            ;;
+          esac
+        fi
+      elif can_install_tool "$tool"; then
+        manager=$(yq ".tools.${tool}.manager" "$YAML_FILE")
+        type=$(yq ".tools.${tool}.type" "$YAML_FILE")
+        info "Installing $tool ($manager $type)..."
+        if install_tool "$tool"; then
+          info "✓ Successfully installed $tool ($manager $type)"
+        else
+          info "Failed to install $tool ($manager $type)"
         fi
       else
         manager=$(yq ".tools.${tool}.manager" "$YAML_FILE")
@@ -348,6 +505,7 @@ usage() {
   echo "  -v, --verbose       Show detailed information and status messages"
   echo "  -s, --stow          Run stow after installation"
   echo "  -f, --force         Force stow to adopt existing files"
+  echo "  -u, --update        Update already installed packages (brew only)"
   echo "  -h, --help          Show this help message"
   exit 1
 }
@@ -371,6 +529,10 @@ while [[ $# -gt 0 ]]; do
     ;;
   -f | --force)
     FORCE=true
+    shift
+    ;;
+  -u | --update)
+    UPDATE=true
     shift
     ;;
   -h | --help)
