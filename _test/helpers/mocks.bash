@@ -122,6 +122,7 @@ clear_mock_calls() {
 
 # Mock specific package managers
 mock_brew() {
+  # shellcheck disable=SC2016  # Single quotes prevent variable expansion in script
   mock_command_with_script "brew" '
 case "$1" in
   install)
@@ -151,6 +152,7 @@ esac
 }
 
 mock_apt_get() {
+  # shellcheck disable=SC2016  # Single quotes prevent variable expansion in script
   mock_command_with_script "apt-get" '
 case "$1" in
   update)
@@ -174,6 +176,7 @@ esac
 }
 
 mock_arkade() {
+  # shellcheck disable=SC2016  # Single quotes prevent variable expansion in script
   mock_command_with_script "arkade" '
 case "$1" in
   get)
@@ -204,6 +207,7 @@ esac
 }
 
 mock_cargo() {
+  # shellcheck disable=SC2016  # Single quotes prevent variable expansion in script
   mock_command_with_script "cargo" '
 case "$1" in
   install)
@@ -230,6 +234,7 @@ esac
 }
 
 mock_uv() {
+  # shellcheck disable=SC2016  # Single quotes prevent variable expansion in script
   mock_command_with_script "uv" '
 case "$1" in
   tool)
@@ -250,6 +255,7 @@ esac
 }
 
 mock_stow() {
+  # shellcheck disable=SC2016  # Single quotes prevent variable expansion in script
   mock_command_with_script "stow" '
 # Parse options
 while [[ "$1" =~ ^- ]]; do
@@ -299,6 +305,7 @@ exit 0
 
 # Mock yq with test data
 mock_yq() {
+  # shellcheck disable=SC2034  # tools_yaml reserved for future use
   local tools_yaml="${1:-$BATS_TEST_DIRNAME/fixtures/tools.yaml}"
   
   mock_command_with_script "yq" "
@@ -562,6 +569,7 @@ esac
 mock_id() {
   local uid="${1:-1000}"
   mock_command_with_script "id" "
+# shellcheck disable=SC2016  # Single quotes prevent variable expansion
 case \"\$1\" in
   -u)
     echo \"$uid\"
@@ -577,22 +585,33 @@ esac
 
 # Mock command_exists function
 mock_command_exists() {
-  local commands="$@"
+  local commands=("$@")
+  
+  # Build case patterns
+  local case_patterns=""
+  for cmd in "${commands[@]}"; do
+    if [[ -z "$case_patterns" ]]; then
+      case_patterns="$cmd"
+    else
+      case_patterns="$case_patterns|$cmd"
+    fi
+  done
   
   # Override the command_exists function
-  eval 'command_exists() {
-    local cmd="$1"
-    case "$cmd" in
-      '"$commands"') return 0 ;;
+  # shellcheck disable=SC2016  # Single quotes prevent variable expansion
+  eval "command_exists() {
+    local cmd=\"\$1\"
+    case \"\$cmd\" in
+      $case_patterns) return 0 ;;
       *) return 1 ;;
     esac
-  }'
+  }"
 }
 
 # Cleanup function
 teardown_mocks() {
   # Remove mock binaries from PATH
-  export PATH="${PATH#$MOCK_BIN_DIR:}"
+  export PATH="${PATH#"$MOCK_BIN_DIR:"}"
   
   # Clean up temporary directories
   rm -rf "$MOCK_BIN_DIR" "$MOCK_OUTPUT_DIR" "$MOCK_CALLS_DIR"

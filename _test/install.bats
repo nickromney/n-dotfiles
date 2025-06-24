@@ -21,6 +21,7 @@ setup() {
   
   # Source the install script functions only (not main)
   set +e  # Temporarily disable errexit
+  # shellcheck source=/dev/null
   source ./install.sh --source-only
   set -e  # Re-enable errexit
 }
@@ -53,6 +54,7 @@ teardown() {
 
 @test "check_requirements fails when yq is missing" {
   # Override command_exists to simulate yq missing
+  # shellcheck disable=SC2317  # Function is used when exported
   command_exists() {
     [[ "$1" == "which" ]] && return 0
     return 1
@@ -66,6 +68,7 @@ teardown() {
 
 @test "check_requirements fails when which is missing" {
   # Override command_exists to simulate which missing
+  # shellcheck disable=SC2317  # Function is used when exported
   command_exists() {
     [[ "$1" == "yq" ]] && return 0
     return 1
@@ -112,7 +115,7 @@ EOF
   if command_exists brew; then
     [[ "$output" =~ "Available package managers: brew" ]]
   else
-    [[ "$output" =~ "brew: please install from https://brew.sh" ]]
+    [[ "$output" =~ brew:\ please\ install\ from\ https://brew.sh ]]
   fi
 }
 
@@ -297,6 +300,7 @@ EOF
 
 @test "can_install_tool returns failure when manager is not available" {
   mock_yq
+  # shellcheck disable=SC2034  # Used by can_install_tool function
   AVAILABLE_MANAGERS=("arkade")
   
   run can_install_tool "tool1"
@@ -403,6 +407,7 @@ EOF
 @test "install_tool respects dry run mode" {
   mock_yq
   mock_brew
+  # shellcheck disable=SC2030  # DRY_RUN modification is intentional in test
   export DRY_RUN="true"
   
   run install_tool "jq"
@@ -414,6 +419,7 @@ EOF
 # Tests for run_stow function
 @test "run_stow fails when stow is not installed" {
   # Override command_exists to simulate stow not installed
+  # shellcheck disable=SC2317  # Function is used when exported
   command_exists() {
     return 1
   }
@@ -438,6 +444,7 @@ EOF
 
 @test "run_stow respects dry run mode" {
   mock_stow
+  # shellcheck disable=SC2030,SC2031  # DRY_RUN modification is intentional in test
   export DRY_RUN="true"
   
   mkdir -p "$BATS_TEST_DIRNAME/../zsh"
@@ -593,7 +600,7 @@ esac
   
   run main
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "tool1 is already installed" ]]
+  [[ "$output" =~ "tool1 (brew package) is already installed" ]]
   assert_mock_not_called "brew"
 }
 
