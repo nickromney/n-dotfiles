@@ -11,8 +11,8 @@ system:
 dock:
   # Dock size (empty string = default size)
   size: ""  
-  # Position (empty string = default position)
-  position: ""  
+  # Position (empty string = bottom, "left" = left, "right" = right)
+  position: "left"  
   # Auto-hide dock (currently visible)
   auto_hide: false
   # Don't show recent applications
@@ -66,7 +66,12 @@ trackpad:
 
 mouse:
   # Natural scrolling disabled for mouse (0 = traditional, 1 = natural)
-  # Note: This is separate from trackpad scrolling
+  # NOTE: macOS does NOT support separate scroll directions for mouse and trackpad
+  # This setting will affect BOTH mouse and trackpad despite separate UI checkboxes
+  # For independent control, consider third-party tools like:
+  # - Scroll Reverser (free): https://pilotmoon.com/scrollreverser/
+  # - Mos (free): https://mos.caldis.me/
+  # - BetterMouse (paid): https://better-mouse.com/
   natural_scrolling: false
 
 mission_control:
