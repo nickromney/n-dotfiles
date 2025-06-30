@@ -23,12 +23,20 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 echo -e "${YELLOW}Running BATS tests...${NC}"
 echo
 
-if bats install.bats; then
+# Run all .bats files
+all_passed=true
+for test_file in *.bats; do
+    echo -e "${YELLOW}Running $test_file...${NC}"
+    if ! bats "$test_file"; then
+        all_passed=false
+    fi
     echo
+done
+
+if [ "$all_passed" = true ]; then
     echo -e "${GREEN}All tests passed!${NC}"
     exit 0
 else
-    echo
     echo -e "${RED}Some tests failed!${NC}"
     exit 1
 fi

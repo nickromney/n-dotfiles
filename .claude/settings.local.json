@@ -11,7 +11,17 @@
       "Bash(bats:*)",
       "Bash(grep:*)",
       "Bash(./test/minimal_test.sh:*)",
-      "Bash(./_test/run_tests.sh:*)"
+      "Bash(./_test/run_tests.sh:*)",
+      "Bash(chmod:*)",
+      "Bash(./macos.sh)",
+      "Bash(./macos.sh:*)",
+      "Bash(/Users/nickromney/Developer/personal/n-dotfiles/_test/debug_test.sh:*)",
+      "Bash(rm:*)",
+      "Bash(./run_tests.sh)",
+      "Bash(defaults read:*)",
+      "Bash(/Users/nickromney/Developer/personal/n-dotfiles/check_all_settings.sh:*)",
+      "Bash(/Users/nickromney/Developer/personal/n-dotfiles/debug_defaults.sh:*)",
+      "Bash(shellcheck:*)"
     ],
     "deny": []
   }

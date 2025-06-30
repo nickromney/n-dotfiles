@@ -45,6 +45,8 @@ cd ~/.dotfiles
 
 ## Usage
 
+### Package Installation and Configuration
+
 ```bash
 # Install packages only
 ./install.sh
@@ -57,7 +59,27 @@ cd ~/.dotfiles
 
 # Force stow to adopt existing files
 ./install.sh -s -f
+
+# Update installed packages
+./install.sh -u
 ```
+
+### macOS System Configuration
+
+Light-touch macOS configuration management:
+
+```bash
+# Show current system settings
+./macos.sh
+
+# Apply personal configuration
+./macos.sh _macos/personal.yaml
+
+# Dry run to preview changes
+./macos.sh -d _macos/personal.yaml
+```
+
+See [_macos/README.md](_macos/README.md) for detailed macOS configuration options.
 
 ## Configuration
 
@@ -132,10 +154,16 @@ install_args: Additional installation arguments (optional)
 
 ```shell
 .
-├── install.sh    # Package installation and configuration management
+├── install.sh   # Package installation and configuration management
+├── macos.sh     # macOS system configuration script
 ├── tools.yaml   # Package definitions
+├── _macos/      # macOS configuration files
+│   ├── personal.yaml     # Personal Mac settings
+│   ├── work-example.yaml # Example work settings
+│   └── README.md         # macOS configuration documentation
 ├── _test/       # BATS test suite
-│   ├── install.bats      # Main test file
+│   ├── install.bats      # Package installation tests
+│   ├── macos.bats        # macOS configuration tests
 │   ├── helpers/mocks.bash # Mock framework
 │   └── run_tests.sh      # Test runner script
 └── */           # Tool configurations, where each directory represents a stow target
@@ -162,8 +190,9 @@ The test suite includes:
 - Unit tests for all utility functions
 - Integration tests for package manager detection
 - Installation tests for each package manager type
+- macOS configuration tests with defaults mocking
 - Mocking framework to simulate external commands
-- 39 comprehensive tests covering all major functionality
+- 65+ comprehensive tests covering all major functionality
 
 ### Handling `errexit` in Shell Scripts
 
