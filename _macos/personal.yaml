@@ -1,0 +1,100 @@
+# Personal macOS configuration
+# Documents the exact current system state (December 2024)
+# Use this to reproduce your preferred setup on other machines
+
+system:
+  # Show hidden files in Finder (currently NO)
+  show_hidden_files: false
+  # Show file extensions (currently 0)
+  show_all_extensions: false
+
+dock:
+  # Dock size (empty string = default size)
+  size: ""  
+  # Position (empty string = default position)
+  position: ""  
+  # Auto-hide dock (currently visible)
+  auto_hide: false
+  # Don't show recent applications
+  show_recents: false
+  # Minimize effect (empty string = default)
+  minimize_effect: ""
+  # Magnification not currently set
+  # magnification: false
+  # Magnification size when hovering
+  magnification_size: 128
+  # Don't animate opening apps
+  animate_opening: false
+  # Show indicators for open apps
+  show_indicators: true
+  # Minimize to application icon
+  minimize_to_app: true
+
+finder:
+  # Default view (currently empty string)
+  default_view: ""
+  # Show path bar at bottom (currently 0)
+  show_path_bar: false
+  # Show status bar (currently 0)
+  show_status_bar: false
+  # Keep folders on top when sorting (currently 0)
+  folders_on_top: false
+  # Double-click title bar to maximize
+  double_click_title_bar: Maximize
+
+windows:
+  # Always prefer tabs when opening documents
+  prefer_tabs: always
+  # Don't ask to keep changes when closing
+  ask_to_keep_changes: false
+  # Close windows when quitting (not currently set)
+  # close_windows_on_quit: true
+
+keyboard:
+  # Key repeat rate (currently empty string)
+  key_repeat: ""
+  # Initial key repeat delay (currently empty string)
+  initial_key_repeat: ""
+
+trackpad:
+  # Tap to click disabled
+  tap_to_click: false
+  # Natural scrolling disabled
+  natural_scrolling: false
+  # Tracking speed not set in defaults
+  # tracking_speed: 2.5
+
+mouse:
+  # Natural scrolling disabled for mouse (0 = traditional, 1 = natural)
+  # Note: This is separate from trackpad scrolling
+  natural_scrolling: false
+
+mission_control:
+  # Don't automatically rearrange Spaces
+  auto_rearrange_spaces: false
+  # Don't switch to Space with app windows
+  switch_to_space_with_windows: false
+  # Group windows by application (expose-group-by-app is 1)
+  group_by_app: true
+  # Displays don't have separate Spaces
+  displays_have_separate_spaces: false
+
+stage_manager:
+  # Stage Manager is disabled
+  enabled: false
+  # Don't show recent apps strip
+  show_recent_apps: false
+  # Click wallpaper to reveal desktop only in Stage Manager
+  click_wallpaper_to_reveal: "Only in Stage Manager"
+
+# Screenshots configuration (if you want to set these)
+# screenshots:
+#   location: "~/Pictures/Screenshots"
+#   format: png
+#   include_date: true
+#   show_thumbnail: true
+
+# Developer settings (if you want to enable these)
+# developer:
+#   show_path_in_title: true
+#   safari_developer_menu: true
