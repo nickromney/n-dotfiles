@@ -198,7 +198,23 @@ apply_config() {
 
   if [[ "$DRY_RUN" == "false" ]]; then
     info ""
-    success "Configuration applied. Some changes may require logout or restart."
+    info "Restarting affected services..."
+    
+    # Restart Dock for dock-related changes
+    killall Dock 2>/dev/null || true
+    
+    # Restart SystemUIServer for menu bar changes
+    killall SystemUIServer 2>/dev/null || true
+    
+    # Restart Finder for Finder-related changes
+    killall Finder 2>/dev/null || true
+    
+    # Activate settings using private framework (needed for scroll direction changes)
+    if [[ -x "/System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings" ]]; then
+      /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u 2>/dev/null || true
+    fi
+    
+    success "Configuration applied. Some changes may still require logout or restart."
   fi
 }
 
@@ -435,15 +451,28 @@ apply_mouse_settings() {
     echo "Mouse Settings:"
 
     # Natural scrolling for mouse
+    # NOTE: macOS links mouse and trackpad scroll direction - they cannot be set independently
     local natural_scrolling
     natural_scrolling=$(yq ".$section.natural_scrolling" "$config_file")
     if [[ "$natural_scrolling" != "null" ]]; then
       local value
       value=$([[ "$natural_scrolling" == "true" ]] && echo "1" || echo "0")
+      
+      # Set all possible mouse scroll settings to ensure consistency
+      # Global scroll direction (primary setting)
+      apply_default "Scroll direction (global)" "NSGlobalDomain" "com.apple.swipescrolldirection" "$value"
+      
       # Apple Magic Mouse
       apply_default "Mouse natural scrolling (Magic Mouse)" "com.apple.AppleMultitouchMouse" "MouseVerticalScroll" "$value"
+      
       # Bluetooth mice
       apply_default "Mouse natural scrolling (Bluetooth)" "com.apple.driver.AppleBluetoothMultitouch.mouse" "MouseVerticalScroll" "$value"
+      
+      # HID/Generic mice (same logic as others: 0=natural OFF, 1=natural ON)
+      apply_default "Mouse natural scrolling (HID/Generic)" "com.apple.driver.AppleHIDMouse" "ScrollV" "$value"
+      
+      info "NOTE: macOS links mouse and trackpad scroll directions"
+      info "Settings will be activated using SystemAdministration framework"
     fi
   fi
 }

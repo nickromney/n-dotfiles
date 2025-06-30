@@ -20,6 +20,9 @@ setup() {
   mock_command "id" 0 "501"
   mock_command "whoami" 0 "testuser"
   
+  # Mock killall to prevent actual service restarts during tests
+  mock_command "killall" 0 ""
+  
   # Create mock /etc/shells
   mkdir -p "$TEST_TEMP_DIR/etc"
   cat > "$TEST_TEMP_DIR/etc/shells" << EOF
@@ -808,4 +811,53 @@ esac
   [[ "$output" =~ "size" ]]
   [[ "$output" =~ "auto_hide" ]]
   [[ ! "$output" =~ "ERROR" ]]
+}
+
+@test "mouse settings are applied correctly" {
+  # Create custom defaults mock that tracks writes
+  setup_mock defaults '#!/bin/bash
+case "$1" in
+  read)
+    if [[ "$3" == "com.apple.swipescrolldirection" ]]; then
+      echo "1"
+    elif [[ "$3" == "MouseVerticalScroll" ]]; then
+      echo "1"
+    elif [[ "$3" == "ScrollV" ]]; then
+      echo "1"
+    fi
+    ;;
+  write)
+    echo "$@" >> "$SETTINGS_FILE"
+    ;;
+esac'
+  
+  # Create yq mock for mouse settings
+  setup_mock yq '#!/bin/bash
+case "$1" in
+  ".mouse")
+    echo "natural_scrolling: false"
+    ;;
+  ".mouse.natural_scrolling")
+    echo "false"
+    ;;
+  *)
+    echo "null"
+    ;;
+esac'
+  
+  # Create test config
+  cat > "$TEST_TEMP_DIR/test.yaml" << 'EOF'
+mouse:
+  natural_scrolling: false
+EOF
+  
+  run "$MACOS_SCRIPT" "$TEST_TEMP_DIR/test.yaml"
+  [ "$status" -eq 0 ]
+  
+  # Check that all mouse settings were applied
+  run cat "$SETTINGS_FILE"
+  [[ "$output" =~ "NSGlobalDomain com.apple.swipescrolldirection 0" ]]
+  [[ "$output" =~ "com.apple.AppleMultitouchMouse MouseVerticalScroll 0" ]]
+  [[ "$output" =~ "com.apple.driver.AppleBluetoothMultitouch.mouse MouseVerticalScroll 0" ]]
+  [[ "$output" =~ "com.apple.driver.AppleHIDMouse ScrollV 0" ]]
 }
