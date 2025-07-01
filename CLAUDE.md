@@ -83,15 +83,22 @@ This is a personal dotfiles repository designed for cross-platform configuration
 
 ### Running Tests
 
-The repository includes a comprehensive BATS test suite for `install.sh`:
+The repository includes comprehensive BATS test suites:
 
 ```bash
-# Run all tests
+# Run all tests (macOS only)
 ./_test/run_tests.sh
+
+# Run install tests only (cross-platform)
+./_test/run_install_tests.sh
 
 # Run specific tests
 cd _test && bats install.bats --filter "command_exists"
 ```
+
+**Platform-specific testing:**
+- **Ubuntu/Linux**: Only runs `install.bats` (cross-platform installation tests)
+- **macOS**: Runs both `install.bats` and `macos.bats`
 
 The test suite uses mocking to simulate all external commands (brew, apt, cargo, etc.) without requiring actual installations.
 

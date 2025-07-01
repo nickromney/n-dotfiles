@@ -25,7 +25,8 @@
       "Bash(defaults find MouseVerticalScroll 2 > /dev/null)",
       "Bash(defaults find \"scroll\" 2 > /dev/null)",
       "Bash(system_profiler:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(./test_platform_skip.sh:*)"
     ],
     "deny": []
   }

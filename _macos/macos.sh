@@ -816,9 +816,6 @@ apply_display_settings() {
   if ! yq ".$section" "$config_file" | grep -q '^null$'; then
     echo "Display Settings:"
     
-    # Get current displays
-    local current_displays
-    current_displays=$(system_profiler SPDisplaysDataType 2>/dev/null | grep -E "^        [A-Za-z].*:" | sed 's/://g' | sed 's/^        //')
     
     # Check if we have any external displays
     local has_external=false

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2016  # Mock scripts intentionally use single quotes
 # Test helper functions for mocking commands
 
 # Directory to store mock commands
@@ -122,7 +123,6 @@ clear_mock_calls() {
 
 # Mock specific package managers
 mock_brew() {
-  # shellcheck disable=SC2016  # Single quotes prevent variable expansion in script
   mock_command_with_script "brew" '
 case "$1" in
   install)
@@ -152,7 +152,6 @@ esac
 }
 
 mock_apt_get() {
-  # shellcheck disable=SC2016  # Single quotes prevent variable expansion in script
   mock_command_with_script "apt-get" '
 case "$1" in
   update)
@@ -176,7 +175,6 @@ esac
 }
 
 mock_arkade() {
-  # shellcheck disable=SC2016  # Single quotes prevent variable expansion in script
   mock_command_with_script "arkade" '
 case "$1" in
   get)
@@ -207,7 +205,6 @@ esac
 }
 
 mock_cargo() {
-  # shellcheck disable=SC2016  # Single quotes prevent variable expansion in script
   mock_command_with_script "cargo" '
 case "$1" in
   install)
@@ -234,7 +231,6 @@ esac
 }
 
 mock_uv() {
-  # shellcheck disable=SC2016  # Single quotes prevent variable expansion in script
   mock_command_with_script "uv" '
 case "$1" in
   tool)
@@ -255,7 +251,6 @@ esac
 }
 
 mock_stow() {
-  # shellcheck disable=SC2016  # Single quotes prevent variable expansion in script
   mock_command_with_script "stow" '
 # Parse options
 while [[ "$1" =~ ^- ]]; do
@@ -569,7 +564,6 @@ esac
 mock_id() {
   local uid="${1:-1000}"
   mock_command_with_script "id" "
-# shellcheck disable=SC2016  # Single quotes prevent variable expansion
 case \"\$1\" in
   -u)
     echo \"$uid\"
@@ -598,7 +592,6 @@ mock_command_exists() {
   done
   
   # Override the command_exists function
-  # shellcheck disable=SC2016  # Single quotes prevent variable expansion
   eval "command_exists() {
     local cmd=\"\$1\"
     case \"\$cmd\" in

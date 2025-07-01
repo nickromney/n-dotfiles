@@ -600,7 +600,7 @@ esac
   
   run main
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "tool1 (brew package) is already installed" ]]
+  [[ "$output" =~ tool1\ \(brew\ package\)\ is\ already\ installed ]]
   assert_mock_not_called "brew"
 }
 
