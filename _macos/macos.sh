@@ -373,6 +373,10 @@ apply_dock_settings() {
     if [[ "$manage_apps" == "true" ]]; then
       warning "Dock application management is enabled"
       
+      # Get current dock apps to check for duplicates
+      local current_dock_apps
+      current_dock_apps=$(defaults read com.apple.dock persistent-apps 2>/dev/null | grep -o '"_CFURLString" = "[^"]*"' | sed 's/"_CFURLString" = "//; s/"$//; s|^file://||; s|/$||' | python3 -c "import sys, urllib.parse; [print(urllib.parse.unquote(line.strip())) for line in sys.stdin]" || echo "")
+      
       # Check if we should clear dock first
       local clear_first
       clear_first=$(yq ".$section.clear_dock_first" "$config_file")
@@ -381,6 +385,7 @@ apply_dock_settings() {
           info "Clearing dock..."
           defaults write com.apple.dock persistent-apps -array
           success "Dock cleared"
+          current_dock_apps=""  # Reset since we cleared
         else
           warning "[DRY RUN] Would clear all dock applications"
         fi
@@ -390,22 +395,36 @@ apply_dock_settings() {
       local apps_count
       apps_count=$(yq ".$section.apps | length" "$config_file")
       if [[ "$apps_count" -gt 0 ]]; then
-        info "Adding $apps_count applications to dock..."
+        info "Processing $apps_count applications for dock..."
+        local added_count=0
+        local skipped_count=0
+        
         for ((i=0; i<apps_count; i++)); do
           local app_path
           app_path=$(yq ".$section.apps[$i]" "$config_file")
           if [[ -e "$app_path" ]]; then
-            if [[ "$DRY_RUN" == "false" ]]; then
-              defaults write com.apple.dock persistent-apps -array-add \
-                "<dict><key>tile-data</key><dict><key>file-data</key><dict><key>_CFURLString</key><string>$app_path</string><key>_CFURLStringType</key><integer>0</integer></dict></dict></dict>"
-              success "Added to dock: $app_path"
+            # Check if app is already in dock
+            if echo "$current_dock_apps" | grep -qF "$app_path"; then
+              info "Already in dock: $app_path"
+              ((skipped_count++)) || true
             else
-              info "[DRY RUN] Would add to dock: $app_path"
+              if [[ "$DRY_RUN" == "false" ]]; then
+                defaults write com.apple.dock persistent-apps -array-add \
+                  "<dict><key>tile-data</key><dict><key>file-data</key><dict><key>_CFURLString</key><string>$app_path</string><key>_CFURLStringType</key><integer>0</integer></dict></dict></dict>"
+                success "Added to dock: $app_path"
+                ((added_count++)) || true
+              else
+                info "[DRY RUN] Would add to dock: $app_path"
+              fi
             fi
           else
             warning "App not found: $app_path"
           fi
         done
+        
+        if [[ "$DRY_RUN" == "false" ]]; then
+          info "Summary: Added $added_count apps, skipped $skipped_count already present"
+        fi
       fi
     fi
   fi
@@ -543,8 +562,6 @@ apply_mouse_settings() {
       # HID/Generic mice (same logic as others: 0=natural OFF, 1=natural ON)
       apply_default "Mouse natural scrolling (HID/Generic)" "com.apple.driver.AppleHIDMouse" "ScrollV" "$value"
       
-      info "NOTE: macOS links mouse and trackpad scroll directions"
-      info "Settings will be activated using SystemAdministration framework"
     fi
   fi
 }
@@ -844,9 +861,6 @@ apply_display_settings() {
       fi
     fi
     
-    # Note about main display selection
-    info "NOTE: macOS main display selection requires System Settings UI interaction"
-    info "Current displays: $(echo "$current_displays" | tr '\n' ', ' | sed 's/, $//')"
   fi
 }
 
@@ -947,6 +961,15 @@ while [[ $# -gt 0 ]]; do
   *.yaml | *.yml)
     MODE="apply"
     CONFIG_FILE="$1"
+    
+    # If file doesn't exist as given, check in script's directory
+    if [[ ! -f "$CONFIG_FILE" ]]; then
+      SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+      if [[ -f "$SCRIPT_DIR/$CONFIG_FILE" ]]; then
+        CONFIG_FILE="$SCRIPT_DIR/$CONFIG_FILE"
+      fi
+    fi
+    
     shift
     ;;
   *)

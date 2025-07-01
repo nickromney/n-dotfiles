@@ -38,6 +38,8 @@ dock:
   manage_apps: true
   clear_dock_first: false # Set to true to start with empty dock
   # Apps are only added if they exist - missing apps are skipped with a warning
+  # NOTE: Finder is always in the dock by default - don't add it here
+  #       Safari is in /Applications/Safari.app if you want to add it
   apps:
     # Terminal (T workspace)
     - "/Applications/Ghostty.app"
@@ -64,7 +66,6 @@ dock:
     # Office (O workspace)
 
     # Utilities (U workspace)
-    - "/Applications/Finder.app"
 
 finder:
   # Default view (currently empty string)
