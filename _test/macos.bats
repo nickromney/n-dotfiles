@@ -6,26 +6,26 @@ load helpers/mocks.bash
 setup() {
   # Initialize mocking framework
   setup_mocks
-  
+
   # Set up test environment
   local temp_dir
   temp_dir="$(mktemp -d)"
   export TEST_TEMP_DIR="$temp_dir"
   export PATH="$MOCK_BIN_DIR:$PATH"
-  
+
   # Path to the script we're testing
   export MACOS_SCRIPT="$BATS_TEST_DIRNAME/../_macos/macos.sh"
-  
+
   # Mock common commands
   mock_command "sw_vers" 0 "macOS 14.0"
   mock_command "sysctl" 0 "MacBookPro18,1"
   mock_command "uname" 0 "arm64"
   mock_command "id" 0 "501"
   mock_command "whoami" 0 "testuser"
-  
+
   # Mock killall to prevent actual service restarts during tests
   mock_command "killall" 0 ""
-  
+
   # Create mock /etc/shells
   mkdir -p "$TEST_TEMP_DIR/etc"
   cat > "$TEST_TEMP_DIR/etc/shells" << EOF
@@ -69,11 +69,11 @@ esac
 '
   mock_command "find" 0 ""
   mock_command "defaults" 0 "0"
-  
+
   # Mock file existence checks
   mock_command "test" 0
   mock_command "[" 0
-  
+
   run "$MACOS_SCRIPT"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "System Information" ]]
@@ -91,7 +91,7 @@ esac
 '
   mock_command "find" 0 ""
   mock_command "defaults" 0 "0"
-  
+
   run "$MACOS_SCRIPT"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "Running on Apple Silicon" ]]
@@ -107,7 +107,7 @@ esac
 '
   mock_command "find" 0 ""
   mock_command "defaults" 0 "0"
-  
+
   run "$MACOS_SCRIPT"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "Running on Intel" ]]
@@ -129,7 +129,6 @@ esac
 /bin/sh
 /bin/tcsh
 /bin/zsh
-/opt/homebrew/bin/bash
 EOF
 
   # Mock [[ -f /etc/shells ]] by overriding the test builtin
@@ -141,7 +140,7 @@ EOF
     builtin test "$@"
   }
   export -f test
-  
+
   # Mock [[ -f ]] by overriding the [[ builtin behavior
   # We'll use a sed replacement approach instead
   cat > "$TEST_TEMP_DIR/macos_test.sh" << 'EOF'
@@ -152,8 +151,8 @@ SCRIPT_CONTENT="${SCRIPT_CONTENT//\/etc\/shells/$TEST_TEMP_DIR/etc/shells}"
 eval "$SCRIPT_CONTENT"
 EOF
   chmod +x "$TEST_TEMP_DIR/macos_test.sh"
-  
-  # Mock other required commands  
+
+  # Mock other required commands
   mock_command_with_script "sw_vers" '
 case "$1" in
   -productVersion) echo "14.0" ;;
@@ -162,11 +161,11 @@ esac
 '
   mock_command "find" 0 ""
   mock_command "defaults" 0 "0"
-  
+
   # Export our variables so the eval'd script can see them
   export TEST_TEMP_DIR
   export MACOS_SCRIPT
-  
+
   run "$TEST_TEMP_DIR/macos_test.sh"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "Available Shells:" ]]
@@ -178,7 +177,7 @@ esac
 @test "detects Homebrew bash on Apple Silicon" {
   # We need to mock the file existence check for /opt/homebrew/bin/bash
   # The script uses [[ -f "/opt/homebrew/bin/bash" ]]
-  
+
   # Create a mock script that modifies the file check
   cat > "$TEST_TEMP_DIR/macos_homebrew.sh" << 'EOF'
 #!/usr/bin/env bash
@@ -192,7 +191,7 @@ SCRIPT_CONTENT="${SCRIPT_CONTENT//\[\[ -f \"\/usr\/local\/bin\/bash\" \]\]/false
 eval "$SCRIPT_CONTENT"
 EOF
   chmod +x "$TEST_TEMP_DIR/macos_homebrew.sh"
-  
+
   # Mock other required commands
   mock_command_with_script "sw_vers" '
 case "$1" in
@@ -202,11 +201,11 @@ esac
 '
   mock_command "find" 0 ""
   mock_command "defaults" 0 "0"
-  
+
   # Export our variables
   export TEST_TEMP_DIR
   export MACOS_SCRIPT
-  
+
   run "$TEST_TEMP_DIR/macos_homebrew.sh"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "Homebrew bash found at /opt/homebrew/bin/bash" ]]
@@ -225,7 +224,7 @@ esac
 '
   mock_command "find" 0 ""
   mock_command "defaults" 0 "0"
-  
+
   # Mock brew list commands
   mock_command_with_script "brew" '
 case "$*" in
@@ -235,7 +234,7 @@ case "$*" in
   *) exit 1 ;;
 esac
 '
-  
+
   run "$MACOS_SCRIPT"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "Homebrew is installed" ]]
@@ -254,7 +253,7 @@ esac
   mock_command "defaults" 0 "0"
   mock_command "test" 0
   mock_command "[" 0
-  
+
   # Override command -v to simulate brew not found
   function command() {
     if [[ "$1" == "-v" ]] && [[ "$2" == "brew" ]]; then
@@ -264,7 +263,7 @@ esac
     fi
   }
   export -f command
-  
+
   run "$MACOS_SCRIPT"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "Homebrew is not installed" ]]
@@ -296,25 +295,25 @@ esac
   mock_command "defaults" 0 "0"
   mock_command "test" 0
   mock_command "[" 0
-  
+
   run "$MACOS_SCRIPT" -d
   [ "$status" -eq 0 ]  # Should succeed in show mode
-  
+
   # Try to apply without file
   ORIGINAL_PATH="$PATH"
   PATH="$MOCK_BIN_DIR:$ORIGINAL_PATH"
-  
+
   # Create a wrapper script that will apply a non-existent config
   cat > "$TEST_TEMP_DIR/test_apply.sh" << 'EOF'
 #!/usr/bin/env bash
 exec "$MACOS_SCRIPT" nonexistent.yaml
 EOF
   chmod +x "$TEST_TEMP_DIR/test_apply.sh"
-  
+
   run "$TEST_TEMP_DIR/test_apply.sh"
   [ "$status" -eq 1 ]
   [[ "$output" =~ "Configuration file not found" ]]
-  
+
   PATH="$ORIGINAL_PATH"
 }
 
@@ -326,7 +325,7 @@ EOF
 system:
   show_hidden_files: true
 EOF
-  
+
   # Mock yq with a proper script
   cat > "$MOCK_BIN_DIR/yq" << 'EOF'
 #!/usr/bin/env bash
@@ -342,7 +341,7 @@ case "$*" in
 esac
 EOF
   chmod +x "$MOCK_BIN_DIR/yq"
-  
+
   # Mock defaults to handle reads and writes
   mock_command_with_script "defaults" '
 case "$*" in
@@ -351,12 +350,12 @@ case "$*" in
   *) exit 0 ;;
 esac
 '
-  
+
   # Run from a different directory with just the filename
   cd "$TEST_TEMP_DIR"
   run "$MACOS_SCRIPT" test-config.yaml
   [ "$status" -eq 0 ]
-  
+
   # Clean up
   rm -f "$script_dir/test-config.yaml"
 }
@@ -377,7 +376,7 @@ case "$*" in
   *) echo "null" ;;
 esac
 '
-  
+
   # Mock defaults
   mock_command_with_script "defaults" '
 case "$*" in
@@ -386,7 +385,7 @@ case "$*" in
   *) exit 1 ;;
 esac
 '
-  
+
   run "$MACOS_SCRIPT" "$TEST_TEMP_DIR/test.yaml"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "Applying Configuration: $TEST_TEMP_DIR/test.yaml" ]]
@@ -410,7 +409,7 @@ EOF
     fi
   }
   export -f command
-  
+
   run "$MACOS_SCRIPT" "$TEST_TEMP_DIR/test.yaml"
   [ "$status" -eq 1 ]
   [[ "$output" =~ "yq is required" ]]
@@ -435,7 +434,7 @@ case "$1" in
 esac
 '
   mock_command "find" 0 ""
-  
+
   run "$MACOS_SCRIPT"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "Size: 48" ]]
@@ -454,7 +453,7 @@ esac
 '
   mock_command "find" 0 ""
   mock_command "defaults" 0 "0"
-  
+
   run "$MACOS_SCRIPT" --dry-run
   [ "$status" -eq 0 ]
   # In show mode, dry-run doesn't change output, but should be accepted
@@ -487,7 +486,7 @@ EOF
     fi
   }
   export -f command
-  
+
   run "$MACOS_SCRIPT" "$TEST_TEMP_DIR/test.yaml"
   [ "$status" -eq 1 ]
   [[ "$output" =~ "yq is required to parse YAML configuration files" ]]
@@ -533,7 +532,7 @@ case "$*" in
   *) echo "null" ;;
 esac
 '
-  
+
   # Mock defaults to return different current values
   mock_command_with_script "defaults" '
 case "$*" in
@@ -543,7 +542,7 @@ case "$*" in
   *) exit 1 ;;
 esac
 '
-  
+
   run "$MACOS_SCRIPT" "$TEST_TEMP_DIR/test.yaml"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "System Settings:" ]]
@@ -575,7 +574,7 @@ case "$*" in
   *) echo "null" ;;
 esac
 '
-  
+
   # Mock defaults to return the same value as we're trying to set
   mock_command_with_script "defaults" '
 case "$*" in
@@ -584,7 +583,7 @@ case "$*" in
   *) exit 1 ;;
 esac
 '
-  
+
   run "$MACOS_SCRIPT" "$TEST_TEMP_DIR/test.yaml"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "Dock size: already set to 48" ]]
@@ -607,7 +606,7 @@ case "$*" in
   *) echo "null" ;;
 esac
 '
-  
+
   # Mock defaults - current value is different
   mock_command_with_script "defaults" '
 case "$*" in
@@ -616,7 +615,7 @@ case "$*" in
   *) exit 1 ;;
 esac
 '
-  
+
   run "$MACOS_SCRIPT" "$TEST_TEMP_DIR/test.yaml"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "Dock size: changed from '64' to '48'" ]]
@@ -638,7 +637,7 @@ case "$*" in
   *) echo "null" ;;
 esac
 '
-  
+
   # Mock defaults - read fails (not set), write succeeds
   mock_command_with_script "defaults" '
 case "$*" in
@@ -647,7 +646,7 @@ case "$*" in
   *) exit 1 ;;
 esac
 '
-  
+
   run "$MACOS_SCRIPT" "$TEST_TEMP_DIR/test.yaml"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "Show hidden files: changed from '<not set>' to 'YES'" ]]
@@ -669,7 +668,7 @@ case "$*" in
   *) echo "null" ;;
 esac
 '
-  
+
   # Mock defaults - should not write in dry run
   mock_command_with_script "defaults" '
 case "$*" in
@@ -678,7 +677,7 @@ case "$*" in
   *) exit 1 ;;
 esac
 '
-  
+
   run "$MACOS_SCRIPT" --dry-run "$TEST_TEMP_DIR/test.yaml"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "[DRY RUN] Would change Dock size from '64' to '48'" ]]
@@ -722,41 +721,41 @@ case "$*" in
   *) echo "null" ;;
 esac
 '
-  
+
   # Track which defaults commands were called
   DEFAULTS_CALLS_FILE="$TEST_TEMP_DIR/defaults_calls.txt"
   touch "$DEFAULTS_CALLS_FILE"
-  
+
   mock_command_with_script "defaults" '
 CALLS_FILE="'"$DEFAULTS_CALLS_FILE"'"
 case "$*" in
   *"read"*) exit 1 ;;  # Simulate all as unset
-  *"write com.apple.finder AppleShowAllFiles YES"*) 
+  *"write com.apple.finder AppleShowAllFiles YES"*)
     echo "show_hidden_files=YES" >> "$CALLS_FILE"
     exit 0 ;;
-  *"write NSGlobalDomain AppleShowAllExtensions 0"*) 
+  *"write NSGlobalDomain AppleShowAllExtensions 0"*)
     echo "show_all_extensions=0" >> "$CALLS_FILE"
     exit 0 ;;
-  *"write com.apple.dock autohide 1"*) 
+  *"write com.apple.dock autohide 1"*)
     echo "auto_hide=1" >> "$CALLS_FILE"
     exit 0 ;;
-  *"write com.apple.dock show-recents 0"*) 
+  *"write com.apple.dock show-recents 0"*)
     echo "show_recents=0" >> "$CALLS_FILE"
     exit 0 ;;
-  *"write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking 1"*) 
+  *"write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking 1"*)
     echo "tap_to_click=1" >> "$CALLS_FILE"
     exit 0 ;;
-  *"write NSGlobalDomain com.apple.swipescrolldirection 0"*) 
+  *"write NSGlobalDomain com.apple.swipescrolldirection 0"*)
     echo "natural_scrolling=0" >> "$CALLS_FILE"
     exit 0 ;;
   *"write"*) exit 0 ;;
   *) exit 1 ;;
 esac
 '
-  
+
   run "$MACOS_SCRIPT" "$TEST_TEMP_DIR/test.yaml"
   [ "$status" -eq 0 ]
-  
+
   # Check that the correct conversions were made
   run cat "$DEFAULTS_CALLS_FILE"
   [[ "$output" =~ "show_hidden_files=YES" ]]
@@ -783,18 +782,18 @@ case "$*" in
   *) echo "null" ;;
 esac
 '
-  
+
   # Track mkdir calls
   MKDIR_CALLS_FILE="$TEST_TEMP_DIR/mkdir_calls.txt"
   touch "$MKDIR_CALLS_FILE"
-  
+
   # Mock mkdir to track calls
   mock_command_with_script "mkdir" '
 CALLS_FILE="'"$MKDIR_CALLS_FILE"'"
 echo "$*" >> "$CALLS_FILE"
 exit 0
 '
-  
+
   # Mock defaults
   mock_command_with_script "defaults" '
 case "$*" in
@@ -803,10 +802,10 @@ case "$*" in
   *) exit 1 ;;
 esac
 '
-  
+
   run "$MACOS_SCRIPT" "$TEST_TEMP_DIR/test.yaml"
   [ "$status" -eq 0 ]
-  
+
   # Check that mkdir was called with expanded path
   run cat "$MKDIR_CALLS_FILE"
   [[ "$output" =~ "-p $HOME/Pictures/Screenshots" ]]
@@ -828,13 +827,13 @@ case "$*" in
   *) echo "null" ;;
 esac
 '
-  
+
   # Mock mkdir - should not be called in dry run
   mock_command_with_script "mkdir" '
 echo "ERROR: mkdir should not be called in dry run"
 exit 1
 '
-  
+
   # Mock defaults
   mock_command_with_script "defaults" '
 case "$*" in
@@ -843,7 +842,7 @@ case "$*" in
   *) exit 1 ;;
 esac
 '
-  
+
   run "$MACOS_SCRIPT" --dry-run "$TEST_TEMP_DIR/test.yaml"
   [ "$status" -eq 0 ]
   [[ ! "$output" =~ "ERROR: mkdir should not be called in dry run" ]]
@@ -871,34 +870,34 @@ case "$*" in
   *) echo "null" ;;
 esac
 '
-  
+
   # Track which settings were attempted
   SETTINGS_FILE="$TEST_TEMP_DIR/settings_attempted.txt"
   touch "$SETTINGS_FILE"
-  
+
   mock_command_with_script "defaults" '
 SETTINGS_FILE="'"$SETTINGS_FILE"'"
 case "$*" in
   *"read"*) exit 1 ;;
-  *"write com.apple.dock tilesize"*) 
+  *"write com.apple.dock tilesize"*)
     echo "size" >> "$SETTINGS_FILE"
     exit 0 ;;
-  *"write com.apple.dock orientation"*) 
+  *"write com.apple.dock orientation"*)
     echo "ERROR: position should be skipped" >> "$SETTINGS_FILE"
     exit 1 ;;
-  *"write com.apple.dock autohide"*) 
+  *"write com.apple.dock autohide"*)
     echo "auto_hide" >> "$SETTINGS_FILE"
     exit 0 ;;
-  *"write com.apple.dock show-recents"*) 
+  *"write com.apple.dock show-recents"*)
     echo "ERROR: show_recents should be skipped" >> "$SETTINGS_FILE"
     exit 1 ;;
   *) exit 1 ;;
 esac
 '
-  
+
   run "$MACOS_SCRIPT" "$TEST_TEMP_DIR/test.yaml"
   [ "$status" -eq 0 ]
-  
+
   # Check that only non-null settings were attempted
   run cat "$SETTINGS_FILE"
   [[ "$output" =~ "size" ]]
@@ -910,7 +909,7 @@ esac
   # Set up settings file
   SETTINGS_FILE="$TEST_TEMP_DIR/settings.txt"
   touch "$SETTINGS_FILE"
-  
+
   # Mock defaults for mouse settings
   mock_command_with_script "defaults" '
 SETTINGS_FILE="'"$SETTINGS_FILE"'"
@@ -924,7 +923,7 @@ case "$*" in
   *) exit 0 ;;
 esac
 '
-  
+
   # Mock yq for mouse settings
   mock_command_with_script "yq" '
 case "$*" in
@@ -933,16 +932,16 @@ case "$*" in
   *) echo "null" ;;
 esac
 '
-  
+
   # Create test config
   cat > "$TEST_TEMP_DIR/test.yaml" << 'EOF'
 mouse:
   natural_scrolling: false
 EOF
-  
+
   run "$MACOS_SCRIPT" "$TEST_TEMP_DIR/test.yaml"
   [ "$status" -eq 0 ]
-  
+
   # Check that all mouse settings were applied
   run cat "$SETTINGS_FILE"
   [[ "$output" =~ "NSGlobalDomain com.apple.swipescrolldirection 0" ]]
@@ -955,7 +954,7 @@ EOF
   # Set up settings file
   SETTINGS_FILE="$TEST_TEMP_DIR/settings.txt"
   touch "$SETTINGS_FILE"
-  
+
   # Mock defaults for appearance
   mock_command_with_script "defaults" '
 SETTINGS_FILE="'"$SETTINGS_FILE"'"
@@ -967,11 +966,11 @@ case "$*" in
   *) exit 0 ;;
 esac
 '
-  
+
   # Mock yq for appearance settings
   mock_command_with_script "yq" '
 case "$*" in
-  ".system "*/test.yaml) 
+  ".system "*/test.yaml)
     echo "appearance: Dark"
     echo "show_hidden_files: false"
     echo "show_all_extensions: false"
@@ -982,16 +981,16 @@ case "$*" in
   *) echo "null" ;;
 esac
 '
-  
+
   # Create test config
   cat > "$TEST_TEMP_DIR/test.yaml" << 'EOF'
 system:
   appearance: Dark
 EOF
-  
+
   run "$MACOS_SCRIPT" "$TEST_TEMP_DIR/test.yaml"
   [ "$status" -eq 0 ]
-  
+
   # Check that Dark mode was applied
   run cat "$SETTINGS_FILE"
   [ "$status" -eq 0 ]
@@ -1000,10 +999,10 @@ EOF
 
 @test "display settings detect external vs builtin displays" {
   skip "Complex test with system_profiler - tested manually"
-  
+
   # Mock killall to prevent actual service restarts
   mock_command "killall" 0 ""
-  
+
   # Mock system_profiler for external display
   mock_command_with_script "system_profiler" '
 if [[ "$*" =~ "SPDisplaysDataType" ]]; then
@@ -1011,12 +1010,12 @@ if [[ "$*" =~ "SPDisplaysDataType" ]]; then
   echo "          Main Display: Yes"
 fi
 '
-  
+
   # Mock yq with a proper script
   cat > "$MOCK_BIN_DIR/yq" << 'EOF'
 #!/usr/bin/env bash
 case "$*" in
-  *".displays "$*".yaml"*) 
+  *".displays "$*".yaml"*)
     # Return actual YAML content (not null) to indicate displays section exists
     echo "preferred_main_display:"
     echo "  - PL2792Q"
@@ -1033,7 +1032,7 @@ case "$*" in
 esac
 EOF
   chmod +x "$MOCK_BIN_DIR/yq"
-  
+
   # Mock defaults
   mock_command_with_script "defaults" '
 case "$*" in
@@ -1044,7 +1043,7 @@ case "$*" in
   *) exit 0 ;;
 esac
 '
-  
+
   # Create test config
   cat > "$TEST_TEMP_DIR/test.yaml" << 'EOF'
 displays:
@@ -1055,10 +1054,10 @@ displays:
     external: left
     builtin: bottom
 EOF
-  
+
   run "$MACOS_SCRIPT" "$TEST_TEMP_DIR/test.yaml"
   [ "$status" -eq 0 ]
-  
+
   # Check output mentions external display
   [[ "$output" =~ "Display type: external" ]]
 }
@@ -1067,7 +1066,7 @@ EOF
   # Set up settings file
   SETTINGS_FILE="$TEST_TEMP_DIR/settings.txt"
   touch "$SETTINGS_FILE"
-  
+
   # Mock defaults for dock management
   mock_command_with_script "defaults" '
 SETTINGS_FILE="'"$SETTINGS_FILE"'"
@@ -1083,11 +1082,11 @@ case "$*" in
     ;;
 esac
 '
-  
+
   # Create Safari.app but not NotExists.app in temp dir
   mkdir -p "$TEST_TEMP_DIR/Applications"
   touch "$TEST_TEMP_DIR/Applications/Safari.app"
-  
+
   # Mock yq for dock app management
   mock_command_with_script "yq" '
 TEST_TEMP_DIR="'"$TEST_TEMP_DIR"'"
@@ -1107,7 +1106,7 @@ case "$*" in
   *) echo "null" ;;
 esac
 '
-  
+
   # Create test config
   cat > "$TEST_TEMP_DIR/test.yaml" << 'EOF'
 dock:
@@ -1117,19 +1116,19 @@ dock:
     - "/Applications/Safari.app"
     - "/Applications/NotExists.app"
 EOF
-  
+
   run "$MACOS_SCRIPT" "$TEST_TEMP_DIR/test.yaml"
   [ "$status" -eq 0 ]
-  
+
   # Save the script output
   local script_output="$output"
-  
+
   # Check that dock was cleared and Safari was added
   run cat "$SETTINGS_FILE"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "CLEAR_DOCK" ]]
   [[ "$output" =~ "ADD_APP:" ]] && [[ "$output" =~ "Safari.app" ]]
-  
+
   # Check the script output for the warning about missing app
   [[ "$script_output" =~ "App not found:" ]]
 }
@@ -1138,7 +1137,7 @@ EOF
   # Set up settings file
   SETTINGS_FILE="$TEST_TEMP_DIR/settings.txt"
   touch "$SETTINGS_FILE"
-  
+
   # Mock defaults for dock management that simulates existing apps
   mock_command_with_script "defaults" '
 SETTINGS_FILE="'"$SETTINGS_FILE"'"
@@ -1167,19 +1166,19 @@ case "$*" in
     ;;
 esac
 '
-  
+
   # Create Safari.app in temp dir
   mkdir -p "$TEST_TEMP_DIR/Applications"
   touch "$TEST_TEMP_DIR/Applications/Safari.app"
   touch "$TEST_TEMP_DIR/Applications/Terminal.app"
-  
+
   # Mock python3 for URL decoding
   mock_command_with_script "python3" '
 while IFS= read -r line; do
   echo "$line"
 done
 '
-  
+
   # Mock yq for dock app management
   mock_command_with_script "yq" '
 TEST_TEMP_DIR="'"$TEST_TEMP_DIR"'"
@@ -1199,7 +1198,7 @@ case "$*" in
   *) echo "null" ;;
 esac
 '
-  
+
   # Create test config
   cat > "$TEST_TEMP_DIR/test.yaml" << 'EOF'
 dock:
@@ -1209,7 +1208,7 @@ dock:
     - "/Applications/Safari.app"
     - "/Applications/Terminal.app"
 EOF
-  
+
   run "$MACOS_SCRIPT" "$TEST_TEMP_DIR/test.yaml"
   # Debug
   if [ "$status" -ne 0 ]; then
@@ -1217,16 +1216,16 @@ EOF
     echo "Output: $output" >&3
   fi
   [ "$status" -eq 0 ]
-  
+
   # Save the script output
   local script_output="$output"
-  
+
   # Check that only Terminal was added (Safari was already there)
   run cat "$SETTINGS_FILE"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "Terminal.app" ]]
   [[ ! "$output" =~ "Safari.app" ]]  # Safari should NOT be added again
-  
+
   # Check the script output for skip message
   [[ "$script_output" =~ "Already in dock:" ]]
   [[ "$script_output" =~ "Summary: Added 1 apps, skipped 1 already present" ]]
@@ -1235,7 +1234,7 @@ EOF
 @test "dry run mode shows appearance mode changes without applying" {
   # Set up settings file (should remain empty in dry run)
   SETTINGS_FILE="$TEST_TEMP_DIR/settings.txt"
-  
+
   # Mock current Dark mode
   mock_command_with_script "defaults" '
 SETTINGS_FILE="'"$SETTINGS_FILE"'"
@@ -1246,7 +1245,7 @@ case "$*" in
   *) exit 0 ;;
 esac
 '
-  
+
   # Mock yq for Light mode
   mock_command_with_script "yq" '
 case "$*" in
@@ -1255,19 +1254,19 @@ case "$*" in
   *) echo "null" ;;
 esac
 '
-  
+
   # Create test config
   cat > "$TEST_TEMP_DIR/test.yaml" << 'EOF'
 system:
   appearance: Light
 EOF
-  
+
   run "$MACOS_SCRIPT" -d "$TEST_TEMP_DIR/test.yaml"
   [ "$status" -eq 0 ]
-  
+
   # Check dry run warning
   [[ "$output" =~ \[DRY\ RUN\]\ Would\ change\ Appearance\ mode\ from\ \'Dark\'\ to\ \'Light\' ]]
-  
+
   # Ensure no settings were written
   [ ! -f "$SETTINGS_FILE" ]
 }
