@@ -3,6 +3,8 @@
 # Use this to reproduce your preferred setup on other machines
 
 system:
+  # Appearance mode (Dark)
+  appearance: "Dark"
   # Show hidden files in Finder (currently NO)
   show_hidden_files: false
   # Show file extensions (currently 0)
@@ -10,9 +12,9 @@ system:
 
 dock:
   # Dock size (empty string = default size)
-  size: ""  
+  size: ""
   # Position (empty string = bottom, "left" = left, "right" = right)
-  position: "left"  
+  position: "left"
   # Auto-hide dock (currently visible)
   auto_hide: false
   # Don't show recent applications
@@ -29,6 +31,40 @@ dock:
   show_indicators: true
   # Minimize to application icon
   minimize_to_app: true
+
+  # Dock applications management
+  # WARNING: This will CLEAR the entire dock and add only these apps
+  # Set manage_apps to false if you want to keep existing dock items
+  manage_apps: true
+  clear_dock_first: false # Set to true to start with empty dock
+  # Apps are only added if they exist - missing apps are skipped with a warning
+  apps:
+    # Terminal (T workspace)
+    - "/Applications/Ghostty.app"
+
+    # IDE/Development (Y workspace)
+    - "/Applications/Visual Studio Code.app"
+
+    # Browsers (I workspace)
+    - "/Applications/Brave Browser.app"
+    - "/Applications/Google Chrome.app"
+
+    # Email ([ workspace)
+    - "/Applications/HEY.app"
+    - "/Applications/Microsoft Outlook.app"
+
+    # Communication (] workspace)
+    - "/Applications/Microsoft Teams.app"
+    - "/Applications/WhatsApp.app"
+
+    # Productivity (P workspace)
+    - "/Applications/Things3.app"
+    - "/Applications/Obsidian.app"
+
+    # Office (O workspace)
+
+    # Utilities (U workspace)
+    - "/Applications/Finder.app"
 
 finder:
   # Default view (currently empty string)
@@ -91,6 +127,20 @@ stage_manager:
   show_recent_apps: false
   # Click wallpaper to reveal desktop only in Stage Manager
   click_wallpaper_to_reveal: "Only in Stage Manager"
+
+# Display preferences
+displays:
+  # Preferred main display order (first match becomes main)
+  # Use display names from System Information
+  preferred_main_display:
+    - "PL2792Q" # Primary external monitor
+    - "DELL U2412M" # Secondary external monitor
+    - "Built-in Display" # MacBook's built-in display
+
+  # Dock position per display type
+  dock_position:
+    external: "left" # When external display is main
+    builtin: "" # When built-in display is main (empty = bottom)
 
 # Screenshots configuration (if you want to set these)
 # screenshots:
