@@ -152,3 +152,101 @@ This pattern is critical for:
 - Functions that check if commands exist (which return non-zero when not found)
 - Information gathering functions that shouldn't fail the entire script
 - Test compatibility where mocked commands might not exist
+
+## macOS Configuration Script
+
+The `_macos/macos.sh` script provides automated macOS system configuration management.
+
+### Usage
+
+```bash
+# Show current system settings (default mode)
+./_macos/macos.sh
+
+# Apply configuration from YAML file
+./_macos/macos.sh personal.yaml
+
+# Dry run to preview changes
+./_macos/macos.sh -d personal.yaml
+
+# The script automatically looks in its own directory for YAML files
+cd /anywhere && /path/to/_macos/macos.sh personal.yaml  # Works!
+```
+
+### Dock Management
+
+The script can manage dock applications with intelligent duplicate prevention:
+
+```yaml
+dock:
+  manage_apps: true
+  clear_dock_first: false  # Set to true to start fresh
+  apps:
+    - "/Applications/Visual Studio Code.app"
+    - "/Applications/Brave Browser.app"
+```
+
+**Important Notes:**
+- Running multiple times with `clear_dock_first: false` will NOT create duplicates
+- The script checks existing dock apps before adding (URL decoding handles spaces in names)
+- Finder is ALWAYS in the dock by default - don't add it to your apps list
+- Some system apps have non-standard paths (e.g., Finder is in `/System/Library/CoreServices/`)
+
+### Implementation Details
+
+#### Arithmetic Operations with errexit
+
+When using `set -e`, arithmetic operations that evaluate to 0 will cause the script to exit:
+
+```bash
+# WRONG - will exit when count is 0
+((count++))
+
+# CORRECT - won't exit
+((count++)) || true
+```
+
+#### Dock App Detection
+
+The script handles URL-encoded paths from macOS defaults:
+
+```bash
+# Dock apps are stored with URL encoding and file:// prefix
+# The script decodes these for accurate duplicate detection
+defaults read com.apple.dock persistent-apps | \
+  grep -o '"_CFURLString" = "[^"]*"' | \
+  sed 's/"_CFURLString" = "//; s/"$//; s|^file://||; s|/$||' | \
+  python3 -c "import sys, urllib.parse; [print(urllib.parse.unquote(line.strip())) for line in sys.stdin]"
+```
+
+### Testing macOS Script
+
+The macOS script has its own comprehensive BATS test suite:
+
+```bash
+# Run all macOS tests
+cd _test && bats macos.bats
+
+# Run specific test
+bats macos.bats --filter "dock app management"
+```
+
+Key testing patterns:
+- Mock `defaults` command to simulate system state
+- Mock `python3` for URL decoding in tests
+- Test duplicate prevention with pre-existing dock apps
+- Verify dry-run mode doesn't modify system
+
+### Common Issues and Solutions
+
+1. **"App not found: /Applications/Finder.app"**
+   - Finder is in `/System/Library/CoreServices/Finder.app`
+   - Better solution: Remove Finder from your apps list (it's always there)
+
+2. **Duplicate dock items**
+   - Ensure you're using the latest version with URL decoding
+   - The script now properly detects apps with spaces in names
+
+3. **Script exits unexpectedly**
+   - Check for arithmetic operations without `|| true`
+   - Ensure all `grep` commands that might not match use `|| echo ""`

@@ -11,7 +11,7 @@ setup() {
   export PATH="$MOCK_BIN_DIR:$PATH"
   
   # Path to the script we're testing
-  export MACOS_SCRIPT="$BATS_TEST_DIRNAME/../macos.sh"
+  export MACOS_SCRIPT="$BATS_TEST_DIRNAME/../_macos/macos.sh"
   
   # Mock common commands
   mock_command "sw_vers" 0 "macOS 14.0"
@@ -266,6 +266,31 @@ EOF
   [[ "$output" =~ "Configuration file not found" ]]
   
   PATH="$ORIGINAL_PATH"
+}
+
+@test "accepts yaml config files from script directory" {
+  # Create a yaml file in the script's directory
+  local script_dir
+  script_dir="$(dirname "$MACOS_SCRIPT")"
+  cat > "$script_dir/test-config.yaml" << 'EOF'
+system:
+  show_hidden_files: true
+EOF
+  
+  # Mock yq to validate it's reading the correct file
+  mock_command_with_script "yq" '
+case "$*" in
+  *) echo "show_hidden_files: true" ;;
+esac
+'
+  
+  # Run from a different directory with just the filename
+  cd "$TEST_TEMP_DIR"
+  run "$MACOS_SCRIPT" test-config.yaml
+  [ "$status" -eq 0 ]
+  
+  # Clean up
+  rm -f "$script_dir/test-config.yaml"
 }
 
 @test "accepts yaml config files" {
@@ -814,36 +839,32 @@ esac
 }
 
 @test "mouse settings are applied correctly" {
-  # Create custom defaults mock that tracks writes
-  setup_mock defaults '#!/bin/bash
-case "$1" in
-  read)
-    if [[ "$3" == "com.apple.swipescrolldirection" ]]; then
-      echo "1"
-    elif [[ "$3" == "MouseVerticalScroll" ]]; then
-      echo "1"
-    elif [[ "$3" == "ScrollV" ]]; then
-      echo "1"
-    fi
-    ;;
-  write)
-    echo "$@" >> "$SETTINGS_FILE"
-    ;;
-esac'
+  # Set up settings file
+  SETTINGS_FILE="$TEST_TEMP_DIR/settings.txt"
+  touch "$SETTINGS_FILE"
   
-  # Create yq mock for mouse settings
-  setup_mock yq '#!/bin/bash
-case "$1" in
-  ".mouse")
-    echo "natural_scrolling: false"
-    ;;
-  ".mouse.natural_scrolling")
-    echo "false"
-    ;;
-  *)
-    echo "null"
-    ;;
-esac'
+  # Mock defaults for mouse settings
+  mock_command_with_script "defaults" '
+SETTINGS_FILE="'"$SETTINGS_FILE"'"
+case "$*" in
+  *"read NSGlobalDomain com.apple.swipescrolldirection"*) echo "1" ;;
+  *"read com.apple.AppleMultitouchMouse MouseVerticalScroll"*) echo "1" ;;
+  *"read com.apple.driver.AppleBluetoothMultitouch.mouse MouseVerticalScroll"*) echo "1" ;;
+  *"read com.apple.driver.AppleHIDMouse ScrollV"*) echo "1" ;;
+  *"write"*) echo "$@" >> "$SETTINGS_FILE" ;;
+  *"read"*) echo "<not set>" ;;
+  *) exit 0 ;;
+esac
+'
+  
+  # Mock yq for mouse settings
+  mock_command_with_script "yq" '
+case "$*" in
+  *".mouse"*".yaml") echo "natural_scrolling: false" ;;
+  *".mouse.natural_scrolling"*) echo "false" ;;
+  *) echo "null" ;;
+esac
+'
   
   # Create test config
   cat > "$TEST_TEMP_DIR/test.yaml" << 'EOF'
@@ -860,4 +881,297 @@ EOF
   [[ "$output" =~ "com.apple.AppleMultitouchMouse MouseVerticalScroll 0" ]]
   [[ "$output" =~ "com.apple.driver.AppleBluetoothMultitouch.mouse MouseVerticalScroll 0" ]]
   [[ "$output" =~ "com.apple.driver.AppleHIDMouse ScrollV 0" ]]
+}
+
+@test "appearance mode settings are applied correctly" {
+  # Set up settings file
+  SETTINGS_FILE="$TEST_TEMP_DIR/settings.txt"
+  touch "$SETTINGS_FILE"
+  
+  # Mock defaults for appearance
+  mock_command_with_script "defaults" '
+SETTINGS_FILE="'"$SETTINGS_FILE"'"
+case "$*" in
+  *"read NSGlobalDomain AppleInterfaceStyle"*) echo "<not set>" ;;
+  *"write NSGlobalDomain AppleInterfaceStyle Dark"*) echo "NSGlobalDomain AppleInterfaceStyle Dark" >> "$SETTINGS_FILE" ;;
+  *"write"*) echo "$@" >> "$SETTINGS_FILE" ;;
+  *"read"*) echo "<not set>" ;;
+  *) exit 0 ;;
+esac
+'
+  
+  # Mock yq for appearance settings
+  mock_command_with_script "yq" '
+case "$*" in
+  ".system "*/test.yaml) 
+    echo "appearance: Dark"
+    echo "show_hidden_files: false"
+    echo "show_all_extensions: false"
+    ;;
+  *".system.appearance"*) echo "Dark" ;;
+  *".system.show_hidden_files"*) echo "false" ;;
+  *".system.show_all_extensions"*) echo "false" ;;
+  *) echo "null" ;;
+esac
+'
+  
+  # Create test config
+  cat > "$TEST_TEMP_DIR/test.yaml" << 'EOF'
+system:
+  appearance: Dark
+EOF
+  
+  run "$MACOS_SCRIPT" "$TEST_TEMP_DIR/test.yaml"
+  [ "$status" -eq 0 ]
+  
+  # Check that Dark mode was applied
+  run cat "$SETTINGS_FILE"
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "NSGlobalDomain AppleInterfaceStyle Dark" ]]
+}
+
+@test "display settings detect external vs builtin displays" {
+  # Mock system_profiler for external display
+  mock_command_with_script "system_profiler" '
+if [[ "$*" =~ "SPDisplaysDataType" ]]; then
+  echo "        DELL U2412M:"
+  echo "          Main Display: Yes"
+fi
+'
+  
+  # Mock yq for display settings
+  mock_command_with_script "yq" '
+case "$*" in
+  *".displays"*".yaml") 
+    echo "dock_position:"
+    echo "  external: left"
+    echo "  builtin: bottom"
+    ;;
+  *".displays.dock_position.external"*) echo "left" ;;
+  *) echo "null" ;;
+esac
+'
+  
+  # Create test config
+  cat > "$TEST_TEMP_DIR/test.yaml" << 'EOF'
+displays:
+  dock_position:
+    external: left
+    builtin: bottom
+EOF
+  
+  run "$MACOS_SCRIPT" "$TEST_TEMP_DIR/test.yaml"
+  [ "$status" -eq 0 ]
+  
+  # Check output mentions external display
+  [[ "$output" =~ "Display type: external" ]]
+}
+
+@test "dock app management adds apps and skips missing ones" {
+  # Set up settings file
+  SETTINGS_FILE="$TEST_TEMP_DIR/settings.txt"
+  touch "$SETTINGS_FILE"
+  
+  # Mock defaults for dock management
+  mock_command_with_script "defaults" '
+SETTINGS_FILE="'"$SETTINGS_FILE"'"
+case "$*" in
+  *"write com.apple.dock persistent-apps -array-add"*)
+    echo "ADD_APP: $*" >> "$SETTINGS_FILE"
+    ;;
+  *"write com.apple.dock persistent-apps -array"*)
+    echo "CLEAR_DOCK" >> "$SETTINGS_FILE"
+    ;;
+  *"read"*)
+    echo "<not set>"
+    ;;
+esac
+'
+  
+  # Create Safari.app but not NotExists.app in temp dir
+  mkdir -p "$TEST_TEMP_DIR/Applications"
+  touch "$TEST_TEMP_DIR/Applications/Safari.app"
+  
+  # Mock yq for dock app management
+  mock_command_with_script "yq" '
+TEST_TEMP_DIR="'"$TEST_TEMP_DIR"'"
+case "$*" in
+  ".dock "*/test.yaml)
+    echo "manage_apps: true"
+    echo "clear_dock_first: true"
+    echo "apps:"
+    echo "  - $TEST_TEMP_DIR/Applications/Safari.app"
+    echo "  - $TEST_TEMP_DIR/Applications/NotExists.app"
+    ;;
+  *".dock.manage_apps"*) echo "true" ;;
+  *".dock.clear_dock_first"*) echo "true" ;;
+  *".dock.apps | length"*) echo "2" ;;
+  *".dock.apps[0]"*) echo "$TEST_TEMP_DIR/Applications/Safari.app" ;;
+  *".dock.apps[1]"*) echo "$TEST_TEMP_DIR/Applications/NotExists.app" ;;
+  *) echo "null" ;;
+esac
+'
+  
+  # Create test config
+  cat > "$TEST_TEMP_DIR/test.yaml" << 'EOF'
+dock:
+  manage_apps: true
+  clear_dock_first: true
+  apps:
+    - "/Applications/Safari.app"
+    - "/Applications/NotExists.app"
+EOF
+  
+  run "$MACOS_SCRIPT" "$TEST_TEMP_DIR/test.yaml"
+  [ "$status" -eq 0 ]
+  
+  # Save the script output
+  local script_output="$output"
+  
+  # Check that dock was cleared and Safari was added
+  run cat "$SETTINGS_FILE"
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "CLEAR_DOCK" ]]
+  [[ "$output" =~ "ADD_APP:" ]] && [[ "$output" =~ "Safari.app" ]]
+  
+  # Check the script output for the warning about missing app
+  [[ "$script_output" =~ "App not found:" ]]
+}
+
+@test "dock app management prevents duplicates when run twice" {
+  # Set up settings file
+  SETTINGS_FILE="$TEST_TEMP_DIR/settings.txt"
+  touch "$SETTINGS_FILE"
+  
+  # Mock defaults for dock management that simulates existing apps
+  mock_command_with_script "defaults" '
+SETTINGS_FILE="'"$SETTINGS_FILE"'"
+TEST_TEMP_DIR="'"$TEST_TEMP_DIR"'"
+case "$*" in
+  *"read com.apple.dock persistent-apps"*)
+    # Simulate that Safari is already in the dock
+    echo "(
+      {
+        \"tile-data\" = {
+          \"file-data\" = {
+            \"_CFURLString\" = \"file://$TEST_TEMP_DIR/Applications/Safari.app/\";
+          };
+        };
+      }
+    )"
+    ;;
+  *"write com.apple.dock persistent-apps -array-add"*)
+    echo "ADD_APP: $*" >> "$SETTINGS_FILE"
+    ;;
+  *"write com.apple.dock persistent-apps -array"*)
+    echo "CLEAR_DOCK" >> "$SETTINGS_FILE"
+    ;;
+  *"read"*)
+    echo "<not set>"
+    ;;
+esac
+'
+  
+  # Create Safari.app in temp dir
+  mkdir -p "$TEST_TEMP_DIR/Applications"
+  touch "$TEST_TEMP_DIR/Applications/Safari.app"
+  touch "$TEST_TEMP_DIR/Applications/Terminal.app"
+  
+  # Mock python3 for URL decoding
+  mock_command_with_script "python3" '
+while IFS= read -r line; do
+  echo "$line"
+done
+'
+  
+  # Mock yq for dock app management
+  mock_command_with_script "yq" '
+TEST_TEMP_DIR="'"$TEST_TEMP_DIR"'"
+case "$*" in
+  ".dock "*/test.yaml)
+    echo "manage_apps: true"
+    echo "clear_dock_first: false"
+    echo "apps:"
+    echo "  - $TEST_TEMP_DIR/Applications/Safari.app"
+    echo "  - $TEST_TEMP_DIR/Applications/Terminal.app"
+    ;;
+  *".dock.manage_apps"*) echo "true" ;;
+  *".dock.clear_dock_first"*) echo "false" ;;
+  *".dock.apps | length"*) echo "2" ;;
+  *".dock.apps[0]"*) echo "$TEST_TEMP_DIR/Applications/Safari.app" ;;
+  *".dock.apps[1]"*) echo "$TEST_TEMP_DIR/Applications/Terminal.app" ;;
+  *) echo "null" ;;
+esac
+'
+  
+  # Create test config
+  cat > "$TEST_TEMP_DIR/test.yaml" << 'EOF'
+dock:
+  manage_apps: true
+  clear_dock_first: false
+  apps:
+    - "/Applications/Safari.app"
+    - "/Applications/Terminal.app"
+EOF
+  
+  run "$MACOS_SCRIPT" "$TEST_TEMP_DIR/test.yaml"
+  # Debug
+  if [ "$status" -ne 0 ]; then
+    echo "Exit status: $status" >&3
+    echo "Output: $output" >&3
+  fi
+  [ "$status" -eq 0 ]
+  
+  # Save the script output
+  local script_output="$output"
+  
+  # Check that only Terminal was added (Safari was already there)
+  run cat "$SETTINGS_FILE"
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "Terminal.app" ]]
+  [[ ! "$output" =~ "Safari.app" ]]  # Safari should NOT be added again
+  
+  # Check the script output for skip message
+  [[ "$script_output" =~ "Already in dock:" ]]
+  [[ "$script_output" =~ "Summary: Added 1 apps, skipped 1 already present" ]]
+}
+
+@test "dry run mode shows appearance mode changes without applying" {
+  # Set up settings file (should remain empty in dry run)
+  SETTINGS_FILE="$TEST_TEMP_DIR/settings.txt"
+  
+  # Mock current Dark mode
+  mock_command_with_script "defaults" '
+SETTINGS_FILE="'"$SETTINGS_FILE"'"
+case "$*" in
+  *"read NSGlobalDomain AppleInterfaceStyle"*) echo "Dark" ;;
+  *"write"*) echo "ERROR: Should not write in dry run" >> "$SETTINGS_FILE"; exit 1 ;;
+  *"read"*) echo "<not set>" ;;
+  *) exit 0 ;;
+esac
+'
+  
+  # Mock yq for Light mode
+  mock_command_with_script "yq" '
+case "$*" in
+  ".system "*/test.yaml) echo "appearance: Light" ;;
+  *".system.appearance"*) echo "Light" ;;
+  *) echo "null" ;;
+esac
+'
+  
+  # Create test config
+  cat > "$TEST_TEMP_DIR/test.yaml" << 'EOF'
+system:
+  appearance: Light
+EOF
+  
+  run "$MACOS_SCRIPT" -d "$TEST_TEMP_DIR/test.yaml"
+  [ "$status" -eq 0 ]
+  
+  # Check dry run warning
+  [[ "$output" =~ \[DRY\ RUN\]\ Would\ change\ Appearance\ mode\ from\ \'Dark\'\ to\ \'Light\' ]]
+  
+  # Ensure no settings were written
+  [ ! -f "$SETTINGS_FILE" ]
 }

@@ -23,7 +23,9 @@
       "Bash(/Users/nickromney/Developer/personal/n-dotfiles/debug_defaults.sh:*)",
       "Bash(shellcheck:*)",
       "Bash(defaults find MouseVerticalScroll 2 > /dev/null)",
-      "Bash(defaults find \"scroll\" 2 > /dev/null)"
+      "Bash(defaults find \"scroll\" 2 > /dev/null)",
+      "Bash(system_profiler:*)",
+      "Bash(mv:*)"
     ],
     "deny": []
   }

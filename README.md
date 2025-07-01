@@ -70,13 +70,13 @@ Light-touch macOS configuration management:
 
 ```bash
 # Show current system settings
-./macos.sh
+./_macos/macos.sh
 
 # Apply personal configuration
-./macos.sh _macos/personal.yaml
+./_macos/macos.sh personal.yaml
 
 # Dry run to preview changes
-./macos.sh -d _macos/personal.yaml
+./_macos/macos.sh -d personal.yaml
 ```
 
 See [_macos/README.md](_macos/README.md) for detailed macOS configuration options.
@@ -155,9 +155,9 @@ install_args: Additional installation arguments (optional)
 ```shell
 .
 ├── install.sh   # Package installation and configuration management
-├── macos.sh     # macOS system configuration script
 ├── tools.yaml   # Package definitions
-├── _macos/      # macOS configuration files
+├── _macos/      # macOS configuration
+│   ├── macos.sh          # macOS system configuration script
 │   ├── personal.yaml     # Personal Mac settings
 │   ├── work-example.yaml # Example work settings
 │   └── README.md         # macOS configuration documentation

@@ -195,6 +195,7 @@ apply_config() {
   apply_mission_control_settings "$config_file"
   apply_stage_manager_settings "$config_file"
   apply_widgets_settings "$config_file"
+  apply_display_settings "$config_file"
 
   if [[ "$DRY_RUN" == "false" ]]; then
     info ""
@@ -225,6 +226,35 @@ apply_system_settings() {
 
   if ! yq ".$section" "$config_file" | grep -q '^null$'; then
     echo "System Settings:"
+
+    # Appearance mode
+    local appearance
+    appearance=$(yq ".$section.appearance" "$config_file")
+    if [[ "$appearance" != "null" ]]; then
+      case "$appearance" in
+        "Dark")
+          apply_default "Appearance mode" "NSGlobalDomain" "AppleInterfaceStyle" "Dark"
+          ;;
+        "Light")
+          # Light mode means removing the AppleInterfaceStyle key
+          if [[ "$DRY_RUN" == "false" ]]; then
+            defaults delete NSGlobalDomain AppleInterfaceStyle 2>/dev/null || true
+            success "Appearance mode: changed to Light"
+          else
+            local current
+            current=$(defaults read NSGlobalDomain AppleInterfaceStyle 2>/dev/null || echo "<not set>")
+            if [[ "$current" != "<not set>" ]]; then
+              warning "[DRY RUN] Would change Appearance mode from 'Dark' to 'Light'"
+            else
+              success "Appearance mode: already set to Light"
+            fi
+          fi
+          ;;
+        "Auto")
+          apply_default "Appearance mode" "NSGlobalDomain" "AppleInterfaceStyleSwitchesAutomatically" "1"
+          ;;
+      esac
+    fi
 
     # Show hidden files
     local show_hidden
@@ -335,6 +365,67 @@ apply_dock_settings() {
       local value
       value=$([[ "$minimize_to_app" == "true" ]] && echo "1" || echo "0")
       apply_default "Minimize to application icon" "com.apple.dock" "minimize-to-application" "$value"
+    fi
+    
+    # Manage dock applications
+    local manage_apps
+    manage_apps=$(yq ".$section.manage_apps" "$config_file")
+    if [[ "$manage_apps" == "true" ]]; then
+      warning "Dock application management is enabled"
+      
+      # Get current dock apps to check for duplicates
+      local current_dock_apps
+      current_dock_apps=$(defaults read com.apple.dock persistent-apps 2>/dev/null | grep -o '"_CFURLString" = "[^"]*"' | sed 's/"_CFURLString" = "//; s/"$//; s|^file://||; s|/$||' | python3 -c "import sys, urllib.parse; [print(urllib.parse.unquote(line.strip())) for line in sys.stdin]" || echo "")
+      
+      # Check if we should clear dock first
+      local clear_first
+      clear_first=$(yq ".$section.clear_dock_first" "$config_file")
+      if [[ "$clear_first" == "true" ]]; then
+        if [[ "$DRY_RUN" == "false" ]]; then
+          info "Clearing dock..."
+          defaults write com.apple.dock persistent-apps -array
+          success "Dock cleared"
+          current_dock_apps=""  # Reset since we cleared
+        else
+          warning "[DRY RUN] Would clear all dock applications"
+        fi
+      fi
+      
+      # Add specified apps
+      local apps_count
+      apps_count=$(yq ".$section.apps | length" "$config_file")
+      if [[ "$apps_count" -gt 0 ]]; then
+        info "Processing $apps_count applications for dock..."
+        local added_count=0
+        local skipped_count=0
+        
+        for ((i=0; i<apps_count; i++)); do
+          local app_path
+          app_path=$(yq ".$section.apps[$i]" "$config_file")
+          if [[ -e "$app_path" ]]; then
+            # Check if app is already in dock
+            if echo "$current_dock_apps" | grep -qF "$app_path"; then
+              info "Already in dock: $app_path"
+              ((skipped_count++)) || true
+            else
+              if [[ "$DRY_RUN" == "false" ]]; then
+                defaults write com.apple.dock persistent-apps -array-add \
+                  "<dict><key>tile-data</key><dict><key>file-data</key><dict><key>_CFURLString</key><string>$app_path</string><key>_CFURLStringType</key><integer>0</integer></dict></dict></dict>"
+                success "Added to dock: $app_path"
+                ((added_count++)) || true
+              else
+                info "[DRY RUN] Would add to dock: $app_path"
+              fi
+            fi
+          else
+            warning "App not found: $app_path"
+          fi
+        done
+        
+        if [[ "$DRY_RUN" == "false" ]]; then
+          info "Summary: Added $added_count apps, skipped $skipped_count already present"
+        fi
+      fi
     fi
   fi
 }
@@ -471,8 +562,6 @@ apply_mouse_settings() {
       # HID/Generic mice (same logic as others: 0=natural OFF, 1=natural ON)
       apply_default "Mouse natural scrolling (HID/Generic)" "com.apple.driver.AppleHIDMouse" "ScrollV" "$value"
       
-      info "NOTE: macOS links mouse and trackpad scroll directions"
-      info "Settings will be activated using SystemAdministration framework"
     fi
   fi
 }
@@ -719,6 +808,62 @@ apply_widgets_settings() {
   fi
 }
 
+# Apply display settings
+apply_display_settings() {
+  local config_file="$1"
+  local section="displays"
+  
+  if ! yq ".$section" "$config_file" | grep -q '^null$'; then
+    echo "Display Settings:"
+    
+    # Get current displays
+    local current_displays
+    current_displays=$(system_profiler SPDisplaysDataType 2>/dev/null | grep -E "^        [A-Za-z].*:" | sed 's/://g' | sed 's/^        //')
+    
+    # Check if we have any external displays
+    local has_external=false
+    local is_builtin_main=false
+    
+    # Check current main display
+    if system_profiler SPDisplaysDataType 2>/dev/null | grep -B1 "Main Display: Yes" | grep -q "Built-in"; then
+      is_builtin_main=true
+    else
+      has_external=true
+    fi
+    
+    # Get dock position preference based on display type
+    local dock_position_key
+    if [[ "$has_external" == "true" ]] && [[ "$is_builtin_main" == "false" ]]; then
+      dock_position_key="external"
+    else
+      dock_position_key="builtin"
+    fi
+    
+    local preferred_dock_position
+    preferred_dock_position=$(yq ".displays.dock_position.$dock_position_key" "$config_file" 2>/dev/null || echo "null")
+    
+    if [[ "$preferred_dock_position" != "null" ]]; then
+      info "Display type: $dock_position_key, preferred dock position: $preferred_dock_position"
+      
+      # Apply the dock position
+      local current_position
+      current_position=$(defaults read com.apple.dock orientation 2>/dev/null || echo "")
+      
+      if [[ "$current_position" != "$preferred_dock_position" ]]; then
+        if [[ "$DRY_RUN" == "false" ]]; then
+          defaults write com.apple.dock orientation "$preferred_dock_position"
+          success "Dock position: changed to '$preferred_dock_position' for $dock_position_key display"
+        else
+          warning "[DRY RUN] Would change dock position from '$current_position' to '$preferred_dock_position' for $dock_position_key display"
+        fi
+      else
+        success "Dock position: already set to '$preferred_dock_position' for $dock_position_key display"
+      fi
+    fi
+    
+  fi
+}
+
 # Apply a single default setting
 apply_default() {
   local description="$1"
@@ -794,6 +939,7 @@ usage() {
   echo "  $0                    # Show current system configuration"
   echo "  $0 personal.yaml      # Apply personal configuration"
   echo "  $0 -d work.yaml       # Dry run with work configuration"
+  echo "  $0 ../personal.yaml   # Apply config from parent directory"
 }
 
 # Parse arguments
@@ -815,6 +961,15 @@ while [[ $# -gt 0 ]]; do
   *.yaml | *.yml)
     MODE="apply"
     CONFIG_FILE="$1"
+    
+    # If file doesn't exist as given, check in script's directory
+    if [[ ! -f "$CONFIG_FILE" ]]; then
+      SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+      if [[ -f "$SCRIPT_DIR/$CONFIG_FILE" ]]; then
+        CONFIG_FILE="$SCRIPT_DIR/$CONFIG_FILE"
+      fi
+    fi
+    
     shift
     ;;
   *)

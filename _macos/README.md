@@ -15,18 +15,19 @@ Light-touch macOS configuration management that respects existing system setting
 
 ```bash
 # Apply personal settings
-./macos.sh _macos/personal.yaml
+./macos.sh personal.yaml
 
 # Apply work settings (example)
-./macos.sh _macos/work-example.yaml
+./macos.sh work-example.yaml
 
 # Dry run (show what would change)
-./macos.sh -d _macos/personal.yaml
+./macos.sh -d personal.yaml
 ```
 
 ## Configuration Files
 
 The `_macos/` directory contains:
+- `macos.sh` - The main configuration script
 - `personal.yaml` - Personal settings that match the current system state (December 2024)
 - `work-example.yaml` - Conservative example for work machines
 - `README.md` - This documentation
@@ -55,6 +56,7 @@ The YAML files use human-friendly key names that are automatically mapped to the
 ### Available Settings
 
 #### System
+- `appearance`: System appearance mode ("Light", "Dark", or "Auto")
 - `show_hidden_files`: Show hidden files in Finder
 - `show_all_extensions`: Always show file extensions
 
@@ -69,6 +71,9 @@ The YAML files use human-friendly key names that are automatically mapped to the
 - `launchanim`: Animate opening applications (0 or 1)
 - `show-process-indicators`: Show indicators for open applications (0 or 1)
 - `minimize-to-application`: Minimize windows into application icon (0 or 1)
+- `manage_apps`: Enable dock application management (false by default)
+- `clear_dock_first`: Clear all dock items before adding apps (requires manage_apps: true)
+- `apps`: List of application paths to add to dock
 
 Note: Empty strings (`""`) are valid values that represent system defaults
 
@@ -119,6 +124,12 @@ Note: Many Stage Manager UI settings may not have corresponding defaults entries
 
 #### Mouse
 - `natural_scrolling`: Scrolling direction for mouse (separate from trackpad)
+
+#### Displays
+- `preferred_main_display`: List of display names in preference order
+- `dock_position`: Dock position per display type
+  - `external`: Position when external display is main
+  - `builtin`: Position when built-in display is main
 
 #### Screenshots
 - `location`: Where to save screenshots
