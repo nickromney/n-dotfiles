@@ -255,6 +255,7 @@ esac
   mock_command "[" 0
 
   # Override command -v to simulate brew not found
+  # shellcheck disable=SC2317  # Function is used when exported
   function command() {
     if [[ "$1" == "-v" ]] && [[ "$2" == "brew" ]]; then
       return 1
@@ -388,7 +389,7 @@ esac
 
   run "$MACOS_SCRIPT" "$TEST_TEMP_DIR/test.yaml"
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "Applying Configuration: $TEST_TEMP_DIR/test.yaml" ]]
+  [[ $output == *"Applying Configuration: $TEST_TEMP_DIR/test.yaml"* ]]
   [[ "$output" =~ "System Settings:" ]]
   [[ "$output" =~ "Configuration applied" ]]
 }
@@ -401,6 +402,7 @@ system:
 EOF
 
   # Override command -v to simulate yq not found
+  # shellcheck disable=SC2317  # Function is used when exported
   function command() {
     if [[ "$1" == "-v" ]] && [[ "$2" == "yq" ]]; then
       return 1
@@ -467,7 +469,7 @@ esac
   # Test with non-existent file
   run "$MACOS_SCRIPT" "/path/to/nonexistent.yaml"
   [ "$status" -eq 1 ]
-  [[ "$output" =~ "Configuration file not found: /path/to/nonexistent.yaml" ]]
+  [[ "$output" =~ Configuration\ file\ not\ found:\ /path/to/nonexistent.yaml ]]
 }
 
 @test "apply_config requires yq to be installed" {
@@ -478,6 +480,7 @@ system:
 EOF
 
   # Override command -v to simulate yq not found
+  # shellcheck disable=SC2317  # Function is used when exported
   function command() {
     if [[ "$1" == "-v" ]] && [[ "$2" == "yq" ]]; then
       return 1
@@ -680,7 +683,7 @@ esac
 
   run "$MACOS_SCRIPT" --dry-run "$TEST_TEMP_DIR/test.yaml"
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "[DRY RUN] Would change Dock size from '64' to '48'" ]]
+  [[ "$output" =~ \[DRY\ RUN\]\ Would\ change\ Dock\ size\ from\ \'64\'\ to\ \'48\' ]]
   [[ ! "$output" =~ "ERROR: Should not write in dry run" ]]
 }
 
@@ -808,7 +811,7 @@ esac
 
   # Check that mkdir was called with expanded path
   run cat "$MKDIR_CALLS_FILE"
-  [[ "$output" =~ "-p $HOME/Pictures/Screenshots" ]]
+  [[ "$output" =~ -p\ $HOME/Pictures/Screenshots ]]
 }
 
 @test "screenshot location not created in dry run mode" {
@@ -944,10 +947,10 @@ EOF
 
   # Check that all mouse settings were applied
   run cat "$SETTINGS_FILE"
-  [[ "$output" =~ "NSGlobalDomain com.apple.swipescrolldirection 0" ]]
-  [[ "$output" =~ "com.apple.AppleMultitouchMouse MouseVerticalScroll 0" ]]
-  [[ "$output" =~ "com.apple.driver.AppleBluetoothMultitouch.mouse MouseVerticalScroll 0" ]]
-  [[ "$output" =~ "com.apple.driver.AppleHIDMouse ScrollV 0" ]]
+  [[ "$output" =~ NSGlobalDomain\ com.apple.swipescrolldirection\ 0 ]]
+  [[ "$output" =~ com.apple.AppleMultitouchMouse\ MouseVerticalScroll\ 0 ]]
+  [[ "$output" =~ com.apple.driver.AppleBluetoothMultitouch.mouse\ MouseVerticalScroll\ 0 ]]
+  [[ "$output" =~ com.apple.driver.AppleHIDMouse\ ScrollV\ 0 ]]
 }
 
 @test "appearance mode settings are applied correctly" {
@@ -1127,8 +1130,7 @@ EOF
   run cat "$SETTINGS_FILE"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "CLEAR_DOCK" ]]
-  [[ "$output" =~ "ADD_APP:" ]] && [[ "$output" =~ "Safari.app" ]]
-
+  [[ "$output" =~ "ADD_APP:" ]] && [[ "$output" =~ Safari\.app ]]
   # Check the script output for the warning about missing app
   [[ "$script_output" =~ "App not found:" ]]
 }
@@ -1223,9 +1225,8 @@ EOF
   # Check that only Terminal was added (Safari was already there)
   run cat "$SETTINGS_FILE"
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "Terminal.app" ]]
-  [[ ! "$output" =~ "Safari.app" ]]  # Safari should NOT be added again
-
+  [[ "$output" =~ Terminal\.app ]]
+  [[ ! "$output" =~ Safari\.app ]]  # Safari should NOT be added again
   # Check the script output for skip message
   [[ "$script_output" =~ "Already in dock:" ]]
   [[ "$script_output" =~ "Summary: Added 1 apps, skipped 1 already present" ]]
