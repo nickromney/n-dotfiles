@@ -389,7 +389,7 @@ esac
 
   run "$MACOS_SCRIPT" "$TEST_TEMP_DIR/test.yaml"
   [ "$status" -eq 0 ]
-  [[ "$output" =~ Applying\ Configuration:\ $TEST_TEMP_DIR/test.yaml ]]
+  [[ $output == *"Applying Configuration: $TEST_TEMP_DIR/test.yaml"* ]]
   [[ "$output" =~ "System Settings:" ]]
   [[ "$output" =~ "Configuration applied" ]]
 }
