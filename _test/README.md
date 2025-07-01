@@ -1,6 +1,6 @@
-# Install Script Tests
+# Test Suite
 
-This directory contains BATS (Bash Automated Testing System) tests for the `install.sh` script.
+This directory contains the test suite for the dotfiles repository, including tests for both `install.sh` and `macos.sh`.
 
 ## Prerequisites
 
