@@ -126,10 +126,14 @@ Note: Many Stage Manager UI settings may not have corresponding defaults entries
 - `natural_scrolling`: Scrolling direction for mouse (separate from trackpad)
 
 #### Displays
-- `preferred_main_display`: List of display names in preference order
+- `main_display_priority`: List of display names in preference order
+  - First connected display in list becomes main
+  - All other connected displays become extended
 - `dock_position`: Dock position per display type
   - `external`: Position when external display is main
   - `builtin`: Position when built-in display is main
+
+Note: macOS display arrangement requires manual configuration in System Settings.
 
 #### Screenshots
 - `location`: Where to save screenshots

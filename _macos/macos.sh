@@ -267,7 +267,6 @@ apply_system_settings() {
 
     # Show all extensions
     local show_extensions
-    local show_extensions
     show_extensions=$(yq ".$section.show_all_extensions" "$config_file")
     if [[ "$show_extensions" != "null" ]]; then
       local value
@@ -816,6 +815,18 @@ apply_display_settings() {
   if ! yq ".$section" "$config_file" | grep -q '^null$'; then
     echo "Display Settings:"
     
+    # Show main display priority for reference
+    local priority_count
+    priority_count=$(yq ".displays.main_display_priority | length" "$config_file" 2>/dev/null || echo "0")
+    
+    if [[ "$priority_count" -gt 0 ]]; then
+      info "Main display priority:"
+      for ((i=0; i<priority_count; i++)); do
+        local display_name
+        display_name=$(yq ".displays.main_display_priority[$i]" "$config_file")
+        info "  $((i+1)). $display_name"
+      done
+    fi
     
     # Check if we have any external displays
     local has_external=false
