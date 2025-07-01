@@ -27,6 +27,7 @@ Light-touch macOS configuration management that respects existing system setting
 ## Configuration Files
 
 The `_macos/` directory contains:
+
 - `macos.sh` - The main configuration script
 - `personal.yaml` - Personal settings that match the current system state (December 2024)
 - `work-example.yaml` - Conservative example for work machines
@@ -56,11 +57,13 @@ The YAML files use human-friendly key names that are automatically mapped to the
 ### Available Settings
 
 #### System
+
 - `appearance`: System appearance mode ("Light", "Dark", or "Auto")
 - `show_hidden_files`: Show hidden files in Finder
 - `show_all_extensions`: Always show file extensions
 
 #### Dock
+
 - `tilesize`: Icon size (16-128, or empty string for default)
 - `orientation`: Dock position (left, bottom, right, or empty string for default)
 - `autohide`: Auto-hide the dock (0 or 1)
@@ -78,6 +81,7 @@ The YAML files use human-friendly key names that are automatically mapped to the
 Note: Empty strings (`""`) are valid values that represent system defaults
 
 #### Finder
+
 - `default_view`: Default view style (icnv, Nlsv, clmv, Flwv)
 - `show_path_bar`: Show path bar at bottom
 - `show_status_bar`: Show status bar
@@ -85,6 +89,7 @@ Note: Empty strings (`""`) are valid values that represent system defaults
 - `double_click_title_bar`: Action on double-click (Minimize, Zoom, None)
 
 #### Windows
+
 - `AppleWindowTabbingMode`: When to use tabs (always, fullscreen, manual) - in NSGlobalDomain
 - `NSCloseAlwaysConfirmsChanges`: Ask to save changes when closing (0 = ask, 1 = don't ask) - in NSGlobalDomain
 - `NSQuitAlwaysKeepsWindows`: Keep windows when quitting (0 = close, 1 = keep) - in NSGlobalDomain
@@ -93,6 +98,7 @@ Note: Empty strings (`""`) are valid values that represent system defaults
 Note: Window tiling features (edge tiling, margins) may not have corresponding defaults entries
 
 #### Mission Control
+
 - `mru-spaces`: Automatically rearrange Spaces based on most recent use (0 or 1)
 - `AppleSpacesSwitchOnActivate`: Switch to Space with app windows (0 or 1) - in NSGlobalDomain
 - `expose-group-by-app`: Group windows by application (0 or 1)
@@ -101,6 +107,7 @@ Note: Window tiling features (edge tiling, margins) may not have corresponding d
 Note: Some Mission Control settings may require different domains (NSGlobalDomain, com.apple.spaces)
 
 #### Stage Manager (com.apple.WindowManager domain)
+
 - `GloballyEnabled`: Enable Stage Manager (0 or 1)
 - `AutoHide`: Auto-hide recent apps strip (0 or 1)
 - `HideDesktop`: Click wallpaper behavior (0 = Always reveal, 1 = Only in Stage Manager, 2 = Never)
@@ -108,36 +115,46 @@ Note: Some Mission Control settings may require different domains (NSGlobalDomai
 Note: Many Stage Manager UI settings may not have corresponding defaults entries
 
 #### Widgets
+
 - `show_on_desktop`: Show widgets on desktop
 - `show_in_stage_manager`: Show widgets in Stage Manager
 - `style`: Widget appearance (Automatic, Monochrome, Full Color)
 - `use_iphone_widgets`: Use iPhone widgets
 
 #### Keyboard
+
 - `key_repeat`: Key repeat rate (0-120, lower is faster)
 - `initial_key_repeat`: Delay before repeat (15-120)
 
 #### Trackpad
+
 - `tap_to_click`: Enable tap to click
 - `natural_scrolling`: Scrolling direction
 - `tracking_speed`: Pointer tracking speed (0-3)
 
 #### Mouse
+
 - `natural_scrolling`: Scrolling direction for mouse (separate from trackpad)
 
 #### Displays
+
 - `preferred_main_display`: List of display names in preference order
+  - First connected display in list becomes main
+  - All other connected displays become extended
+- `mirror_builtin_when_both_external_connected`: Mirror built-in to main when both externals connected
 - `dock_position`: Dock position per display type
   - `external`: Position when external display is main
   - `builtin`: Position when built-in display is main
 
 #### Screenshots
+
 - `location`: Where to save screenshots
 - `format`: File format (png, jpg)
 - `include_date`: Include timestamp in filename
 - `show_thumbnail`: Show thumbnail after capture
 
 #### Developer
+
 - `show_path_in_title`: Show full path in Finder title
 - `safari_developer_menu`: Enable Safari developer menu
 - `show_all_extensions`: Force showing all file extensions

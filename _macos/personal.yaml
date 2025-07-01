@@ -131,12 +131,17 @@ stage_manager:
 
 # Display preferences
 displays:
-  # Preferred main display order (first match becomes main)
-  # Use display names from System Information
+  # Main display priority - first connected display in this list becomes main
+  # All other connected displays become extended displays
+  # Note: macOS display arrangement requires manual configuration in System Settings
   preferred_main_display:
-    - "PL2792Q" # Primary external monitor
-    - "DELL U2412M" # Secondary external monitor
-    - "Built-in Display" # MacBook's built-in display
+    - "PL2792Q"         # Primary external monitor
+    - "DELL U2412M"     # Secondary external monitor
+    - "Built-in Display" # Laptop screen (fallback)
+  
+  # Mirror configuration - when both external monitors are connected,
+  # mirror the built-in display to the main display
+  mirror_builtin_when_both_external_connected: true
 
   # Dock position per display type
   dock_position:

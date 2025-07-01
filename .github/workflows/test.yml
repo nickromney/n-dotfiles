@@ -46,13 +46,22 @@ jobs:
         run: |
           brew install bats-core
 
-      - name: Run tests
+      - name: Run install tests (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
         run: |
           # Ensure bats is in PATH
           export PATH="/usr/local/bin:$PATH"
           which bats
           bats --version
-          ./_test/run_tests.sh
+          ./_test/run_install_tests.sh
+
+      - name: Run macOS tests (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          # Ensure bats is in PATH
+          which bats
+          bats --version
+          ./_test/run_macos_tests.sh
 
       - name: Test dry run
         run: |

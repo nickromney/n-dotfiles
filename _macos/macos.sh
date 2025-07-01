@@ -816,9 +816,25 @@ apply_display_settings() {
   if ! yq ".$section" "$config_file" | grep -q '^null$'; then
     echo "Display Settings:"
     
-    # Get current displays
-    local current_displays
-    current_displays=$(system_profiler SPDisplaysDataType 2>/dev/null | grep -E "^        [A-Za-z].*:" | sed 's/://g' | sed 's/^        //')
+    # Show main display priority for reference
+    local priority_count
+    priority_count=$(yq ".displays.preferred_main_display | length" "$config_file" 2>/dev/null || echo "0")
+    
+    if [[ "$priority_count" -gt 0 ]]; then
+      info "Main display priority:"
+      for ((i=0; i<priority_count; i++)); do
+        local display_name
+        display_name=$(yq ".displays.preferred_main_display[$i]" "$config_file")
+        info "  $((i+1)). $display_name"
+      done
+    fi
+    
+    # Show mirror preference
+    local mirror_builtin
+    mirror_builtin=$(yq ".displays.mirror_builtin_when_both_external_connected" "$config_file" 2>/dev/null || echo "null")
+    if [[ "$mirror_builtin" == "true" ]]; then
+      info "Mirror built-in display when both external monitors connected: Yes"
+    fi
     
     # Check if we have any external displays
     local has_external=false

@@ -8,7 +8,7 @@ system:
 
 dock:
   # Keep dock visible for work apps
-  auto_hide: false
+  auto_hide: true
   # Standard size
   size: 64
   # Traditional bottom position
@@ -32,6 +32,5 @@ trackpad:
   tap_to_click: true
   natural_scrolling: true
   tracking_speed: 1.5
-
 # Skip screenshot settings (may be managed)
 # Skip developer settings (may conflict with security)
