@@ -1,0 +1,632 @@
+# Development tools
+# Programming languages, version managers, build tools, and development utilities
+
+package_managers:
+  arkade:
+    types:
+      - get
+    default_type: get
+
+  brew:
+    types:
+      - package
+      - cask
+      - tap
+    default_type: package
+
+  cargo:
+    types:
+      - binary
+    default_type: binary
+
+  uv:
+    types:
+      - tool
+    default_type: tool
+
+tools:
+  # IDEs and Editors
+  neovim:
+    manager: brew
+    type: package
+    check_command: "nvim --version"
+    install_args: []
+    description: "Hyperextensible Vim-based text editor"
+    documentation_url: "https://neovim.io/"
+    category: "development"
+
+  # Programming Languages and Runtimes
+  bun:
+    manager: arkade
+    type: get
+    check_command: "test -f $HOME/.arkade/bin/bun"
+    install_args: []
+    description: "Fast all-in-one JavaScript runtime and toolkit"
+    documentation_url: "https://bun.sh/"
+    category: "development"
+
+  rust:
+    manager: brew
+    type: package
+    check_command: "rustc --version"
+    install_args: []
+    description: "Systems programming language focused on safety"
+    documentation_url: "https://www.rust-lang.org/"
+    category: "development"
+
+  # Version Managers
+  nvm:
+    manager: brew
+    type: package
+    check_command: 'brew --prefix nvm >/dev/null 2>&1 && test -d "$(brew --prefix nvm)"'
+    install_args: []
+    description: "Node Version Manager - manage multiple Node.js versions"
+    documentation_url: "https://github.com/nvm-sh/nvm"
+    category: "development"
+
+  rbenv:
+    manager: brew
+    type: package
+    check_command: "rbenv --version"
+    install_args: []
+    description: "Ruby version manager"
+    documentation_url: "https://github.com/rbenv/rbenv"
+    category: "development"
+
+  # Build Tools
+  automake:
+    manager: brew
+    type: package
+    check_command: "automake --version"
+    install_args: []
+    description: "Tool for generating GNU Standards-compliant Makefiles"
+    documentation_url: "https://www.gnu.org/software/automake/"
+    category: "development"
+
+  # Package Managers
+  brew-gem:
+    manager: brew
+    type: package
+    check_command: "brew list brew-gem >/dev/null 2>&1 || which brew-gem >/dev/null 2>&1"
+    install_args: []
+    description: "Install Ruby gems as Homebrew formulae"
+    documentation_url: "https://github.com/sportngin/brew-gem"
+    category: "development"
+
+  python3-pip:
+    manager: brew
+    type: package
+    check_command: "python3 -m pip --version"
+    install_args: []
+    description: "Python package installer"
+    documentation_url: "https://pip.pypa.io/"
+    category: "development"
+
+  # Container Tools
+  docker:
+    manager: brew
+    type: package
+    check_command: "docker --version"
+    install_args: []
+    description: "Container platform for building and running applications"
+    documentation_url: "https://docs.docker.com/"
+    category: "development"
+
+  podman:
+    manager: brew
+    type: package
+    check_command: "podman --version"
+    install_args: []
+    description: "Container engine for running OCI containers"
+    documentation_url: "https://podman.io/"
+    category: "development"
+
+  podman-compose:
+    manager: brew
+    type: package
+    check_command: "podman-compose --version"
+    install_args: []
+    description: "Docker-compose compatible wrapper for Podman"
+    documentation_url: "https://github.com/containers/podman-compose"
+    category: "development"
+
+  podman-desktop:
+    manager: brew
+    type: cask
+    check_command: "test -d '/Applications/Podman Desktop.app'"
+    install_args: []
+    description: "Graphical tool for managing containers and Kubernetes"
+    documentation_url: "https://podman-desktop.io/"
+    category: "development"
+
+  lazydocker:
+    manager: brew
+    type: package
+    check_command: "lazydocker --version"
+    install_args: []
+    description: "Terminal UI for Docker and docker-compose"
+    documentation_url: "https://github.com/jesseduffield/lazydocker"
+    category: "development"
+
+  # Version Control
+  gh:
+    manager: brew
+    type: package
+    check_command: "gh --version"
+    install_args: []
+    description: "GitHub's official command-line tool"
+    documentation_url: "https://cli.github.com/"
+    category: "development"
+
+  lazygit:
+    manager: brew
+    type: package
+    check_command: "lazygit --version"
+    install_args: []
+    description: "Simple terminal UI for git commands"
+    documentation_url: "https://github.com/jesseduffield/lazygit"
+    category: "development"
+
+  # CI/CD Tools
+  act:
+    manager: brew
+    type: package
+    check_command: "act --version"
+    install_args: []
+    description: "Run GitHub Actions locally"
+    documentation_url: "https://github.com/nektos/act"
+    category: "development"
+
+  actions-usage:
+    manager: arkade
+    type: get
+    check_command: "test -f $HOME/.arkade/bin/actions-usage"
+    install_args: []
+    description: "GitHub Actions usage metrics CLI tool"
+    documentation_url: "https://github.com/self-actuated/actions-usage"
+    category: "development"
+
+  # Cloud Tools
+  azure-cli:
+    manager: brew
+    type: package
+    check_command: "az --version"
+    install_args: []
+    description: "Command-line tools for Azure cloud services"
+    documentation_url: "https://docs.microsoft.com/en-us/cli/azure/"
+    category: "development"
+
+  pulumi:
+    manager: brew
+    type: package
+    check_command: "pulumi version"
+    install_args: []
+    description: "Infrastructure as Code SDK"
+    documentation_url: "https://www.pulumi.com/"
+    category: "development"
+
+  # Development Utilities
+  fx:
+    manager: brew
+    type: package
+    check_command: "which fx >/dev/null 2>&1"
+    install_args: []
+    description: "Terminal JSON viewer with interactive navigation"
+    documentation_url: "https://github.com/antonmedv/fx"
+    category: "development"
+
+  jq:
+    manager: brew
+    type: package
+    check_command: "jq --version"
+    install_args: []
+    description: "Lightweight command-line JSON processor"
+    documentation_url: "https://stedolan.github.io/jq/"
+    category: "development"
+
+  jqp:
+    manager: brew
+    type: package
+    check_command: "which jqp"
+    install_args: ["noahgorstein/tap/jqp"]
+    description: "TUI for jq with live preview"
+    documentation_url: "https://github.com/noahgorstein/jqp"
+    category: "development"
+
+  yq:
+    manager: brew
+    type: package
+    check_command: "yq --version"
+    install_args: []
+    description: "Command-line YAML processor"
+    documentation_url: "https://github.com/mikefarah/yq"
+    category: "development"
+
+  # Testing Tools
+  bats-core:
+    manager: brew
+    type: package
+    check_command: "bats --version"
+    install_args: []
+    description: "Bash Automated Testing System"
+    documentation_url: "https://github.com/bats-core/bats-core"
+    category: "development"
+
+  # Code Quality Tools
+  shellcheck:
+    manager: brew
+    type: package
+    check_command: "shellcheck --version"
+    install_args: []
+    description: "Static analysis tool for shell scripts"
+    documentation_url: "https://www.shellcheck.net/"
+    category: "development"
+
+  yamllint:
+    manager: brew
+    type: package
+    check_command: "yamllint --version"
+    install_args: []
+    description: "Linter for YAML files"
+    documentation_url: "https://yamllint.readthedocs.io/"
+    category: "development"
+
+  # Security Tools
+  trivy:
+    manager: brew
+    type: package
+    check_command: "trivy --version"
+    install_args: []
+    description: "Vulnerability scanner for containers and other artifacts"
+    documentation_url: "https://aquasecurity.github.io/trivy/"
+    category: "development"
+
+  # Fonts
+  font-jetbrains-mono-nerd-font:
+    manager: brew
+    type: cask
+    check_command: 'brew list --cask font-jetbrains-mono-nerd-font >/dev/null 2>&1 || [ -d "$HOME/Library/Fonts/JetBrainsMono" ] || [ -d "/Library/Fonts/JetBrainsMono" ]'
+    install_args: []
+    description: "JetBrains Mono font patched with Nerd Font icons"
+    documentation_url: "https://www.nerdfonts.com/"
+    category: "development"
+
+  # HTTP Tools
+  xh:
+    manager: brew
+    type: package
+    check_command: "xh --version"
+    install_args: []
+    description: "Friendly and fast HTTP client"
+    documentation_url: "https://github.com/ducaale/xh"
+    category: "development"
+
+  posting:
+    manager: uv
+    type: tool
+    check_command: "which posting"
+    install_args: ["--python", "3.12"]
+    description: "Terminal-based HTTP client for API testing"
+    documentation_url: "https://github.com/darrenburns/posting"
+    category: "development"
+
+  # Documentation Tools
+  code2prompt:
+    manager: cargo
+    type: binary
+    check_command: "code2prompt --version"
+    description: "Convert code files to LLM prompts"
+    documentation_url: "https://github.com/raphaelmansuy/code2prompt"
+    category: "development"
+
+  # Brew Taps
+  noahgorstein/tap:
+    manager: brew
+    type: tap
+    check_command: "brew tap | grep -q '^noahgorstein/tap$'"
+    install_args: []
+    description: "Homebrew tap for noahgorstein's formulae"
+    documentation_url: "https://github.com/noahgorstein/homebrew-tap"
+    category: "development"
+
+  # Completion Tools
+  brew-cask-completion:
+    manager: brew
+    type: package
+    check_command: "brew list brew-cask-completion"
+    install_args: []
+    description: "Bash completion for brew cask commands"
+    documentation_url: "https://github.com/xyb/homebrew-cask-completion"
+    category: "development"
+
+  # Infrastructure and DevOps
+  ansible:
+    manager: brew
+    type: package
+    check_command: "ansible --version"
+    install_args: []
+    description: "Automation platform for configuration management"
+    documentation_url: "https://www.ansible.com/"
+    category: "development"
+
+  awscli:
+    manager: brew
+    type: package
+    check_command: "aws --version"
+    install_args: []
+    description: "Official Amazon AWS command-line interface"
+    documentation_url: "https://aws.amazon.com/cli/"
+    category: "development"
+
+  helm:
+    manager: brew
+    type: package
+    check_command: "helm version"
+    install_args: []
+    description: "Kubernetes package manager"
+    documentation_url: "https://helm.sh/"
+    category: "development"
+
+  tfenv:
+    manager: brew
+    type: package
+    check_command: "tfenv --version"
+    install_args: []
+    description: "Terraform version manager"
+    documentation_url: "https://github.com/tfutils/tfenv"
+    category: "development"
+
+  tflint:
+    manager: brew
+    type: package
+    check_command: "tflint --version"
+    install_args: []
+    description: "Terraform linter"
+    documentation_url: "https://github.com/terraform-linters/tflint"
+    category: "development"
+
+  # Programming Languages
+  go:
+    manager: brew
+    type: package
+    check_command: "go version"
+    install_args: []
+    description: "Go programming language"
+    documentation_url: "https://golang.org/"
+    category: "development"
+
+  php:
+    manager: brew
+    type: package
+    check_command: "php --version"
+    install_args: []
+    description: "PHP programming language"
+    documentation_url: "https://www.php.net/"
+    category: "development"
+
+  r:
+    manager: brew
+    type: package
+    check_command: "R --version"
+    install_args: []
+    description: "R statistical computing language"
+    documentation_url: "https://www.r-project.org/"
+    category: "development"
+
+  typescript:
+    manager: brew
+    type: package
+    check_command: "tsc --version"
+    install_args: []
+    description: "TypeScript programming language"
+    documentation_url: "https://www.typescriptlang.org/"
+    category: "development"
+
+  # Python Tools
+  black:
+    manager: brew
+    type: package
+    check_command: "black --version"
+    install_args: []
+    description: "Python code formatter"
+    documentation_url: "https://github.com/psf/black"
+    category: "development"
+
+  flake8:
+    manager: brew
+    type: package
+    check_command: "flake8 --version"
+    install_args: []
+    description: "Python linting tool"
+    documentation_url: "https://flake8.pycqa.org/"
+    category: "development"
+
+  ipython:
+    manager: brew
+    type: package
+    check_command: "ipython --version"
+    install_args: []
+    description: "Interactive Python shell"
+    documentation_url: "https://ipython.org/"
+    category: "development"
+
+  jupyterlab:
+    manager: brew
+    type: package
+    check_command: "jupyter --version"
+    install_args: []
+    description: "Web-based interactive development environment"
+    documentation_url: "https://jupyter.org/"
+    category: "development"
+
+  mypy:
+    manager: brew
+    type: package
+    check_command: "mypy --version"
+    install_args: []
+    description: "Static type checker for Python"
+    documentation_url: "http://mypy-lang.org/"
+    category: "development"
+
+  pipx:
+    manager: brew
+    type: package
+    check_command: "pipx --version"
+    install_args: []
+    description: "Install Python applications in isolated environments"
+    documentation_url: "https://pypa.github.io/pipx/"
+    category: "development"
+
+  virtualenv:
+    manager: brew
+    type: package
+    check_command: "virtualenv --version"
+    install_args: []
+    description: "Tool to create isolated Python environments"
+    documentation_url: "https://virtualenv.pypa.io/"
+    category: "development"
+
+  # Database Tools
+  postgresql:
+    manager: brew
+    type: package
+    check_command: "postgres --version"
+    install_args: []
+    description: "PostgreSQL database system"
+    documentation_url: "https://www.postgresql.org/"
+    category: "development"
+
+  mariadb:
+    manager: brew
+    type: package
+    check_command: "mysql --version | grep -i mariadb"
+    install_args: []
+    description: "MySQL-compatible database server"
+    documentation_url: "https://mariadb.org/"
+    category: "development"
+
+  # Code Quality Tools
+  markdownlint-cli:
+    manager: brew
+    type: package
+    check_command: "markdownlint --version"
+    install_args: []
+    description: "Markdown linting and style checking"
+    documentation_url: "https://github.com/igorshubovych/markdownlint-cli"
+    category: "development"
+
+  pre-commit:
+    manager: brew
+    type: package
+    check_command: "pre-commit --version"
+    install_args: []
+    description: "Framework for managing git pre-commit hooks"
+    documentation_url: "https://pre-commit.com/"
+    category: "development"
+
+  prettier:
+    manager: brew
+    type: package
+    check_command: "prettier --version"
+    install_args: []
+    description: "Opinionated code formatter"
+    documentation_url: "https://prettier.io/"
+    category: "development"
+
+  shfmt:
+    manager: brew
+    type: package
+    check_command: "shfmt --version"
+    install_args: []
+    description: "Shell script formatter"
+    documentation_url: "https://github.com/mvdan/sh"
+    category: "development"
+
+  # Version Control
+  git-lfs:
+    manager: brew
+    type: package
+    check_command: "git lfs version"
+    install_args: []
+    description: "Git extension for large file storage"
+    documentation_url: "https://git-lfs.github.com/"
+    category: "development"
+
+  # Package Managers
+  yarn:
+    manager: brew
+    type: package
+    check_command: "yarn --version"
+    install_args: []
+    description: "Fast, reliable JavaScript package manager"
+    documentation_url: "https://yarnpkg.com/"
+    category: "development"
+
+  # HTTP Tools
+  httpie:
+    manager: brew
+    type: package
+    check_command: "http --version"
+    install_args: []
+    description: "User-friendly command-line HTTP client"
+    documentation_url: "https://httpie.io/"
+    category: "development"
+
+  # Document Tools
+  pandoc:
+    manager: brew
+    type: package
+    check_command: "pandoc --version"
+    install_args: []
+    description: "Universal document converter"
+    documentation_url: "https://pandoc.org/"
+    category: "development"
+
+  # Parsing Tools
+  tree-sitter:
+    manager: brew
+    type: package
+    check_command: "tree-sitter --version"
+    install_args: []
+    description: "Parser generator and incremental parsing library"
+    documentation_url: "https://tree-sitter.github.io/"
+    category: "development"
+
+  # Shell Tools
+  powershell:
+    manager: brew
+    type: cask
+    check_command: "pwsh --version"
+    install_args: []
+    description: "Cross-platform automation and configuration tool"
+    documentation_url: "https://github.com/PowerShell/PowerShell"
+    category: "development"
+
+  # .NET Development
+  dotnet-sdk:
+    manager: brew
+    type: cask
+    check_command: "dotnet --version"
+    install_args: []
+    description: ".NET SDK for building applications"
+    documentation_url: "https://dotnet.microsoft.com/"
+    category: "development"
+
+  # Container Tools
+  docker-desktop:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Docker.app"'
+    install_args: []
+    description: "Docker Desktop for Mac"
+    documentation_url: "https://www.docker.com/products/docker-desktop"
+    category: "development"
+
+  docker-completion:
+    manager: brew
+    type: package
+    check_command: "brew list docker-completion"
+    install_args: []
+    description: "Bash completion for Docker"
+    documentation_url: "https://docs.docker.com/"
+    category: "development"

@@ -26,7 +26,10 @@
       "Bash(defaults find \"scroll\" 2 > /dev/null)",
       "Bash(system_profiler:*)",
       "Bash(mv:*)",
-      "Bash(./_test/shellcheck.sh:*)"
+      "Bash(./_test/shellcheck.sh:*)",
+      "Bash(CONFIG_FILES=\"\" ./install.sh -d)",
+      "Bash(./install.sh:*)",
+      "Bash(CONFIG_FILES=\"terminal productivity\" ./install.sh -d)"
     ],
     "deny": []
   }

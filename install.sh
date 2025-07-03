@@ -2,10 +2,25 @@
 set -euo pipefail
 
 # Configuration
-DEFAULT_YAML_FILE="tools.yaml"
 DEFAULT_CONFIG_DIR="_configs"
 CONFIG_DIR="${CONFIG_DIR:-}"
-YAML_FILE=""
+# Default to development tools only, but allow override via environment
+# CONFIG_FILES can be set as environment variable with space-separated values
+if [[ -v CONFIG_FILES ]]; then
+  # CONFIG_FILES exists in environment (as a string)
+  config_files_env="$CONFIG_FILES"
+  if [[ -z "$config_files_env" ]]; then
+    # It's empty, so use no files
+    CONFIG_FILES=()
+  else
+    # Parse space-separated list into array
+    IFS=' ' read -ra CONFIG_FILES <<< "$config_files_env"
+  fi
+  unset config_files_env
+else
+  # CONFIG_FILES not set in environment, use default
+  CONFIG_FILES=("development")
+fi
 REQUIRED_COMMANDS=("yq" "which")
 STOW_DIRS=(aerospace bat gh git karabiner kitty nvim starship tmux zsh)
 
@@ -15,6 +30,7 @@ VERBOSE="${VERBOSE:-false}"
 STOW="${STOW:-false}"
 FORCE="${FORCE:-false}"
 UPDATE="${UPDATE:-false}"
+CONFIG_FILES_SET_VIA_CLI="${CONFIG_FILES_SET_VIA_CLI:-false}"
 
 command_exists() {
   type "$1" >/dev/null 2>&1
@@ -33,7 +49,7 @@ get_available_managers() {
     # Get unique package managers from YAML
     local required_managers
     # Use || true to ensure the command doesn't cause an exit
-    required_managers=$(yq '.tools[].manager' "$YAML_FILE" 2>/dev/null | sort -u || true)
+    required_managers=$(yq '.tools[].manager' "$1" 2>/dev/null | sort -u || true)
 
     while read -r manager; do
       # Skip empty lines
@@ -116,6 +132,61 @@ check_requirements() {
   return 0
 }
 
+prepare_config_files() {
+  local config_file
+  local resolved_files=()
+  
+  # If no config files specified, report and exit
+  if [ ${#CONFIG_FILES[@]} -eq 0 ]; then
+    # Check if CONFIG_FILES was explicitly set to empty via environment
+    if [[ "${CONFIG_FILES:-unset}" == "" ]]; then
+      info "No configuration files specified (CONFIG_FILES was set to empty)."
+      info "Use -c to add config files or unset CONFIG_FILES to use defaults."
+    else
+      info "No configuration files specified. Use -c to add config files."
+    fi
+    info "Example: $0 -c development -c productivity"
+    return 1
+  fi
+  
+  # Resolve each config file path
+  for config_file in "${CONFIG_FILES[@]}"; do
+    # Add .yaml extension if not present
+    if [[ ! "$config_file" =~ \.(yaml|yml)$ ]]; then
+      config_file="${config_file}.yaml"
+    fi
+    
+    # Check if file exists directly
+    if [[ -f "$config_file" ]]; then
+      resolved_files+=("$config_file")
+    elif [[ "$CONFIG_DIR" = /* ]] && [[ -f "$CONFIG_DIR/$config_file" ]]; then
+      # Absolute CONFIG_DIR path
+      resolved_files+=("$CONFIG_DIR/$config_file")
+    else
+      # Relative CONFIG_DIR path
+      local script_dir
+      script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+      
+      if [[ -f "$CONFIG_DIR/$config_file" ]]; then
+        resolved_files+=("$CONFIG_DIR/$config_file")
+      elif [[ -f "$script_dir/$CONFIG_DIR/$config_file" ]]; then
+        resolved_files+=("$script_dir/$CONFIG_DIR/$config_file")
+      else
+        error "Configuration file not found: $config_file"
+        error "Searched in:"
+        error "  - $config_file"
+        error "  - $CONFIG_DIR/$config_file"
+        error "  - $script_dir/$CONFIG_DIR/$config_file"
+        return 1
+      fi
+    fi
+  done
+  
+  # Export resolved files for use by other functions
+  RESOLVED_CONFIG_FILES=("${resolved_files[@]}")
+  return 0
+}
+
 run_stow() {
   if ! command_exists "stow"; then
     error "stow is not installed. Please install stow first."
@@ -170,22 +241,24 @@ info() {
 
 can_install_tool() {
   local tool=$1
+  local yaml_file=$2
   local manager
-  manager=$(yq ".tools.${tool}.manager" "$YAML_FILE")
+  manager=$(yq ".tools.${tool}.manager" "$yaml_file")
 
   [[ " ${AVAILABLE_MANAGERS[*]} " =~ \ ${manager}\  ]]
 }
 
 install_tool() {
   local tool=$1
+  local yaml_file=$2
   local manager
   local type
   local install_args
   local install_cmd
 
-  manager=$(yq ".tools.${tool}.manager" "$YAML_FILE")
-  type=$(yq ".tools.${tool}.type" "$YAML_FILE")
-  install_args=$(yq ".tools.${tool}.install_args[]" "$YAML_FILE" | tr '\n' ' ')
+  manager=$(yq ".tools.${tool}.manager" "$yaml_file")
+  type=$(yq ".tools.${tool}.type" "$yaml_file")
+  install_args=$(yq ".tools.${tool}.install_args[]" "$yaml_file" | tr '\n' ' ')
 
   case "$manager" in
   "apt")
@@ -277,8 +350,9 @@ install_tool() {
 
 is_tool_installed() {
   local tool=$1
+  local yaml_file=$2
   local check_command
-  check_command=$(yq ".tools.${tool}.check_command" "$YAML_FILE")
+  check_command=$(yq ".tools.${tool}.check_command" "$yaml_file")
 
   if [ "$check_command" = "null" ]; then
     info "Skipping check for $tool: no check command specified"
@@ -299,56 +373,25 @@ main() {
   [[ "$DRY_RUN" == "true" ]] && info "Running in dry-run mode - no changes will be made"
   [[ "$FORCE" == "true" ]] && info "Running in force mode - existing files will be overwritten"
 
-  # Resolve YAML file path
-  if [[ -z "$YAML_FILE" ]]; then
-    YAML_FILE="$DEFAULT_YAML_FILE"
-  fi
-
   # Set CONFIG_DIR to default if not specified
   if [[ -z "$CONFIG_DIR" ]]; then
     CONFIG_DIR="$DEFAULT_CONFIG_DIR"
   fi
 
-  # Check if YAML file exists
-  if [[ ! -f "$YAML_FILE" ]]; then
-    # If CONFIG_DIR is an absolute path, use it directly
-    if [[ "$CONFIG_DIR" = /* ]]; then
-      if [[ -f "$CONFIG_DIR/$YAML_FILE" ]]; then
-        YAML_FILE="$CONFIG_DIR/$YAML_FILE"
-      else
-        error "Configuration file not found: $CONFIG_DIR/$YAML_FILE"
-        return 1
-      fi
-    else
-      # CONFIG_DIR is relative, try multiple locations
-      SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-      
-      # First try relative to current directory
-      if [[ -f "$CONFIG_DIR/$YAML_FILE" ]]; then
-        YAML_FILE="$CONFIG_DIR/$YAML_FILE"
-      # Then try relative to script directory
-      elif [[ -f "$SCRIPT_DIR/$CONFIG_DIR/$YAML_FILE" ]]; then
-        YAML_FILE="$SCRIPT_DIR/$CONFIG_DIR/$YAML_FILE"
-      # For backward compatibility, also check script directory directly
-      elif [[ "$CONFIG_DIR" == "$DEFAULT_CONFIG_DIR" ]] && [[ -f "$SCRIPT_DIR/$YAML_FILE" ]]; then
-        YAML_FILE="$SCRIPT_DIR/$YAML_FILE"
-      else
-        error "Configuration file not found: $YAML_FILE"
-        error "Searched in:"
-        error "  - $CONFIG_DIR/$YAML_FILE"
-        error "  - $SCRIPT_DIR/$CONFIG_DIR/$YAML_FILE"
-        [[ "$CONFIG_DIR" == "$DEFAULT_CONFIG_DIR" ]] && error "  - $SCRIPT_DIR/$YAML_FILE"
-        return 1
-      fi
-    fi
-  fi
-
-  info "Using configuration: $YAML_FILE"
-
   # Check requirements and exit if they're not met
   if ! check_requirements; then
     return 1
   fi
+
+  # Prepare configuration files
+  if ! prepare_config_files; then
+    return 1
+  fi
+
+  info "Using configuration files:"
+  for config_file in "${RESOLVED_CONFIG_FILES[@]}"; do
+    info "  - $config_file"
+  done
 
   # Update package manager databases if in update mode
   if [[ "$UPDATE" == "true" ]]; then
@@ -362,29 +405,41 @@ main() {
     fi
   fi
 
-  # Get available package managers
-  AVAILABLE_MANAGERS=()
-  while IFS= read -r manager; do
-    # Skip empty lines
-    [[ -n "$manager" ]] && AVAILABLE_MANAGERS+=("$manager")
-  done < <(get_available_managers)
-
+  # Collect all required package managers from all config files
+  local all_managers=()
+  for config_file in "${RESOLVED_CONFIG_FILES[@]}"; do
+    # Get available package managers for this config file
+    while IFS= read -r manager; do
+      # Skip empty lines and add unique managers
+      if [[ -n "$manager" ]] && [[ ! " ${all_managers[*]} " =~ \ $manager\  ]]; then
+        all_managers+=("$manager")
+      fi
+    done < <(get_available_managers "$config_file")
+  done
+  
+  AVAILABLE_MANAGERS=("${all_managers[@]}")
+  
   if [ ${#AVAILABLE_MANAGERS[@]} -eq 0 ]; then
     info "No package managers available - nothing to do"
     return 0
   fi
 
-  # Get all tools from YAML
-  local tools
-  tools=$(yq '.tools | keys | .[]' "$YAML_FILE")
+  # Process each configuration file
+  for CURRENT_CONFIG_FILE in "${RESOLVED_CONFIG_FILES[@]}"; do
+    info ""
+    info "Processing: $CURRENT_CONFIG_FILE"
+    
+    # Get all tools from this YAML file
+    local tools
+    tools=$(yq '.tools | keys | .[]' "$CURRENT_CONFIG_FILE")
 
   # Only process if we have tools
   if [[ -n "$tools" ]]; then
     while read -r tool; do
-      if is_tool_installed "$tool"; then
+      if is_tool_installed "$tool" "$CURRENT_CONFIG_FILE"; then
         if [[ "$UPDATE" == "true" ]]; then
-          manager=$(yq ".tools.${tool}.manager" "$YAML_FILE")
-          type=$(yq ".tools.${tool}.type" "$YAML_FILE")
+          manager=$(yq ".tools.${tool}.manager" "$CURRENT_CONFIG_FILE")
+          type=$(yq ".tools.${tool}.type" "$CURRENT_CONFIG_FILE")
           
           case "$manager" in
           "brew")
@@ -505,8 +560,8 @@ main() {
             ;;
           esac
         else
-          manager=$(yq ".tools.${tool}.manager" "$YAML_FILE")
-          type=$(yq ".tools.${tool}.type" "$YAML_FILE")
+          manager=$(yq ".tools.${tool}.manager" "$CURRENT_CONFIG_FILE")
+          type=$(yq ".tools.${tool}.type" "$CURRENT_CONFIG_FILE")
           case "$manager" in
           "brew")
             info "✓ $tool (brew $type) is already installed"
@@ -526,8 +581,8 @@ main() {
           esac
         fi
       elif can_install_tool "$tool"; then
-        manager=$(yq ".tools.${tool}.manager" "$YAML_FILE")
-        type=$(yq ".tools.${tool}.type" "$YAML_FILE")
+        manager=$(yq ".tools.${tool}.manager" "$CURRENT_CONFIG_FILE")
+        type=$(yq ".tools.${tool}.type" "$CURRENT_CONFIG_FILE")
         info "Installing $tool ($manager $type)..."
         if install_tool "$tool"; then
           info "✓ Successfully installed $tool ($manager $type)"
@@ -535,11 +590,12 @@ main() {
           info "Failed to install $tool ($manager $type)"
         fi
       else
-        manager=$(yq ".tools.${tool}.manager" "$YAML_FILE")
+        manager=$(yq ".tools.${tool}.manager" "$CURRENT_CONFIG_FILE")
         info "Skipping $tool: $manager not available"
       fi
     done <<<"$tools"
   fi
+  done # End of config file loop
 
   if [[ "$STOW" == "true" ]]; then
     info "Running stow..."
@@ -548,9 +604,10 @@ main() {
 }
 
 usage() {
-  echo "Usage: $0 [options] [config.yaml]"
+  echo "Usage: $0 [options]"
   echo "Options:"
-  echo "  -c, --config-dir <dir>  Specify configuration directory (default: _configs)"
+  echo "  -c, --config <name>     Add configuration file to install (can be used multiple times)"
+  echo "  -C, --config-dir <dir>  Specify configuration directory (default: _configs)"
   echo "  -d, --dry-run           Show what would be installed without making changes"
   echo "  -f, --force             Force stow to adopt existing files"
   echo "  -h, --help              Show this help message"
@@ -558,18 +615,20 @@ usage() {
   echo "  -u, --update            Update already installed packages (brew only)"
   echo "  -v, --verbose           Show detailed information and status messages"
   echo ""
-  echo "Config file:"
-  echo "  Specify a YAML file to use instead of the default tools.yaml"
-  echo "  If not found, will search in the configuration directory"
+  echo "Configuration files:"
+  echo "  By default, only 'development' tools are installed."
+  echo "  Use -c to add additional configuration files."
+  echo "  Files are searched in the configuration directory."
   echo ""
   echo "Environment variables:"
   echo "  CONFIG_DIR    Configuration directory (can be absolute or relative path)"
   echo ""
   echo "Examples:"
-  echo "  $0                              # Use default tools.yaml in _configs/"
-  echo "  $0 devtools.yaml                # Use devtools.yaml from config dir"
-  echo "  $0 -c /path/to/configs work.yaml # Use custom config directory"
-  echo "  CONFIG_DIR=./ $0                 # Use current directory for configs"
+  echo "  $0                              # Install development tools only"
+  echo "  $0 -c terminal                  # Install terminal tools only"
+  echo "  $0 -c development -c productivity # Install multiple configs"
+  echo "  $0 -C /path/to/configs -c work  # Use custom config directory"
+  echo "  CONFIG_DIR=./ $0 -c personal     # Use current directory for configs"
   exit 1
 }
 
@@ -598,7 +657,21 @@ while [[ $# -gt 0 ]]; do
     UPDATE=true
     shift
     ;;
-  -c | --config-dir)
+  -c | --config)
+    if [[ -n "$2" && ! "$2" =~ ^- ]]; then
+      # Clear default if this is the first explicit config
+      if [[ "$CONFIG_FILES_SET_VIA_CLI" == "false" ]]; then
+        CONFIG_FILES=()
+        CONFIG_FILES_SET_VIA_CLI=true
+      fi
+      CONFIG_FILES+=("$2")
+      shift 2
+    else
+      echo "Error: --config requires a configuration name" >&2
+      usage
+    fi
+    ;;
+  -C | --config-dir)
     if [[ -n "$2" && ! "$2" =~ ^- ]]; then
       CONFIG_DIR="$2"
       shift 2
@@ -614,11 +687,8 @@ while [[ $# -gt 0 ]]; do
     SOURCE_ONLY=true
     shift
     ;;
-  *.yaml | *.yml)
-    YAML_FILE="$1"
-    shift
-    ;;
   *)
+    echo "Error: Unknown option: $1" >&2
     usage
     ;;
   esac

@@ -37,24 +37,36 @@ tools:
     type: get
     check_command: "test -f $HOME/.arkade/bin/actions-usage"
     install_args: []
+    description: "GitHub Actions usage metrics CLI tool"
+    documentation_url: "https://github.com/self-actuated/actions-usage"
+    category: "development"
 
   atuin:
     manager: arkade
     type: get
     check_command: "test -f $HOME/.arkade/bin/atuin"
     install_args: []
+    description: "Sync, search, and backup shell history across machines"
+    documentation_url: "https://atuin.sh/"
+    category: "terminal"
 
   bun:
     manager: arkade
     type: get
     check_command: "test -f $HOME/.arkade/bin/bun"
     install_args: []
+    description: "Fast all-in-one JavaScript runtime and toolkit"
+    documentation_url: "https://bun.sh/"
+    category: "development"
 
   hostctl:
     manager: arkade
     type: get
     check_command: "test -f $HOME/.arkade/bin/hostctl"
     install_args: []
+    description: "Manage /etc/hosts like a pro with profiles and commands"
+    documentation_url: "https://github.com/guumaster/hostctl"
+    category: "utilities"
 
   # Brew cask packages
   1password-cli:
@@ -62,42 +74,63 @@ tools:
     type: cask
     check_command: "op --version"
     install_args: []
+    description: "1Password command-line tool for secrets management"
+    documentation_url: "https://developer.1password.com/docs/cli/"
+    category: "utilities"
 
   amethyst:
     manager: brew
     type: cask
     check_command: 'test -d "/Applications/Amethyst.app"'
     install_args: []
+    description: "Automatic tiling window manager for macOS"
+    documentation_url: "https://ianyh.com/amethyst/"
+    category: "productivity"
 
   font-jetbrains-mono-nerd-font:
     manager: brew
     type: cask
     check_command: 'brew list --cask font-jetbrains-mono-nerd-font >/dev/null 2>&1 || [ -d "$HOME/Library/Fonts/JetBrainsMono" ] || [ -d "/Library/Fonts/JetBrainsMono" ]'
     install_args: []
+    description: "JetBrains Mono font patched with Nerd Font icons"
+    documentation_url: "https://www.nerdfonts.com/"
+    category: "development"
 
   ghostty:
     manager: brew
     type: cask
     check_command: 'test -d "/Applications/Ghostty.app"'
     install_args: []
+    description: "Fast, feature-rich, and cross-platform terminal emulator"
+    documentation_url: "https://github.com/ghostty-org/ghostty"
+    category: "terminal"
 
   karabiner-elements:
     manager: brew
     type: cask
     check_command: 'test -d "/Applications/Karabiner-Elements.app"'
     install_args: []
+    description: "Powerful keyboard customizer for macOS"
+    documentation_url: "https://karabiner-elements.pqrs.org/"
+    category: "utilities"
 
   kitty:
     manager: brew
     type: cask
     check_command: 'brew list --cask kitty >/dev/null 2>&1 || [ -d "/Applications/kitty.app" ] || which kitty >/dev/null 2>&1'
     install_args: []
+    description: "Fast, feature-rich, GPU based terminal emulator"
+    documentation_url: "https://sw.kovidgoyal.net/kitty/"
+    category: "terminal"
 
   podman-desktop:
     manager: brew
     type: cask
     check_command: "test -d '/Applications/Podman Desktop.app'"
     install_args: []
+    description: "Graphical tool for managing containers and Kubernetes"
+    documentation_url: "https://podman-desktop.io/"
+    category: "development"
 
   # Brew packages
   act:
@@ -105,126 +138,189 @@ tools:
     type: package
     check_command: "act --version"
     install_args: []
+    description: "Run GitHub Actions locally"
+    documentation_url: "https://github.com/nektos/act"
+    category: "development"
 
   automake:
     manager: brew
     type: package
     check_command: "automake --version"
     install_args: []
+    description: "Tool for generating GNU Standards-compliant Makefiles"
+    documentation_url: "https://www.gnu.org/software/automake/"
+    category: "development"
 
   azure-cli:
     manager: brew
     type: package
     check_command: "az --version"
     install_args: []
+    description: "Command-line tools for Azure cloud services"
+    documentation_url: "https://docs.microsoft.com/en-us/cli/azure/"
+    category: "development"
 
   bash:
     manager: brew
     type: package
     check_command: "bash --version | grep -q 'version 5'"
     install_args: []
+    description: "Bourne-Again SHell, a UNIX command interpreter (version 5)"
+    documentation_url: "https://www.gnu.org/software/bash/"
+    category: "terminal"
 
   bat:
     manager: brew
     type: package
     check_command: "bat --version"
     install_args: []
+    description: "Cat clone with syntax highlighting and Git integration"
+    documentation_url: "https://github.com/sharkdp/bat"
+    category: "terminal"
 
   bats-core:
     manager: brew
     type: package
     check_command: "bats --version"
     install_args: []
+    description: "Bash Automated Testing System"
+    documentation_url: "https://github.com/bats-core/bats-core"
+    category: "development"
 
   bpytop:
     manager: brew
     type: package
     check_command: "bpytop --version"
     install_args: []
+    description: "Resource monitor that shows usage and stats"
+    documentation_url: "https://github.com/aristocratos/bpytop"
+    category: "utilities"
 
   brew-cask-completion:
     manager: brew
     type: package
     check_command: "brew list brew-cask-completion"
     install_args: []
+    description: "Bash completion for brew cask commands"
+    documentation_url: "https://github.com/xyb/homebrew-cask-completion"
+    category: "development"
 
   brew-gem:
     manager: brew
     type: package
     check_command: "brew list brew-gem >/dev/null 2>&1 || which brew-gem >/dev/null 2>&1"
     install_args: []
+    description: "Install Ruby gems as Homebrew formulae"
+    documentation_url: "https://github.com/sportngin/brew-gem"
+    category: "development"
 
   eza:
     manager: brew
     type: package
     check_command: "eza --version"
     install_args: []
+    description: "Modern replacement for 'ls' with color and icons"
+    documentation_url: "https://github.com/eza-community/eza"
+    category: "terminal"
 
   docker:
     manager: brew
     type: package
     check_command: "docker --version"
     install_args: []
+    description: "Container platform for building and running applications"
+    documentation_url: "https://docs.docker.com/"
+    category: "development"
 
   fd:
     manager: brew
     type: package
     check_command: "fd --version"
     install_args: []
+    description: "Simple, fast and user-friendly alternative to 'find'"
+    documentation_url: "https://github.com/sharkdp/fd"
+    category: "terminal"
 
   fx:
     manager: brew
     type: package
     check_command: "which fx >/dev/null 2>&1"
     install_args: []
+    description: "Terminal JSON viewer with interactive navigation"
+    documentation_url: "https://github.com/antonmedv/fx"
+    category: "development"
 
   fzf:
     manager: brew
     type: package
     check_command: "fzf --version"
     install_args: []
+    description: "Command-line fuzzy finder"
+    documentation_url: "https://github.com/junegunn/fzf"
+    category: "terminal"
 
   gh:
     manager: brew
     type: package
     check_command: "gh --version"
     install_args: []
+    description: "GitHub's official command-line tool"
+    documentation_url: "https://cli.github.com/"
+    category: "development"
 
   jq:
     manager: brew
     type: package
     check_command: "jq --version"
     install_args: []
+    description: "Lightweight command-line JSON processor"
+    documentation_url: "https://stedolan.github.io/jq/"
+    category: "development"
 
   lazydocker:
     manager: brew
     type: package
     check_command: "lazydocker --version"
     install_args: []
+    description: "Terminal UI for Docker and docker-compose"
+    documentation_url: "https://github.com/jesseduffield/lazydocker"
+    category: "development"
 
   lazygit:
     manager: brew
     type: package
     check_command: "lazygit --version"
     install_args: []
+    description: "Simple terminal UI for git commands"
+    documentation_url: "https://github.com/jesseduffield/lazygit"
+    category: "development"
 
   mas:
     manager: brew
     type: package
     check_command: "mas version"
     install_args: []
+    description: "Mac App Store command-line interface"
+    documentation_url: "https://github.com/mas-cli/mas"
+    category: "utilities"
 
   midnight-commander:
     manager: brew
     type: package
     check_command: "mc --version"
     install_args: []
+    description: "Terminal-based visual file manager"
+    documentation_url: "https://midnight-commander.org/"
+    category: "terminal"
 
   ncdu:
     manager: brew
     type: package
     check_command: "ncdu --version"
     install_args: []
+    description: "NCurses Disk Usage - disk usage analyzer"
+    documentation_url: "https://dev.yorhel.nl/ncdu"
+    category: "utilities"
 
   neovim:
     manager: brew
@@ -234,162 +330,243 @@ tools:
     # add --HEAD to install_args to install the latest version from HEAD
     # install_args:
     #   - --HEAD
+    description: "Hyperextensible Vim-based text editor"
+    documentation_url: "https://neovim.io/"
+    category: "development"
 
   nushell:
     manager: brew
     type: package
     check_command: "nu --version"
     install_args: []
+    description: "Modern shell written in Rust"
+    documentation_url: "https://www.nushell.sh/"
+    category: "terminal"
 
   nvm:
     manager: brew
     type: package
     check_command: 'brew --prefix nvm >/dev/null 2>&1 && test -d "$(brew --prefix nvm)"'
     install_args: []
+    description: "Node Version Manager - manage multiple Node.js versions"
+    documentation_url: "https://github.com/nvm-sh/nvm"
+    category: "development"
 
   podman:
     manager: brew
     type: package
     check_command: "podman --version"
     install_args: []
+    description: "Container engine for running OCI containers"
+    documentation_url: "https://podman.io/"
+    category: "development"
 
   podman-compose:
     manager: brew
     type: package
     check_command: "podman-compose --version"
     install_args: []
+    description: "Docker-compose compatible wrapper for Podman"
+    documentation_url: "https://github.com/containers/podman-compose"
+    category: "development"
 
   python3-pip:
     manager: brew
     type: package
     check_command: "python3 -m pip --version"
     install_args: []
+    description: "Python package installer"
+    documentation_url: "https://pip.pypa.io/"
+    category: "development"
 
   pulumi:
     manager: brew
     type: package
     check_command: "pulumi version"
     install_args: []
+    description: "Infrastructure as Code SDK"
+    documentation_url: "https://www.pulumi.com/"
+    category: "development"
 
   ranger:
     manager: brew
     type: package
     check_command: "ranger --version"
     install_args: []
+    description: "Console file manager with VI key bindings"
+    documentation_url: "https://ranger.github.io/"
+    category: "terminal"
 
   rbenv:
     manager: brew
     type: package
     check_command: "rbenv --version"
     install_args: []
+    description: "Ruby version manager"
+    documentation_url: "https://github.com/rbenv/rbenv"
+    category: "development"
 
   ripgrep:
     manager: brew
     type: package
     check_command: "rg --version"
     install_args: []
+    description: "Recursively search directories for a regex pattern"
+    documentation_url: "https://github.com/BurntSushi/ripgrep"
+    category: "terminal"
 
   rust:
     manager: brew
     type: package
     check_command: "rustc --version"
     install_args: []
+    description: "Systems programming language focused on safety"
+    documentation_url: "https://www.rust-lang.org/"
+    category: "development"
 
   shellcheck:
     manager: brew
     type: package
     check_command: "shellcheck --version"
     install_args: []
+    description: "Static analysis tool for shell scripts"
+    documentation_url: "https://www.shellcheck.net/"
+    category: "development"
 
   sk:
     manager: brew
     type: package
     check_command: "sk --version"
     install_args: []
+    description: "Fuzzy finder in rust (skim)"
+    documentation_url: "https://github.com/lotabout/skim"
+    category: "terminal"
 
   sshs:
     manager: brew
     type: package
     check_command: "sshs --version"
     install_args: []
+    description: "SSH client with server management features"
+    documentation_url: "https://github.com/quantumsheep/sshs"
+    category: "utilities"
 
   starship:
     manager: brew
     type: package
     check_command: "starship --version"
     install_args: []
+    description: "Cross-shell prompt for astronauts"
+    documentation_url: "https://starship.rs/"
+    category: "terminal"
 
   stow:
     manager: brew
     type: package
     check_command: "stow --version"
     install_args: []
+    description: "Symlink farm manager for dotfiles"
+    documentation_url: "https://www.gnu.org/software/stow/"
+    category: "utilities"
 
   the_silver_searcher:
     manager: brew
     type: package
     check_command: "ag --version"
     install_args: []
+    description: "Code searching tool similar to ack but faster"
+    documentation_url: "https://github.com/ggreer/the_silver_searcher"
+    category: "terminal"
 
   tmux:
     manager: brew
     type: package
     check_command: "tmux -V"
     install_args: []
+    description: "Terminal multiplexer"
+    documentation_url: "https://github.com/tmux/tmux"
+    category: "terminal"
 
   trivy:
     manager: brew
     type: package
     check_command: "trivy --version"
     install_args: []
+    description: "Vulnerability scanner for containers and other artifacts"
+    documentation_url: "https://aquasecurity.github.io/trivy/"
+    category: "development"
 
   wget:
     manager: brew
     type: package
     check_command: "wget --version"
     install_args: []
+    description: "Internet file retriever"
+    documentation_url: "https://www.gnu.org/software/wget/"
+    category: "utilities"
 
   xh:
     manager: brew
     type: package
     check_command: "xh --version"
     install_args: []
+    description: "Friendly and fast HTTP client"
+    documentation_url: "https://github.com/ducaale/xh"
+    category: "development"
 
   yamllint:
     manager: brew
     type: package
     check_command: "yamllint --version"
     install_args: []
+    description: "Linter for YAML files"
+    documentation_url: "https://yamllint.readthedocs.io/"
+    category: "development"
 
   ykman:
     manager: brew
     type: package
     check_command: "ykman --version"
     install_args: []
+    description: "YubiKey Manager CLI"
+    documentation_url: "https://docs.yubico.com/software/yubikey/tools/ykman/"
+    category: "utilities"
 
   yq:
     manager: brew
     type: package
     check_command: "yq --version"
     install_args: []
+    description: "Command-line YAML processor"
+    documentation_url: "https://github.com/mikefarah/yq"
+    category: "development"
 
   zoxide:
     manager: brew
     type: package
     check_command: "zoxide --version"
     install_args: []
+    description: "Smarter cd command that learns your habits"
+    documentation_url: "https://github.com/ajeetdsouza/zoxide"
+    category: "terminal"
 
   zsh-autosuggestions:
     manager: brew
     type: package
     check_command: "brew list zsh-autosuggestions"
     install_args: []
+    description: "Fish-like autosuggestions for zsh"
+    documentation_url: "https://github.com/zsh-users/zsh-autosuggestions"
+    category: "terminal"
 
   zsh-syntax-highlighting:
     manager: brew
     type: package
     check_command: "brew list zsh-syntax-highlighting"
     install_args: []
+    description: "Fish shell-like syntax highlighting for Zsh"
+    documentation_url: "https://github.com/zsh-users/zsh-syntax-highlighting"
+    category: "terminal"
 
   # Brew tap repositories
   FelixKratz/formulae:
@@ -397,18 +574,27 @@ tools:
     type: tap
     check_command: "brew tap | grep -qi '^felixkratz/formulae$'"
     install_args: []
+    description: "Homebrew tap for FelixKratz's formulae"
+    documentation_url: "https://github.com/FelixKratz/homebrew-formulae"
+    category: "development"
 
   nikitabobko/tap:
     manager: brew
     type: tap
     check_command: "brew tap | grep -q '^nikitabobko/tap$'"
     install_args: []
+    description: "Homebrew tap for nikitabobko's formulae"
+    documentation_url: "https://github.com/nikitabobko/homebrew-tap"
+    category: "development"
 
   noahgorstein/tap:
     manager: brew
     type: tap
     check_command: "brew tap | grep -q '^noahgorstein/tap$'"
     install_args: []
+    description: "Homebrew tap for noahgorstein's formulae"
+    documentation_url: "https://github.com/noahgorstein/homebrew-tap"
+    category: "development"
 
   # Brew packages from tap repositories
   aerospace:
@@ -416,24 +602,36 @@ tools:
     type: cask
     check_command: 'test -d "/Applications/Aerospace.app"'
     install_args: ["nikitabobko/tap/aerospace"]
+    description: "AeroSpace is an i3-like tiling window manager for macOS"
+    documentation_url: "https://github.com/nikitabobko/AeroSpace"
+    category: "productivity"
 
   borders: # Changed from jankyborders to match actual package name
     manager: brew
     type: package
     check_command: "test -d /opt/homebrew/Cellar/borders"
     install_args: ["felixkratz/formulae/borders"] # Note lower case
+    description: "Window border system for macOS"
+    documentation_url: "https://github.com/FelixKratz/JankyBorders"
+    category: "productivity"
 
   jqp:
     manager: brew
     type: package
     check_command: "which jqp"
     install_args: ["noahgorstein/tap/jqp"]
+    description: "TUI for jq with live preview"
+    documentation_url: "https://github.com/noahgorstein/jqp"
+    category: "development"
 
   # cargo
   code2prompt:
     manager: cargo
     type: binary
     check_command: "code2prompt --version"
+    description: "Convert code files to LLM prompts"
+    documentation_url: "https://github.com/raphaelmansuy/code2prompt"
+    category: "development"
 
   # example of adding a tool from cargo:
   # zellij:
@@ -449,3 +647,6 @@ tools:
     type: tool
     check_command: "which posting"
     install_args: ["--python", "3.12"]
+    description: "Terminal-based HTTP client for API testing"
+    documentation_url: "https://github.com/darrenburns/posting"
+    category: "development"
