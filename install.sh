@@ -2,7 +2,10 @@
 set -euo pipefail
 
 # Configuration
-YAML_FILE="tools.yaml"
+DEFAULT_YAML_FILE="tools.yaml"
+DEFAULT_CONFIG_DIR="_configs"
+CONFIG_DIR="${CONFIG_DIR:-}"
+YAML_FILE=""
 REQUIRED_COMMANDS=("yq" "which")
 STOW_DIRS=(aerospace bat gh git karabiner kitty nvim starship tmux zsh)
 
@@ -296,6 +299,52 @@ main() {
   [[ "$DRY_RUN" == "true" ]] && info "Running in dry-run mode - no changes will be made"
   [[ "$FORCE" == "true" ]] && info "Running in force mode - existing files will be overwritten"
 
+  # Resolve YAML file path
+  if [[ -z "$YAML_FILE" ]]; then
+    YAML_FILE="$DEFAULT_YAML_FILE"
+  fi
+
+  # Set CONFIG_DIR to default if not specified
+  if [[ -z "$CONFIG_DIR" ]]; then
+    CONFIG_DIR="$DEFAULT_CONFIG_DIR"
+  fi
+
+  # Check if YAML file exists
+  if [[ ! -f "$YAML_FILE" ]]; then
+    # If CONFIG_DIR is an absolute path, use it directly
+    if [[ "$CONFIG_DIR" = /* ]]; then
+      if [[ -f "$CONFIG_DIR/$YAML_FILE" ]]; then
+        YAML_FILE="$CONFIG_DIR/$YAML_FILE"
+      else
+        error "Configuration file not found: $CONFIG_DIR/$YAML_FILE"
+        return 1
+      fi
+    else
+      # CONFIG_DIR is relative, try multiple locations
+      SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+      
+      # First try relative to current directory
+      if [[ -f "$CONFIG_DIR/$YAML_FILE" ]]; then
+        YAML_FILE="$CONFIG_DIR/$YAML_FILE"
+      # Then try relative to script directory
+      elif [[ -f "$SCRIPT_DIR/$CONFIG_DIR/$YAML_FILE" ]]; then
+        YAML_FILE="$SCRIPT_DIR/$CONFIG_DIR/$YAML_FILE"
+      # For backward compatibility, also check script directory directly
+      elif [[ "$CONFIG_DIR" == "$DEFAULT_CONFIG_DIR" ]] && [[ -f "$SCRIPT_DIR/$YAML_FILE" ]]; then
+        YAML_FILE="$SCRIPT_DIR/$YAML_FILE"
+      else
+        error "Configuration file not found: $YAML_FILE"
+        error "Searched in:"
+        error "  - $CONFIG_DIR/$YAML_FILE"
+        error "  - $SCRIPT_DIR/$CONFIG_DIR/$YAML_FILE"
+        [[ "$CONFIG_DIR" == "$DEFAULT_CONFIG_DIR" ]] && error "  - $SCRIPT_DIR/$YAML_FILE"
+        return 1
+      fi
+    fi
+  fi
+
+  info "Using configuration: $YAML_FILE"
+
   # Check requirements and exit if they're not met
   if ! check_requirements; then
     return 1
@@ -499,14 +548,28 @@ main() {
 }
 
 usage() {
-  echo "Usage: $0 [options]"
+  echo "Usage: $0 [options] [config.yaml]"
   echo "Options:"
-  echo "  -d, --dry-run       Show what would be installed without making changes"
-  echo "  -v, --verbose       Show detailed information and status messages"
-  echo "  -s, --stow          Run stow after installation"
-  echo "  -f, --force         Force stow to adopt existing files"
-  echo "  -u, --update        Update already installed packages (brew only)"
-  echo "  -h, --help          Show this help message"
+  echo "  -c, --config-dir <dir>  Specify configuration directory (default: _configs)"
+  echo "  -d, --dry-run           Show what would be installed without making changes"
+  echo "  -f, --force             Force stow to adopt existing files"
+  echo "  -h, --help              Show this help message"
+  echo "  -s, --stow              Run stow after installation"
+  echo "  -u, --update            Update already installed packages (brew only)"
+  echo "  -v, --verbose           Show detailed information and status messages"
+  echo ""
+  echo "Config file:"
+  echo "  Specify a YAML file to use instead of the default tools.yaml"
+  echo "  If not found, will search in the configuration directory"
+  echo ""
+  echo "Environment variables:"
+  echo "  CONFIG_DIR    Configuration directory (can be absolute or relative path)"
+  echo ""
+  echo "Examples:"
+  echo "  $0                              # Use default tools.yaml in _configs/"
+  echo "  $0 devtools.yaml                # Use devtools.yaml from config dir"
+  echo "  $0 -c /path/to/configs work.yaml # Use custom config directory"
+  echo "  CONFIG_DIR=./ $0                 # Use current directory for configs"
   exit 1
 }
 
@@ -535,11 +598,24 @@ while [[ $# -gt 0 ]]; do
     UPDATE=true
     shift
     ;;
+  -c | --config-dir)
+    if [[ -n "$2" && ! "$2" =~ ^- ]]; then
+      CONFIG_DIR="$2"
+      shift 2
+    else
+      echo "Error: --config-dir requires a directory path" >&2
+      usage
+    fi
+    ;;
   -h | --help)
     usage
     ;;
   --source-only)
     SOURCE_ONLY=true
+    shift
+    ;;
+  *.yaml | *.yml)
+    YAML_FILE="$1"
     shift
     ;;
   *)

@@ -244,7 +244,7 @@ tools:
   nvm:
     manager: brew
     type: package
-    check_command: "brew --prefix nvm >/dev/null 2>&1 && test -d \"$(brew --prefix nvm)\""
+    check_command: 'brew --prefix nvm >/dev/null 2>&1 && test -d "$(brew --prefix nvm)"'
     install_args: []
 
   podman:

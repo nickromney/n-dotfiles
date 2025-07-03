@@ -29,8 +29,10 @@ This is a personal dotfiles repository designed for cross-platform configuration
 
 ### Tool Management
 
-- All tools are defined in `tools.yaml` with installation methods and verification commands
-- The `install.sh` script reads this YAML file and installs tools using the appropriate package manager
+- All tools are defined in YAML files in the `_configs/` directory
+- The default configuration is `_configs/tools.yaml`
+- You can use custom configurations: `./install.sh devtools.yaml` or `./install.sh work.yaml`
+- The `install.sh` script reads the specified YAML file and installs tools using the appropriate package manager
 - Each tool has a `check_command` to verify if it's already installed (skip if present)
 
 ### Configuration Structure
@@ -47,6 +49,53 @@ This is a personal dotfiles repository designed for cross-platform configuration
 4. **cargo** - Rust binaries
 5. **apt** - Ubuntu/Debian systems
 
+### Configuration Files
+
+The configuration directory is flexible and can be customized:
+
+1. **Default location**: `_configs/` directory in the repository
+2. **Environment variable**: Set `CONFIG_DIR` to specify a custom directory
+3. **Command-line option**: Use `-c` or `--config-dir` to override
+
+Configuration files can include:
+
+- `tools.yaml` - Default configuration with all available tools
+- `devtools.yaml` - Development tools only (e.g., editors, linters, git tools)
+- `productivity.yaml` - Productivity apps (e.g., task managers, note-taking)
+- `work.yaml` - Work-specific tools
+- `personal.yaml` - Personal machine setup
+
+Example usage:
+
+```bash
+# Install default tools
+./install.sh
+
+# Install development tools only
+./install.sh devtools.yaml
+
+# Use configuration from current directory
+CONFIG_DIR=./ ./install.sh personal.yaml
+
+# Use external configuration directory
+./install.sh -c ~/my-configs work.yaml
+
+# Use absolute path to config directory
+./install.sh --config-dir /path/to/configs devtools.yaml
+
+# Install with specific options
+./install.sh -s -v work.yaml
+```
+
+The script searches for configuration files in this order:
+
+1. If the YAML file path is absolute, use it directly
+2. If CONFIG_DIR is absolute, look in `CONFIG_DIR/file.yaml`
+3. If CONFIG_DIR is relative:
+   - Check `./CONFIG_DIR/file.yaml` (relative to current directory)
+   - Check `SCRIPT_DIR/CONFIG_DIR/file.yaml` (relative to install.sh location)
+   - For backward compatibility with default config dir, also check `SCRIPT_DIR/file.yaml`
+
 ### Key Design Principles
 
 - **Idempotent**: Running multiple times produces the same result
@@ -58,9 +107,10 @@ This is a personal dotfiles repository designed for cross-platform configuration
 
 ### Adding a New Tool
 
-1. Edit `tools.yaml` and add the tool definition with appropriate installer and check_command
-2. Run `./install.sh -d` to preview
-3. Run `./install.sh` to install
+1. Edit the appropriate YAML file in `_configs/` (or create a new one)
+2. Add the tool definition with appropriate installer and check_command
+3. Run `./install.sh -d [config.yaml]` to preview
+4. Run `./install.sh [config.yaml]` to install
 
 ### Adding a New Configuration
 
@@ -105,6 +155,8 @@ The test suite uses mocking to simulate all external commands (brew, apt, cargo,
 - **is_tool_installed()** - Runs the check_command for each tool to verify installation
 - **install_tool()** - Handles installation based on manager and type
 - **main()** - Orchestrates the installation process, handles empty lines in command output
+  - Resolves YAML file path: checks current dir, then `_configs/`, then script directory
+  - Supports custom configuration files passed as arguments
 
 ### Error Handling
 
@@ -137,10 +189,10 @@ get_available_managers() {
   local old_errexit
   old_errexit=$(set +o | grep errexit)
   set +e
-  
+
   # Function body that may have failing commands
   # e.g., checking if commands exist
-  
+
   # Restore errexit before returning
   eval "$old_errexit"
   return 0
@@ -180,19 +232,20 @@ The script can manage dock applications with intelligent duplicate prevention:
 ```yaml
 dock:
   manage_apps: true
-  clear_dock_first: false  # Set to true to start fresh
+  clear_dock_first: false # Set to true to start fresh
   apps:
     - "/Applications/Visual Studio Code.app"
     - "/Applications/Brave Browser.app"
 ```
 
 **Important Notes:**
+
 - Running multiple times with `clear_dock_first: false` will NOT create duplicates
 - The script checks existing dock apps before adding (URL decoding handles spaces in names)
 - Finder is ALWAYS in the dock by default - don't add it to your apps list
 - Some system apps have non-standard paths (e.g., Finder is in `/System/Library/CoreServices/`)
 
-### Implementation Details
+### Implementation
 
 #### Arithmetic Operations with errexit
 
@@ -232,6 +285,7 @@ bats macos.bats --filter "dock app management"
 ```
 
 Key testing patterns:
+
 - Mock `defaults` command to simulate system state
 - Mock `python3` for URL decoding in tests
 - Test duplicate prevention with pre-existing dock apps
@@ -240,10 +294,12 @@ Key testing patterns:
 ### Common Issues and Solutions
 
 1. **"App not found: /Applications/Finder.app"**
+
    - Finder is in `/System/Library/CoreServices/Finder.app`
    - Better solution: Remove Finder from your apps list (it's always there)
 
 2. **Duplicate dock items**
+
    - Ensure you're using the latest version with URL decoding
    - The script now properly detects apps with spaces in names
 

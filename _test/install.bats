@@ -7,7 +7,7 @@ setup() {
   setup_mocks
   
   # Set up test environment - use the real tools.yaml
-  export YAML_FILE="$BATS_TEST_DIRNAME/../tools.yaml"
+  export YAML_FILE="$BATS_TEST_DIRNAME/../_configs/tools.yaml"
   export DRY_RUN="false"
   export VERBOSE="false"
   export STOW="false"
