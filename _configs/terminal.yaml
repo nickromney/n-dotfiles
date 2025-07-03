@@ -1,0 +1,244 @@
+# Terminal and shell-related tools
+# Tools for terminal emulation, shell enhancements, and command-line productivity
+
+package_managers:
+  arkade:
+    types:
+      - get
+    default_type: get
+
+  brew:
+    types:
+      - package
+      - cask
+    default_type: package
+
+tools:
+  # Terminal emulators
+  ghostty:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Ghostty.app"'
+    install_args: []
+    description: "Fast, feature-rich, and cross-platform terminal emulator"
+    documentation_url: "https://github.com/ghostty-org/ghostty"
+    category: "terminal"
+
+  kitty:
+    manager: brew
+    type: cask
+    check_command: 'brew list --cask kitty >/dev/null 2>&1 || [ -d "/Applications/kitty.app" ] || which kitty >/dev/null 2>&1'
+    install_args: []
+    description: "Fast, feature-rich, GPU based terminal emulator"
+    documentation_url: "https://sw.kovidgoyal.net/kitty/"
+    category: "terminal"
+
+  # Shell enhancements
+  atuin:
+    manager: arkade
+    type: get
+    check_command: "test -f $HOME/.arkade/bin/atuin"
+    install_args: []
+    description: "Sync, search, and backup shell history across machines"
+    documentation_url: "https://atuin.sh/"
+    category: "terminal"
+
+  bash:
+    manager: brew
+    type: package
+    check_command: "bash --version | grep -q 'version 5'"
+    install_args: []
+    description: "Bourne-Again SHell, a UNIX command interpreter (version 5)"
+    documentation_url: "https://www.gnu.org/software/bash/"
+    category: "terminal"
+
+  nushell:
+    manager: brew
+    type: package
+    check_command: "nu --version"
+    install_args: []
+    description: "Modern shell written in Rust"
+    documentation_url: "https://www.nushell.sh/"
+    category: "terminal"
+
+  starship:
+    manager: brew
+    type: package
+    check_command: "starship --version"
+    install_args: []
+    description: "Cross-shell prompt for astronauts"
+    documentation_url: "https://starship.rs/"
+    category: "terminal"
+
+  zsh-autosuggestions:
+    manager: brew
+    type: package
+    check_command: "brew list zsh-autosuggestions"
+    install_args: []
+    description: "Fish-like autosuggestions for zsh"
+    documentation_url: "https://github.com/zsh-users/zsh-autosuggestions"
+    category: "terminal"
+
+  zsh-syntax-highlighting:
+    manager: brew
+    type: package
+    check_command: "brew list zsh-syntax-highlighting"
+    install_args: []
+    description: "Fish shell-like syntax highlighting for Zsh"
+    documentation_url: "https://github.com/zsh-users/zsh-syntax-highlighting"
+    category: "terminal"
+
+  # Command-line tools
+  bat:
+    manager: brew
+    type: package
+    check_command: "bat --version"
+    install_args: []
+    description: "Cat clone with syntax highlighting and Git integration"
+    documentation_url: "https://github.com/sharkdp/bat"
+    category: "terminal"
+
+  eza:
+    manager: brew
+    type: package
+    check_command: "eza --version"
+    install_args: []
+    description: "Modern replacement for 'ls' with color and icons"
+    documentation_url: "https://github.com/eza-community/eza"
+    category: "terminal"
+
+  fd:
+    manager: brew
+    type: package
+    check_command: "fd --version"
+    install_args: []
+    description: "Simple, fast and user-friendly alternative to 'find'"
+    documentation_url: "https://github.com/sharkdp/fd"
+    category: "terminal"
+
+  fzf:
+    manager: brew
+    type: package
+    check_command: "fzf --version"
+    install_args: []
+    description: "Command-line fuzzy finder"
+    documentation_url: "https://github.com/junegunn/fzf"
+    category: "terminal"
+
+  midnight-commander:
+    manager: brew
+    type: package
+    check_command: "mc --version"
+    install_args: []
+    description: "Terminal-based visual file manager"
+    documentation_url: "https://midnight-commander.org/"
+    category: "terminal"
+
+  ranger:
+    manager: brew
+    type: package
+    check_command: "ranger --version"
+    install_args: []
+    description: "Console file manager with VI key bindings"
+    documentation_url: "https://ranger.github.io/"
+    category: "terminal"
+
+  ripgrep:
+    manager: brew
+    type: package
+    check_command: "rg --version"
+    install_args: []
+    description: "Recursively search directories for a regex pattern"
+    documentation_url: "https://github.com/BurntSushi/ripgrep"
+    category: "terminal"
+
+  sk:
+    manager: brew
+    type: package
+    check_command: "sk --version"
+    install_args: []
+    description: "Fuzzy finder in rust (skim)"
+    documentation_url: "https://github.com/lotabout/skim"
+    category: "terminal"
+
+  the_silver_searcher:
+    manager: brew
+    type: package
+    check_command: "ag --version"
+    install_args: []
+    description: "Code searching tool similar to ack but faster"
+    documentation_url: "https://github.com/ggreer/the_silver_searcher"
+    category: "terminal"
+
+  tmux:
+    manager: brew
+    type: package
+    check_command: "tmux -V"
+    install_args: []
+    description: "Terminal multiplexer"
+    documentation_url: "https://github.com/tmux/tmux"
+    category: "terminal"
+
+  zoxide:
+    manager: brew
+    type: package
+    check_command: "zoxide --version"
+    install_args: []
+    description: "Smarter cd command that learns your habits"
+    documentation_url: "https://github.com/ajeetdsouza/zoxide"
+    category: "terminal"
+
+  # Additional terminal tools
+  coreutils:
+    manager: brew
+    type: package
+    check_command: "gls --version"
+    install_args: []
+    description: "GNU core utilities for macOS"
+    documentation_url: "https://www.gnu.org/software/coreutils/"
+    category: "terminal"
+
+  diffutils:
+    manager: brew
+    type: package
+    check_command: "diff --version | grep -q GNU"
+    install_args: []
+    description: "GNU diff utilities"
+    documentation_url: "https://www.gnu.org/software/diffutils/"
+    category: "terminal"
+
+  gnu-sed:
+    manager: brew
+    type: package
+    check_command: "gsed --version"
+    install_args: []
+    description: "GNU implementation of sed"
+    documentation_url: "https://www.gnu.org/software/sed/"
+    category: "terminal"
+
+  grep:
+    manager: brew
+    type: package
+    check_command: "ggrep --version"
+    install_args: []
+    description: "GNU grep"
+    documentation_url: "https://www.gnu.org/software/grep/"
+    category: "terminal"
+
+  tree:
+    manager: brew
+    type: package
+    check_command: "tree --version"
+    install_args: []
+    description: "Display directories as trees"
+    documentation_url: "http://mama.indstate.edu/users/ice/tree/"
+    category: "terminal"
+
+  dialog:
+    manager: brew
+    type: package
+    check_command: "dialog --version"
+    install_args: []
+    description: "Display dialog boxes from shell scripts"
+    documentation_url: "https://invisible-island.net/dialog/"
+    category: "terminal"

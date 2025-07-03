@@ -1,0 +1,61 @@
+# Mac App Store applications
+# Install using: mas install <app_id>
+# Requires mas (Mac App Store CLI) to be installed first
+
+package_managers:
+  mas:
+    types:
+      - app
+    default_type: app
+
+tools:
+  # Productivity Apps
+  things:
+    manager: mas
+    type: app
+    app_id: "904280696"
+    check_command: 'test -d "/Applications/Things3.app"'
+    install_args: ["904280696"]
+    description: "Award-winning personal task manager"
+    documentation_url: "https://culturedcode.com/things/"
+    category: "productivity"
+
+  # Clipboard Managers
+  copy-em:
+    manager: mas
+    type: app
+    app_id: "876540291"
+    check_command: "test -d '/Applications/Copy Em.app' || test -d \"/Applications/Copy 'Em.app\""
+    install_args: ["876540291"]
+    description: "Clipboard manager with advanced paste features"
+    documentation_url: "https://copye.app/"
+    category: "productivity"
+
+  paste:
+    manager: mas
+    type: app
+    app_id: "967805235"
+    check_command: 'test -d "/Applications/Paste.app"'
+    install_args: ["967805235"]
+    description: "Smart clipboard history manager"
+    documentation_url: "https://pasteapp.io/"
+    category: "productivity"
+
+  # Browser Extensions
+  nightshift:
+    manager: mas
+    type: app
+    app_id: "1561604170"
+    check_command: 'mas list | grep -q "1561604170"'
+    install_args: ["1561604170"]
+    description: "Safari dark mode extension for websites"
+    documentation_url: "https://github.com/yep/nightshift"
+    category: "utilities"
+
+# Note: To install Mac App Store apps, use:
+# mas install <app_id>
+#
+# Example:
+# mas install 904280696  # Things
+# mas install 876540291  # Copy 'Em
+# mas install 967805235  # Paste

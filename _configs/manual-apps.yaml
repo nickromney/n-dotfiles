@@ -1,0 +1,266 @@
+# Applications requiring manual installation
+# These apps are not available through standard package managers
+
+manual_install_apps:
+  # Browsers
+  brave-browser:
+    name: "Brave Browser"
+    check_command: 'test -d "/Applications/Brave Browser.app"'
+    download_url: "https://brave.com/download/"
+    description: "Privacy-focused web browser"
+    category: "browsers"
+
+  firefox:
+    name: "Firefox"
+    check_command: 'test -d "/Applications/Firefox.app"'
+    download_url: "https://www.mozilla.org/firefox/"
+    description: "Mozilla Firefox web browser"
+    category: "browsers"
+
+  # Development Tools
+  visual-studio-code:
+    name: "Visual Studio Code"
+    check_command: 'test -d "/Applications/Visual Studio Code.app"'
+    download_url: "https://code.visualstudio.com/"
+    description: "Source code editor by Microsoft"
+    category: "development"
+    note: "Also available via brew cask: brew install --cask visual-studio-code"
+
+  cursor:
+    name: "Cursor"
+    check_command: 'test -d "/Applications/Cursor.app"'
+    download_url: "https://cursor.sh/"
+    description: "AI-powered code editor"
+    category: "development"
+
+  webstorm:
+    name: "WebStorm"
+    check_command: 'test -d "/Applications/WebStorm.app"'
+    download_url: "https://www.jetbrains.com/webstorm/"
+    description: "JavaScript IDE by JetBrains"
+    category: "development"
+
+  rider:
+    name: "Rider"
+    check_command: 'test -d "/Applications/Rider.app"'
+    download_url: "https://www.jetbrains.com/rider/"
+    description: ".NET IDE by JetBrains"
+    category: "development"
+
+  local:
+    name: "Local"
+    check_command: 'test -d "/Applications/Local.app"'
+    download_url: "https://localwp.com/"
+    description: "Local WordPress development environment"
+    category: "development"
+
+  # Communication
+  slack:
+    name: "Slack"
+    check_command: 'test -d "/Applications/Slack.app"'
+    download_url: "https://slack.com/downloads/mac"
+    description: "Team communication platform"
+    category: "communication"
+    note: "Also available via brew cask: brew install --cask slack"
+
+  microsoft-teams:
+    name: "Microsoft Teams"
+    check_command: 'test -d "/Applications/Microsoft Teams.app"'
+    download_url: "https://www.microsoft.com/en-us/microsoft-teams/download-app"
+    description: "Microsoft collaboration platform"
+    category: "communication"
+    note: "Also available via brew cask: brew install --cask microsoft-teams"
+
+  whatsapp:
+    name: "WhatsApp"
+    check_command: 'test -d "/Applications/WhatsApp.app"'
+    download_url: "https://www.whatsapp.com/download"
+    description: "WhatsApp Desktop"
+    category: "communication"
+    note: "Also available via brew cask: brew install --cask whatsapp"
+
+  zoom:
+    name: "Zoom"
+    check_command: 'test -d "/Applications/zoom.us.app"'
+    download_url: "https://zoom.us/download"
+    description: "Video conferencing software"
+    category: "communication"
+    note: "Also available via brew cask: brew install --cask zoom"
+
+  # Email
+  hey:
+    name: "HEY"
+    check_command: 'test -d "/Applications/HEY.app"'
+    download_url: "https://hey.com/apps/"
+    description: "Email service by Basecamp"
+    category: "email"
+
+  microsoft-outlook:
+    name: "Microsoft Outlook"
+    check_command: 'test -d "/Applications/Microsoft Outlook.app"'
+    download_url: "https://www.microsoft.com/en-us/microsoft-365/outlook/email-and-calendar-software-microsoft-outlook"
+    description: "Email and calendar application"
+    category: "office"
+
+  # Office Suite
+  microsoft-excel:
+    name: "Microsoft Excel"
+    check_command: 'test -d "/Applications/Microsoft Excel.app"'
+    download_url: "https://www.microsoft.com/en-us/microsoft-365/"
+    description: "Spreadsheet application"
+    category: "office"
+
+  microsoft-word:
+    name: "Microsoft Word"
+    check_command: 'test -d "/Applications/Microsoft Word.app"'
+    download_url: "https://www.microsoft.com/en-us/microsoft-365/"
+    description: "Word processor"
+    category: "office"
+
+  microsoft-powerpoint:
+    name: "Microsoft PowerPoint"
+    check_command: 'test -d "/Applications/Microsoft PowerPoint.app"'
+    download_url: "https://www.microsoft.com/en-us/microsoft-365/"
+    description: "Presentation software"
+    category: "office"
+
+  microsoft-onenote:
+    name: "Microsoft OneNote"
+    check_command: 'test -d "/Applications/Microsoft OneNote.app"'
+    download_url: "https://www.microsoft.com/en-us/microsoft-365/onenote/digital-note-taking-app"
+    description: "Digital note-taking app"
+    category: "office"
+
+  onedrive:
+    name: "OneDrive"
+    check_command: 'test -d "/Applications/OneDrive.app"'
+    download_url: "https://www.microsoft.com/en-us/microsoft-365/onedrive/download"
+    description: "Cloud storage service"
+    category: "office"
+
+  # Productivity
+  obsidian:
+    name: "Obsidian"
+    check_command: 'test -d "/Applications/Obsidian.app"'
+    download_url: "https://obsidian.md/"
+    description: "Knowledge base and note-taking app"
+    category: "productivity"
+    note: "Also available via brew cask: brew install --cask obsidian"
+
+  alfred:
+    name: "Alfred 5"
+    check_command: 'test -d "/Applications/Alfred 5.app"'
+    download_url: "https://www.alfredapp.com/"
+    description: "Productivity app for macOS"
+    category: "productivity"
+    note: "Also available via brew cask: brew install --cask alfred"
+
+  # Media
+  spotify:
+    name: "Spotify"
+    check_command: 'test -d "/Applications/Spotify.app"'
+    download_url: "https://www.spotify.com/download/"
+    description: "Music streaming service"
+    category: "media"
+    note: "Also available via brew cask: brew install --cask spotify"
+
+  # Screen Recording/Capture
+  snagit:
+    name: "Snagit"
+    check_command: 'test -d "/Applications/Snagit.app"'
+    download_url: "https://www.techsmith.com/screen-capture.html"
+    description: "Screen capture and recording software"
+    category: "utilities"
+
+  camtasia:
+    name: "Camtasia 2023"
+    check_command: 'test -d "/Applications/Camtasia 2023.app"'
+    download_url: "https://www.techsmith.com/video-editor.html"
+    description: "Screen recording and video editing"
+    category: "utilities"
+
+  # AI Tools
+  claude:
+    name: "Claude"
+    check_command: 'test -d "/Applications/Claude.app"'
+    download_url: "https://claude.ai/download"
+    description: "Anthropic's AI assistant desktop app"
+    category: "productivity"
+
+  ollama:
+    name: "Ollama"
+    check_command: 'test -d "/Applications/Ollama.app"'
+    download_url: "https://ollama.ai/"
+    description: "Run large language models locally"
+    category: "development"
+    note: "Also available via brew: brew install ollama"
+
+  # Utilities
+  beyond-compare:
+    name: "Beyond Compare"
+    check_command: 'test -d "/Applications/Beyond Compare.app"'
+    download_url: "https://www.scootersoftware.com/"
+    description: "File and folder comparison tool"
+    category: "utilities"
+    note: "Also available via brew cask: brew install --cask beyond-compare"
+
+  balenaetcher:
+    name: "balenaEtcher"
+    check_command: 'test -d "/Applications/balenaEtcher.app"'
+    download_url: "https://www.balena.io/etcher/"
+    description: "Flash OS images to SD cards & USB drives"
+    category: "utilities"
+    note: "Also available via brew cask: brew install --cask balenaetcher"
+
+  vmware-fusion:
+    name: "VMware Fusion"
+    check_command: 'test -d "/Applications/VMware Fusion.app"'
+    download_url: "https://www.vmware.com/products/fusion.html"
+    description: "Virtual machine software"
+    category: "utilities"
+    note: "Also available via brew cask: brew install --cask vmware-fusion"
+
+  imazing:
+    name: "iMazing"
+    check_command: 'test -d "/Applications/iMazing.app"'
+    download_url: "https://imazing.com/"
+    description: "iOS device manager"
+    category: "utilities"
+    note: "Also available via brew cask: brew install --cask imazing"
+
+  gpg-keychain:
+    name: "GPG Keychain"
+    check_command: 'test -d "/Applications/GPG Keychain.app"'
+    download_url: "https://gpgtools.org/"
+    description: "GPG key management"
+    category: "utilities"
+    note: "Part of GPG Suite"
+
+  # Hardware/Peripherals
+  logi-tune:
+    name: "Logi Tune"
+    check_command: 'test -d "/Applications/Logi Tune.app"'
+    download_url: "https://www.logitech.com/en-us/video-collaboration/software/logi-tune-software.html"
+    description: "Logitech device management"
+    category: "utilities"
+
+  elgato-control-center:
+    name: "Elgato Control Center"
+    check_command: 'test -d "/Applications/Elgato Control Center.app"'
+    download_url: "https://www.elgato.com/en/downloads"
+    description: "Control Elgato devices"
+    category: "utilities"
+
+  vocaster-hub:
+    name: "Vocaster Hub"
+    check_command: 'test -d "/Applications/Vocaster Hub.app"'
+    download_url: "https://focusrite.com/en/vocaster"
+    description: "Focusrite Vocaster control software"
+    category: "utilities"
+
+  displaylink-manager:
+    name: "DisplayLink Manager"
+    check_command: 'test -d "/Applications/DisplayLink Manager.app"'
+    download_url: "https://www.synaptics.com/products/displaylink-graphics/downloads/macos"
+    description: "DisplayLink display adapter software"
+    category: "utilities"

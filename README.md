@@ -83,7 +83,7 @@ See [_macos/README.md](_macos/README.md) for detailed macOS configuration option
 
 ## Configuration
 
-Edit `tools.yaml` to modify:
+Edit YAML files in `_configs/` to modify:
 
 - Package manager configurations
 - Tool specifications and dependencies
@@ -155,7 +155,8 @@ install_args: Additional installation arguments (optional)
 ```shell
 .
 ├── install.sh   # Package installation and configuration management
-├── tools.yaml   # Package definitions
+├── _configs/
+│   └── tools.yaml  # Default package definitions
 ├── _macos/      # macOS configuration
 │   ├── macos.sh          # macOS system configuration script
 │   ├── personal.yaml     # Personal Mac settings
