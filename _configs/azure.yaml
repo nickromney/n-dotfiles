@@ -1,0 +1,28 @@
+# Azure and infrastructure tools
+# Microsoft Azure CLI and infrastructure as code tools
+
+package_managers:
+  brew:
+    types:
+      - package
+    default_type: package
+
+tools:
+  azure-cli:
+    manager: brew
+    type: package
+    check_command: "az --version"
+    install_args: []
+    description: "Command-line tools for Azure cloud services"
+    documentation_url: "https://docs.microsoft.com/en-us/cli/azure/"
+    category: "azure"
+
+  # Infrastructure as Code
+  pulumi:
+    manager: brew
+    type: package
+    check_command: "pulumi version"
+    install_args: []
+    description: "Infrastructure as Code SDK"
+    documentation_url: "https://www.pulumi.com/"
+    category: "azure"

@@ -1,0 +1,46 @@
+# AWS tools
+# Amazon Web Services CLI and related tools
+
+package_managers:
+  brew:
+    types:
+      - package
+      - cask
+    default_type: package
+
+tools:
+  awscli:
+    manager: brew
+    type: package
+    check_command: "aws --version"
+    install_args: []
+    description: "Official Amazon AWS command-line interface"
+    documentation_url: "https://aws.amazon.com/cli/"
+    category: "aws"
+
+  aws-vault:
+    manager: brew
+    type: cask
+    check_command: "aws-vault --version"
+    install_args: []
+    description: "Store and access AWS credentials in development environments"
+    documentation_url: "https://github.com/99designs/aws-vault"
+    category: "aws"
+
+  awsume:
+    manager: brew
+    type: package
+    check_command: "awsume --version"
+    install_args: []
+    description: "Utility for easily assuming AWS IAM roles"
+    documentation_url: "https://awsu.me/"
+    category: "aws"
+
+  aws-sam-cli:
+    manager: brew
+    type: package
+    check_command: "sam --version"
+    install_args: []
+    description: "AWS Serverless Application Model CLI"
+    documentation_url: "https://aws.amazon.com/serverless/sam/"
+    category: "aws"

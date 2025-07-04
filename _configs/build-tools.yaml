@@ -1,0 +1,102 @@
+# Build automation tools
+# Make, autotools, and build system utilities
+
+package_managers:
+  brew:
+    types:
+      - package
+    default_type: package
+
+tools:
+  # Autotools
+  automake:
+    manager: brew
+    type: package
+    check_command: "automake --version"
+    install_args: []
+    description: "Tool for generating GNU Standards-compliant Makefiles"
+    documentation_url: "https://www.gnu.org/software/automake/"
+    category: "build-tools"
+
+  autoconf:
+    manager: brew
+    type: package
+    check_command: "autoconf --version"
+    install_args: []
+    description: "Automatic configure script builder"
+    documentation_url: "https://www.gnu.org/software/autoconf/"
+    category: "build-tools"
+
+  libtool:
+    manager: brew
+    type: package
+    check_command: "libtool --version"
+    install_args: []
+    description: "Generic library support script"
+    documentation_url: "https://www.gnu.org/software/libtool/"
+    category: "build-tools"
+
+  # Modern Build Tools
+  cmake:
+    manager: brew
+    type: package
+    check_command: "cmake --version"
+    install_args: []
+    description: "Cross-platform build system generator"
+    documentation_url: "https://cmake.org/"
+    category: "build-tools"
+
+  ninja:
+    manager: brew
+    type: package
+    check_command: "ninja --version"
+    install_args: []
+    description: "Small build system with focus on speed"
+    documentation_url: "https://ninja-build.org/"
+    category: "build-tools"
+
+  bazel:
+    manager: brew
+    type: package
+    check_command: "bazel --version"
+    install_args: []
+    description: "Fast, scalable, multi-language build system"
+    documentation_url: "https://bazel.build/"
+    category: "build-tools"
+
+  meson:
+    manager: brew
+    type: package
+    check_command: "meson --version"
+    install_args: []
+    description: "Fast and user-friendly build system"
+    documentation_url: "https://mesonbuild.com/"
+    category: "build-tools"
+
+  # Language-Specific Build Tools
+  gradle:
+    manager: brew
+    type: package
+    check_command: "gradle --version"
+    install_args: []
+    description: "Build automation tool for multi-language software"
+    documentation_url: "https://gradle.org/"
+    category: "build-tools"
+
+  maven:
+    manager: brew
+    type: package
+    check_command: "mvn --version"
+    install_args: []
+    description: "Java project management and build tool"
+    documentation_url: "https://maven.apache.org/"
+    category: "build-tools"
+
+  ant:
+    manager: brew
+    type: package
+    check_command: "ant -version"
+    install_args: []
+    description: "Java-based build tool"
+    documentation_url: "https://ant.apache.org/"
+    category: "build-tools"

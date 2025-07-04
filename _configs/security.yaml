@@ -1,0 +1,86 @@
+# Security tools
+# Password managers, vulnerability scanners, and security utilities
+
+package_managers:
+  brew:
+    types:
+      - package
+      - cask
+    default_type: package
+
+tools:
+  # Password Management
+  1password-cli:
+    manager: brew
+    type: cask
+    check_command: "op --version"
+    install_args: []
+    description: "1Password command-line tool for secrets management"
+    documentation_url: "https://developer.1password.com/docs/cli/"
+    category: "security"
+
+  bitwarden-cli:
+    manager: brew
+    type: package
+    check_command: "bw --version"
+    install_args: []
+    description: "Secure and free password manager CLI"
+    documentation_url: "https://bitwarden.com/help/cli/"
+    category: "security"
+
+  # Vulnerability Scanning
+  trivy:
+    manager: brew
+    type: package
+    check_command: "trivy --version"
+    install_args: []
+    description: "Vulnerability scanner for containers and other artifacts"
+    documentation_url: "https://aquasecurity.github.io/trivy/"
+    category: "security"
+
+  # Encryption Tools
+  gnupg:
+    manager: brew
+    type: package
+    check_command: "gpg --version"
+    install_args: []
+    description: "GNU Privacy Guard"
+    documentation_url: "https://gnupg.org/"
+    category: "security"
+
+  age:
+    manager: brew
+    type: package
+    check_command: "age --version"
+    install_args: []
+    description: "Simple, modern, secure file encryption"
+    documentation_url: "https://age-encryption.org/"
+    category: "security"
+
+  sops:
+    manager: brew
+    type: package
+    check_command: "sops --version"
+    install_args: []
+    description: "Simple and flexible tool for managing secrets"
+    documentation_url: "https://github.com/getsops/sops"
+    category: "security"
+
+  # Certificate Management
+  mkcert:
+    manager: brew
+    type: package
+    check_command: "mkcert --version"
+    install_args: []
+    description: "Simple tool for making locally-trusted development certificates"
+    documentation_url: "https://github.com/FiloSottile/mkcert"
+    category: "security"
+
+  step:
+    manager: brew
+    type: package
+    check_command: "step version"
+    install_args: []
+    description: "Toolkit for working with certificates and cryptography"
+    documentation_url: "https://smallstep.com/cli/"
+    category: "security"

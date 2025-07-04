@@ -1,0 +1,79 @@
+# Rust development tools
+# Rust compiler, cargo tools, and development utilities
+
+package_managers:
+  brew:
+    types:
+      - package
+    default_type: package
+  cargo:
+    types:
+      - binary
+    default_type: binary
+
+tools:
+  # Rust Compiler
+  rust:
+    manager: brew
+    type: package
+    check_command: "rustc --version"
+    install_args: []
+    description: "Systems programming language focused on safety"
+    documentation_url: "https://www.rust-lang.org/"
+    category: "rust"
+
+  rustup-init:
+    manager: brew
+    type: package
+    check_command: "rustup --version"
+    install_args: []
+    description: "Rust toolchain installer"
+    documentation_url: "https://rustup.rs/"
+    category: "rust"
+
+  # Cargo Extensions
+  cargo-edit:
+    manager: brew
+    type: package
+    check_command: "cargo add --version"
+    install_args: []
+    description: "Add, remove, and upgrade dependencies from the command line"
+    documentation_url: "https://github.com/killercup/cargo-edit"
+    category: "rust"
+
+  cargo-watch:
+    manager: brew
+    type: package
+    check_command: "cargo watch --version"
+    install_args: []
+    description: "Watches over your Cargo project's source"
+    documentation_url: "https://github.com/watchexec/cargo-watch"
+    category: "rust"
+
+  # Rust Tools from Cargo
+  code2prompt:
+    manager: cargo
+    type: binary
+    check_command: "code2prompt --version"
+    description: "Convert code files to LLM prompts"
+    documentation_url: "https://github.com/raphaelmansuy/code2prompt"
+    category: "rust"
+
+  # Code Quality
+  rust-analyzer:
+    manager: brew
+    type: package
+    check_command: "rust-analyzer --version"
+    install_args: []
+    description: "Modular compiler frontend for the Rust language"
+    documentation_url: "https://rust-analyzer.github.io/"
+    category: "rust"
+
+  clippy:
+    manager: brew
+    type: package
+    check_command: "cargo clippy --version"
+    install_args: []
+    description: "Lints to catch common mistakes in Rust"
+    documentation_url: "https://github.com/rust-lang/rust-clippy"
+    category: "rust"

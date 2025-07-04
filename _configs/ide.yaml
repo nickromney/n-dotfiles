@@ -1,0 +1,47 @@
+# IDE and Editor tools
+# Integrated Development Environments and advanced text editors
+
+package_managers:
+  brew:
+    types:
+      - package
+      - cask
+    default_type: package
+
+tools:
+  # Text Editors and IDEs
+  neovim:
+    manager: brew
+    type: package
+    check_command: "nvim --version"
+    install_args: []
+    description: "Hyperextensible Vim-based text editor"
+    documentation_url: "https://neovim.io/"
+    category: "ide"
+
+  visual-studio-code:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Visual Studio Code.app"'
+    install_args: []
+    description: "Code editor redefined and optimized for building modern web and cloud applications"
+    documentation_url: "https://code.visualstudio.com/"
+    category: "ide"
+
+  webstorm:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/WebStorm.app"'
+    install_args: []
+    description: "The smartest JavaScript IDE by JetBrains"
+    documentation_url: "https://www.jetbrains.com/webstorm/"
+    category: "ide"
+
+  rider:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Rider.app"'
+    install_args: []
+    description: "Fast & powerful cross-platform .NET IDE"
+    documentation_url: "https://www.jetbrains.com/rider/"
+    category: "ide"

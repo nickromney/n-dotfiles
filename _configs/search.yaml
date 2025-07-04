@@ -1,0 +1,85 @@
+# Search and find tools
+# Fast file searching, text searching, and fuzzy finding utilities
+
+package_managers:
+  brew:
+    types:
+      - package
+    default_type: package
+
+tools:
+  # Text Search
+  ripgrep:
+    manager: brew
+    type: package
+    check_command: "rg --version"
+    install_args: []
+    description: "Recursively search directories for a regex pattern"
+    documentation_url: "https://github.com/BurntSushi/ripgrep"
+    category: "search"
+
+  the_silver_searcher:
+    manager: brew
+    type: package
+    check_command: "ag --version"
+    install_args: []
+    description: "Code searching tool similar to ack but faster"
+    documentation_url: "https://github.com/ggreer/the_silver_searcher"
+    category: "search"
+
+  ack:
+    manager: brew
+    type: package
+    check_command: "ack --version"
+    install_args: []
+    description: "Search tool optimized for programmers"
+    documentation_url: "https://beyondgrep.com/"
+    category: "search"
+
+  # File Search
+  fd:
+    manager: brew
+    type: package
+    check_command: "fd --version"
+    install_args: []
+    description: "Simple, fast and user-friendly alternative to 'find'"
+    documentation_url: "https://github.com/sharkdp/fd"
+    category: "search"
+
+  # Fuzzy Finders
+  fzf:
+    manager: brew
+    type: package
+    check_command: "fzf --version"
+    install_args: []
+    description: "Command-line fuzzy finder"
+    documentation_url: "https://github.com/junegunn/fzf"
+    category: "search"
+
+  sk:
+    manager: brew
+    type: package
+    check_command: "sk --version"
+    install_args: []
+    description: "Fuzzy finder in rust (skim)"
+    documentation_url: "https://github.com/lotabout/skim"
+    category: "search"
+
+  peco:
+    manager: brew
+    type: package
+    check_command: "peco --version"
+    install_args: []
+    description: "Simplistic interactive filtering tool"
+    documentation_url: "https://github.com/peco/peco"
+    category: "search"
+
+  # Advanced Search
+  ast-grep:
+    manager: brew
+    type: package
+    check_command: "ast-grep --version"
+    install_args: []
+    description: "Code searching, linting, and rewriting tool based on AST"
+    documentation_url: "https://ast-grep.github.io/"
+    category: "search"

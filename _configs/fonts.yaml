@@ -1,0 +1,74 @@
+# Font packages
+# Programming fonts and nerd fonts
+
+package_managers:
+  brew:
+    types:
+      - cask
+    default_type: cask
+
+tools:
+  # Nerd Fonts
+  font-jetbrains-mono-nerd-font:
+    manager: brew
+    type: cask
+    check_command: 'brew list --cask font-jetbrains-mono-nerd-font >/dev/null 2>&1 || [ -d "$HOME/Library/Fonts/JetBrainsMono" ] || [ -d "/Library/Fonts/JetBrainsMono" ]'
+    install_args: []
+    description: "JetBrains Mono font patched with Nerd Font icons"
+    documentation_url: "https://www.nerdfonts.com/"
+    category: "fonts"
+
+  font-fira-code-nerd-font:
+    manager: brew
+    type: cask
+    check_command: 'brew list --cask font-fira-code-nerd-font >/dev/null 2>&1'
+    install_args: []
+    description: "Fira Code font patched with Nerd Font icons"
+    documentation_url: "https://www.nerdfonts.com/"
+    category: "fonts"
+
+  font-hack-nerd-font:
+    manager: brew
+    type: cask
+    check_command: 'brew list --cask font-hack-nerd-font >/dev/null 2>&1'
+    install_args: []
+    description: "Hack font patched with Nerd Font icons"
+    documentation_url: "https://www.nerdfonts.com/"
+    category: "fonts"
+
+  font-meslo-lg-nerd-font:
+    manager: brew
+    type: cask
+    check_command: 'brew list --cask font-meslo-lg-nerd-font >/dev/null 2>&1'
+    install_args: []
+    description: "Meslo LG font patched with Nerd Font icons"
+    documentation_url: "https://www.nerdfonts.com/"
+    category: "fonts"
+
+  # Regular Programming Fonts
+  font-cascadia-code:
+    manager: brew
+    type: cask
+    check_command: 'brew list --cask font-cascadia-code >/dev/null 2>&1'
+    install_args: []
+    description: "Monospaced font designed for terminal and code editors"
+    documentation_url: "https://github.com/microsoft/cascadia-code"
+    category: "fonts"
+
+  font-sf-mono:
+    manager: brew
+    type: cask
+    check_command: 'brew list --cask font-sf-mono >/dev/null 2>&1'
+    install_args: []
+    description: "Apple's SF Mono font"
+    documentation_url: "https://developer.apple.com/fonts/"
+    category: "fonts"
+
+  font-source-code-pro:
+    manager: brew
+    type: cask
+    check_command: 'brew list --cask font-source-code-pro >/dev/null 2>&1'
+    install_args: []
+    description: "Monospaced font family for coding environments"
+    documentation_url: "https://adobe-fonts.github.io/source-code-pro/"
+    category: "fonts"

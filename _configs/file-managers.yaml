@@ -1,0 +1,63 @@
+# File management tools
+# Terminal-based file managers and explorers
+
+package_managers:
+  brew:
+    types:
+      - package
+    default_type: package
+
+tools:
+  ranger:
+    manager: brew
+    type: package
+    check_command: "ranger --version"
+    install_args: []
+    description: "Console file manager with VI key bindings"
+    documentation_url: "https://ranger.github.io/"
+    category: "file-managers"
+
+  midnight-commander:
+    manager: brew
+    type: package
+    check_command: "mc --version"
+    install_args: []
+    description: "Terminal-based visual file manager"
+    documentation_url: "https://midnight-commander.org/"
+    category: "file-managers"
+
+  nnn:
+    manager: brew
+    type: package
+    check_command: "nnn -V"
+    install_args: []
+    description: "Tiny, lightning fast, feature-packed file manager"
+    documentation_url: "https://github.com/jarun/nnn"
+    category: "file-managers"
+
+  lf:
+    manager: brew
+    type: package
+    check_command: "lf --version"
+    install_args: []
+    description: "Terminal file manager inspired by ranger"
+    documentation_url: "https://github.com/gokcehan/lf"
+    category: "file-managers"
+
+  broot:
+    manager: brew
+    type: package
+    check_command: "broot --version"
+    install_args: []
+    description: "New way to see and navigate directory trees"
+    documentation_url: "https://dystroy.org/broot/"
+    category: "file-managers"
+
+  vifm:
+    manager: brew
+    type: package
+    check_command: "vifm --version"
+    install_args: []
+    description: "Ncurses-based file manager with vi-like keybindings"
+    documentation_url: "https://vifm.info/"
+    category: "file-managers"

@@ -1,0 +1,110 @@
+# Networking tools
+# HTTP clients, SSH tools, and network utilities
+
+package_managers:
+  arkade:
+    types:
+      - get
+    default_type: get
+  brew:
+    types:
+      - package
+    default_type: package
+  uv:
+    types:
+      - tool
+    default_type: tool
+
+tools:
+  # HTTP Clients
+  wget:
+    manager: brew
+    type: package
+    check_command: "wget --version"
+    install_args: []
+    description: "Internet file retriever"
+    documentation_url: "https://www.gnu.org/software/wget/"
+    category: "networking"
+
+  xh:
+    manager: brew
+    type: package
+    check_command: "xh --version"
+    install_args: []
+    description: "Friendly and fast HTTP client"
+    documentation_url: "https://github.com/ducaale/xh"
+    category: "networking"
+
+  httpie:
+    manager: brew
+    type: package
+    check_command: "http --version"
+    install_args: []
+    description: "User-friendly command-line HTTP client"
+    documentation_url: "https://httpie.io/"
+    category: "networking"
+
+  curl:
+    manager: brew
+    type: package
+    check_command: "curl --version"
+    install_args: []
+    description: "Transfer data from or to a server"
+    documentation_url: "https://curl.se/"
+    category: "networking"
+
+  posting:
+    manager: uv
+    type: tool
+    check_command: "which posting"
+    install_args: ["--python", "3.12"]
+    description: "Terminal-based HTTP client for API testing"
+    documentation_url: "https://github.com/darrenburns/posting"
+    category: "networking"
+
+  # SSH and Remote Access
+  sshs:
+    manager: brew
+    type: package
+    check_command: "sshs --version"
+    install_args: []
+    description: "SSH client with server management features"
+    documentation_url: "https://github.com/quantumsheep/sshs"
+    category: "networking"
+
+  mosh:
+    manager: brew
+    type: package
+    check_command: "mosh --version"
+    install_args: []
+    description: "Mobile shell that supports roaming and intelligent local echo"
+    documentation_url: "https://mosh.org/"
+    category: "networking"
+
+  # Network Utilities
+  hostctl:
+    manager: arkade
+    type: get
+    check_command: "test -f $HOME/.arkade/bin/hostctl"
+    install_args: []
+    description: "Manage /etc/hosts like a pro with profiles and commands"
+    documentation_url: "https://github.com/guumaster/hostctl"
+    category: "networking"
+
+  nmap:
+    manager: brew
+    type: package
+    check_command: "nmap --version"
+    install_args: []
+    description: "Network exploration tool and security scanner"
+    documentation_url: "https://nmap.org/"
+    category: "networking"
+
+  telnet:
+    manager: brew
+    type: package
+    check_command: "telnet -h 2>&1 | grep -q telnet"
+    install_args: []
+    description: "User interface to TELNET protocol"
+    documentation_url: "https://www.gnu.org/software/inetutils/"
+    category: "networking"

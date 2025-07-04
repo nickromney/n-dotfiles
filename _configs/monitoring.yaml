@@ -1,0 +1,103 @@
+# System monitoring tools
+# Resource monitors, disk usage analyzers, and system information utilities
+
+package_managers:
+  brew:
+    types:
+      - package
+    default_type: package
+
+tools:
+  # Resource Monitors
+  bpytop:
+    manager: brew
+    type: package
+    check_command: "bpytop --version"
+    install_args: []
+    description: "Resource monitor that shows usage and stats"
+    documentation_url: "https://github.com/aristocratos/bpytop"
+    category: "monitoring"
+
+  btop:
+    manager: brew
+    type: package
+    check_command: "btop --version"
+    install_args: []
+    description: "Resource monitor written in C++"
+    documentation_url: "https://github.com/aristocratos/btop"
+    category: "monitoring"
+
+  htop:
+    manager: brew
+    type: package
+    check_command: "htop --version"
+    install_args: []
+    description: "Interactive process viewer"
+    documentation_url: "https://htop.dev/"
+    category: "monitoring"
+
+  glances:
+    manager: brew
+    type: package
+    check_command: "glances --version"
+    install_args: []
+    description: "Cross-platform system monitoring tool"
+    documentation_url: "https://nicolargo.github.io/glances/"
+    category: "monitoring"
+
+  # Disk Usage
+  ncdu:
+    manager: brew
+    type: package
+    check_command: "ncdu --version"
+    install_args: []
+    description: "NCurses Disk Usage - disk usage analyzer"
+    documentation_url: "https://dev.yorhel.nl/ncdu"
+    category: "monitoring"
+
+  duf:
+    manager: brew
+    type: package
+    check_command: "duf --version"
+    install_args: []
+    description: "Disk Usage/Free Utility with better UI"
+    documentation_url: "https://github.com/muesli/duf"
+    category: "monitoring"
+
+  dust:
+    manager: brew
+    type: package
+    check_command: "dust --version"
+    install_args: []
+    description: "More intuitive version of du written in Rust"
+    documentation_url: "https://github.com/bootandy/dust"
+    category: "monitoring"
+
+  # System Information
+  neofetch:
+    manager: brew
+    type: package
+    check_command: "neofetch --version"
+    install_args: []
+    description: "System information tool"
+    documentation_url: "https://github.com/dylanaraps/neofetch"
+    category: "monitoring"
+
+  # Network Monitoring
+  bandwhich:
+    manager: brew
+    type: package
+    check_command: "bandwhich --version"
+    install_args: []
+    description: "Terminal bandwidth utilization tool"
+    documentation_url: "https://github.com/imsnif/bandwhich"
+    category: "monitoring"
+
+  iftop:
+    manager: brew
+    type: package
+    check_command: "iftop -h 2>&1 | grep -q iftop"
+    install_args: []
+    description: "Display bandwidth usage on an interface"
+    documentation_url: "http://www.ex-parrot.com/pdw/iftop/"
+    category: "monitoring"

@@ -1,0 +1,68 @@
+# Hardware-related tools
+# Tools for managing hardware devices, peripherals, and input devices
+
+package_managers:
+  brew:
+    types:
+      - package
+      - cask
+    default_type: package
+
+tools:
+  # Security Hardware
+  ykman:
+    manager: brew
+    type: package
+    check_command: "ykman --version"
+    install_args: []
+    description: "YubiKey Manager CLI"
+    documentation_url: "https://docs.yubico.com/software/yubikey/tools/ykman/"
+    category: "hardware"
+
+  # Input Devices
+  karabiner-elements:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Karabiner-Elements.app"'
+    install_args: []
+    description: "Powerful keyboard customizer for macOS"
+    documentation_url: "https://karabiner-elements.pqrs.org/"
+    category: "hardware"
+
+  logi-options-plus:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Logi Options+.app"'
+    install_args: []
+    description: "Logitech device management software"
+    documentation_url: "https://www.logitech.com/en-us/software/logi-options-plus.html"
+    category: "hardware"
+
+  # Display Management
+  displaylink:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/DisplayLink Manager.app"'
+    install_args: []
+    description: "DisplayLink USB graphics software"
+    documentation_url: "https://www.displaylink.com/"
+    category: "hardware"
+
+  monitorcontrol:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/MonitorControl.app"'
+    install_args: []
+    description: "Control external monitor brightness and volume"
+    documentation_url: "https://github.com/MonitorControl/MonitorControl"
+    category: "hardware"
+
+  # Printer Drivers
+  cups:
+    manager: brew
+    type: package
+    check_command: "cups-config --version"
+    install_args: []
+    description: "Common UNIX Printing System"
+    documentation_url: "https://www.cups.org/"
+    category: "hardware"

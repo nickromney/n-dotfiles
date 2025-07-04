@@ -1,0 +1,66 @@
+# Ruby development tools
+# Ruby version managers, package managers, and development utilities
+
+package_managers:
+  brew:
+    types:
+      - package
+    default_type: package
+
+tools:
+  # Ruby Version Management
+  rbenv:
+    manager: brew
+    type: package
+    check_command: "rbenv --version"
+    install_args: []
+    description: "Ruby version manager"
+    documentation_url: "https://github.com/rbenv/rbenv"
+    category: "ruby"
+
+  ruby-build:
+    manager: brew
+    type: package
+    check_command: "ruby-build --version"
+    install_args: []
+    description: "Install various Ruby versions and implementations"
+    documentation_url: "https://github.com/rbenv/ruby-build"
+    category: "ruby"
+
+  chruby:
+    manager: brew
+    type: package
+    check_command: "brew list chruby"
+    install_args: []
+    description: "Change Ruby versions"
+    documentation_url: "https://github.com/postmodern/chruby"
+    category: "ruby"
+
+  # Package Management
+  brew-gem:
+    manager: brew
+    type: package
+    check_command: "brew list brew-gem >/dev/null 2>&1 || which brew-gem >/dev/null 2>&1"
+    install_args: []
+    description: "Install Ruby gems as Homebrew formulae"
+    documentation_url: "https://github.com/sportngin/brew-gem"
+    category: "ruby"
+
+  # Ruby Tools
+  rubocop:
+    manager: brew
+    type: package
+    check_command: "rubocop --version"
+    install_args: []
+    description: "Ruby static code analyzer and formatter"
+    documentation_url: "https://rubocop.org/"
+    category: "ruby"
+
+  bundler:
+    manager: brew
+    type: package
+    check_command: "bundle --version"
+    install_args: []
+    description: "Ruby dependency management"
+    documentation_url: "https://bundler.io/"
+    category: "ruby"

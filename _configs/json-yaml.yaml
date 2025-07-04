@@ -1,0 +1,95 @@
+# JSON and YAML processing tools
+# Command-line tools for parsing, querying, and manipulating structured data
+
+package_managers:
+  brew:
+    types:
+      - package
+      - tap
+    default_type: package
+
+tools:
+  # Taps
+  noahgorstein/tap:
+    manager: brew
+    type: tap
+    check_command: "brew tap | grep -q '^noahgorstein/tap$'"
+    install_args: []
+    description: "Homebrew tap for noahgorstein's formulae"
+    documentation_url: "https://github.com/noahgorstein/homebrew-tap"
+    category: "json-yaml"
+
+  # JSON Tools
+  jq:
+    manager: brew
+    type: package
+    check_command: "jq --version"
+    install_args: []
+    description: "Lightweight command-line JSON processor"
+    documentation_url: "https://stedolan.github.io/jq/"
+    category: "json-yaml"
+
+  fx:
+    manager: brew
+    type: package
+    check_command: "which fx >/dev/null 2>&1"
+    install_args: []
+    description: "Terminal JSON viewer with interactive navigation"
+    documentation_url: "https://github.com/antonmedv/fx"
+    category: "json-yaml"
+
+  jqp:
+    manager: brew
+    type: package
+    check_command: "which jqp"
+    install_args: ["noahgorstein/tap/jqp"]
+    description: "TUI for jq with live preview"
+    documentation_url: "https://github.com/noahgorstein/jqp"
+    category: "json-yaml"
+
+  jless:
+    manager: brew
+    type: package
+    check_command: "jless --version"
+    install_args: []
+    description: "Command-line JSON viewer"
+    documentation_url: "https://jless.io/"
+    category: "json-yaml"
+
+  gron:
+    manager: brew
+    type: package
+    check_command: "gron --version"
+    install_args: []
+    description: "Make JSON greppable"
+    documentation_url: "https://github.com/tomnomnom/gron"
+    category: "json-yaml"
+
+  # YAML Tools
+  yq:
+    manager: brew
+    type: package
+    check_command: "yq --version"
+    install_args: []
+    description: "Command-line YAML processor"
+    documentation_url: "https://github.com/mikefarah/yq"
+    category: "json-yaml"
+
+  yamllint:
+    manager: brew
+    type: package
+    check_command: "yamllint --version"
+    install_args: []
+    description: "Linter for YAML files"
+    documentation_url: "https://yamllint.readthedocs.io/"
+    category: "json-yaml"
+
+  # Data Conversion
+  dasel:
+    manager: brew
+    type: package
+    check_command: "dasel version"
+    install_args: []
+    description: "Query and update data structures from the command line"
+    documentation_url: "https://daseldocs.tomwright.me/"
+    category: "json-yaml"

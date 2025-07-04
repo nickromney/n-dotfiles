@@ -1,0 +1,130 @@
+# Container and orchestration tools
+# Docker, Podman, Kubernetes, and related container management tools
+
+package_managers:
+  brew:
+    types:
+      - package
+      - cask
+    default_type: package
+
+tools:
+  # Container Runtimes
+  docker:
+    manager: brew
+    type: package
+    check_command: "docker --version"
+    install_args: []
+    description: "Container platform for building and running applications"
+    documentation_url: "https://docs.docker.com/"
+    category: "containers"
+
+  docker-desktop:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Docker.app"'
+    install_args: []
+    description: "Docker Desktop for Mac"
+    documentation_url: "https://www.docker.com/products/docker-desktop"
+    category: "containers"
+
+  docker-compose:
+    manager: brew
+    type: package
+    check_command: "docker-compose --version"
+    install_args: []
+    description: "Define and run multi-container Docker applications"
+    documentation_url: "https://docs.docker.com/compose/"
+    category: "containers"
+
+  docker-completion:
+    manager: brew
+    type: package
+    check_command: "brew list docker-completion"
+    install_args: []
+    description: "Bash completion for Docker"
+    documentation_url: "https://docs.docker.com/"
+    category: "containers"
+
+  podman:
+    manager: brew
+    type: package
+    check_command: "podman --version"
+    install_args: []
+    description: "Container engine for running OCI containers"
+    documentation_url: "https://podman.io/"
+    category: "containers"
+
+  podman-compose:
+    manager: brew
+    type: package
+    check_command: "podman-compose --version"
+    install_args: []
+    description: "Docker-compose compatible wrapper for Podman"
+    documentation_url: "https://github.com/containers/podman-compose"
+    category: "containers"
+
+  podman-desktop:
+    manager: brew
+    type: cask
+    check_command: "test -d '/Applications/Podman Desktop.app'"
+    install_args: []
+    description: "Graphical tool for managing containers and Kubernetes"
+    documentation_url: "https://podman-desktop.io/"
+    category: "containers"
+
+  # Container Management
+  lazydocker:
+    manager: brew
+    type: package
+    check_command: "lazydocker --version"
+    install_args: []
+    description: "Terminal UI for Docker and docker-compose"
+    documentation_url: "https://github.com/jesseduffield/lazydocker"
+    category: "containers"
+
+  # Kubernetes Tools
+  kubernetes-cli:
+    manager: brew
+    type: package
+    check_command: "kubectl version --client"
+    install_args: []
+    description: "Kubernetes command-line tool"
+    documentation_url: "https://kubernetes.io/docs/reference/kubectl/"
+    category: "containers"
+
+  helm:
+    manager: brew
+    type: package
+    check_command: "helm version"
+    install_args: []
+    description: "Kubernetes package manager"
+    documentation_url: "https://helm.sh/"
+    category: "containers"
+
+  minikube:
+    manager: brew
+    type: cask
+    check_command: "minikube version"
+    install_args: []
+    description: "Run Kubernetes locally"
+    documentation_url: "https://minikube.sigs.k8s.io/"
+    category: "containers"
+
+  k9s:
+    manager: brew
+    type: package
+    check_command: "k9s version"
+    install_args: []
+    description: "Kubernetes CLI to manage your clusters in style"
+    documentation_url: "https://k9scli.io/"
+    category: "containers"
+
+  lens:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Lens.app"'
+    install_args: []
+    description: "The Kubernetes IDE"
+    documentation_url: "https://k8slens.dev/"
+    category: "containers"

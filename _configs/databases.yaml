@@ -1,0 +1,85 @@
+# Database tools
+# Database servers, clients, and management tools
+
+package_managers:
+  brew:
+    types:
+      - package
+      - cask
+    default_type: package
+
+tools:
+  # Database Servers
+  mariadb:
+    manager: brew
+    type: package
+    check_command: "mysql --version | grep -i mariadb"
+    install_args: []
+    description: "MySQL-compatible database server"
+    documentation_url: "https://mariadb.org/"
+    category: "databases"
+
+  postgresql:
+    manager: brew
+    type: package
+    check_command: "postgres --version"
+    install_args: []
+    description: "PostgreSQL database system"
+    documentation_url: "https://www.postgresql.org/"
+    category: "databases"
+
+  redis:
+    manager: brew
+    type: package
+    check_command: "redis-server --version"
+    install_args: []
+    description: "In-memory data structure store"
+    documentation_url: "https://redis.io/"
+    category: "databases"
+
+  # Database Clients
+  mycli:
+    manager: brew
+    type: package
+    check_command: "mycli --version"
+    install_args: []
+    description: "Terminal client for MySQL with auto-completion and syntax highlighting"
+    documentation_url: "https://www.mycli.net/"
+    category: "databases"
+
+  pgcli:
+    manager: brew
+    type: package
+    check_command: "pgcli --version"
+    install_args: []
+    description: "PostgreSQL client with auto-completion and syntax highlighting"
+    documentation_url: "https://www.pgcli.com/"
+    category: "databases"
+
+  # Database GUI Tools
+  dbeaver-community:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/DBeaver.app"'
+    install_args: []
+    description: "Free universal database tool"
+    documentation_url: "https://dbeaver.io/"
+    category: "databases"
+
+  tableplus:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/TablePlus.app"'
+    install_args: []
+    description: "Modern, native database management tool"
+    documentation_url: "https://tableplus.com/"
+    category: "databases"
+
+  postico:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Postico.app" || test -d "/Applications/Postico 2.app"'
+    install_args: []
+    description: "Modern PostgreSQL client for macOS"
+    documentation_url: "https://eggerapps.at/postico/"
+    category: "databases"
