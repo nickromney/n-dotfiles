@@ -55,3 +55,23 @@ tools:
     description: "Window border system for macOS"
     documentation_url: "https://github.com/FelixKratz/JankyBorders"
     category: "productivity"
+
+  # Note-taking and Knowledge Management
+  obsidian:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Obsidian.app"'
+    install_args: []
+    description: "Knowledge base and note-taking app"
+    documentation_url: "https://obsidian.md/"
+    category: "productivity"
+
+  # Media
+  spotify:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Spotify.app"'
+    install_args: []
+    description: "Music streaming service"
+    documentation_url: "https://www.spotify.com/"
+    category: "productivity"

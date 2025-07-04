@@ -47,23 +47,6 @@ tools:
     documentation_url: "https://github.com/noahgorstein/jqp"
     category: "json-yaml"
 
-  jless:
-    manager: brew
-    type: package
-    check_command: "jless --version"
-    install_args: []
-    description: "Command-line JSON viewer"
-    documentation_url: "https://jless.io/"
-    category: "json-yaml"
-
-  gron:
-    manager: brew
-    type: package
-    check_command: "gron --version"
-    install_args: []
-    description: "Make JSON greppable"
-    documentation_url: "https://github.com/tomnomnom/gron"
-    category: "json-yaml"
 
   # YAML Tools
   yq:
@@ -84,12 +67,3 @@ tools:
     documentation_url: "https://yamllint.readthedocs.io/"
     category: "json-yaml"
 
-  # Data Conversion
-  dasel:
-    manager: brew
-    type: package
-    check_command: "dasel version"
-    install_args: []
-    description: "Query and update data structures from the command line"
-    documentation_url: "https://daseldocs.tomwright.me/"
-    category: "json-yaml"

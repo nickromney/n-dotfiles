@@ -1,0 +1,50 @@
+# AI and machine learning tools
+# AI assistants, code editors with AI, and local LLMs
+
+package_managers:
+  brew:
+    types:
+      - package
+      - cask
+    default_type: cask
+
+tools:
+  # AI Assistants
+  claude:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Claude.app"'
+    install_args: []
+    description: "Anthropic's AI assistant desktop app"
+    documentation_url: "https://claude.ai/"
+    category: "ai"
+
+  # AI-Powered Code Editors
+  cursor:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Cursor.app"'
+    install_args: []
+    description: "AI-powered code editor"
+    documentation_url: "https://cursor.sh/"
+    category: "ai"
+
+  # Local LLMs
+  ollama:
+    manager: brew
+    type: package
+    check_command: "ollama --version"
+    install_args: []
+    description: "Run large language models locally"
+    documentation_url: "https://ollama.ai/"
+    category: "ai"
+
+  # AI Development Tools
+  code2prompt:
+    manager: brew
+    type: package
+    check_command: "code2prompt --version"
+    install_args: []
+    description: "Convert code files to LLM prompts"
+    documentation_url: "https://github.com/raphaelmansuy/code2prompt"
+    category: "ai"

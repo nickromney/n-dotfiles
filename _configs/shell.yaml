@@ -18,24 +18,6 @@ tools:
     documentation_url: "https://www.gnu.org/software/bash/"
     category: "shell"
 
-  zsh:
-    manager: brew
-    type: package
-    check_command: "zsh --version"
-    install_args: []
-    description: "UNIX shell (command interpreter)"
-    documentation_url: "https://www.zsh.org/"
-    category: "shell"
-
-  fish:
-    manager: brew
-    type: package
-    check_command: "fish --version"
-    install_args: []
-    description: "User-friendly command-line shell"
-    documentation_url: "https://fishshell.com/"
-    category: "shell"
-
   nushell:
     manager: brew
     type: package
@@ -83,11 +65,3 @@ tools:
     documentation_url: "https://github.com/scop/bash-completion"
     category: "shell"
 
-  powerlevel10k:
-    manager: brew
-    type: package
-    check_command: "brew list powerlevel10k"
-    install_args: []
-    description: "Zsh theme with fast prompt"
-    documentation_url: "https://github.com/romkatv/powerlevel10k"
-    category: "shell"

@@ -1,0 +1,64 @@
+# Office suite applications
+# Microsoft Office and related productivity applications
+
+package_managers:
+  brew:
+    types:
+      - cask
+    default_type: cask
+
+tools:
+  # Microsoft Office Suite
+  microsoft-excel:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Microsoft Excel.app"'
+    install_args: []
+    description: "Spreadsheet application"
+    documentation_url: "https://www.microsoft.com/en-us/microsoft-365/excel"
+    category: "office"
+
+  microsoft-word:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Microsoft Word.app"'
+    install_args: []
+    description: "Word processor"
+    documentation_url: "https://www.microsoft.com/en-us/microsoft-365/word"
+    category: "office"
+
+  microsoft-powerpoint:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Microsoft PowerPoint.app"'
+    install_args: []
+    description: "Presentation software"
+    documentation_url: "https://www.microsoft.com/en-us/microsoft-365/powerpoint"
+    category: "office"
+
+  microsoft-onenote:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Microsoft OneNote.app"'
+    install_args: []
+    description: "Digital note-taking app"
+    documentation_url: "https://www.microsoft.com/en-us/microsoft-365/onenote/digital-note-taking-app"
+    category: "office"
+
+  microsoft-office:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Microsoft Excel.app" && test -d "/Applications/Microsoft Word.app"'
+    install_args: []
+    description: "Complete Microsoft Office suite"
+    documentation_url: "https://www.microsoft.com/en-us/microsoft-365/"
+    category: "office"
+
+  onedrive:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/OneDrive.app"'
+    install_args: []
+    description: "Cloud storage service"
+    documentation_url: "https://www.microsoft.com/en-us/microsoft-365/onedrive/online-cloud-storage"
+    category: "office"

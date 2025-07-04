@@ -68,23 +68,6 @@ tools:
     documentation_url: "http://mypy-lang.org/"
     category: "python"
 
-  pylint:
-    manager: brew
-    type: package
-    check_command: "pylint --version"
-    install_args: []
-    description: "Python static code analysis tool"
-    documentation_url: "https://pylint.org/"
-    category: "python"
-
-  ruff:
-    manager: brew
-    type: package
-    check_command: "ruff --version"
-    install_args: []
-    description: "An extremely fast Python linter and code formatter"
-    documentation_url: "https://github.com/astral-sh/ruff"
-    category: "python"
 
   # Python Development Tools
   ipython:
@@ -105,40 +88,3 @@ tools:
     documentation_url: "https://jupyter.org/"
     category: "python"
 
-  poetry:
-    manager: brew
-    type: package
-    check_command: "poetry --version"
-    install_args: []
-    description: "Python dependency management and packaging"
-    documentation_url: "https://python-poetry.org/"
-    category: "python"
-
-  # Python Version Management
-  pyenv:
-    manager: brew
-    type: package
-    check_command: "pyenv --version"
-    install_args: []
-    description: "Python version management"
-    documentation_url: "https://github.com/pyenv/pyenv"
-    category: "python"
-
-  # Testing Tools
-  pytest:
-    manager: brew
-    type: package
-    check_command: "pytest --version"
-    install_args: []
-    description: "Python testing framework"
-    documentation_url: "https://pytest.org/"
-    category: "python"
-
-  tox:
-    manager: brew
-    type: package
-    check_command: "tox --version"
-    install_args: []
-    description: "Generic virtual environment management and test tool"
-    documentation_url: "https://tox.readthedocs.io/"
-    category: "python"

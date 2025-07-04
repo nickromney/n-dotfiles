@@ -2,10 +2,6 @@
 # JavaScript runtimes, package managers, and development utilities
 
 package_managers:
-  arkade:
-    types:
-      - get
-    default_type: get
   brew:
     types:
       - package
@@ -14,9 +10,9 @@ package_managers:
 tools:
   # JavaScript Runtimes
   bun:
-    manager: arkade
-    type: get
-    check_command: "test -f $HOME/.arkade/bin/bun"
+    manager: brew
+    type: package
+    check_command: "bun --version"
     install_args: []
     description: "Fast all-in-one JavaScript runtime and toolkit"
     documentation_url: "https://bun.sh/"
@@ -41,14 +37,6 @@ tools:
     documentation_url: "https://github.com/nvm-sh/nvm"
     category: "javascript"
 
-  fnm:
-    manager: brew
-    type: package
-    check_command: "fnm --version"
-    install_args: []
-    description: "Fast and simple Node.js version manager"
-    documentation_url: "https://github.com/Schniz/fnm"
-    category: "javascript"
 
   # Package Managers
   yarn:
@@ -60,14 +48,6 @@ tools:
     documentation_url: "https://yarnpkg.com/"
     category: "javascript"
 
-  pnpm:
-    manager: brew
-    type: package
-    check_command: "pnpm --version"
-    install_args: []
-    description: "Fast, disk space efficient package manager"
-    documentation_url: "https://pnpm.io/"
-    category: "javascript"
 
   # TypeScript
   typescript:
@@ -79,21 +59,3 @@ tools:
     documentation_url: "https://www.typescriptlang.org/"
     category: "javascript"
 
-  # Build Tools
-  vite:
-    manager: brew
-    type: package
-    check_command: "vite --version"
-    install_args: []
-    description: "Next generation frontend tooling"
-    documentation_url: "https://vitejs.dev/"
-    category: "javascript"
-
-  webpack:
-    manager: brew
-    type: package
-    check_command: "webpack --version"
-    install_args: []
-    description: "JavaScript module bundler"
-    documentation_url: "https://webpack.js.org/"
-    category: "javascript"

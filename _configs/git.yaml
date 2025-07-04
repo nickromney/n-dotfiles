@@ -40,23 +40,6 @@ tools:
     documentation_url: "https://git-lfs.github.com/"
     category: "git"
 
-  gitui:
-    manager: brew
-    type: package
-    check_command: "gitui --version"
-    install_args: []
-    description: "Blazing fast terminal-ui for git"
-    documentation_url: "https://github.com/extrawurst/gitui"
-    category: "git"
-
-  delta:
-    manager: brew
-    type: package
-    check_command: "delta --version"
-    install_args: []
-    description: "Syntax-highlighting pager for git and diff output"
-    documentation_url: "https://github.com/dandavison/delta"
-    category: "git"
 
   # CI/CD Tools
   act:

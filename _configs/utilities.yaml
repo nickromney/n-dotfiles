@@ -2,11 +2,6 @@
 # File managers, system monitoring, security tools, and general utilities
 
 package_managers:
-  arkade:
-    types:
-      - get
-    default_type: get
-
   brew:
     types:
       - package
@@ -14,25 +9,6 @@ package_managers:
     default_type: package
 
 tools:
-  # Password and Security Tools
-  1password-cli:
-    manager: brew
-    type: cask
-    check_command: "op --version"
-    install_args: []
-    description: "1Password command-line tool for secrets management"
-    documentation_url: "https://developer.1password.com/docs/cli/"
-    category: "utilities"
-
-  ykman:
-    manager: brew
-    type: package
-    check_command: "ykman --version"
-    install_args: []
-    description: "YubiKey Manager CLI"
-    documentation_url: "https://docs.yubico.com/software/yubikey/tools/ykman/"
-    category: "utilities"
-
   # System Monitoring
   bpytop:
     manager: brew
@@ -43,25 +19,7 @@ tools:
     documentation_url: "https://github.com/aristocratos/bpytop"
     category: "utilities"
 
-  ncdu:
-    manager: brew
-    type: package
-    check_command: "ncdu --version"
-    install_args: []
-    description: "NCurses Disk Usage - disk usage analyzer"
-    documentation_url: "https://dev.yorhel.nl/ncdu"
-    category: "utilities"
-
   # Network Tools
-  hostctl:
-    manager: arkade
-    type: get
-    check_command: "test -f $HOME/.arkade/bin/hostctl"
-    install_args: []
-    description: "Manage /etc/hosts like a pro with profiles and commands"
-    documentation_url: "https://github.com/guumaster/hostctl"
-    category: "utilities"
-
   sshs:
     manager: brew
     type: package
@@ -90,16 +48,6 @@ tools:
     documentation_url: "https://karabiner-elements.pqrs.org/"
     category: "utilities"
 
-  # System Configuration
-  stow:
-    manager: brew
-    type: package
-    check_command: "stow --version"
-    install_args: []
-    description: "Symlink farm manager for dotfiles"
-    documentation_url: "https://www.gnu.org/software/stow/"
-    category: "utilities"
-
   mas:
     manager: brew
     type: package
@@ -107,36 +55,6 @@ tools:
     install_args: []
     description: "Mac App Store command-line interface"
     documentation_url: "https://github.com/mas-cli/mas"
-    category: "utilities"
-
-  # File Management
-  macos-trash:
-    manager: brew
-    type: package
-    check_command: "trash --version"
-    install_args: []
-    description: "Move files and folders to macOS Trash"
-    documentation_url: "https://github.com/sindresorhus/macos-trash"
-    category: "utilities"
-
-  # Media Tools
-  webtorrent-cli:
-    manager: brew
-    type: package
-    check_command: "webtorrent --version"
-    install_args: []
-    description: "WebTorrent command-line streaming torrent client"
-    documentation_url: "https://github.com/webtorrent/webtorrent-cli"
-    category: "utilities"
-
-  # System Monitoring
-  osx-cpu-temp:
-    manager: brew
-    type: package
-    check_command: "osx-cpu-temp"
-    install_args: []
-    description: "Show CPU temperature on macOS"
-    documentation_url: "https://github.com/lavoiesl/osx-cpu-temp"
     category: "utilities"
 
   # Backup Tools
@@ -149,7 +67,7 @@ tools:
     documentation_url: "https://www.backblaze.com/"
     category: "utilities"
 
-  # Screen Recording
+  # Screen Recording and Capture
   keycastr:
     manager: brew
     type: cask
@@ -157,4 +75,32 @@ tools:
     install_args: []
     description: "Open-source keystroke visualizer"
     documentation_url: "https://github.com/keycastr/keycastr"
+    category: "utilities"
+
+  snagit:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Snagit.app" || test -d "/Applications/Snagit 2023.app" || test -d "/Applications/Snagit 2024.app"'
+    install_args: []
+    description: "Screen capture and recording software"
+    documentation_url: "https://www.techsmith.com/screen-capture.html"
+    category: "utilities"
+
+  # Device Management
+  balenaetcher:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/balenaEtcher.app"'
+    install_args: []
+    description: "Flash OS images to SD cards & USB drives"
+    documentation_url: "https://www.balena.io/etcher/"
+    category: "utilities"
+
+  imazing:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/iMazing.app"'
+    install_args: []
+    description: "iOS device manager"
+    documentation_url: "https://imazing.com/"
     category: "utilities"

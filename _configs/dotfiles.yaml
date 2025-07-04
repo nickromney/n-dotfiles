@@ -17,20 +17,3 @@ tools:
     documentation_url: "https://www.gnu.org/software/stow/"
     category: "dotfiles"
 
-  chezmoi:
-    manager: brew
-    type: package
-    check_command: "chezmoi --version"
-    install_args: []
-    description: "Manage your dotfiles across multiple machines"
-    documentation_url: "https://www.chezmoi.io/"
-    category: "dotfiles"
-
-  yadm:
-    manager: brew
-    type: package
-    check_command: "yadm version"
-    install_args: []
-    description: "Yet Another Dotfiles Manager"
-    documentation_url: "https://yadm.io/"
-    category: "dotfiles"

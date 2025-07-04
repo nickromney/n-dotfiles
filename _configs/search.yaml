@@ -27,14 +27,6 @@ tools:
     documentation_url: "https://github.com/ggreer/the_silver_searcher"
     category: "search"
 
-  ack:
-    manager: brew
-    type: package
-    check_command: "ack --version"
-    install_args: []
-    description: "Search tool optimized for programmers"
-    documentation_url: "https://beyondgrep.com/"
-    category: "search"
 
   # File Search
   fd:
@@ -65,21 +57,3 @@ tools:
     documentation_url: "https://github.com/lotabout/skim"
     category: "search"
 
-  peco:
-    manager: brew
-    type: package
-    check_command: "peco --version"
-    install_args: []
-    description: "Simplistic interactive filtering tool"
-    documentation_url: "https://github.com/peco/peco"
-    category: "search"
-
-  # Advanced Search
-  ast-grep:
-    manager: brew
-    type: package
-    check_command: "ast-grep --version"
-    install_args: []
-    description: "Code searching, linting, and rewriting tool based on AST"
-    documentation_url: "https://ast-grep.github.io/"
-    category: "search"

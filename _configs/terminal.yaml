@@ -2,11 +2,6 @@
 # Tools for terminal emulation, shell enhancements, and command-line productivity
 
 package_managers:
-  arkade:
-    types:
-      - get
-    default_type: get
-
   brew:
     types:
       - package
@@ -35,9 +30,9 @@ tools:
 
   # Shell enhancements
   atuin:
-    manager: arkade
-    type: get
-    check_command: "test -f $HOME/.arkade/bin/atuin"
+    manager: brew
+    type: package
+    check_command: "atuin --version"
     install_args: []
     description: "Sync, search, and backup shell history across machines"
     documentation_url: "https://atuin.sh/"
@@ -50,15 +45,6 @@ tools:
     install_args: []
     description: "Bourne-Again SHell, a UNIX command interpreter (version 5)"
     documentation_url: "https://www.gnu.org/software/bash/"
-    category: "terminal"
-
-  nushell:
-    manager: brew
-    type: package
-    check_command: "nu --version"
-    install_args: []
-    description: "Modern shell written in Rust"
-    documentation_url: "https://www.nushell.sh/"
     category: "terminal"
 
   starship:
@@ -223,15 +209,6 @@ tools:
     install_args: []
     description: "GNU grep"
     documentation_url: "https://www.gnu.org/software/grep/"
-    category: "terminal"
-
-  tree:
-    manager: brew
-    type: package
-    check_command: "tree --version"
-    install_args: []
-    description: "Display directories as trees"
-    documentation_url: "http://mama.indstate.edu/users/ice/tree/"
     category: "terminal"
 
   dialog:

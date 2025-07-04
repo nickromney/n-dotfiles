@@ -1,5 +1,5 @@
-# Container and orchestration tools
-# Docker, Podman, Kubernetes, and related container management tools
+# Container runtime and management tools
+# Docker, Podman, and container management utilities
 
 package_managers:
   brew:
@@ -9,7 +9,7 @@ package_managers:
     default_type: package
 
 tools:
-  # Container Runtimes
+  # Docker Container Runtime
   docker:
     manager: brew
     type: package
@@ -46,6 +46,7 @@ tools:
     documentation_url: "https://docs.docker.com/"
     category: "containers"
 
+  # Podman Container Runtime
   podman:
     manager: brew
     type: package
@@ -69,11 +70,11 @@ tools:
     type: cask
     check_command: "test -d '/Applications/Podman Desktop.app'"
     install_args: []
-    description: "Graphical tool for managing containers and Kubernetes"
+    description: "Graphical tool for managing containers"
     documentation_url: "https://podman-desktop.io/"
     category: "containers"
 
-  # Container Management
+  # Container Management Tools
   lazydocker:
     manager: brew
     type: package
@@ -83,48 +84,24 @@ tools:
     documentation_url: "https://github.com/jesseduffield/lazydocker"
     category: "containers"
 
-  # Kubernetes Tools
-  kubernetes-cli:
+
+  # Container Registry Tools
+  docker-credential-helper:
     manager: brew
     type: package
-    check_command: "kubectl version --client"
+    check_command: "docker-credential-osxkeychain version"
     install_args: []
-    description: "Kubernetes command-line tool"
-    documentation_url: "https://kubernetes.io/docs/reference/kubectl/"
+    description: "Docker credential helper for macOS keychain"
+    documentation_url: "https://github.com/docker/docker-credential-helpers"
     category: "containers"
 
-  helm:
+  # Container Build Tools
+  buildx:
     manager: brew
     type: package
-    check_command: "helm version"
+    check_command: "docker buildx version"
     install_args: []
-    description: "Kubernetes package manager"
-    documentation_url: "https://helm.sh/"
+    description: "Docker CLI plugin for extended build capabilities"
+    documentation_url: "https://github.com/docker/buildx"
     category: "containers"
 
-  minikube:
-    manager: brew
-    type: cask
-    check_command: "minikube version"
-    install_args: []
-    description: "Run Kubernetes locally"
-    documentation_url: "https://minikube.sigs.k8s.io/"
-    category: "containers"
-
-  k9s:
-    manager: brew
-    type: package
-    check_command: "k9s version"
-    install_args: []
-    description: "Kubernetes CLI to manage your clusters in style"
-    documentation_url: "https://k9scli.io/"
-    category: "containers"
-
-  lens:
-    manager: brew
-    type: cask
-    check_command: 'test -d "/Applications/Lens.app"'
-    install_args: []
-    description: "The Kubernetes IDE"
-    documentation_url: "https://k8slens.dev/"
-    category: "containers"

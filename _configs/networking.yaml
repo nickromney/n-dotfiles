@@ -2,18 +2,10 @@
 # HTTP clients, SSH tools, and network utilities
 
 package_managers:
-  arkade:
-    types:
-      - get
-    default_type: get
   brew:
     types:
       - package
     default_type: package
-  uv:
-    types:
-      - tool
-    default_type: tool
 
 tools:
   # HTTP Clients
@@ -53,14 +45,6 @@ tools:
     documentation_url: "https://curl.se/"
     category: "networking"
 
-  posting:
-    manager: uv
-    type: tool
-    check_command: "which posting"
-    install_args: ["--python", "3.12"]
-    description: "Terminal-based HTTP client for API testing"
-    documentation_url: "https://github.com/darrenburns/posting"
-    category: "networking"
 
   # SSH and Remote Access
   sshs:
@@ -70,41 +54,4 @@ tools:
     install_args: []
     description: "SSH client with server management features"
     documentation_url: "https://github.com/quantumsheep/sshs"
-    category: "networking"
-
-  mosh:
-    manager: brew
-    type: package
-    check_command: "mosh --version"
-    install_args: []
-    description: "Mobile shell that supports roaming and intelligent local echo"
-    documentation_url: "https://mosh.org/"
-    category: "networking"
-
-  # Network Utilities
-  hostctl:
-    manager: arkade
-    type: get
-    check_command: "test -f $HOME/.arkade/bin/hostctl"
-    install_args: []
-    description: "Manage /etc/hosts like a pro with profiles and commands"
-    documentation_url: "https://github.com/guumaster/hostctl"
-    category: "networking"
-
-  nmap:
-    manager: brew
-    type: package
-    check_command: "nmap --version"
-    install_args: []
-    description: "Network exploration tool and security scanner"
-    documentation_url: "https://nmap.org/"
-    category: "networking"
-
-  telnet:
-    manager: brew
-    type: package
-    check_command: "telnet -h 2>&1 | grep -q telnet"
-    install_args: []
-    description: "User interface to TELNET protocol"
-    documentation_url: "https://www.gnu.org/software/inetutils/"
     category: "networking"

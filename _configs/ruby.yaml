@@ -27,14 +27,6 @@ tools:
     documentation_url: "https://github.com/rbenv/ruby-build"
     category: "ruby"
 
-  chruby:
-    manager: brew
-    type: package
-    check_command: "brew list chruby"
-    install_args: []
-    description: "Change Ruby versions"
-    documentation_url: "https://github.com/postmodern/chruby"
-    category: "ruby"
 
   # Package Management
   brew-gem:
