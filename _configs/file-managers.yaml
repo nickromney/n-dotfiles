@@ -17,12 +17,11 @@ tools:
     documentation_url: "https://ranger.github.io/"
     category: "file-managers"
 
-  midnight-commander:
-    manager: brew
-    type: package
-    check_command: "mc --version"
-    install_args: []
-    description: "Terminal-based visual file manager"
-    documentation_url: "https://midnight-commander.org/"
-    category: "file-managers"
-
+  # midnight-commander:
+  #   manager: brew
+  #   type: package
+  #   check_command: "mc --version"
+  #   install_args: []
+  #   description: "Terminal-based visual file manager"
+  #   documentation_url: "https://midnight-commander.org/"
+  #   category: "file-managers"

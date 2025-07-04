@@ -9,42 +9,42 @@ package_managers:
     default_type: package
 
 tools:
-  # Docker Container Runtime
-  docker:
-    manager: brew
-    type: package
-    check_command: "docker --version"
-    install_args: []
-    description: "Container platform for building and running applications"
-    documentation_url: "https://docs.docker.com/"
-    category: "containers"
+  # # Docker Container Runtime
+  # docker:
+  #   manager: brew
+  #   type: package
+  #   check_command: "docker --version"
+  #   install_args: []
+  #   description: "Container platform for building and running applications"
+  #   documentation_url: "https://docs.docker.com/"
+  #   category: "containers"
 
-  docker-desktop:
-    manager: brew
-    type: cask
-    check_command: 'test -d "/Applications/Docker.app"'
-    install_args: []
-    description: "Docker Desktop for Mac"
-    documentation_url: "https://www.docker.com/products/docker-desktop"
-    category: "containers"
+  # docker-desktop:
+  #   manager: brew
+  #   type: cask
+  #   check_command: 'test -d "/Applications/Docker.app"'
+  #   install_args: []
+  #   description: "Docker Desktop for Mac"
+  #   documentation_url: "https://www.docker.com/products/docker-desktop"
+  #   category: "containers"
 
-  docker-compose:
-    manager: brew
-    type: package
-    check_command: "docker-compose --version"
-    install_args: []
-    description: "Define and run multi-container Docker applications"
-    documentation_url: "https://docs.docker.com/compose/"
-    category: "containers"
+  # docker-compose:
+  #   manager: brew
+  #   type: package
+  #   check_command: "docker-compose --version"
+  #   install_args: []
+  #   description: "Define and run multi-container Docker applications"
+  #   documentation_url: "https://docs.docker.com/compose/"
+  #   category: "containers"
 
-  docker-completion:
-    manager: brew
-    type: package
-    check_command: "brew list docker-completion"
-    install_args: []
-    description: "Bash completion for Docker"
-    documentation_url: "https://docs.docker.com/"
-    category: "containers"
+  # docker-completion:
+  #   manager: brew
+  #   type: package
+  #   check_command: "brew list docker-completion"
+  #   install_args: []
+  #   description: "Bash completion for Docker"
+  #   documentation_url: "https://docs.docker.com/"
+  #   category: "containers"
 
   # Podman Container Runtime
   podman:
@@ -95,13 +95,13 @@ tools:
     documentation_url: "https://github.com/docker/docker-credential-helpers"
     category: "containers"
 
-  # Container Build Tools
-  buildx:
-    manager: brew
-    type: package
-    check_command: "docker buildx version"
-    install_args: []
-    description: "Docker CLI plugin for extended build capabilities"
-    documentation_url: "https://github.com/docker/buildx"
-    category: "containers"
+  # # Container Build Tools
+  # buildx:
+  #   manager: brew
+  #   type: package
+  #   check_command: "docker buildx version"
+  #   install_args: []
+  #   description: "Docker CLI plugin for extended build capabilities"
+  #   documentation_url: "https://github.com/docker/buildx"
+  #   category: "containers"
 

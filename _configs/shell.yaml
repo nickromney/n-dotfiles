@@ -65,3 +65,22 @@ tools:
     documentation_url: "https://github.com/scop/bash-completion"
     category: "shell"
 
+  # Shell Tools
+  powershell:
+    manager: brew
+    type: cask
+    check_command: "pwsh --version"
+    install_args: []
+    description: "Cross-platform automation and configuration tool"
+    documentation_url: "https://github.com/PowerShell/PowerShell"
+    category: "development"
+
+  # Shell Testing
+  bats-core:
+    manager: brew
+    type: package
+    check_command: "bats --version"
+    install_args: []
+    description: "Bash Automated Testing System"
+    documentation_url: "https://github.com/bats-core/bats-core"
+    category: "testing"

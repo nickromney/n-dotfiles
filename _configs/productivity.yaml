@@ -20,33 +20,6 @@ tools:
     documentation_url: "https://github.com/FelixKratz/homebrew-formulae"
     category: "productivity"
 
-  nikitabobko/tap:
-    manager: brew
-    type: tap
-    check_command: "brew tap | grep -q '^nikitabobko/tap$'"
-    install_args: []
-    description: "Homebrew tap for nikitabobko's formulae (includes aerospace)"
-    documentation_url: "https://github.com/nikitabobko/homebrew-tap"
-    category: "productivity"
-  # Window Managers
-  amethyst:
-    manager: brew
-    type: cask
-    check_command: 'test -d "/Applications/Amethyst.app"'
-    install_args: []
-    description: "Automatic tiling window manager for macOS"
-    documentation_url: "https://ianyh.com/amethyst/"
-    category: "productivity"
-
-  aerospace:
-    manager: brew
-    type: cask
-    check_command: 'test -d "/Applications/Aerospace.app"'
-    install_args: ["nikitabobko/tap/aerospace"]
-    description: "AeroSpace is an i3-like tiling window manager for macOS"
-    documentation_url: "https://github.com/nikitabobko/AeroSpace"
-    category: "productivity"
-
   borders:
     manager: brew
     type: package

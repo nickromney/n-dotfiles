@@ -18,15 +18,6 @@ tools:
     documentation_url: "https://slack.com/"
     category: "messaging"
 
-  microsoft-teams:
-    manager: brew
-    type: cask
-    check_command: 'test -d "/Applications/Microsoft Teams.app"'
-    install_args: []
-    description: "Microsoft collaboration platform"
-    documentation_url: "https://www.microsoft.com/en-us/microsoft-teams/"
-    category: "messaging"
-
   # Personal Messaging
   whatsapp:
     manager: brew

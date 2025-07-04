@@ -18,6 +18,15 @@ tools:
     documentation_url: "https://www.microsoft.com/en-us/microsoft-365/excel"
     category: "office"
 
+  microsoft-outlook:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Microsoft Outlook.app"'
+    install_args: []
+    description: "Email and calendar application"
+    documentation_url: "https://www.microsoft.com/en-us/microsoft-365/outlook/"
+    category: "email"
+
   microsoft-word:
     manager: brew
     type: cask
@@ -62,3 +71,12 @@ tools:
     description: "Cloud storage service"
     documentation_url: "https://www.microsoft.com/en-us/microsoft-365/onedrive/online-cloud-storage"
     category: "office"
+
+  microsoft-teams:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Microsoft Teams.app"'
+    install_args: []
+    description: "Microsoft collaboration platform"
+    documentation_url: "https://www.microsoft.com/en-us/microsoft-teams/"
+    category: "messaging"

@@ -38,16 +38,6 @@ tools:
     documentation_url: "https://www.gnu.org/software/wget/"
     category: "utilities"
 
-  # Keyboard and Input
-  karabiner-elements:
-    manager: brew
-    type: cask
-    check_command: 'test -d "/Applications/Karabiner-Elements.app"'
-    install_args: []
-    description: "Powerful keyboard customizer for macOS"
-    documentation_url: "https://karabiner-elements.pqrs.org/"
-    category: "utilities"
-
   mas:
     manager: brew
     type: package
@@ -94,13 +84,4 @@ tools:
     install_args: []
     description: "Flash OS images to SD cards & USB drives"
     documentation_url: "https://www.balena.io/etcher/"
-    category: "utilities"
-
-  imazing:
-    manager: brew
-    type: cask
-    check_command: 'test -d "/Applications/iMazing.app"'
-    install_args: []
-    description: "iOS device manager"
-    documentation_url: "https://imazing.com/"
     category: "utilities"

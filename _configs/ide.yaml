@@ -45,12 +45,3 @@ tools:
     description: "Fast & powerful cross-platform .NET IDE"
     documentation_url: "https://www.jetbrains.com/rider/"
     category: "ide"
-
-  local:
-    manager: brew
-    type: cask
-    check_command: 'test -d "/Applications/Local.app"'
-    install_args: []
-    description: "Local WordPress development environment"
-    documentation_url: "https://localwp.com/"
-    category: "ide"

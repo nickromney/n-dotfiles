@@ -9,26 +9,6 @@ package_managers:
     default_type: package
 
 tools:
-  # Security Hardware
-  ykman:
-    manager: brew
-    type: package
-    check_command: "ykman --version"
-    install_args: []
-    description: "YubiKey Manager CLI"
-    documentation_url: "https://docs.yubico.com/software/yubikey/tools/ykman/"
-    category: "hardware"
-
-  # Input Devices
-  karabiner-elements:
-    manager: brew
-    type: cask
-    check_command: 'test -d "/Applications/Karabiner-Elements.app"'
-    install_args: []
-    description: "Powerful keyboard customizer for macOS"
-    documentation_url: "https://karabiner-elements.pqrs.org/"
-    category: "hardware"
-
   # Display Management
   displaylink:
     manager: brew
@@ -38,3 +18,17 @@ tools:
     description: "DisplayLink USB graphics software"
     documentation_url: "https://www.displaylink.com/"
     category: "hardware"
+
+  elgato-control-center:
+    name: "Elgato Control Center"
+    check_command: 'test -d "/Applications/Elgato Control Center.app"'
+    download_url: "https://www.elgato.com/en/downloads"
+    description: "Control Elgato devices"
+    category: "utilities"
+
+  vocaster-hub:
+    name: "Vocaster Hub"
+    check_command: 'test -d "/Applications/Vocaster Hub.app"'
+    download_url: "https://focusrite.com/en/vocaster"
+    description: "Focusrite Vocaster control software"
+    category: "utilities"

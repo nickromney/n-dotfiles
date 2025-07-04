@@ -18,15 +18,6 @@ tools:
     documentation_url: "https://brave.com/"
     category: "internet"
 
-  firefox:
-    manager: brew
-    type: cask
-    check_command: 'test -d "/Applications/Firefox.app"'
-    install_args: []
-    description: "Mozilla Firefox web browser"
-    documentation_url: "https://www.mozilla.org/firefox/"
-    category: "internet"
-
   google-chrome:
     manager: brew
     type: cask

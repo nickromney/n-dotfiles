@@ -104,24 +104,6 @@ tools:
     documentation_url: "https://golang.org/"
     category: "development"
 
-  php:
-    manager: brew
-    type: package
-    check_command: "php --version"
-    install_args: []
-    description: "PHP programming language"
-    documentation_url: "https://www.php.net/"
-    category: "development"
-
-  r:
-    manager: brew
-    type: package
-    check_command: "R --version"
-    install_args: []
-    description: "R statistical computing language"
-    documentation_url: "https://www.r-project.org/"
-    category: "development"
-
   # Parsing Tools
   tree-sitter:
     manager: brew
@@ -132,25 +114,15 @@ tools:
     documentation_url: "https://tree-sitter.github.io/"
     category: "development"
 
-  # Shell Tools
-  powershell:
-    manager: brew
-    type: cask
-    check_command: "pwsh --version"
-    install_args: []
-    description: "Cross-platform automation and configuration tool"
-    documentation_url: "https://github.com/PowerShell/PowerShell"
-    category: "development"
-
-  # .NET Development
-  dotnet-sdk:
-    manager: brew
-    type: cask
-    check_command: "dotnet --version"
-    install_args: []
-    description: ".NET SDK for building applications"
-    documentation_url: "https://dotnet.microsoft.com/"
-    category: "development"
+  # # .NET Development
+  # dotnet-sdk:
+  #   manager: brew
+  #   type: cask
+  #   check_command: "dotnet --version"
+  #   install_args: []
+  #   description: ".NET SDK for building applications"
+  #   documentation_url: "https://dotnet.microsoft.com/"
+  #   category: "development"
 
   # Completion Tools
   brew-cask-completion:

@@ -17,12 +17,3 @@ tools:
     description: "Email service by Basecamp"
     documentation_url: "https://hey.com/"
     category: "email"
-
-  microsoft-outlook:
-    manager: brew
-    type: cask
-    check_command: 'test -d "/Applications/Microsoft Outlook.app"'
-    install_args: []
-    description: "Email and calendar application"
-    documentation_url: "https://www.microsoft.com/en-us/microsoft-365/outlook/"
-    category: "email"

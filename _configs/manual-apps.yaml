@@ -237,30 +237,3 @@ manual_install_apps:
     note: "Part of GPG Suite"
 
   # Hardware/Peripherals
-  logi-tune:
-    name: "Logi Tune"
-    check_command: 'test -d "/Applications/Logi Tune.app"'
-    download_url: "https://www.logitech.com/en-us/video-collaboration/software/logi-tune-software.html"
-    description: "Logitech device management"
-    category: "utilities"
-
-  elgato-control-center:
-    name: "Elgato Control Center"
-    check_command: 'test -d "/Applications/Elgato Control Center.app"'
-    download_url: "https://www.elgato.com/en/downloads"
-    description: "Control Elgato devices"
-    category: "utilities"
-
-  vocaster-hub:
-    name: "Vocaster Hub"
-    check_command: 'test -d "/Applications/Vocaster Hub.app"'
-    download_url: "https://focusrite.com/en/vocaster"
-    description: "Focusrite Vocaster control software"
-    category: "utilities"
-
-  displaylink-manager:
-    name: "DisplayLink Manager"
-    check_command: 'test -d "/Applications/DisplayLink Manager.app"'
-    download_url: "https://www.synaptics.com/products/displaylink-graphics/downloads/macos"
-    description: "DisplayLink display adapter software"
-    category: "utilities"
