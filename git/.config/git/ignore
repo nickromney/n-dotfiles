@@ -2,7 +2,3 @@
 
 # AWS credentials
 aws/.aws/config
-
-**/.claude/settings.local.json
-
-**/.claude/settings.local.json
