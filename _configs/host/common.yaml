@@ -87,3 +87,11 @@ tools:
     description: "1Password command-line tool"
     documentation_url: "https://developer.1password.com/docs/cli"
     category: security
+  
+  obsidian:
+    manager: brew
+    type: cask
+    check_command: "[ -d '/Applications/Obsidian.app' ]"
+    description: "Knowledge base and note-taking app"
+    documentation_url: "https://obsidian.md/"
+    category: productivity

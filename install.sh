@@ -21,7 +21,7 @@ if [[ -v CONFIG_FILES ]]; then
   unset config_files_env
 else
   # CONFIG_FILES not set in environment, use default
-  CONFIG_FILES=("development")
+  CONFIG_FILES=("host/common")
 fi
 REQUIRED_COMMANDS=("yq" "which")
 STOW_DIRS=(aerospace bat gh git karabiner kitty nvim prettier starship tmux vscode zsh)
@@ -435,13 +435,21 @@ main() {
 
   # Prepare configuration files
   if ! prepare_config_files; then
-    return 1
+    # If only stow was requested and no configs specified, that's OK
+    if [[ "$STOW" == "true" ]] && [ ${#CONFIG_FILES[@]} -eq 0 ]; then
+      info "No configuration files specified - proceeding with stow only"
+      RESOLVED_CONFIG_FILES=()
+    else
+      return 1
+    fi
   fi
 
-  info "Using configuration files:"
-  for config_file in "${RESOLVED_CONFIG_FILES[@]}"; do
-    info "  - $config_file"
-  done
+  if [ ${#RESOLVED_CONFIG_FILES[@]} -gt 0 ]; then
+    info "Using configuration files:"
+    for config_file in "${RESOLVED_CONFIG_FILES[@]}"; do
+      info "  - $config_file"
+    done
+  fi
 
   # Update package manager databases if in update mode
   if [[ "$UPDATE" == "true" ]]; then
@@ -470,18 +478,19 @@ main() {
   AVAILABLE_MANAGERS=("${all_managers[@]}")
   
   if [ ${#AVAILABLE_MANAGERS[@]} -eq 0 ]; then
-    info "No package managers available - nothing to do"
-    return 0
+    info "No package managers available - skipping package installation"
+    # Don't return early - allow stow to run
   fi
 
-  # Process each configuration file
-  for CURRENT_CONFIG_FILE in "${RESOLVED_CONFIG_FILES[@]}"; do
-    info ""
-    info "Processing: $CURRENT_CONFIG_FILE"
-    
-    # Get all tools from this YAML file
-    local tools
-    tools=$(yq '.tools | keys | .[]' "$CURRENT_CONFIG_FILE")
+  # Process each configuration file only if we have managers
+  if [ ${#AVAILABLE_MANAGERS[@]} -gt 0 ]; then
+    for CURRENT_CONFIG_FILE in "${RESOLVED_CONFIG_FILES[@]}"; do
+      info ""
+      info "Processing: $CURRENT_CONFIG_FILE"
+      
+      # Get all tools from this YAML file
+      local tools
+      tools=$(yq '.tools | keys | .[]' "$CURRENT_CONFIG_FILE")
 
   # Only process if we have tools
   if [[ -n "$tools" ]]; then
@@ -664,6 +673,7 @@ main() {
     done <<<"$tools"
   fi
   done # End of config file loop
+  fi # End of if AVAILABLE_MANAGERS check
 
   if [[ "$STOW" == "true" ]]; then
     info "Running stow..."
@@ -684,8 +694,8 @@ usage() {
   echo "  -v, --verbose           Show detailed information and status messages"
   echo ""
   echo "Configuration files:"
-  echo "  By default, only 'development' tools are installed."
-  echo "  Use -c to add additional configuration files."
+  echo "  By default, 'host/common' tools are installed (essential Mac tools)."
+  echo "  Use -c to specify different configuration files."
   echo "  Files are searched in the configuration directory."
   echo ""
   echo "Environment variables:"
@@ -693,12 +703,14 @@ usage() {
   echo "  VSCODE_CLI    VSCode binary to use (default: code, e.g., cursor, vscodium)"
   echo ""
   echo "Examples:"
-  echo "  $0                              # Install development tools only"
-  echo "  $0 -c terminal                  # Install terminal tools only"
-  echo "  $0 -c development -c productivity # Install multiple configs"
+  echo "  $0                              # Install common host tools (default)"
+  echo "  $0 -c focus/vscode              # Install VSCode extensions"
+  echo "  $0 -c host/personal -c focus/vscode # Install personal tools + VSCode extensions"
   echo "  $0 -C /path/to/configs -c work  # Use custom config directory"
   echo "  CONFIG_DIR=./ $0 -c personal     # Use current directory for configs"
-  echo "  VSCODE_CLI=cursor $0 -c vscode   # Install VSCode extensions for Cursor"
+  echo "  VSCODE_CLI=cursor $0 -c focus/vscode # Install VSCode extensions for Cursor"
+  echo "  $0 -s                            # Install common tools + run stow"
+  echo "  CONFIG_FILES=\"\" $0 -s            # Run stow only (no package installation)"
   exit 1
 }
 
