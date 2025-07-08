@@ -64,6 +64,14 @@ tools:
     documentation_url: "https://www.alfredapp.com/"
     category: productivity
   
+  visual-studio-code:
+    manager: brew
+    type: cask
+    check_command: "[ -d '/Applications/Visual Studio Code.app' ]"
+    description: "Code editor"
+    documentation_url: "https://code.visualstudio.com/"
+    category: ide
+  
   docker:
     manager: brew
     type: cask

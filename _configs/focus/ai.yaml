@@ -1,13 +1,5 @@
 # AI/ML development tools
 tools:
-  cline:
-    manager: brew
-    type: package
-    check_command: command -v cline
-    description: "AI coding assistant for VS Code"
-    documentation_url: "https://github.com/cline/cline"
-    category: ai
-  
   llm:
     manager: brew
     type: package

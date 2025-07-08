@@ -4,6 +4,8 @@ set -euo pipefail
 # Configuration
 DEFAULT_CONFIG_DIR="_configs"
 CONFIG_DIR="${CONFIG_DIR:-}"
+# VSCode CLI - can be overridden for variants like cursor, vscodium
+VSCODE_CLI="${VSCODE_CLI:-}"
 # Default to development tools only, but allow override via environment
 # CONFIG_FILES can be set as environment variable with space-separated values
 if [[ -v CONFIG_FILES ]]; then
@@ -22,7 +24,7 @@ else
   CONFIG_FILES=("development")
 fi
 REQUIRED_COMMANDS=("yq" "which")
-STOW_DIRS=(aerospace bat gh git karabiner kitty nvim starship tmux zsh)
+STOW_DIRS=(aerospace bat gh git karabiner kitty nvim prettier starship tmux vscode zsh)
 
 # Default values and argument parsing
 DRY_RUN="${DRY_RUN:-false}"
@@ -38,6 +40,19 @@ command_exists() {
 
 is_root() {
   [ "$(id -u 2>/dev/null || echo 1000)" -eq 0 ]
+}
+
+get_vscode_cli() {
+  # Default to 'code' if not set
+  local cli="${VSCODE_CLI:-code}"
+  
+  if command_exists "$cli"; then
+    echo "$cli"
+    return 0
+  else
+    error "VSCode CLI '$cli' not found. Set VSCODE_CLI environment variable to use a different binary (e.g., cursor)"
+    return 1
+  fi
 }
 
 get_available_managers() {
@@ -91,6 +106,13 @@ get_available_managers() {
           unavailable+=("uv: please install from https://github.com/astral-sh/uv")
         else
           available+=("uv")
+        fi
+        ;;
+      "code")
+        if ! get_vscode_cli >/dev/null 2>&1; then
+          unavailable+=("code: VSCode CLI not found - please install VSCode or set VSCODE_CLI")
+        else
+          available+=("code")
         fi
         ;;
       *)
@@ -334,6 +356,25 @@ install_tool() {
       ;;
     esac
     ;;
+  "code")
+    case "$type" in
+    "extension")
+      # For VSCode extensions, we need the extension_id field
+      local extension_id vscode_cli
+      extension_id=$(yq ".tools.${tool}.extension_id" "$yaml_file")
+      if [[ "$extension_id" == "null" || -z "$extension_id" ]]; then
+        info "Skipping $tool: no extension_id specified"
+        return 0
+      fi
+      vscode_cli=$(get_vscode_cli) || return 1
+      install_cmd="$vscode_cli --install-extension $extension_id $install_args"
+      ;;
+    *)
+      info "Skipping $tool: unknown code type: $type"
+      return 0
+      ;;
+    esac
+    ;;
   *)
     info "Skipping $tool: unknown package manager: $manager"
     return 0
@@ -351,12 +392,21 @@ install_tool() {
 is_tool_installed() {
   local tool=$1
   local yaml_file=$2
-  local check_command
+  local check_command manager
   check_command=$(yq ".tools.${tool}.check_command" "$yaml_file")
+  manager=$(yq ".tools.${tool}.manager" "$yaml_file")
 
   if [ "$check_command" = "null" ]; then
     info "Skipping check for $tool: no check command specified"
     return 1 # Tool is not verified as installed if no check command
+  fi
+
+  # For code extensions, substitute the VSCode CLI in the check command
+  if [[ "$manager" == "code" ]]; then
+    local vscode_cli
+    vscode_cli=$(get_vscode_cli) || return 1
+    # Replace 'code' with the actual CLI in the check command
+    check_command="${check_command//code --list-extensions/$vscode_cli --list-extensions}"
   fi
 
   # The check_command may contain environment variables like $HOME
@@ -555,6 +605,21 @@ main() {
               ;;
             esac
             ;;
+          "code")
+            case "$type" in
+            "extension")
+              if [[ "$DRY_RUN" == "true" ]]; then
+                info "Would check: code --list-extensions for updates"
+              else
+                # VSCode extensions auto-update by default
+                info "✓ $tool (code extension) - extensions auto-update in VSCode"
+              fi
+              ;;
+            *)
+              info "✓ $tool (code $type) is already installed"
+              ;;
+            esac
+            ;;
           *)
             info "✓ $tool ($manager) is already installed - update not supported"
             ;;
@@ -574,6 +639,9 @@ main() {
             ;;
           "uv")
             info "✓ $tool (uv $type) is already installed"
+            ;;
+          "code")
+            info "✓ $tool (code $type) is already installed"
             ;;
           *)
             info "✓ $tool ($manager $type) is already installed"
@@ -622,6 +690,7 @@ usage() {
   echo ""
   echo "Environment variables:"
   echo "  CONFIG_DIR    Configuration directory (can be absolute or relative path)"
+  echo "  VSCODE_CLI    VSCode binary to use (default: code, e.g., cursor, vscodium)"
   echo ""
   echo "Examples:"
   echo "  $0                              # Install development tools only"
@@ -629,6 +698,7 @@ usage() {
   echo "  $0 -c development -c productivity # Install multiple configs"
   echo "  $0 -C /path/to/configs -c work  # Use custom config directory"
   echo "  CONFIG_DIR=./ $0 -c personal     # Use current directory for configs"
+  echo "  VSCODE_CLI=cursor $0 -c vscode   # Install VSCode extensions for Cursor"
   exit 1
 }
 
