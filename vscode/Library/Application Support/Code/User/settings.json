@@ -9,7 +9,7 @@
   "editor.detectIndentation": false,
   "editor.inlineSuggest.enabled": true,
   "editor.insertSpaces": true,
-  "editor.fontFamily": "Monaspace, 'JetBrains Mono', Consolas, 'Fira Code', 'Courier New', monospace",
+  "editor.fontFamily": "'JetBrains Mono', 'Fira Code', Consolas, 'Courier New', monospace",
   "editor.fontLigatures": true,
   "editor.fontSize": 14,
   "editor.formatOnSave": true,
