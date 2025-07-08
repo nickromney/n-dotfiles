@@ -4,6 +4,7 @@
 # Font configuration
 # Match VSCode font preferences
 font-family = "JetBrains Mono"
+font-family = "JetBrainsMono Nerd Font"
 font-family = "Fira Code"
 font-family = Consolas
 font-family = "Courier New"
@@ -43,6 +44,9 @@ macos-option-as-alt = true
 
 # Shell integration
 shell-integration = detect
+
+# Use Nushell as the default shell
+command = /opt/homebrew/bin/nu
 
 # Colours (optional - defaults are good)
 # background = 1e1e2e

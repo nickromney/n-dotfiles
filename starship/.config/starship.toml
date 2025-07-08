@@ -146,6 +146,7 @@ bash_indicator = "bash"
 powershell_indicator = "powershell"
 cmd_indicator = "cmd"
 zsh_indicator = "zsh"
+nu_indicator = "nu"
 
 [os]
 disabled = false

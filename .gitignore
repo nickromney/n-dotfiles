@@ -19,3 +19,10 @@ Thumbs.db
 *.tmp
 *.bak
 *.cache
+
+# Nushell
+nushell/Library/Application Support/nushell/history.sqlite3
+nushell/Library/Application Support/nushell/history.sqlite3-shm
+nushell/Library/Application Support/nushell/history.sqlite3-wal
+nushell/Library/Application Support/nushell/history.txt
+nushell/Library/Application Support/nushell/vendor/
