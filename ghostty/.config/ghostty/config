@@ -1,0 +1,81 @@
+# Ghostty Configuration
+# A modern, GPU-accelerated terminal emulator
+
+# Font configuration
+# Match VSCode font preferences
+font-family = "JetBrains Mono"
+font-family = "Fira Code"
+font-family = Consolas
+font-family = "Courier New"
+font-family = monospace
+
+font-size = 16
+
+# Font features
+# font-thicken = true  # macOS only - makes fonts slightly bolder
+# font-synthetic-style = true  # Allow synthetic bold/italic if not available
+
+# Optional: If you have Nerd Fonts installed, uncomment to use for icons
+# font-family = "JetBrainsMono Nerd Font"
+# font-codepoint-map = U+E000-U+F8FF="JetBrainsMono Nerd Font"
+
+# Cursor
+cursor-style = block
+
+# Window
+window-padding-x = 10
+window-padding-y = 10
+
+# Background opacity (1.0 = opaque, 0.0 = transparent)
+background-opacity = 1.0
+
+# Scrollback
+scrollback-limit = 10000
+
+# Mouse
+mouse-hide-while-typing = true
+
+# Copy on select
+copy-on-select = clipboard
+
+# macOS specific
+macos-option-as-alt = true
+
+# Shell integration
+shell-integration = detect
+
+# Colours (optional - defaults are good)
+# background = 1e1e2e
+# foreground = cdd6f4
+# Ghostty uses a good default palette, but you can customise:
+# palette = 0=#45475a
+# palette = 1=#f38ba8
+# palette = 2=#a6e3a1
+# palette = 3=#f9e2af
+# palette = 4=#89b4fa
+# palette = 5=#f5c2e7
+# palette = 6=#94e2d5
+# palette = 7=#bac2de
+# palette = 8=#585b70
+# palette = 9=#f38ba8
+# palette = 10=#a6e3a1
+# palette = 11=#f9e2af
+# palette = 12=#89b4fa
+# palette = 13=#f5c2e7
+# palette = 14=#94e2d5
+# palette = 15=#a6adc8
+
+# Window title
+title = Ghostty
+
+# Confirm on close with multiple tabs
+confirm-close-surface = true
+
+# Quick terminal (dropdown) settings
+# quick-terminal-position = top
+# quick-terminal-screen = current
+# quick-terminal-animation-duration = 0.2
+
+# Custom themes can be placed in ~/.config/ghostty/themes/
+# To use a theme, uncomment and set:
+# theme = catppuccin-mocha
