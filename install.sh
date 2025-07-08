@@ -8,7 +8,7 @@ CONFIG_DIR="${CONFIG_DIR:-}"
 VSCODE_CLI="${VSCODE_CLI:-}"
 # Default to development tools only, but allow override via environment
 # CONFIG_FILES can be set as environment variable with space-separated values
-if [[ -v CONFIG_FILES ]]; then
+if [[ -n "${CONFIG_FILES+x}" ]]; then
   # CONFIG_FILES exists in environment (as a string)
   config_files_env="$CONFIG_FILES"
   if [[ -z "$config_files_env" ]]; then
