@@ -1,0 +1,33 @@
+# Version control tools - available in both host and containers
+tools:
+  git:
+    manager: brew
+    type: package
+    check_command: command -v git
+    description: "Distributed version control system"
+    documentation_url: "https://git-scm.com/"
+    category: git
+  
+  gh:
+    manager: brew
+    type: package
+    check_command: command -v gh
+    description: "GitHub's official command line tool"
+    documentation_url: "https://cli.github.com/"
+    category: git
+  
+  lazygit:
+    manager: brew
+    type: package
+    check_command: command -v lazygit
+    description: "Simple terminal UI for git commands"
+    documentation_url: "https://github.com/jesseduffield/lazygit"
+    category: git
+  
+  git-delta:
+    manager: brew
+    type: package
+    check_command: command -v delta
+    description: "Syntax-highlighting pager for git"
+    documentation_url: "https://github.com/dandavison/delta"
+    category: git

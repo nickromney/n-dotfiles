@@ -580,11 +580,11 @@ main() {
             ;;
           esac
         fi
-      elif can_install_tool "$tool"; then
+      elif can_install_tool "$tool" "$CURRENT_CONFIG_FILE"; then
         manager=$(yq ".tools.${tool}.manager" "$CURRENT_CONFIG_FILE")
         type=$(yq ".tools.${tool}.type" "$CURRENT_CONFIG_FILE")
         info "Installing $tool ($manager $type)..."
-        if install_tool "$tool"; then
+        if install_tool "$tool" "$CURRENT_CONFIG_FILE"; then
           info "✓ Successfully installed $tool ($manager $type)"
         else
           info "Failed to install $tool ($manager $type)"

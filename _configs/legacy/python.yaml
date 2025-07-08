@@ -1,0 +1,90 @@
+# Python development tools
+# Python interpreters, package managers, linters, formatters, and development utilities
+
+package_managers:
+  brew:
+    types:
+      - package
+    default_type: package
+  uv:
+    types:
+      - tool
+    default_type: tool
+
+tools:
+  # Python Package Management
+  python3-pip:
+    manager: brew
+    type: package
+    check_command: "python3 -m pip --version"
+    install_args: []
+    description: "Python package installer"
+    documentation_url: "https://pip.pypa.io/"
+    category: "python"
+
+  pipx:
+    manager: brew
+    type: package
+    check_command: "pipx --version"
+    install_args: []
+    description: "Install Python applications in isolated environments"
+    documentation_url: "https://pypa.github.io/pipx/"
+    category: "python"
+
+  virtualenv:
+    manager: brew
+    type: package
+    check_command: "virtualenv --version"
+    install_args: []
+    description: "Tool to create isolated Python environments"
+    documentation_url: "https://virtualenv.pypa.io/"
+    category: "python"
+
+  # Python Code Quality Tools
+  black:
+    manager: brew
+    type: package
+    check_command: "black --version"
+    install_args: []
+    description: "Python code formatter"
+    documentation_url: "https://github.com/psf/black"
+    category: "python"
+
+  flake8:
+    manager: brew
+    type: package
+    check_command: "flake8 --version"
+    install_args: []
+    description: "Python linting tool"
+    documentation_url: "https://flake8.pycqa.org/"
+    category: "python"
+
+  mypy:
+    manager: brew
+    type: package
+    check_command: "mypy --version"
+    install_args: []
+    description: "Static type checker for Python"
+    documentation_url: "http://mypy-lang.org/"
+    category: "python"
+
+
+  # Python Development Tools
+  ipython:
+    manager: brew
+    type: package
+    check_command: "ipython --version"
+    install_args: []
+    description: "Interactive Python shell"
+    documentation_url: "https://ipython.org/"
+    category: "python"
+
+  jupyterlab:
+    manager: brew
+    type: package
+    check_command: "jupyter --version"
+    install_args: []
+    description: "Web-based interactive development environment"
+    documentation_url: "https://jupyter.org/"
+    category: "python"
+

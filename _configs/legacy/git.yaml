@@ -1,0 +1,70 @@
+# Git, version control, and CI/CD tools
+# Git clients, GitHub tools, CI/CD utilities
+
+package_managers:
+  arkade:
+    types:
+      - get
+    default_type: get
+  brew:
+    types:
+      - package
+    default_type: package
+
+tools:
+  # Git and Version Control
+  gh:
+    manager: brew
+    type: package
+    check_command: "gh --version"
+    install_args: []
+    description: "GitHub's official command-line tool"
+    documentation_url: "https://cli.github.com/"
+    category: "git"
+
+  lazygit:
+    manager: brew
+    type: package
+    check_command: "lazygit --version"
+    install_args: []
+    description: "Simple terminal UI for git commands"
+    documentation_url: "https://github.com/jesseduffield/lazygit"
+    category: "git"
+
+  git-lfs:
+    manager: brew
+    type: package
+    check_command: "git lfs version"
+    install_args: []
+    description: "Git extension for large file storage"
+    documentation_url: "https://git-lfs.github.com/"
+    category: "git"
+
+
+  # CI/CD Tools
+  act:
+    manager: brew
+    type: package
+    check_command: "act --version"
+    install_args: []
+    description: "Run GitHub Actions locally"
+    documentation_url: "https://github.com/nektos/act"
+    category: "git"
+
+  actions-usage:
+    manager: arkade
+    type: get
+    check_command: "test -f $HOME/.arkade/bin/actions-usage"
+    install_args: []
+    description: "GitHub Actions usage metrics CLI tool"
+    documentation_url: "https://github.com/self-actuated/actions-usage"
+    category: "git"
+
+  pre-commit:
+    manager: brew
+    type: package
+    check_command: "pre-commit --version"
+    install_args: []
+    description: "Framework for managing git pre-commit hooks"
+    documentation_url: "https://pre-commit.com/"
+    category: "git"

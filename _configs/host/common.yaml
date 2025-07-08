@@ -1,0 +1,81 @@
+# Common host tools - installed on any host machine (personal or work)
+tools:
+  stow:
+    manager: brew
+    type: package
+    check_command: command -v stow
+    description: "Symlink farm manager for dotfiles"
+    documentation_url: "https://www.gnu.org/software/stow/"
+    category: system
+  
+  ghostty:
+    manager: brew
+    type: cask
+    check_command: "[ -d /Applications/Ghostty.app ]"
+    description: "Fast, native terminal emulator"
+    documentation_url: "https://github.com/ghostty-org/ghostty"
+    category: terminal
+  
+  tmux:
+    manager: brew
+    type: package
+    check_command: command -v tmux
+    description: "Terminal multiplexer"
+    documentation_url: "https://github.com/tmux/tmux"
+    category: terminal
+  
+  aerospace:
+    manager: brew
+    type: cask
+    check_command: command -v aerospace
+    description: "Tiling window manager"
+    documentation_url: "https://github.com/nikitabobko/AeroSpace"
+    category: window-manager
+  
+  FelixKratz/formulae/borders:
+    manager: brew
+    type: tap
+    check_command: "brew tap | grep -q '^felixkratz/formulae$'"
+    description: "Tap for JankyBorders"
+    documentation_url: "https://github.com/FelixKratz/JankyBorders"
+    category: window-manager
+  
+  borders:
+    manager: brew
+    type: package
+    check_command: command -v borders
+    description: "Window borders for tiling window managers"
+    documentation_url: "https://github.com/FelixKratz/JankyBorders"
+    category: window-manager
+  
+  karabiner-elements:
+    manager: brew
+    type: cask
+    check_command: "[ -d '/Applications/Karabiner-Elements.app' ]"
+    description: "Keyboard customizer"
+    documentation_url: "https://karabiner-elements.pqrs.org/"
+    category: productivity
+  
+  alfred:
+    manager: brew
+    type: cask
+    check_command: "[ -d '/Applications/Alfred 5.app' ]"
+    description: "Application launcher and productivity tool"
+    documentation_url: "https://www.alfredapp.com/"
+    category: productivity
+  
+  docker:
+    manager: brew
+    type: cask
+    check_command: command -v docker
+    description: "Container platform"
+    documentation_url: "https://www.docker.com/"
+    category: containers
+  
+  1password-cli:
+    manager: brew
+    type: cask
+    check_command: command -v op
+    description: "1Password command-line tool"
+    documentation_url: "https://developer.1password.com/docs/cli"
+    category: security

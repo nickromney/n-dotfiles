@@ -1,0 +1,20 @@
+# AWS tools
+# Amazon Web Services CLI and related tools
+
+package_managers:
+  brew:
+    types:
+      - package
+      - cask
+    default_type: package
+
+tools:
+  awscli:
+    manager: brew
+    type: package
+    check_command: "aws --version"
+    install_args: []
+    description: "Official Amazon AWS command-line interface"
+    documentation_url: "https://aws.amazon.com/cli/"
+    category: "aws"
+

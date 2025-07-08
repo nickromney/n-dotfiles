@@ -1,0 +1,61 @@
+# JavaScript and Node.js development tools
+# JavaScript runtimes, package managers, and development utilities
+
+package_managers:
+  brew:
+    types:
+      - package
+    default_type: package
+
+tools:
+  # JavaScript Runtimes
+  bun:
+    manager: brew
+    type: package
+    check_command: "bun --version"
+    install_args: []
+    description: "Fast all-in-one JavaScript runtime and toolkit"
+    documentation_url: "https://bun.sh/"
+    category: "javascript"
+
+  node:
+    manager: brew
+    type: package
+    check_command: "node --version"
+    install_args: []
+    description: "JavaScript runtime built on Chrome's V8 engine"
+    documentation_url: "https://nodejs.org/"
+    category: "javascript"
+
+  # Version Managers
+  nvm:
+    manager: brew
+    type: package
+    check_command: 'brew --prefix nvm >/dev/null 2>&1 && test -d "$(brew --prefix nvm)"'
+    install_args: []
+    description: "Node Version Manager - manage multiple Node.js versions"
+    documentation_url: "https://github.com/nvm-sh/nvm"
+    category: "javascript"
+
+
+  # Package Managers
+  yarn:
+    manager: brew
+    type: package
+    check_command: "yarn --version"
+    install_args: []
+    description: "Fast, reliable JavaScript package manager"
+    documentation_url: "https://yarnpkg.com/"
+    category: "javascript"
+
+
+  # TypeScript
+  typescript:
+    manager: brew
+    type: package
+    check_command: "tsc --version"
+    install_args: []
+    description: "TypeScript programming language"
+    documentation_url: "https://www.typescriptlang.org/"
+    category: "javascript"
+

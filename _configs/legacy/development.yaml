@@ -1,0 +1,135 @@
+# Development tools
+# Language-agnostic development utilities and general programming tools
+
+package_managers:
+  brew:
+    types:
+      - package
+      - cask
+      - tap
+    default_type: package
+
+tools:
+  # Code Quality Tools
+  shellcheck:
+    manager: brew
+    type: package
+    check_command: "shellcheck --version"
+    install_args: []
+    description: "Static analysis tool for shell scripts"
+    documentation_url: "https://www.shellcheck.net/"
+    category: "development"
+
+  shfmt:
+    manager: brew
+    type: package
+    check_command: "shfmt --version"
+    install_args: []
+    description: "Shell script formatter"
+    documentation_url: "https://github.com/mvdan/sh"
+    category: "development"
+
+  prettier:
+    manager: brew
+    type: package
+    check_command: "prettier --version"
+    install_args: []
+    description: "Opinionated code formatter"
+    documentation_url: "https://prettier.io/"
+    category: "development"
+
+  # Documentation Tools
+  pandoc:
+    manager: brew
+    type: package
+    check_command: "pandoc --version"
+    install_args: []
+    description: "Universal document converter"
+    documentation_url: "https://pandoc.org/"
+    category: "development"
+
+  markdownlint-cli:
+    manager: brew
+    type: package
+    check_command: "markdownlint --version"
+    install_args: []
+    description: "Markdown linting and style checking"
+    documentation_url: "https://github.com/igorshubovych/markdownlint-cli"
+    category: "development"
+
+  # Infrastructure and DevOps
+  ansible:
+    manager: brew
+    type: package
+    check_command: "ansible --version"
+    install_args: []
+    description: "Automation platform for configuration management"
+    documentation_url: "https://www.ansible.com/"
+    category: "development"
+
+  terraform:
+    manager: brew
+    type: package
+    check_command: "terraform version"
+    install_args: []
+    description: "Infrastructure as code software tool"
+    documentation_url: "https://www.terraform.io/"
+    category: "development"
+
+  tfenv:
+    manager: brew
+    type: package
+    check_command: "tfenv --version"
+    install_args: []
+    description: "Terraform version manager"
+    documentation_url: "https://github.com/tfutils/tfenv"
+    category: "development"
+
+  tflint:
+    manager: brew
+    type: package
+    check_command: "tflint --version"
+    install_args: []
+    description: "Terraform linter"
+    documentation_url: "https://github.com/terraform-linters/tflint"
+    category: "development"
+
+  # Programming Languages
+  go:
+    manager: brew
+    type: package
+    check_command: "go version"
+    install_args: []
+    description: "Go programming language"
+    documentation_url: "https://golang.org/"
+    category: "development"
+
+  # Parsing Tools
+  tree-sitter:
+    manager: brew
+    type: package
+    check_command: "tree-sitter --version"
+    install_args: []
+    description: "Parser generator and incremental parsing library"
+    documentation_url: "https://tree-sitter.github.io/"
+    category: "development"
+
+  # # .NET Development
+  # dotnet-sdk:
+  #   manager: brew
+  #   type: cask
+  #   check_command: "dotnet --version"
+  #   install_args: []
+  #   description: ".NET SDK for building applications"
+  #   documentation_url: "https://dotnet.microsoft.com/"
+  #   category: "development"
+
+  # Completion Tools
+  brew-cask-completion:
+    manager: brew
+    type: package
+    check_command: "brew list brew-cask-completion"
+    install_args: []
+    description: "Bash completion for brew cask commands"
+    documentation_url: "https://github.com/xyb/homebrew-cask-completion"
+    category: "development"

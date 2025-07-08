@@ -1,0 +1,37 @@
+package_managers:
+  brew:
+    types:
+      - package
+    default_type: package
+tools:
+  karabiner-elements:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Karabiner-Elements.app"'
+    install_args: []
+    description: "Powerful keyboard customizer for macOS"
+    documentation_url: "https://karabiner-elements.pqrs.org/"
+    category: "utilities"
+  logi-tune:
+    name: "Logi Tune"
+    check_command: 'test -d "/Applications/Logi Tune.app"'
+    download_url: "https://www.logitech.com/en-us/video-collaboration/software/logi-tune-software.html"
+    description: "Logitech device management"
+    category: "utilities"
+  nikitabobko/tap:
+    manager: brew
+    type: tap
+    check_command: "brew tap | grep -q '^nikitabobko/tap$'"
+    install_args: []
+    description: "Homebrew tap for nikitabobko's formulae (includes aerospace)"
+    documentation_url: "https://github.com/nikitabobko/homebrew-tap"
+    category: "productivity"
+  # Window Managers
+  aerospace:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Aerospace.app"'
+    install_args: ["nikitabobko/tap/aerospace"]
+    description: "AeroSpace is an i3-like tiling window manager for macOS"
+    documentation_url: "https://github.com/nikitabobko/AeroSpace"
+    category: "productivity"

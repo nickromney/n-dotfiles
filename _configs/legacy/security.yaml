@@ -1,0 +1,49 @@
+# Security tools
+# Password managers, vulnerability scanners, and security utilities
+
+package_managers:
+  brew:
+    types:
+      - package
+      - cask
+    default_type: package
+
+tools:
+  # Password Management
+  1password-cli:
+    manager: brew
+    type: cask
+    check_command: "op --version"
+    install_args: []
+    description: "1Password command-line tool for secrets management"
+    documentation_url: "https://developer.1password.com/docs/cli/"
+    category: "security"
+
+  ykman:
+    manager: brew
+    type: package
+    check_command: "ykman --version"
+    install_args: []
+    description: "YubiKey Manager CLI"
+    documentation_url: "https://docs.yubico.com/software/yubikey/tools/ykman/"
+    category: "utilities"
+
+  # Vulnerability Scanning
+  trivy:
+    manager: brew
+    type: package
+    check_command: "trivy --version"
+    install_args: []
+    description: "Vulnerability scanner for containers and other artifacts"
+    documentation_url: "https://aquasecurity.github.io/trivy/"
+    category: "security"
+
+  # Encryption Tools
+  gnupg:
+    manager: brew
+    type: package
+    check_command: "gpg --version"
+    install_args: []
+    description: "GNU Privacy Guard"
+    documentation_url: "https://gnupg.org/"
+    category: "security"

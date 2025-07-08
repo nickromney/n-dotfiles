@@ -1,0 +1,39 @@
+# Instant messaging and communication tools
+# Chat applications and video conferencing
+
+package_managers:
+  brew:
+    types:
+      - cask
+    default_type: cask
+
+tools:
+  # Team Communication
+  slack:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Slack.app"'
+    install_args: []
+    description: "Team communication platform"
+    documentation_url: "https://slack.com/"
+    category: "messaging"
+
+  # Personal Messaging
+  whatsapp:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/WhatsApp.app"'
+    install_args: []
+    description: "WhatsApp Desktop"
+    documentation_url: "https://www.whatsapp.com/"
+    category: "messaging"
+
+  # Video Conferencing
+  zoom:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/zoom.us.app"'
+    install_args: []
+    description: "Video conferencing software"
+    documentation_url: "https://zoom.us/"
+    category: "messaging"

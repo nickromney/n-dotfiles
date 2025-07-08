@@ -1,0 +1,59 @@
+# Search and find tools
+# Fast file searching, text searching, and fuzzy finding utilities
+
+package_managers:
+  brew:
+    types:
+      - package
+    default_type: package
+
+tools:
+  # Text Search
+  ripgrep:
+    manager: brew
+    type: package
+    check_command: "rg --version"
+    install_args: []
+    description: "Recursively search directories for a regex pattern"
+    documentation_url: "https://github.com/BurntSushi/ripgrep"
+    category: "search"
+
+  the_silver_searcher:
+    manager: brew
+    type: package
+    check_command: "ag --version"
+    install_args: []
+    description: "Code searching tool similar to ack but faster"
+    documentation_url: "https://github.com/ggreer/the_silver_searcher"
+    category: "search"
+
+
+  # File Search
+  fd:
+    manager: brew
+    type: package
+    check_command: "fd --version"
+    install_args: []
+    description: "Simple, fast and user-friendly alternative to 'find'"
+    documentation_url: "https://github.com/sharkdp/fd"
+    category: "search"
+
+  # Fuzzy Finders
+  fzf:
+    manager: brew
+    type: package
+    check_command: "fzf --version"
+    install_args: []
+    description: "Command-line fuzzy finder"
+    documentation_url: "https://github.com/junegunn/fzf"
+    category: "search"
+
+  sk:
+    manager: brew
+    type: package
+    check_command: "sk --version"
+    install_args: []
+    description: "Fuzzy finder in rust (skim)"
+    documentation_url: "https://github.com/lotabout/skim"
+    category: "search"
+

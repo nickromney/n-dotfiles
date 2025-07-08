@@ -1,0 +1,41 @@
+# Shell environment tools - available in both host and containers
+tools:
+  starship:
+    manager: brew
+    type: package
+    check_command: command -v starship
+    description: "Cross-shell prompt for astronauts"
+    documentation_url: "https://starship.rs/"
+    category: shell
+  
+  zoxide:
+    manager: brew
+    type: package
+    check_command: command -v zoxide
+    description: "Smarter cd command"
+    documentation_url: "https://github.com/ajeetdsouza/zoxide"
+    category: shell
+  
+  zsh-autosuggestions:
+    manager: brew
+    type: package
+    check_command: "[ -f $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]"
+    description: "Fish-like autosuggestions for zsh"
+    documentation_url: "https://github.com/zsh-users/zsh-autosuggestions"
+    category: shell
+  
+  zsh-syntax-highlighting:
+    manager: brew
+    type: package
+    check_command: "[ -f $(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]"
+    description: "Fish-like syntax highlighting for zsh"
+    documentation_url: "https://github.com/zsh-users/zsh-syntax-highlighting"
+    category: shell
+  
+  zsh-completions:
+    manager: brew
+    type: package
+    check_command: "[ -d $(brew --prefix)/share/zsh-completions ]"
+    description: "Additional completion definitions for zsh"
+    documentation_url: "https://github.com/zsh-users/zsh-completions"
+    category: shell

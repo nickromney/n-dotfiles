@@ -1,0 +1,41 @@
+# Kubernetes tools
+# Kubernetes orchestration, management, and development tools
+
+package_managers:
+  brew:
+    types:
+      - package
+      - cask
+    default_type: package
+
+tools:
+  # Kubernetes Core Tools
+  kubernetes-cli:
+    manager: brew
+    type: package
+    check_command: "kubectl version --client"
+    install_args: []
+    description: "Kubernetes command-line tool"
+    documentation_url: "https://kubernetes.io/docs/reference/kubectl/"
+    category: "kubernetes"
+
+  helm:
+    manager: brew
+    type: package
+    check_command: "helm version"
+    install_args: []
+    description: "Kubernetes package manager"
+    documentation_url: "https://helm.sh/"
+    category: "kubernetes"
+
+  # Local Kubernetes
+  # Kubernetes Management UIs
+  k9s:
+    manager: brew
+    type: package
+    check_command: "k9s version"
+    install_args: []
+    description: "Kubernetes CLI to manage your clusters in style"
+    documentation_url: "https://k9scli.io/"
+    category: "kubernetes"
+

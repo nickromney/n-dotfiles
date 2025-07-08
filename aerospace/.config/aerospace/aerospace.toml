@@ -51,14 +51,14 @@ alt-shift-equal = 'resize smart +100'
 
 # A huge stretch for mnemonics, but works with CapsLock as Hyper, plus right hand Qwerty.
 # W = Work (if using browser profiles)
-# T = Terminal (currently Ghostty), Kitty, Tmux
-# Y = YDE (VSCode, Webstorm)
-# U = Utilities (Finder, Preview, Snagit, Podman Desktop)
-# I = Internet (browsers)
-# O = Office (Excel, Word)
-# P = Productivity (Obsidian, Notes, Things, Spotify, helpers like SnagIt)
+# T = Terminal (Ghostty, Kitty, Tmux)
+# Y = YDE (VSCode, Webstorm, Rider, Cursor, Local)
+# U = Utilities (Finder, Preview, Snagit, Podman Desktop, balenaEtcher, iMazing)
+# I = Internet (browsers - Brave, Chrome, Safari, Firefox)
+# O = Office (Excel, Word, PowerPoint, OneNote)
+# P = Productivity (Obsidian, Notes, Things, Spotify) & AI (Claude, Ollama)
 # [ = Email (HEY, Outlook)
-# ] = Instant Messaging (Messages, Teams, WhatsApp)
+# ] = Instant Messaging (Messages, Teams, WhatsApp, Slack, Zoom)
 
 # This binds a series of commands - move to workspace U, then change to workspace U
 # Uses the keys immediately above the workspace letter
@@ -118,6 +118,18 @@ if.app-id = 'com.jetbrains.WebStorm'
 run = 'move-node-to-workspace Y'
 
 [[on-window-detected]]
+if.app-id = 'com.jetbrains.rider'
+run = 'move-node-to-workspace Y'
+
+[[on-window-detected]]
+if.app-id = 'com.todesktop.230313mzl4w4u92'
+run = 'move-node-to-workspace Y'
+
+[[on-window-detected]]
+if.app-id = 'com.getflywheel.lightning.local'
+run = 'move-node-to-workspace Y'
+
+[[on-window-detected]]
 if.app-id = 'com.apple.finder'
 run = 'move-node-to-workspace U'
 
@@ -131,6 +143,18 @@ run = 'move-node-to-workspace U'
 
 [[on-window-detected]]
 if.app-id = 'com.jamfsoftware.selfservice.mac'
+run = 'move-node-to-workspace U'
+
+[[on-window-detected]]
+if.app-id = 'com.TechSmith.Snagit'
+run = 'move-node-to-workspace U'
+
+[[on-window-detected]]
+if.app-id = 'io.balena.etcher'
+run = 'move-node-to-workspace U'
+
+[[on-window-detected]]
+if.app-id = 'com.DigiDNA.iMazing3Mac'
 run = 'move-node-to-workspace U'
 
 [[on-window-detected]]
@@ -149,6 +173,10 @@ run = "move-node-to-workspace I"
 
 [[on-window-detected]]
 if.app-id = 'com.apple.Safari'
+run = "move-node-to-workspace I"
+
+[[on-window-detected]]
+if.app-id = 'org.mozilla.firefox'
 run = "move-node-to-workspace I"
 
 [[on-window-detected]]
@@ -176,6 +204,14 @@ if.app-id = 'com.culturedcode.ThingsMac'
 run = "move-node-to-workspace P"
 
 [[on-window-detected]]
+if.app-id = 'com.anthropic.claudefordesktop'
+run = "move-node-to-workspace P"
+
+[[on-window-detected]]
+if.app-id = 'com.electron.ollama'
+run = "move-node-to-workspace P"
+
+[[on-window-detected]]
 if.app-id = 'com.hey.app.desktop'
 run = 'move-node-to-workspace ['
 
@@ -193,4 +229,12 @@ run = 'move-node-to-workspace ]'
 
 [[on-window-detected]]
 if.app-id = 'net.whatsapp.WhatsApp'
+run = 'move-node-to-workspace ]'
+
+[[on-window-detected]]
+if.app-id = 'com.tinyspeck.slackmacgap'
+run = 'move-node-to-workspace ]'
+
+[[on-window-detected]]
+if.app-id = 'us.zoom.xos'
 run = 'move-node-to-workspace ]'

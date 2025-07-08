@@ -6,12 +6,15 @@ load helpers/mocks
 setup() {
   setup_mocks
   
-  # Set up test environment - use the real tools.yaml
-  export YAML_FILE="$BATS_TEST_DIRNAME/../_configs/tools.yaml"
+  # Set up test environment
+  export CONFIG_DIR="_configs"
+  export CONFIG_FILES=("test")
   export DRY_RUN="false"
   export VERBOSE="false"
   export STOW="false"
   export FORCE="false"
+  export UPDATE="false"
+  export CONFIG_FILES_SET_VIA_CLI="false"
   
   # Change to the script directory to ensure relative paths work
   cd "$BATS_TEST_DIRNAME/.."
@@ -108,7 +111,7 @@ esac
 EOF
   chmod +x "$MOCK_BIN_DIR/yq"
   
-  run get_available_managers
+  run get_available_managers "test.yaml"
   [ "$status" -eq 0 ]
   
   # Check if brew is actually available on the system
@@ -136,7 +139,7 @@ esac
 EOF
   chmod +x "$MOCK_BIN_DIR/yq"
   
-  run get_available_managers
+  run get_available_managers "test.yaml"
   [ "$status" -eq 0 ]
   
   # Should show some managers as available based on what's actually installed
@@ -175,7 +178,7 @@ EOF
   }
   export -f command_exists
   
-  run get_available_managers
+  run get_available_managers "test.yaml"
   [ "$status" -eq 0 ]
   
   # Should report at least one unavailable manager
@@ -214,7 +217,7 @@ EOF
   # Mock brew as available
   mock_command "brew"
   
-  run get_available_managers
+  run get_available_managers "test.yaml"
   [ "$status" -eq 0 ]
   # Check that brew is listed as available (might be with other managers)
   [[ "$output" =~ "Available package managers:" ]] && [[ "$output" =~ "brew" ]]
@@ -244,7 +247,7 @@ EOF
   # Mock id to return non-root
   mock_id 1000
   
-  run get_available_managers
+  run get_available_managers "test.yaml"
   [ "$status" -eq 0 ]
   
   # On Linux with apt-get available but not root, should show permission message
@@ -260,7 +263,7 @@ EOF
   mock_command "apt-get"
   mock_id 0
   
-  run get_available_managers
+  run get_available_managers "test.yaml"
   [ "$status" -eq 0 ]
   [[ "${lines[0]}" =~ "Available package managers:" ]] && [[ "${lines[0]}" =~ "apt" ]]
 }
@@ -270,21 +273,21 @@ EOF
   mock_yq
   mock_command "tool1" 0
   
-  run is_tool_installed "tool1"
+  run is_tool_installed "tool1" "test.yaml"
   [ "$status" -eq 0 ]
 }
 
 @test "is_tool_installed returns failure when tool is not installed" {
   mock_yq
   
-  run is_tool_installed "tool2"
+  run is_tool_installed "tool2" "test.yaml"
   [ "$status" -eq 1 ]
 }
 
 @test "is_tool_installed handles tools with no check command" {
   mock_yq
   
-  run is_tool_installed "special-tool"
+  run is_tool_installed "special-tool" "test.yaml"
   [ "$status" -eq 1 ]
   [[ "$output" =~ "no check command specified" ]]
 }
@@ -294,7 +297,7 @@ EOF
   mock_yq
   AVAILABLE_MANAGERS=("brew" "arkade")
   
-  run can_install_tool "tool1"
+  run can_install_tool "tool1" "test.yaml"
   [ "$status" -eq 0 ]
 }
 
@@ -303,7 +306,7 @@ EOF
   # shellcheck disable=SC2034  # Used by can_install_tool function
   AVAILABLE_MANAGERS=("arkade")
   
-  run can_install_tool "tool1"
+  run can_install_tool "tool1" "test.yaml"
   [ "$status" -eq 1 ]
 }
 
@@ -312,7 +315,7 @@ EOF
   mock_yq
   mock_brew
   
-  run install_tool "jq"
+  run install_tool "jq" "test.yaml"
   [ "$status" -eq 0 ]
   assert_mock_called "brew" "install jq"
 }
@@ -321,7 +324,7 @@ EOF
   mock_yq
   mock_brew
   
-  run install_tool "docker"
+  run install_tool "docker" "test.yaml"
   [ "$status" -eq 0 ]
   assert_mock_called "brew" "install --cask docker"
 }
@@ -330,7 +333,7 @@ EOF
   mock_yq
   mock_brew
   
-  run install_tool "homebrew/cask-fonts"
+  run install_tool "homebrew/cask-fonts" "test.yaml"
   [ "$status" -eq 0 ]
   assert_mock_called "brew" "tap homebrew/cask-fonts"
 }
@@ -340,7 +343,7 @@ EOF
   mock_yq
   mock_arkade
   
-  run install_tool "kubectl"
+  run install_tool "kubectl" "test.yaml"
   [ "$status" -eq 0 ]
   assert_mock_called "arkade" "get kubectl"
 }
@@ -349,7 +352,7 @@ EOF
   mock_yq
   mock_arkade
   
-  run install_tool "prometheus"
+  run install_tool "prometheus" "test.yaml"
   [ "$status" -eq 0 ]
   assert_mock_called "arkade" "system install prometheus"
 }
@@ -358,7 +361,7 @@ EOF
   mock_yq
   mock_arkade
   
-  run install_tool "openfaas"
+  run install_tool "openfaas" "test.yaml"
   [ "$status" -eq 0 ]
   assert_mock_called "arkade" "install openfaas --namespace openfaas"
 }
@@ -368,7 +371,7 @@ EOF
   mock_yq
   mock_cargo
   
-  run install_tool "ripgrep"
+  run install_tool "ripgrep" "test.yaml"
   [ "$status" -eq 0 ]
   assert_mock_called "cargo" "install ripgrep"
 }
@@ -377,7 +380,7 @@ EOF
   mock_yq
   mock_cargo
   
-  run install_tool "zoxide"
+  run install_tool "zoxide" "test.yaml"
   [ "$status" -eq 0 ]
   assert_mock_called "cargo" "install --git https://github.com/ajeetdsouza/zoxide zoxide"
 }
@@ -387,7 +390,7 @@ EOF
   mock_yq
   mock_uv
   
-  run install_tool "ruff"
+  run install_tool "ruff" "test.yaml"
   [ "$status" -eq 0 ]
   assert_mock_called "uv" "tool install ruff"
 }
@@ -397,7 +400,7 @@ EOF
   mock_yq
   mock_apt_get
   
-  run install_tool "curl"
+  run install_tool "curl" "test.yaml"
   [ "$status" -eq 0 ]
   assert_mock_called "apt-get" "update -qq"
   assert_mock_called "apt-get" "install -y curl"
@@ -410,7 +413,7 @@ EOF
   # shellcheck disable=SC2030  # DRY_RUN modification is intentional in test
   export DRY_RUN="true"
   
-  run install_tool "jq"
+  run install_tool "jq" "test.yaml"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "Would execute: brew install" ]] && [[ "$output" =~ "jq" ]]
   assert_mock_not_called "brew"
@@ -485,12 +488,12 @@ EOF
   # Create a simple mock that returns managers that don't exist
   mock_command_with_script "yq" '
 case "$*" in
-  ".tools[].manager"*)
+  *".tools[].manager"*)
     echo "fakemgr1"
     echo "fakemgr2"
     exit 0
     ;;
-  ".tools | keys | .[]"*)
+  *".tools | keys | .[]"*)
     # Return empty list of tools
     exit 0
     ;;
@@ -501,6 +504,12 @@ case "$*" in
 esac
 '
   mock_command "which"
+  
+  # Create a test config file
+  mkdir -p "$BATS_TEST_TMPDIR/_configs"
+  touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
+  export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
+  export CONFIG_FILES=("test")
   
   # Override command_exists to simulate no managers available
   command_exists() {
@@ -519,27 +528,27 @@ esac
   # Create custom yq mock that only returns tool1
   mock_command_with_script "yq" '
 case "$*" in
-  ".tools[].manager"*)
+  *".tools[].manager"*)
     echo "brew"
     exit 0
     ;;
-  ".tools | keys | .[]"*)
+  *".tools | keys | .[]"*)
     echo "tool1"
     exit 0
     ;;
-  ".tools.tool1.manager"*)
+  *".tools.tool1.manager"*)
     echo "brew"
     exit 0
     ;;
-  ".tools.tool1.type"*)
+  *".tools.tool1.type"*)
     echo "package"
     exit 0
     ;;
-  ".tools.tool1.check_command"*)
+  *".tools.tool1.check_command"*)
     echo "tool1 --version"
     exit 0
     ;;
-  ".tools.tool1.install_args[]"*)
+  *".tools.tool1.install_args[]"*)
     exit 0
     ;;
   *)
@@ -550,6 +559,12 @@ esac
 '
   mock_command "which"
   mock_brew
+  
+  # Create a test config file
+  mkdir -p "$BATS_TEST_TMPDIR/_configs"
+  touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
+  export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
+  export CONFIG_FILES=("test")
   
   # tool1 is not installed (not in our mock bin)
   
@@ -563,27 +578,27 @@ esac
   # Create custom yq mock that only returns tool1
   mock_command_with_script "yq" '
 case "$*" in
-  ".tools[].manager"*)
+  *".tools[].manager"*)
     echo "brew"
     exit 0
     ;;
-  ".tools | keys | .[]"*)
+  *".tools | keys | .[]"*)
     echo "tool1"
     exit 0
     ;;
-  ".tools.tool1.manager"*)
+  *".tools.tool1.manager"*)
     echo "brew"
     exit 0
     ;;
-  ".tools.tool1.type"*)
+  *".tools.tool1.type"*)
     echo "package"
     exit 0
     ;;
-  ".tools.tool1.check_command"*)
+  *".tools.tool1.check_command"*)
     echo "tool1 --version"
     exit 0
     ;;
-  ".tools.tool1.install_args[]"*)
+  *".tools.tool1.install_args[]"*)
     exit 0
     ;;
   *)
@@ -594,6 +609,12 @@ esac
 '
   mock_command "which"
   mock_brew
+  
+  # Create a test config file
+  mkdir -p "$BATS_TEST_TMPDIR/_configs"
+  touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
+  export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
+  export CONFIG_FILES=("test")
   
   # Mock tool1 as installed
   mock_command "tool1" 0
@@ -608,11 +629,11 @@ esac
   # Simple mock that returns brew as available manager
   mock_command_with_script "yq" '
 case "$*" in
-  ".tools[].manager"*)
+  *".tools[].manager"*)
     echo "brew"
     exit 0
     ;;
-  ".tools | keys | .[]"*)
+  *".tools | keys | .[]"*)
     # Return empty - no tools to install
     exit 0
     ;;
@@ -626,6 +647,12 @@ esac
   mock_brew
   mock_stow
   export STOW="true"
+  
+  # Create a test config file
+  mkdir -p "$BATS_TEST_TMPDIR/_configs"
+  touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
+  export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
+  export CONFIG_FILES=("test")
   
   mkdir -p "$BATS_TEST_DIRNAME/../zsh"
   
@@ -669,6 +696,12 @@ EOF
   
   mock_command "brew"
   mock_command "tool1"  # Mark tool1 as already installed
+  
+  # Create a test config file
+  mkdir -p "$BATS_TEST_TMPDIR/_configs"
+  touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
+  export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
+  export CONFIG_FILES=("test")
   
   # Create a smart 'which' mock that checks if commands exist in mock dir
   cat > "$MOCK_BIN_DIR/which" << 'EOF'

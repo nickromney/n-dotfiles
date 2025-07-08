@@ -1,0 +1,57 @@
+# Personal machine additions - tools specific to personal use
+tools:
+  mas:
+    manager: brew
+    type: package
+    check_command: command -v mas
+    description: "Mac App Store command-line interface"
+    documentation_url: "https://github.com/mas-cli/mas"
+    category: system
+  
+  atuin:
+    manager: brew
+    type: package
+    check_command: command -v atuin
+    description: "Shell history sync/search"
+    documentation_url: "https://github.com/atuinsh/atuin"
+    category: shell
+  
+  ollama:
+    manager: brew
+    type: cask
+    check_command: command -v ollama
+    description: "Run large language models locally"
+    documentation_url: "https://ollama.ai/"
+    category: ai
+  
+  brave-browser:
+    manager: brew
+    type: cask
+    check_command: "[ -d '/Applications/Brave Browser.app' ]"
+    description: "Privacy-focused web browser"
+    documentation_url: "https://brave.com/"
+    category: internet
+  
+  spotify:
+    manager: brew
+    type: cask
+    check_command: "[ -d /Applications/Spotify.app ]"
+    description: "Music streaming"
+    documentation_url: "https://www.spotify.com/"
+    category: media
+  
+  visual-studio-code:
+    manager: brew
+    type: cask
+    check_command: "[ -d '/Applications/Visual Studio Code.app' ]"
+    description: "Code editor"
+    documentation_url: "https://code.visualstudio.com/"
+    category: development
+  
+  claude:
+    manager: brew
+    type: cask
+    check_command: "[ -d /Applications/Claude.app ]"
+    description: "AI assistant desktop app"
+    documentation_url: "https://claude.ai/"
+    category: ai

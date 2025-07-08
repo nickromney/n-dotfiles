@@ -1,0 +1,19 @@
+# Email clients
+# Desktop email applications
+
+package_managers:
+  brew:
+    types:
+      - cask
+    default_type: cask
+
+tools:
+  # Email Clients
+  hey:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/HEY.app"'
+    install_args: []
+    description: "Email service by Basecamp"
+    documentation_url: "https://hey.com/"
+    category: "email"

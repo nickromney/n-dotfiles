@@ -1,0 +1,34 @@
+# Hardware-related tools
+# Tools for managing hardware devices, peripherals, and input devices
+
+package_managers:
+  brew:
+    types:
+      - package
+      - cask
+    default_type: package
+
+tools:
+  # Display Management
+  displaylink:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/DisplayLink Manager.app"'
+    install_args: []
+    description: "DisplayLink USB graphics software"
+    documentation_url: "https://www.displaylink.com/"
+    category: "hardware"
+
+  elgato-control-center:
+    name: "Elgato Control Center"
+    check_command: 'test -d "/Applications/Elgato Control Center.app"'
+    download_url: "https://www.elgato.com/en/downloads"
+    description: "Control Elgato devices"
+    category: "utilities"
+
+  vocaster-hub:
+    name: "Vocaster Hub"
+    check_command: 'test -d "/Applications/Vocaster Hub.app"'
+    download_url: "https://focusrite.com/en/vocaster"
+    description: "Focusrite Vocaster control software"
+    category: "utilities"

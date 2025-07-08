@@ -1,0 +1,20 @@
+# Build automation tools
+# Make, autotools, and build system utilities
+
+package_managers:
+  brew:
+    types:
+      - package
+    default_type: package
+
+tools:
+  # Autotools
+  automake:
+    manager: brew
+    type: package
+    check_command: "automake --version"
+    install_args: []
+    description: "Tool for generating GNU Standards-compliant Makefiles"
+    documentation_url: "https://www.gnu.org/software/automake/"
+    category: "build-tools"
+

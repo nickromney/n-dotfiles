@@ -1,0 +1,27 @@
+# File management tools
+# Terminal-based file managers and explorers
+
+package_managers:
+  brew:
+    types:
+      - package
+    default_type: package
+
+tools:
+  ranger:
+    manager: brew
+    type: package
+    check_command: "ranger --version"
+    install_args: []
+    description: "Console file manager with VI key bindings"
+    documentation_url: "https://ranger.github.io/"
+    category: "file-managers"
+
+  # midnight-commander:
+  #   manager: brew
+  #   type: package
+  #   check_command: "mc --version"
+  #   install_args: []
+  #   description: "Terminal-based visual file manager"
+  #   documentation_url: "https://midnight-commander.org/"
+  #   category: "file-managers"

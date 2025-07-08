@@ -1,0 +1,50 @@
+# Productivity tools
+# Window managers, task managers, and productivity applications
+
+package_managers:
+  brew:
+    types:
+      - package
+      - cask
+      - tap
+    default_type: package
+
+tools:
+  # Brew Taps (required for some window managers)
+  FelixKratz/formulae:
+    manager: brew
+    type: tap
+    check_command: "brew tap | grep -qi '^felixkratz/formulae$'"
+    install_args: []
+    description: "Homebrew tap for FelixKratz's formulae (includes borders)"
+    documentation_url: "https://github.com/FelixKratz/homebrew-formulae"
+    category: "productivity"
+
+  borders:
+    manager: brew
+    type: package
+    check_command: "test -d /opt/homebrew/Cellar/borders"
+    install_args: ["felixkratz/formulae/borders"]
+    description: "Window border system for macOS"
+    documentation_url: "https://github.com/FelixKratz/JankyBorders"
+    category: "productivity"
+
+  # Note-taking and Knowledge Management
+  obsidian:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Obsidian.app"'
+    install_args: []
+    description: "Knowledge base and note-taking app"
+    documentation_url: "https://obsidian.md/"
+    category: "productivity"
+
+  # Media
+  spotify:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Spotify.app"'
+    install_args: []
+    description: "Music streaming service"
+    documentation_url: "https://www.spotify.com/"
+    category: "productivity"

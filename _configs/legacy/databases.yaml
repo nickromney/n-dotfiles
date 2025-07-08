@@ -1,0 +1,29 @@
+# Database tools
+# Database servers, clients, and management tools
+
+package_managers:
+  brew:
+    types:
+      - package
+      - cask
+    default_type: package
+
+tools:
+  # Database Servers
+  # mariadb:
+  #   manager: brew
+  #   type: package
+  #   check_command: "mysql --version | grep -i mariadb"
+  #   install_args: []
+  #   description: "MySQL-compatible database server"
+  #   documentation_url: "https://mariadb.org/"
+  #   category: "databases"
+
+  # postgresql:
+  #   manager: brew
+  #   type: package
+  #   check_command: "postgres --version"
+  #   install_args: []
+  #   description: "PostgreSQL database system"
+  #   documentation_url: "https://www.postgresql.org/"
+  #   category: "databases"

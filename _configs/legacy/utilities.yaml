@@ -1,0 +1,87 @@
+# System utilities
+# File managers, system monitoring, security tools, and general utilities
+
+package_managers:
+  brew:
+    types:
+      - package
+      - cask
+    default_type: package
+
+tools:
+  # System Monitoring
+  bpytop:
+    manager: brew
+    type: package
+    check_command: "bpytop --version"
+    install_args: []
+    description: "Resource monitor that shows usage and stats"
+    documentation_url: "https://github.com/aristocratos/bpytop"
+    category: "utilities"
+
+  # Network Tools
+  sshs:
+    manager: brew
+    type: package
+    check_command: "sshs --version"
+    install_args: []
+    description: "SSH client with server management features"
+    documentation_url: "https://github.com/quantumsheep/sshs"
+    category: "utilities"
+
+  wget:
+    manager: brew
+    type: package
+    check_command: "wget --version"
+    install_args: []
+    description: "Internet file retriever"
+    documentation_url: "https://www.gnu.org/software/wget/"
+    category: "utilities"
+
+  mas:
+    manager: brew
+    type: package
+    check_command: "mas version"
+    install_args: []
+    description: "Mac App Store command-line interface"
+    documentation_url: "https://github.com/mas-cli/mas"
+    category: "utilities"
+
+  # Backup Tools
+  backblaze:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Backblaze.app"'
+    install_args: []
+    description: "Unlimited cloud backup service"
+    documentation_url: "https://www.backblaze.com/"
+    category: "utilities"
+
+  # Screen Recording and Capture
+  keycastr:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/KeyCastr.app"'
+    install_args: []
+    description: "Open-source keystroke visualizer"
+    documentation_url: "https://github.com/keycastr/keycastr"
+    category: "utilities"
+
+  snagit:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Snagit.app" || test -d "/Applications/Snagit 2023.app" || test -d "/Applications/Snagit 2024.app"'
+    install_args: []
+    description: "Screen capture and recording software"
+    documentation_url: "https://www.techsmith.com/screen-capture.html"
+    category: "utilities"
+
+  # Device Management
+  balenaetcher:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/balenaEtcher.app"'
+    install_args: []
+    description: "Flash OS images to SD cards & USB drives"
+    documentation_url: "https://www.balena.io/etcher/"
+    category: "utilities"

@@ -1,0 +1,29 @@
+# Rust development tools
+# Rust compiler, cargo tools, and development utilities
+
+package_managers:
+  brew:
+    types:
+      - package
+    default_type: package
+tools:
+  # Rust Compiler
+  rust:
+    manager: brew
+    type: package
+    check_command: "rustc --version"
+    install_args: []
+    description: "Systems programming language focused on safety"
+    documentation_url: "https://www.rust-lang.org/"
+    category: "rust"
+
+
+  # Code Quality
+  clippy:
+    manager: brew
+    type: package
+    check_command: "cargo clippy --version"
+    install_args: []
+    description: "Lints to catch common mistakes in Rust"
+    documentation_url: "https://github.com/rust-lang/rust-clippy"
+    category: "rust"

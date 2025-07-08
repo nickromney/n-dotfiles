@@ -1,0 +1,57 @@
+# Networking tools
+# HTTP clients, SSH tools, and network utilities
+
+package_managers:
+  brew:
+    types:
+      - package
+    default_type: package
+
+tools:
+  # HTTP Clients
+  wget:
+    manager: brew
+    type: package
+    check_command: "wget --version"
+    install_args: []
+    description: "Internet file retriever"
+    documentation_url: "https://www.gnu.org/software/wget/"
+    category: "networking"
+
+  xh:
+    manager: brew
+    type: package
+    check_command: "xh --version"
+    install_args: []
+    description: "Friendly and fast HTTP client"
+    documentation_url: "https://github.com/ducaale/xh"
+    category: "networking"
+
+  httpie:
+    manager: brew
+    type: package
+    check_command: "http --version"
+    install_args: []
+    description: "User-friendly command-line HTTP client"
+    documentation_url: "https://httpie.io/"
+    category: "networking"
+
+  curl:
+    manager: brew
+    type: package
+    check_command: "curl --version"
+    install_args: []
+    description: "Transfer data from or to a server"
+    documentation_url: "https://curl.se/"
+    category: "networking"
+
+
+  # SSH and Remote Access
+  sshs:
+    manager: brew
+    type: package
+    check_command: "sshs --version"
+    install_args: []
+    description: "SSH client with server management features"
+    documentation_url: "https://github.com/quantumsheep/sshs"
+    category: "networking"

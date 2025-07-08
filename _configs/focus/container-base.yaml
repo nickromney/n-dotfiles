@@ -1,0 +1,9 @@
+# Base tools for any development container
+tools:
+  direnv:
+    manager: brew
+    type: package
+    check_command: command -v direnv
+    description: "Load/unload environment variables based on directory"
+    documentation_url: "https://direnv.net/"
+    category: development

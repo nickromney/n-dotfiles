@@ -1,0 +1,25 @@
+# TypeScript/Node development tools
+tools:
+  node:
+    manager: brew
+    type: package
+    check_command: command -v node
+    description: "JavaScript runtime"
+    documentation_url: "https://nodejs.org/"
+    category: javascript
+  
+  bun:
+    manager: brew
+    type: package
+    check_command: command -v bun
+    description: "All-in-one JavaScript runtime & toolkit"
+    documentation_url: "https://bun.sh/"
+    category: javascript
+  
+  typescript:
+    manager: brew
+    type: package
+    check_command: command -v tsc
+    description: "TypeScript language"
+    documentation_url: "https://www.typescriptlang.org/"
+    category: javascript

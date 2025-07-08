@@ -1,0 +1,20 @@
+# Font packages
+# Programming fonts and nerd fonts
+
+package_managers:
+  brew:
+    types:
+      - cask
+    default_type: cask
+
+tools:
+  # Nerd Fonts
+  font-jetbrains-mono-nerd-font:
+    manager: brew
+    type: cask
+    check_command: 'brew list --cask font-jetbrains-mono-nerd-font >/dev/null 2>&1 || [ -d "$HOME/Library/Fonts/JetBrainsMono" ] || [ -d "/Library/Fonts/JetBrainsMono" ]'
+    install_args: []
+    description: "JetBrains Mono font patched with Nerd Font icons"
+    documentation_url: "https://www.nerdfonts.com/"
+    category: "fonts"
+

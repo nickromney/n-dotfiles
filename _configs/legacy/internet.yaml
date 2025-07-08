@@ -1,0 +1,28 @@
+# Internet browsers
+# Web browsers and browser-related tools
+
+package_managers:
+  brew:
+    types:
+      - cask
+    default_type: cask
+
+tools:
+  # Web Browsers
+  brave-browser:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Brave Browser.app"'
+    install_args: []
+    description: "Privacy-focused web browser"
+    documentation_url: "https://brave.com/"
+    category: "internet"
+
+  google-chrome:
+    manager: brew
+    type: cask
+    check_command: 'test -d "/Applications/Google Chrome.app"'
+    install_args: []
+    description: "Google Chrome web browser"
+    documentation_url: "https://www.google.com/chrome/"
+    category: "internet"

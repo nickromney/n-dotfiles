@@ -1,0 +1,19 @@
+# Dotfile management tools
+# Tools for managing configuration files and dotfiles
+
+package_managers:
+  brew:
+    types:
+      - package
+    default_type: package
+
+tools:
+  stow:
+    manager: brew
+    type: package
+    check_command: "stow --version"
+    install_args: []
+    description: "Symlink farm manager for dotfiles"
+    documentation_url: "https://www.gnu.org/software/stow/"
+    category: "dotfiles"
+

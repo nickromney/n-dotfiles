@@ -1,0 +1,31 @@
+# System monitoring tools
+# Resource monitors, disk usage analyzers, and system information utilities
+
+package_managers:
+  brew:
+    types:
+      - package
+    default_type: package
+
+tools:
+  # Resource Monitors
+  bpytop:
+    manager: brew
+    type: package
+    check_command: "bpytop --version"
+    install_args: []
+    description: "Resource monitor that shows usage and stats"
+    documentation_url: "https://github.com/aristocratos/bpytop"
+    category: "monitoring"
+
+
+  # Disk Usage
+  ncdu:
+    manager: brew
+    type: package
+    check_command: "ncdu --version"
+    install_args: []
+    description: "NCurses Disk Usage - disk usage analyzer"
+    documentation_url: "https://dev.yorhel.nl/ncdu"
+    category: "monitoring"
+
