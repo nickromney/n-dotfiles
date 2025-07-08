@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 
-# Test for Makefile functionality
+# Tests for Makefile functionality
 
 setup() {
   # Save current directory
@@ -30,16 +30,29 @@ teardown() {
 @test "make help displays usage information" {
   run make help
   [ "$status" -eq 0 ]
+  [[ "$output" =~ "n-dotfiles Makefile wrapper for install.sh" ]]
   [[ "$output" =~ "Usage: make" ]]
-  [[ "$output" =~ "Profiles:" ]]
-  [[ "$output" =~ "Actions:" ]]
+  [[ "$output" =~ "Main targets:" ]]
+  [[ "$output" =~ "common" ]]
+  [[ "$output" =~ "personal" ]]
+  [[ "$output" =~ "work" ]]
+  [[ "$output" =~ "Focus targets" ]]
+  [[ "$output" =~ "Actions" ]]
   [[ "$output" =~ "Examples:" ]]
+}
+
+@test "make common runs with correct configs" {
+  run make common
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "CONFIG_FILES: shared/shell shared/git shared/search shared/file-tools shared/data-tools shared/network shared/neovim host/common" ]]
+  [[ ! "$output" =~ "-u" ]]  # Should not have update flag
+  [[ ! "$output" =~ "-s" ]]  # Should not have stow flag
 }
 
 @test "make personal runs with correct configs" {
   run make personal
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "CONFIG_FILES: shared/shell shared/search shared/git shared/neovim shared/file-tools shared/data-tools shared/network host/common host/personal" ]]
+  [[ "$output" =~ "CONFIG_FILES: shared/shell shared/git shared/search shared/file-tools shared/data-tools shared/network shared/neovim host/common host/personal focus/vscode" ]]
   [[ ! "$output" =~ "-u" ]]  # Should not have update flag
   [[ ! "$output" =~ "-s" ]]  # Should not have stow flag
 }
@@ -47,38 +60,40 @@ teardown() {
 @test "make work runs with correct configs" {
   run make work
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "CONFIG_FILES: shared/shell shared/search shared/git shared/neovim shared/file-tools shared/data-tools shared/network host/common host/work" ]]
+  [[ "$output" =~ "CONFIG_FILES: shared/shell shared/git shared/search shared/file-tools shared/data-tools shared/network shared/neovim host/common host/work focus/vscode" ]]
   [[ ! "$output" =~ "host/personal" ]]  # Should not include personal configs
 }
 
-@test "make python runs with correct configs" {
-  run make python
+@test "make focus-vscode runs with correct configs" {
+  run make focus-vscode
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "CONFIG_FILES: focus/container-base focus/python" ]]
+  [[ "$output" =~ "CONFIG_FILES: focus/vscode" ]]
 }
 
-@test "make typescript runs with correct configs" {
-  run make typescript
+@test "make focus-devops runs with correct configs" {
+  run make focus-devops
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "CONFIG_FILES: focus/container-base focus/typescript" ]]
+  [[ "$output" =~ "CONFIG_FILES: focus/devops" ]]
 }
 
-@test "make rust runs with correct configs" {
-  run make rust
+@test "make focus-neovim runs with correct configs" {
+  run make focus-neovim
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "CONFIG_FILES: focus/container-base focus/rust" ]]
+  [[ "$output" =~ "CONFIG_FILES: focus/neovim" ]]
 }
 
-@test "make ai runs with correct configs" {
-  run make ai
+@test "make common update adds update flag" {
+  run make common update
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "CONFIG_FILES: focus/container-base focus/ai" ]]
+  [[ "$output" =~ "CONFIG_FILES: shared/shell shared/git shared/search shared/file-tools shared/data-tools shared/network shared/neovim host/common" ]]
+  [[ "$output" =~ "-u" ]]  # Should have update flag
 }
 
-@test "make kubernetes runs with correct configs" {
-  run make kubernetes
+@test "make common stow adds stow flag" {
+  run make common stow
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "CONFIG_FILES: focus/container-base focus/kubernetes" ]]
+  [[ "$output" =~ "CONFIG_FILES: shared/shell shared/git shared/search shared/file-tools shared/data-tools shared/network shared/neovim host/common" ]]
+  [[ "$output" =~ "-s" ]]  # Should have stow flag
 }
 
 @test "make personal update adds update flag" {
@@ -100,18 +115,69 @@ teardown() {
   [[ ! "$output" =~ "-s" ]]  # Should not have stow flag
 }
 
-@test "make all runs with all configs" {
-  run make all
+@test "make focus-vscode update adds update flag" {
+  run make focus-vscode update
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "CONFIG_FILES:" ]]
-  [[ "$output" =~ "shared/shell" ]]
-  [[ "$output" =~ "host/personal" ]]
-  [[ "$output" =~ "focus/python" ]]
-  [[ "$output" =~ "focus/typescript" ]]
-  [[ "$output" =~ "focus/rust" ]]
-  [[ "$output" =~ "focus/ai" ]]
-  [[ "$output" =~ "focus/kubernetes" ]]
-  [[ "$output" =~ "-s" ]]  # all target includes stow
+  [[ "$output" =~ "-u" ]]
+}
+
+@test "make focus-vscode stow adds stow flag" {
+  run make focus-vscode stow
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "-s" ]]
+}
+
+@test "make personal update stow adds both flags" {
+  run make personal update stow
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "-u -s" ]]  # Should have both flags
+}
+
+@test "make common install stow adds stow flag" {
+  run make common install stow
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "CONFIG_FILES: shared/shell shared/git shared/search shared/file-tools shared/data-tools shared/network shared/neovim host/common" ]]
+  [[ "$output" =~ "-s" ]]  # Should have stow flag
+  [[ ! "$output" =~ "-u" ]]  # Should not have update flag
+}
+
+@test "make default target shows help" {
+  run make
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "n-dotfiles Makefile wrapper for install.sh" ]]
+}
+
+@test "make install alone does nothing" {
+  run make install
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]  # Should have no output
+}
+
+@test "make update alone does nothing" {
+  run make update
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]  # Should have no output
+}
+
+@test "make stow alone does nothing" {
+  run make stow
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]  # Should have no output
+}
+
+@test "VSCODE_CLI environment variable is passed through" {
+  # Update mock install.sh to show VSCODE_CLI
+  cat > install.sh << 'EOF'
+#!/usr/bin/env bash
+echo "CONFIG_FILES: $CONFIG_FILES"
+echo "VSCODE_CLI: $VSCODE_CLI"
+echo "Arguments: $@"
+EOF
+  chmod +x install.sh
+  
+  VSCODE_CLI=cursor run make focus-vscode
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "VSCODE_CLI: cursor" ]]
 }
 
 @test "make with invalid target fails" {

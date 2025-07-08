@@ -14,25 +14,45 @@ An opinionated dotfiles setup designed to:
 
 I looked at [nix flakes](https://nixos.wiki/wiki/flakes) but although I'm often tweaking my configuration, I don't need to set up whole new machines enough to warrant it. This [blog](https://jvns.ca/blog/2023/11/11/notes-on-nix-flakes/) from Julia Evans convinced me away from it.
 
-## Installation
-
-1. Clone the repository:
+## Quick Start
 
 ```bash
-git clone https://github.com/nickromney/n-dotfiles.git ~/.dotfiles
-cd ~/.dotfiles
+# Clone and enter directory
+git clone https://github.com/nickromney/n-dotfiles.git ~/n-dotfiles
+cd ~/n-dotfiles
+
+# Install common Mac tools (recommended starting point)
+make common install
+
+# Or install my personal setup (includes VSCode extensions)
+make personal stow
+
+# Or just install VSCode and extensions
+make focus-vscode
 ```
 
-1. Install desired package managers:
+## Using the Makefile
 
-- `arkade`: Optional, for CLI tools from [alexellis/arkade](https://github.com/alexellis/arkade?tab=readme-ov-file#getting-arkade)
-- `brew`: Optional, for packages and casks from [brew.sh](https://brew.sh/)
-- `uv`: Optional, for Python tools from [astral.sh](https://docs.astral.sh/uv/getting-started/installation/#installing-uv)
-
-1. Run installation and configuration:
+The Makefile provides convenient targets for different configurations:
 
 ```bash
-./install.sh [-d|--dry-run] [-v|--verbose] [-s|--stow] [-f|--force] [-h|--help]
+# Main targets
+make common       # Essential Mac tools (shared + host/common)
+make personal     # My personal machine setup
+make work         # Work machine setup
+
+# Focus targets (specific tool categories)
+make focus-vscode     # VSCode and extensions
+make focus-devops     # DevOps tools
+make focus-neovim     # Neovim and plugins
+
+# Actions (combine with targets)
+make personal install  # Install packages only
+make personal update   # Update existing packages
+make personal stow     # Install and create symlinks
+
+# VSCode for different editors
+VSCODE_CLI=cursor make focus-vscode  # Install extensions for Cursor
 ```
 
 ## Features
@@ -81,15 +101,33 @@ Light-touch macOS configuration management:
 
 See [_macos/README.md](_macos/README.md) for detailed macOS configuration options.
 
-## Configuration
+## Configuration Structure
 
-Edit YAML files in `_configs/` to modify:
+The `_configs/` directory uses a layered approach:
 
-- Package manager configurations
-- Tool specifications and dependencies
-- Installation methods and verification commands
+```
+_configs/
+├── shared/           # Cross-platform tools
+│   ├── shell.yaml        # Shell utilities (zsh, starship, etc.)
+│   ├── git.yaml          # Git tools
+│   ├── search.yaml       # Search tools (ripgrep, fzf, etc.)
+│   ├── neovim.yaml       # Neovim configuration
+│   ├── file-tools.yaml   # File management utilities
+│   ├── data-tools.yaml   # Data processing tools
+│   └── network.yaml      # Network utilities
+├── host/             # Host-specific configurations  
+│   ├── common.yaml       # Tools for any Mac (Ghostty, VSCode, Obsidian, etc.)
+│   ├── personal.yaml     # Personal additions
+│   └── work.yaml         # Work-specific tools
+└── focus/            # Development focus areas
+    ├── vscode.yaml       # VSCode + 38 extensions
+    ├── python.yaml       # Python development
+    ├── typescript.yaml   # TypeScript/Node development
+    ├── rust.yaml         # Rust development
+    ├── kubernetes.yaml   # Kubernetes tools
+    └── container-base.yaml  # Base container tools
 
-Examples for each type:
+### Package Manager Examples
 
 ### Tap a Homebrew repository
 
@@ -141,33 +179,70 @@ posting:
   install_args: ["--python", "3.12"]
 ```
 
+### Install VSCode extensions
+
+```yaml
+prettier-vscode:
+  manager: code
+  type: extension
+  extension_id: esbenp.prettier-vscode
+  check_command: "code --list-extensions | grep -q esbenp.prettier-vscode"
+  description: "Code formatter"
+  documentation_url: "https://prettier.io/"
+  category: vscode-extension
+```
+
 Each tool entry requires:
 
 ```yaml
-manager: Package manager to use (brew/arkade/uv)
+manager: Package manager to use (brew/arkade/uv/cargo/apt/code)
 type: Installation method specific to the manager
 check_command: Command to verify installation
 install_args: Additional installation arguments (optional)
+extension_id: Required for VSCode extensions (manager: code)
+```
+
+### VSCode Extension Management
+
+The `code` package manager supports VSCode and compatible editors:
+
+```bash
+# Default: uses 'code' CLI
+make focus-vscode
+
+# For Cursor editor
+VSCODE_CLI=cursor make focus-vscode
+
+# For VSCodium
+VSCODE_CLI=vscodium make focus-vscode
 ```
 
 ## Directory Structure
 
 ```shell
 .
-├── install.sh   # Package installation and configuration management
-├── _configs/
-│   └── tools.yaml  # Default package definitions
-├── _macos/      # macOS configuration
-│   ├── macos.sh          # macOS system configuration script
-│   ├── personal.yaml     # Personal Mac settings
-│   ├── work-example.yaml # Example work settings
-│   └── README.md         # macOS configuration documentation
-├── _test/       # BATS test suite
-│   ├── install.bats      # Package installation tests
-│   ├── macos.bats        # macOS configuration tests
-│   ├── helpers/mocks.bash # Mock framework
-│   └── run_tests.sh      # Test runner script
-└── */           # Tool configurations, where each directory represents a stow target
+├── install.sh      # Main installation script
+├── Makefile        # Convenient targets for common operations
+├── _configs/       # Modular configuration files
+│   ├── shared/     # Cross-platform tools
+│   ├── host/       # Host-specific configurations
+│   └── focus/      # Development focus areas
+├── _macos/         # macOS system configuration
+│   ├── macos.sh    # macOS settings script
+│   └── *.yaml      # Settings profiles
+├── _test/          # Comprehensive test suite
+│   ├── install.bats     # Installation tests
+│   ├── macos.bats       # macOS tests
+│   ├── makefile.bats    # Makefile tests
+│   └── run_tests.sh     # Test runner
+└── */              # Stow directories for dotfiles
+    ├── aerospace/  # Tiling window manager
+    ├── git/        # Git configuration
+    ├── nvim/       # Neovim config
+    ├── tmux/       # Tmux config
+    ├── vscode/     # VSCode settings
+    ├── zsh/        # Zsh configuration
+    └── ...         # Other tool configs
 ```
 
 ## Testing
