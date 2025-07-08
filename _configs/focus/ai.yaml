@@ -1,0 +1,25 @@
+# AI/ML development tools
+tools:
+  cline:
+    manager: brew
+    type: package
+    check_command: command -v cline
+    description: "AI coding assistant for VS Code"
+    documentation_url: "https://github.com/cline/cline"
+    category: ai
+  
+  llm:
+    manager: brew
+    type: package
+    check_command: command -v llm
+    description: "CLI for interacting with large language models"
+    documentation_url: "https://github.com/simonw/llm"
+    category: ai
+  
+  code2prompt:
+    manager: cargo
+    type: binary
+    check_command: command -v code2prompt
+    description: "Generate prompts from codebases for LLMs"
+    documentation_url: "https://github.com/raphaelmansuy/code2prompt"
+    category: ai

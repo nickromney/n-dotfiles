@@ -1,0 +1,9 @@
+# Python development tools
+tools:
+  uv:
+    manager: brew
+    type: package
+    check_command: command -v uv
+    description: "Fast Python package installer and resolver"
+    documentation_url: "https://github.com/astral-sh/uv"
+    category: python

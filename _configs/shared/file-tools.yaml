@@ -1,0 +1,25 @@
+# File management and viewing tools - available in both host and containers
+tools:
+  bat:
+    manager: brew
+    type: package
+    check_command: command -v bat
+    description: "Cat clone with syntax highlighting"
+    documentation_url: "https://github.com/sharkdp/bat"
+    category: file-tools
+  
+  eza:
+    manager: brew
+    type: package
+    check_command: command -v eza
+    description: "Modern replacement for ls"
+    documentation_url: "https://github.com/eza-community/eza"
+    category: file-tools
+  
+  ranger:
+    manager: brew
+    type: package
+    check_command: command -v ranger
+    description: "Console file manager with VI key bindings"
+    documentation_url: "https://github.com/ranger/ranger"
+    category: file-tools

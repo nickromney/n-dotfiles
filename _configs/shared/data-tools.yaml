@@ -1,0 +1,41 @@
+# Data processing and manipulation tools - available in both host and containers
+tools:
+  jq:
+    manager: brew
+    type: package
+    check_command: command -v jq
+    description: "Command-line JSON processor"
+    documentation_url: "https://stedolan.github.io/jq/"
+    category: data-tools
+  
+  yq:
+    manager: brew
+    type: package
+    check_command: command -v yq
+    description: "YAML, JSON, XML, CSV and properties parser"
+    documentation_url: "https://github.com/mikefarah/yq"
+    category: data-tools
+  
+  fx:
+    manager: brew
+    type: package
+    check_command: command -v fx
+    description: "Terminal JSON viewer"
+    documentation_url: "https://github.com/antonmedv/fx"
+    category: data-tools
+  
+  jqp:
+    manager: brew
+    type: package
+    check_command: command -v jqp
+    description: "TUI playground for jq"
+    documentation_url: "https://github.com/noahgorstein/jqp"
+    category: data-tools
+  
+  code2prompt:
+    manager: cargo
+    type: binary
+    check_command: command -v code2prompt
+    description: "Generate prompts from codebases for LLMs"
+    documentation_url: "https://github.com/raphaelmansuy/code2prompt"
+    category: ai

@@ -1,0 +1,33 @@
+# Search and find tools - available in both host and containers
+tools:
+  ripgrep:
+    manager: brew
+    type: package
+    check_command: command -v rg
+    description: "Recursively search directories for regex patterns"
+    documentation_url: "https://github.com/BurntSushi/ripgrep"
+    category: search
+  
+  fd:
+    manager: brew
+    type: package
+    check_command: command -v fd
+    description: "Simple, fast and user-friendly alternative to find"
+    documentation_url: "https://github.com/sharkdp/fd"
+    category: search
+  
+  fzf:
+    manager: brew
+    type: package
+    check_command: command -v fzf
+    description: "Command-line fuzzy finder"
+    documentation_url: "https://github.com/junegunn/fzf"
+    category: search
+  
+  the_silver_searcher:
+    manager: brew
+    type: package
+    check_command: command -v ag
+    description: "Code searching tool similar to ack"
+    documentation_url: "https://github.com/ggreer/the_silver_searcher"
+    category: search

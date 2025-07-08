@@ -1,0 +1,9 @@
+# Neovim and related tools - available in both host and containers
+tools:
+  neovim:
+    manager: brew
+    type: package
+    check_command: command -v nvim
+    description: "Hyperextensible Vim-based text editor"
+    documentation_url: "https://neovim.io/"
+    category: editor

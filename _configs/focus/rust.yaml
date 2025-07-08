@@ -1,0 +1,9 @@
+# Rust development tools
+tools:
+  rustup:
+    manager: brew
+    type: package
+    check_command: command -v rustup
+    description: "Rust toolchain installer"
+    documentation_url: "https://rustup.rs/"
+    category: rust
