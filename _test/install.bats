@@ -722,3 +722,130 @@ EOF
   [[ "$output" =~ "unknown package manager: foo" ]]
   [[ "$output" =~ "Skipping footool: foo not available" ]]
 }
+# Tests for get_vscode_cli function
+@test "get_vscode_cli returns code by default" {
+  # Mock code command
+  echo '#!/usr/bin/env bash
+echo "code"' > "$MOCK_BIN_DIR/code"
+  chmod +x "$MOCK_BIN_DIR/code"
+  
+  run get_vscode_cli
+  [ "$status" -eq 0 ]
+  [ "$output" = "code" ]
+}
+
+@test "get_vscode_cli uses VSCODE_CLI environment variable" {
+  export VSCODE_CLI="cursor"
+  
+  # Mock cursor command
+  echo '#!/usr/bin/env bash
+echo "cursor"' > "$MOCK_BIN_DIR/cursor"
+  chmod +x "$MOCK_BIN_DIR/cursor"
+  
+  run get_vscode_cli
+  [ "$status" -eq 0 ]
+  [ "$output" = "cursor" ]
+}
+
+@test "get_vscode_cli fails when specified CLI not found" {
+  export VSCODE_CLI="nonexistent"
+  
+  run get_vscode_cli
+  [ "$status" -eq 1 ]
+  [[ "$output" =~ "VSCode CLI 'nonexistent' not found" ]]
+}
+
+# Tests for code package manager
+@test "get_available_managers detects code when available" {
+  # Mock yq to return code as a manager
+  cat > "$MOCK_BIN_DIR/yq" << 'EOF'
+#!/usr/bin/env bash
+case "$*" in
+  *".tools[].manager"*)
+    echo "code"
+    ;;
+  *)
+    echo "null"
+    ;;
+esac
+EOF
+  chmod +x "$MOCK_BIN_DIR/yq"
+  
+  # Mock code command
+  echo '#!/usr/bin/env bash
+echo "code"' > "$MOCK_BIN_DIR/code"
+  chmod +x "$MOCK_BIN_DIR/code"
+  
+  run get_available_managers "test.yaml"
+  [ "$status" -eq 0 ]
+  # get_available_managers outputs to stdout, we need to check for "code" in output
+  [[ "$output" =~ "code" ]]
+}
+
+@test "install_tool installs code extension" {
+  mock_yq
+  
+  # Mock code command
+  echo '#!/usr/bin/env bash
+echo "Installing extension: $*"' > "$MOCK_BIN_DIR/code"
+  chmod +x "$MOCK_BIN_DIR/code"
+  
+  # Add extension_id to yq mock
+  yq() {
+    case "$*" in
+      *".tools.tool1.manager"*) echo "code" ;;
+      *".tools.tool1.type"*) echo "extension" ;;
+      *".tools.tool1.extension_id"*) echo "esbenp.prettier-vscode" ;;
+      *".tools.tool1.install_args[]"*) echo "" ;;
+      *) echo "null" ;;
+    esac
+  }
+  export -f yq
+  
+  run install_tool "tool1" "test.yaml"
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "Installing extension: --install-extension esbenp.prettier-vscode" ]]
+}
+
+@test "install_tool skips code extension without extension_id" {
+  mock_yq
+  
+  # Override yq for this test
+  yq() {
+    case "$*" in
+      *".tools.tool1.manager"*) echo "code" ;;
+      *".tools.tool1.type"*) echo "extension" ;;
+      *".tools.tool1.extension_id"*) echo "null" ;;
+      *) echo "null" ;;
+    esac
+  }
+  export -f yq
+  
+  run install_tool "tool1" "test.yaml"
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "no extension_id specified" ]]
+}
+
+@test "is_tool_installed substitutes VSCode CLI for code extensions" {
+  export VSCODE_CLI="cursor"
+  
+  # Mock cursor command
+  echo '#!/usr/bin/env bash
+if [[ "$1" == "--list-extensions" ]]; then
+  echo "esbenp.prettier-vscode"
+fi' > "$MOCK_BIN_DIR/cursor"
+  chmod +x "$MOCK_BIN_DIR/cursor"
+  
+  # Mock yq
+  yq() {
+    case "$*" in
+      *".tools.prettier-vscode.check_command"*) echo "code --list-extensions | grep -q esbenp.prettier-vscode" ;;
+      *".tools.prettier-vscode.manager"*) echo "code" ;;
+      *) echo "null" ;;
+    esac
+  }
+  export -f yq
+  
+  run is_tool_installed "prettier-vscode" "test.yaml"
+  [ "$status" -eq 0 ]
+}

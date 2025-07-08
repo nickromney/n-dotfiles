@@ -1,0 +1,300 @@
+# VSCode development tools and extensions
+tools:
+  # Core Development Extensions
+  prettier-vscode:
+    manager: code
+    type: extension
+    extension_id: esbenp.prettier-vscode
+    check_command: "code --list-extensions | grep -q esbenp.prettier-vscode"
+    description: "Code formatter"
+    documentation_url: "https://prettier.io/"
+    category: vscode-extension
+    
+  shellcheck-vscode:
+    manager: code
+    type: extension
+    extension_id: timonwong.shellcheck
+    check_command: "code --list-extensions | grep -q timonwong.shellcheck"
+    description: "Shell script analysis"
+    documentation_url: "https://github.com/koalaman/shellcheck"
+    category: vscode-extension
+    
+  markdownlint-vscode:
+    manager: code
+    type: extension
+    extension_id: davidanson.vscode-markdownlint
+    check_command: "code --list-extensions | grep -q davidanson.vscode-markdownlint"
+    description: "Markdown linting"
+    documentation_url: "https://github.com/DavidAnson/markdownlint"
+    category: vscode-extension
+    
+  code-spell-checker-vscode:
+    manager: code
+    type: extension
+    extension_id: streetsidesoftware.code-spell-checker
+    check_command: "code --list-extensions | grep -q streetsidesoftware.code-spell-checker"
+    description: "Spell checker"
+    documentation_url: "https://marketplace.visualstudio.com/items?itemName=streetsidesoftware.code-spell-checker"
+    category: vscode-extension
+
+  shell-format-vscode:
+    manager: code
+    type: extension
+    extension_id: foxundermoon.shell-format
+    check_command: "code --list-extensions | grep -q foxundermoon.shell-format"
+    description: "Shell script formatter"
+    documentation_url: "https://marketplace.visualstudio.com/items?itemName=foxundermoon.shell-format"
+    category: vscode-extension
+
+  # Git Extensions
+  gitlens-vscode:
+    manager: code
+    type: extension
+    extension_id: eamodio.gitlens
+    check_command: "code --list-extensions | grep -q eamodio.gitlens"
+    description: "Git supercharged"
+    documentation_url: "https://gitlens.amod.io/"
+    category: vscode-extension
+    
+  # AI Extensions
+  claude-code-vscode:
+    manager: code
+    type: extension
+    extension_id: anthropic.claude-code
+    check_command: "code --list-extensions | grep -q anthropic.claude-code"
+    description: "Claude AI assistant"
+    documentation_url: "https://claude.ai/code"
+    category: vscode-extension
+    
+  github-copilot-vscode:
+    manager: code
+    type: extension
+    extension_id: github.copilot
+    check_command: "code --list-extensions | grep -q github.copilot"
+    description: "AI pair programmer"
+    documentation_url: "https://github.com/features/copilot"
+    category: vscode-extension
+    
+  github-copilot-chat-vscode:
+    manager: code
+    type: extension
+    extension_id: github.copilot-chat
+    check_command: "code --list-extensions | grep -q github.copilot-chat"
+    description: "AI chat assistant"
+    documentation_url: "https://github.com/features/copilot"
+    category: vscode-extension
+    
+  # Language Support
+  python-vscode:
+    manager: code
+    type: extension
+    extension_id: ms-python.python
+    check_command: "code --list-extensions | grep -q ms-python.python"
+    description: "Python language support"
+    documentation_url: "https://marketplace.visualstudio.com/items?itemName=ms-python.python"
+    category: vscode-extension
+    
+  pylance-vscode:
+    manager: code
+    type: extension
+    extension_id: ms-python.vscode-pylance
+    check_command: "code --list-extensions | grep -q ms-python.vscode-pylance"
+    description: "Python language server"
+    documentation_url: "https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-pylance"
+    category: vscode-extension
+
+  terraform-vscode:
+    manager: code
+    type: extension
+    extension_id: hashicorp.terraform
+    check_command: "code --list-extensions | grep -q hashicorp.terraform"
+    description: "Terraform language support"
+    documentation_url: "https://marketplace.visualstudio.com/items?itemName=hashicorp.terraform"
+    category: vscode-extension
+
+  csharp-vscode:
+    manager: code
+    type: extension
+    extension_id: ms-dotnettools.csharp
+    check_command: "code --list-extensions | grep -q ms-dotnettools.csharp"
+    description: "C# language support"
+    documentation_url: "https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csharp"
+    category: vscode-extension
+
+  powershell-vscode:
+    manager: code
+    type: extension
+    extension_id: ms-vscode.powershell
+    check_command: "code --list-extensions | grep -q ms-vscode.powershell"
+    description: "PowerShell language support"
+    documentation_url: "https://marketplace.visualstudio.com/items?itemName=ms-vscode.powershell"
+    category: vscode-extension
+    
+  yaml-vscode:
+    manager: code
+    type: extension
+    extension_id: redhat.vscode-yaml
+    check_command: "code --list-extensions | grep -q redhat.vscode-yaml"
+    description: "YAML language support"
+    documentation_url: "https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml"
+    category: vscode-extension
+    
+  # Container/Remote Development
+  remote-containers-vscode:
+    manager: code
+    type: extension
+    extension_id: ms-vscode-remote.remote-containers
+    check_command: "code --list-extensions | grep -q ms-vscode-remote.remote-containers"
+    description: "Dev containers support"
+    documentation_url: "https://code.visualstudio.com/docs/remote/containers"
+    category: vscode-extension
+
+  docker-vscode:
+    manager: code
+    type: extension
+    extension_id: ms-azuretools.vscode-docker
+    check_command: "code --list-extensions | grep -q ms-azuretools.vscode-docker"
+    description: "Docker support"
+    documentation_url: "https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-docker"
+    category: vscode-extension
+
+  kubernetes-vscode:
+    manager: code
+    type: extension
+    extension_id: ms-kubernetes-tools.vscode-kubernetes-tools
+    check_command: "code --list-extensions | grep -q ms-kubernetes-tools.vscode-kubernetes-tools"
+    description: "Kubernetes support"
+    documentation_url: "https://marketplace.visualstudio.com/items?itemName=ms-kubernetes-tools.vscode-kubernetes-tools"
+    category: vscode-extension
+
+  # Azure Extensions
+  azure-cli-vscode:
+    manager: code
+    type: extension
+    extension_id: ms-vscode.azurecli
+    check_command: "code --list-extensions | grep -q ms-vscode.azurecli"
+    description: "Azure CLI tools"
+    documentation_url: "https://marketplace.visualstudio.com/items?itemName=ms-vscode.azurecli"
+    category: vscode-extension
+
+  azure-resources-vscode:
+    manager: code
+    type: extension
+    extension_id: ms-azuretools.vscode-azureresourcegroups
+    check_command: "code --list-extensions | grep -q ms-azuretools.vscode-azureresourcegroups"
+    description: "Azure resource management"
+    documentation_url: "https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-azureresourcegroups"
+    category: vscode-extension
+
+  # Documentation Extensions
+  markdown-all-in-one-vscode:
+    manager: code
+    type: extension
+    extension_id: yzhang.markdown-all-in-one
+    check_command: "code --list-extensions | grep -q yzhang.markdown-all-in-one"
+    description: "Markdown toolkit"
+    documentation_url: "https://marketplace.visualstudio.com/items?itemName=yzhang.markdown-all-in-one"
+    category: vscode-extension
+
+  markdown-mermaid-vscode:
+    manager: code
+    type: extension
+    extension_id: bierner.markdown-mermaid
+    check_command: "code --list-extensions | grep -q bierner.markdown-mermaid"
+    description: "Mermaid diagram support"
+    documentation_url: "https://marketplace.visualstudio.com/items?itemName=bierner.markdown-mermaid"
+    category: vscode-extension
+
+  markdown-pdf-vscode:
+    manager: code
+    type: extension
+    extension_id: yzane.markdown-pdf
+    check_command: "code --list-extensions | grep -q yzane.markdown-pdf"
+    description: "Markdown to PDF converter"
+    documentation_url: "https://marketplace.visualstudio.com/items?itemName=yzane.markdown-pdf"
+    category: vscode-extension
+
+  marp-vscode:
+    manager: code
+    type: extension
+    extension_id: marp-team.marp-vscode
+    check_command: "code --list-extensions | grep -q marp-team.marp-vscode"
+    description: "Markdown presentation support"
+    documentation_url: "https://marketplace.visualstudio.com/items?itemName=marp-team.marp-vscode"
+    category: vscode-extension
+
+  plantuml-vscode:
+    manager: code
+    type: extension
+    extension_id: jebbs.plantuml
+    check_command: "code --list-extensions | grep -q jebbs.plantuml"
+    description: "PlantUML diagram support"
+    documentation_url: "https://marketplace.visualstudio.com/items?itemName=jebbs.plantuml"
+    category: vscode-extension
+
+  # Database Extensions
+  sqltools-vscode:
+    manager: code
+    type: extension
+    extension_id: mtxr.sqltools
+    check_command: "code --list-extensions | grep -q mtxr.sqltools"
+    description: "SQL database tools"
+    documentation_url: "https://marketplace.visualstudio.com/items?itemName=mtxr.sqltools"
+    category: vscode-extension
+
+  sqltools-mysql-vscode:
+    manager: code
+    type: extension
+    extension_id: mtxr.sqltools-driver-mysql
+    check_command: "code --list-extensions | grep -q mtxr.sqltools-driver-mysql"
+    description: "MySQL driver for SQLTools"
+    documentation_url: "https://marketplace.visualstudio.com/items?itemName=mtxr.sqltools-driver-mysql"
+    category: vscode-extension
+
+  # Theme and UI Extensions
+  vscode-icons:
+    manager: code
+    type: extension
+    extension_id: vscode-icons-team.vscode-icons
+    check_command: "code --list-extensions | grep -q vscode-icons-team.vscode-icons"
+    description: "File icon theme"
+    documentation_url: "https://marketplace.visualstudio.com/items?itemName=vscode-icons-team.vscode-icons"
+    category: vscode-extension
+
+  dracula-theme-vscode:
+    manager: code
+    type: extension
+    extension_id: dracula-theme.theme-dracula
+    check_command: "code --list-extensions | grep -q dracula-theme.theme-dracula"
+    description: "Dracula color theme"
+    documentation_url: "https://marketplace.visualstudio.com/items?itemName=dracula-theme.theme-dracula"
+    category: vscode-extension
+
+  tokyo-night-vscode:
+    manager: code
+    type: extension
+    extension_id: eternal.tokyo-night-horizon
+    check_command: "code --list-extensions | grep -q eternal.tokyo-night-horizon"
+    description: "Tokyo Night color theme"
+    documentation_url: "https://marketplace.visualstudio.com/items?itemName=eternal.tokyo-night-horizon"
+    category: vscode-extension
+
+  # Vim Support
+  vim-vscode:
+    manager: code
+    type: extension
+    extension_id: vscodevim.vim
+    check_command: "code --list-extensions | grep -q vscodevim.vim"
+    description: "Vim emulation"
+    documentation_url: "https://marketplace.visualstudio.com/items?itemName=vscodevim.vim"
+    category: vscode-extension
+
+  # Other Utilities
+  carbon-now-vscode:
+    manager: code
+    type: extension
+    extension_id: ericadamski.carbon-now-sh
+    check_command: "code --list-extensions | grep -q ericadamski.carbon-now-sh"
+    description: "Create beautiful code screenshots"
+    documentation_url: "https://marketplace.visualstudio.com/items?itemName=ericadamski.carbon-now-sh"
+    category: vscode-extension

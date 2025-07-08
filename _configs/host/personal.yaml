@@ -40,14 +40,6 @@ tools:
     documentation_url: "https://www.spotify.com/"
     category: media
   
-  visual-studio-code:
-    manager: brew
-    type: cask
-    check_command: "[ -d '/Applications/Visual Studio Code.app' ]"
-    description: "Code editor"
-    documentation_url: "https://code.visualstudio.com/"
-    category: development
-  
   claude:
     manager: brew
     type: cask
