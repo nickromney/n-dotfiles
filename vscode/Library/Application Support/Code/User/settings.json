@@ -64,6 +64,17 @@
   "terminal.integrated.persistentSessionReviveProcess": "never",
   "terminal.integrated.scrollback": 10000,
   "terminal.integrated.tabs.enabled": false,
+  "terminal.integrated.profiles.osx": {
+    "zsh": {
+      "path": "/bin/zsh",
+      "args": ["-l"]
+    },
+    "nu": {
+      "path": "/opt/homebrew/bin/nu",
+      "args": []
+    }
+  },
+  "terminal.integrated.defaultProfile.osx": "zsh",
   "update.mode": "manual",
   "update.showReleaseNotes": false,
   "window.newWindowDimensions": "maximized",

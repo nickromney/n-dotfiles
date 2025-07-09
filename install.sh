@@ -8,7 +8,7 @@ CONFIG_DIR="${CONFIG_DIR:-}"
 VSCODE_CLI="${VSCODE_CLI:-}"
 # Default to development tools only, but allow override via environment
 # CONFIG_FILES can be set as environment variable with space-separated values
-if [[ -v CONFIG_FILES ]]; then
+if [[ -n "${CONFIG_FILES+x}" ]]; then
   # CONFIG_FILES exists in environment (as a string)
   config_files_env="$CONFIG_FILES"
   if [[ -z "$config_files_env" ]]; then
@@ -24,7 +24,7 @@ else
   CONFIG_FILES=("host/common")
 fi
 REQUIRED_COMMANDS=("yq" "which")
-STOW_DIRS=(aerospace aws bat gh ghostty git karabiner kitty nvim prettier starship tmux vscode zsh)
+STOW_DIRS=(aerospace aws bat gh ghostty git karabiner kitty nushell nvim prettier starship tmux vscode zsh)
 
 # Default values and argument parsing
 DRY_RUN="${DRY_RUN:-false}"
@@ -469,13 +469,13 @@ main() {
     # Get available package managers for this config file
     while IFS= read -r manager; do
       # Skip empty lines and add unique managers
-      if [[ -n "$manager" ]] && [[ ! " ${all_managers[*]} " =~ \ $manager\  ]]; then
+      if [[ -n "$manager" ]] && [[ ! " ${all_managers[*]:-} " =~ \ $manager\  ]]; then
         all_managers+=("$manager")
       fi
     done < <(get_available_managers "$config_file")
   done
   
-  AVAILABLE_MANAGERS=("${all_managers[@]}")
+  AVAILABLE_MANAGERS=("${all_managers[@]:-}")
   
   if [ ${#AVAILABLE_MANAGERS[@]} -eq 0 ]; then
     info "No package managers available - skipping package installation"

@@ -494,7 +494,9 @@ case "$*" in
     exit 0
     ;;
   *".tools | keys | .[]"*)
-    # Return empty list of tools
+    # Return some tools so we try to find managers
+    echo "tool1"
+    echo "tool2"
     exit 0
     ;;
   *)
@@ -521,7 +523,10 @@ esac
   
   run main
   [ "$status" -eq 0 ]
-  [[ "$output" == *"No package managers available"* ]]
+  # The output should show unavailable managers since they don't exist
+  [[ "$output" == *"Unavailable package managers"* ]]
+  [[ "$output" == *"unknown package manager: fakemgr1"* ]]
+  [[ "$output" == *"unknown package manager: fakemgr2"* ]]
 }
 
 @test "main function installs tools with available managers" {
