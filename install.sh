@@ -469,13 +469,13 @@ main() {
     # Get available package managers for this config file
     while IFS= read -r manager; do
       # Skip empty lines and add unique managers
-      if [[ -n "$manager" ]] && [[ ! " ${all_managers[*]} " =~ \ $manager\  ]]; then
+      if [[ -n "$manager" ]] && [[ ! " ${all_managers[*]:-} " =~ \ $manager\  ]]; then
         all_managers+=("$manager")
       fi
     done < <(get_available_managers "$config_file")
   done
   
-  AVAILABLE_MANAGERS=("${all_managers[@]}")
+  AVAILABLE_MANAGERS=("${all_managers[@]:-}")
   
   if [ ${#AVAILABLE_MANAGERS[@]} -eq 0 ]; then
     info "No package managers available - skipping package installation"
