@@ -57,11 +57,17 @@ teardown() {
   [[ ! "$output" =~ "-s" ]]  # Should not have stow flag
 }
 
-@test "make work runs with correct configs" {
+@test "make work runs setup-work-mac.sh script" {
+  # Create mock setup-work-mac.sh that just prints something
+  cat > setup-work-mac.sh << 'EOF'
+#!/usr/bin/env bash
+echo "Running setup-work-mac.sh"
+EOF
+  chmod +x setup-work-mac.sh
+  
   run make work
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "CONFIG_FILES: shared/shell shared/git shared/search shared/file-tools shared/data-tools shared/network shared/neovim host/common host/work focus/vscode" ]]
-  [[ ! "$output" =~ "host/personal" ]]  # Should not include personal configs
+  [[ "$output" =~ "Running setup-work-mac.sh" ]]
 }
 
 @test "make focus-vscode runs with correct configs" {

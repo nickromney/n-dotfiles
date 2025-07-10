@@ -39,3 +39,11 @@ tools:
     description: "Additional completion definitions for zsh"
     documentation_url: "https://github.com/zsh-users/zsh-completions"
     category: shell
+  
+  nushell:
+    manager: brew
+    type: package
+    check_command: "command -v nu"
+    description: "A modern shell written in Rust"
+    documentation_url: "https://www.nushell.sh/"
+    category: shell

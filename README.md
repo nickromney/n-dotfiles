@@ -16,6 +16,30 @@ I looked at [nix flakes](https://nixos.wiki/wiki/flakes) but although I'm often 
 
 ## Quick Start
 
+### Fresh macOS Installation
+
+For a brand new Mac, use the bootstrap script:
+
+```bash
+# Create directory structure and clone
+mkdir -p ~/Developer/personal
+cd ~/Developer/personal
+git clone https://github.com/nickromney/n-dotfiles.git
+cd n-dotfiles
+
+# Run bootstrap to install essential tools
+./bootstrap.sh
+
+# Then continue with regular installation
+./install.sh -d        # Dry run to preview
+./install.sh           # Install base tools
+./install.sh -s        # Stow configurations
+```
+
+### Existing System
+
+If you already have Homebrew and basic tools:
+
 ```bash
 # Clone and enter directory
 git clone https://github.com/nickromney/n-dotfiles.git ~/n-dotfiles
