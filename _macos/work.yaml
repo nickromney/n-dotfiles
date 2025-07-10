@@ -1,0 +1,152 @@
+# Work macOS configuration
+# Based on personal.yaml but tailored for work environment
+# Customize this file to match your work machine preferences
+
+system:
+  # Appearance mode (Dark for reduced eye strain)
+  appearance: "Dark"
+  # Show hidden files in Finder (useful for development)
+  show_hidden_files: true
+  # Show file extensions (important for work)
+  show_all_extensions: true
+
+dock:
+  # Dock size (empty string = default size)
+  size: ""
+  # Position (left to maximize screen space)
+  position: "left"
+  # Auto-hide dock to maximize screen space
+  auto_hide: true
+  # Don't show recent applications
+  show_recents: false
+  # Minimize effect (empty string = default)
+  minimize_effect: ""
+  # Magnification when hovering
+  magnification_size: 128
+  # Don't animate opening apps
+  animate_opening: false
+  # Show indicators for open apps
+  show_indicators: true
+  # Minimize to application icon
+  minimize_to_app: true
+
+  # Dock applications management
+  # WARNING: This will CLEAR the entire dock and add only these apps
+  # Set manage_apps to false if you want to keep existing dock items
+  manage_apps: true
+  clear_dock_first: false # Set to true to start with empty dock
+  # Apps are only added if they exist - missing apps are skipped with a warning
+  # NOTE: Finder is always in the dock by default - don't add it here
+  apps:
+    # Terminal
+    - "/Applications/Ghostty.app"
+
+    # IDE/Development
+    - "/Applications/Visual Studio Code.app"
+
+    # Browsers
+    - "/Applications/Google Chrome.app"
+
+    # Communication (work tools)
+    - "/Applications/Microsoft Teams.app"
+
+    # Email
+    - "/Applications/Microsoft Outlook.app"
+
+    # Productivity
+    - "/Applications/Obsidian.app"
+    - "/Applications/1Password 7.app"
+
+    # Office suite if needed
+    # - "/Applications/Microsoft Word.app"
+    # - "/Applications/Microsoft Excel.app"
+
+finder:
+  # Default view (empty string = default)
+  default_view: ""
+  # Show path bar at bottom (useful for development)
+  show_path_bar: true
+  # Show status bar (useful for file sizes)
+  show_status_bar: true
+  # Keep folders on top when sorting
+  folders_on_top: true
+  # Double-click title bar to maximize
+  double_click_title_bar: Maximize
+
+windows:
+  # Always prefer tabs when opening documents
+  prefer_tabs: always
+  # Don't ask to keep changes when closing
+  ask_to_keep_changes: false
+  # Close windows when quitting
+  # close_windows_on_quit: true
+
+keyboard:
+  # Fast key repeat for coding
+  key_repeat: "2"
+  # Short initial delay
+  initial_key_repeat: "15"
+
+trackpad:
+  # Tap to click for efficiency
+  tap_to_click: true
+  # Natural scrolling disabled
+  natural_scrolling: false
+  # Fast tracking speed
+  # tracking_speed: 2.5
+
+mouse:
+  # Natural scrolling disabled for mouse
+  # NOTE: This affects BOTH mouse and trackpad despite separate UI checkboxes
+  natural_scrolling: false
+
+mission_control:
+  # Don't automatically rearrange Spaces
+  auto_rearrange_spaces: false
+  # Don't switch to Space with app windows
+  switch_to_space_with_windows: false
+  # Group windows by application
+  group_by_app: true
+  # Displays have separate Spaces for multi-monitor productivity
+  displays_have_separate_spaces: true
+
+stage_manager:
+  # Stage Manager is disabled
+  enabled: false
+  # Don't show recent apps strip
+  show_recent_apps: false
+  # Click wallpaper to reveal desktop only in Stage Manager
+  click_wallpaper_to_reveal: "Only in Stage Manager"
+
+# Display preferences
+displays:
+  # Main display priority - first connected display in this list becomes main
+  # All other connected displays become extended displays
+  # Note: macOS display arrangement requires manual configuration in System Settings
+  preferred_main_display:
+    - "PL2792Q" # Primary external monitor
+    - "DELL U2412M" # Secondary external monitor
+    - "Built-in Display" # Laptop screen (fallback)
+
+  # Mirror configuration - when both external monitors are connected,
+  # mirror the built-in display to the main display
+  mirror_builtin_when_both_external_connected: true
+
+  # Dock position per display type
+  dock_position:
+    external: "left" # When external display is main
+    builtin: "left" # When built-in display is main
+
+# Screenshots configuration
+screenshots:
+  location: "~/Desktop/Screenshots"
+  format: png
+  include_date: true
+  show_thumbnail: true
+
+# Developer settings
+developer:
+  # Show full path in Finder title
+  show_path_in_title: true
+  # Enable Safari developer menu
+  safari_developer_menu: true

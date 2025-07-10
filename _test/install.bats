@@ -854,3 +854,44 @@ fi' > "$MOCK_BIN_DIR/cursor"
   run is_tool_installed "prettier-vscode" "test.yaml"
   [ "$status" -eq 0 ]
 }
+
+@test "main function handles config file with no tools key" {
+  # Create a config file without tools key
+  mkdir -p "$BATS_TEST_TMPDIR/_configs"
+  cat > "$BATS_TEST_TMPDIR/_configs/empty.yaml" << 'EOF'
+# This file has no tools key
+package_managers:
+  brew:
+    types:
+      - package
+EOF
+  
+  # Mock yq to handle the file
+  mock_command_with_script "yq" '
+case "$*" in
+  *".tools[].manager"*)
+    # No tools, return empty
+    exit 0
+    ;;
+  *".tools | keys | .[]"*|*".tools | select(. != null) | keys | .[]"*)
+    # No tools key, return empty
+    exit 0
+    ;;
+  *)
+    echo "null"
+    exit 0
+    ;;
+esac
+'
+  mock_command "which"
+  mock_brew
+  
+  export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
+  export CONFIG_FILES=("empty")
+  
+  run main
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "Processing: $BATS_TEST_TMPDIR/_configs/empty.yaml" ]]
+  # Should not error on missing tools key
+  [[ ! "$output" =~ "error" ]]
+}
