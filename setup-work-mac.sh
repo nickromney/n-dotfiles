@@ -79,7 +79,7 @@ fi
 section "Applying macOS system settings"
 if [[ -f "_macos/work.yaml" ]]; then
   info "Applying work macOS settings..."
-  if ! ./_macos/macos.sh work.yaml; then
+  if ! ./_macos/macos.sh _macos/work.yaml; then
     error "macOS configuration failed"
     exit 1
   fi
