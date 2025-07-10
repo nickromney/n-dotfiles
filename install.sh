@@ -131,7 +131,9 @@ get_available_managers() {
     fi
 
     # Export available managers for use in installation (to stdout)
-    printf '%s\n' "${available[@]}"
+    if [ ${#available[@]} -gt 0 ]; then
+      printf '%s\n' "${available[@]}"
+    fi
   ) || true
   
   # Always return success
@@ -490,7 +492,8 @@ main() {
       
       # Get all tools from this YAML file
       local tools
-      tools=$(yq '.tools | keys | .[]' "$CURRENT_CONFIG_FILE")
+      # Handle empty or null tools section
+      tools=$(yq '.tools | select(. != null) | keys | .[]' "$CURRENT_CONFIG_FILE" 2>/dev/null || echo "")
 
   # Only process if we have tools
   if [[ -n "$tools" ]]; then

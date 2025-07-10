@@ -537,7 +537,7 @@ case "$*" in
     echo "brew"
     exit 0
     ;;
-  *".tools | keys | .[]"*)
+  *".tools | keys | .[]"*|*".tools | select(. != null) | keys | .[]"*)
     echo "tool1"
     exit 0
     ;;
@@ -587,7 +587,7 @@ case "$*" in
     echo "brew"
     exit 0
     ;;
-  *".tools | keys | .[]"*)
+  *".tools | keys | .[]"*|*".tools | select(. != null) | keys | .[]"*)
     echo "tool1"
     exit 0
     ;;
@@ -638,7 +638,7 @@ case "$*" in
     echo "brew"
     exit 0
     ;;
-  *".tools | keys | .[]"*)
+  *".tools | keys | .[]"*|*".tools | select(. != null) | keys | .[]"*)
     # Return empty - no tools to install
     exit 0
     ;;
@@ -676,7 +676,7 @@ case "$*" in
     echo "brew"
     echo "foo"
     ;;
-  *".tools | keys | .[]"*)
+  *".tools | keys | .[]"*|*".tools | select(. != null) | keys | .[]"*)
     echo "tool1"
     echo "footool"
     ;;
