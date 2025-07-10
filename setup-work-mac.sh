@@ -56,7 +56,8 @@ fi
 # Step 2: Install shared and common packages
 section "Installing shared and common packages"
 info "Installing packages from shared and host/common configurations..."
-if ! ./install.sh shared host/common.yaml; then
+# Using the same pattern as Makefile's COMMON_CONFIGS
+if ! CONFIG_FILES="shared/shell shared/git shared/search shared/file-tools shared/data-tools shared/network shared/neovim host/common" ./install.sh; then
   error "Package installation failed"
   exit 1
 fi
@@ -66,7 +67,7 @@ success "Packages installed"
 if [[ -f "_configs/host/work.yaml" ]]; then
   section "Installing work-specific packages"
   info "Installing packages from host/work configuration..."
-  if ! ./install.sh host/work.yaml; then
+  if ! CONFIG_FILES="host/work" ./install.sh; then
     error "Work package installation failed"
     exit 1
   fi
@@ -102,7 +103,7 @@ success "Configuration symlinks created"
 section "Installing VSCode extensions"
 if command -v code >/dev/null 2>&1; then
   info "Installing VSCode extensions..."
-  if ! ./install.sh focus/vscode.yaml; then
+  if ! CONFIG_FILES="focus/vscode" ./install.sh; then
     warning "Some VSCode extensions may have failed to install"
   else
     success "VSCode extensions installed"

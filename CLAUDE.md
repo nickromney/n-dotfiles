@@ -31,7 +31,7 @@ This is a personal dotfiles repository designed for cross-platform configuration
 
 - All tools are defined in YAML files in the `_configs/` directory
 - The default configuration is `_configs/tools.yaml`
-- You can use custom configurations: `./install.sh devtools.yaml` or `./install.sh work.yaml`
+- You can use custom configurations: `./install.sh -c devtools` or `CONFIG_FILES="devtools" ./install.sh`
 - The `install.sh` script reads the specified YAML file and installs tools using the appropriate package manager
 - Each tool has a `check_command` to verify if it's already installed (skip if present)
 
@@ -72,19 +72,19 @@ Example usage:
 ./install.sh
 
 # Install development tools only
-./install.sh devtools.yaml
+./install.sh -c devtools
 
 # Use configuration from current directory
-CONFIG_DIR=./ ./install.sh personal.yaml
+CONFIG_DIR=./ ./install.sh -c personal
 
 # Use external configuration directory
-./install.sh -c ~/my-configs work.yaml
+./install.sh --config-dir ~/my-configs -c work
 
 # Use absolute path to config directory
-./install.sh --config-dir /path/to/configs devtools.yaml
+./install.sh --config-dir /path/to/configs -c devtools
 
 # Install with specific options
-./install.sh -s -v work.yaml
+./install.sh -s -v -c work
 ```
 
 The script searches for configuration files in this order:
@@ -109,8 +109,8 @@ The script searches for configuration files in this order:
 
 1. Edit the appropriate YAML file in `_configs/` (or create a new one)
 2. Add the tool definition with appropriate installer and check_command
-3. Run `./install.sh -d [config.yaml]` to preview
-4. Run `./install.sh [config.yaml]` to install
+3. Run `./install.sh -d -c [config]` to preview
+4. Run `./install.sh -c [config]` to install
 
 ### Adding a New Configuration
 
