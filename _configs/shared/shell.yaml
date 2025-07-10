@@ -47,3 +47,11 @@ tools:
     description: "A modern shell written in Rust"
     documentation_url: "https://www.nushell.sh/"
     category: shell
+  
+  nvm:
+    manager: brew
+    type: package
+    check_command: 'brew --prefix nvm >/dev/null 2>&1 && test -d "$(brew --prefix nvm)"'
+    description: "Node Version Manager - manage multiple Node.js versions (run 'nvm install --lts' after installation)"
+    documentation_url: "https://github.com/nvm-sh/nvm"
+    category: shell

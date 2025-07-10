@@ -1,0 +1,89 @@
+# Neovim-focused development environment
+# Includes editor, language servers, and development tools
+#
+# NOTE: This configuration requires Node.js/npm for many tools.
+# After installing nvm (from shared/shell.yaml), run:
+#   nvm install --lts
+#   nvm use --lts
+
+tools:
+  # Core editor
+  neovim:
+    manager: brew
+    type: package
+    check_command: command -v nvim
+    description: "Hyperextensible Vim-based text editor"
+    documentation_url: "https://neovim.io/"
+    category: editor
+
+  # Language servers and tools
+  tree-sitter:
+    manager: brew
+    type: package
+    check_command: command -v tree-sitter
+    description: "Parser generator for syntax highlighting"
+    documentation_url: "https://tree-sitter.github.io/tree-sitter/"
+    category: editor
+
+  # Python LSP
+  pyright:
+    manager: brew
+    type: package
+    check_command: command -v pyright
+    description: "Fast type checker for Python"
+    documentation_url: "https://github.com/microsoft/pyright"
+    category: lsp
+
+  # Lua LSP
+  lua-language-server:
+    manager: brew
+    type: package
+    check_command: command -v lua-language-server
+    description: "Language server for Lua"
+    documentation_url: "https://github.com/LuaLS/lua-language-server"
+    category: lsp
+
+  # TypeScript/JavaScript LSP
+  typescript-language-server:
+    manager: brew
+    type: package
+    check_command: command -v typescript-language-server
+    description: "Language server for TypeScript and JavaScript"
+    documentation_url: "https://github.com/typescript-language-server/typescript-language-server"
+    category: lsp
+
+  # Rust LSP
+  rust-analyzer:
+    manager: brew
+    type: package
+    check_command: command -v rust-analyzer
+    description: "Language server for Rust"
+    documentation_url: "https://rust-analyzer.github.io/"
+    category: lsp
+
+  # Code formatting
+  prettier:
+    manager: brew
+    type: package
+    check_command: command -v prettier
+    description: "Opinionated code formatter"
+    documentation_url: "https://prettier.io/"
+    category: formatter
+
+  # Python formatting
+  black:
+    manager: brew
+    type: package
+    check_command: command -v black
+    description: "The uncompromising Python code formatter"
+    documentation_url: "https://black.readthedocs.io/"
+    category: formatter
+
+  # Shell formatting
+  shfmt:
+    manager: brew
+    type: package
+    check_command: command -v shfmt
+    description: "Shell script formatter"
+    documentation_url: "https://github.com/mvdan/sh"
+    category: formatter
