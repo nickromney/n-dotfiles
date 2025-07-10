@@ -7,7 +7,7 @@ tools:
     description: "Symlink farm manager for dotfiles"
     documentation_url: "https://www.gnu.org/software/stow/"
     category: system
-  
+
   ghostty:
     manager: brew
     type: cask
@@ -15,7 +15,7 @@ tools:
     description: "Fast, native terminal emulator"
     documentation_url: "https://github.com/ghostty-org/ghostty"
     category: terminal
-  
+
   tmux:
     manager: brew
     type: package
@@ -23,7 +23,7 @@ tools:
     description: "Terminal multiplexer"
     documentation_url: "https://github.com/tmux/tmux"
     category: terminal
-  
+
   nikitabobko/tap:
     manager: brew
     type: tap
@@ -31,7 +31,7 @@ tools:
     description: "Tap for AeroSpace"
     documentation_url: "https://github.com/nikitabobko/AeroSpace"
     category: window-manager
-  
+
   aerospace:
     manager: brew
     type: cask
@@ -40,7 +40,7 @@ tools:
     description: "Tiling window manager"
     documentation_url: "https://github.com/nikitabobko/AeroSpace"
     category: window-manager
-  
+
   FelixKratz/formulae/borders:
     manager: brew
     type: tap
@@ -48,7 +48,7 @@ tools:
     description: "Tap for JankyBorders"
     documentation_url: "https://github.com/FelixKratz/JankyBorders"
     category: window-manager
-  
+
   borders:
     manager: brew
     type: package
@@ -57,15 +57,15 @@ tools:
     description: "Window borders for tiling window managers"
     documentation_url: "https://github.com/FelixKratz/JankyBorders"
     category: window-manager
-  
-  karabiner-elements:
-    manager: brew
-    type: cask
-    check_command: "[ -d '/Applications/Karabiner-Elements.app' ]"
-    description: "Keyboard customizer"
-    documentation_url: "https://karabiner-elements.pqrs.org/"
-    category: productivity
-  
+
+  # karabiner-elements:
+  #   manager: brew
+  #   type: cask
+  #   check_command: "[ -d '/Applications/Karabiner-Elements.app' ]"
+  #   description: "Keyboard customizer"
+  #   documentation_url: "https://karabiner-elements.pqrs.org/"
+  #   category: productivity
+
   alfred:
     manager: brew
     type: cask
@@ -73,7 +73,7 @@ tools:
     description: "Application launcher and productivity tool"
     documentation_url: "https://www.alfredapp.com/"
     category: productivity
-  
+
   visual-studio-code:
     manager: brew
     type: cask
@@ -81,7 +81,7 @@ tools:
     description: "Code editor"
     documentation_url: "https://code.visualstudio.com/"
     category: ide
-  
+
   docker:
     manager: brew
     type: cask
@@ -89,7 +89,7 @@ tools:
     description: "Container platform"
     documentation_url: "https://www.docker.com/"
     category: containers
-  
+
   1password:
     manager: brew
     type: cask
@@ -97,7 +97,7 @@ tools:
     description: "Password manager"
     documentation_url: "https://1password.com/"
     category: security
-  
+
   1password-cli:
     manager: brew
     type: cask
@@ -105,7 +105,7 @@ tools:
     description: "1Password command-line tool"
     documentation_url: "https://developer.1password.com/docs/cli"
     category: security
-  
+
   obsidian:
     manager: brew
     type: cask
@@ -113,7 +113,7 @@ tools:
     description: "Knowledge base and note-taking app"
     documentation_url: "https://obsidian.md/"
     category: productivity
-  
+
   font-jetbrains-mono-nerd-font:
     manager: brew
     type: cask
