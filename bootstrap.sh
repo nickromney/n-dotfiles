@@ -36,6 +36,24 @@ echo "🔧 Installing essential tools..."
 brew install yq      # Required by install.sh
 brew install stow    # Required for symlink management
 
+# Install nvm and node
+echo "📦 Installing nvm and Node.js..."
+brew install nvm
+
+# Create nvm directory
+mkdir -p "$HOME/.nvm"
+
+# Source nvm for this session
+export NVM_DIR="$HOME/.nvm"
+[ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"
+[ -s "/usr/local/opt/nvm/nvm.sh" ] && \. "/usr/local/opt/nvm/nvm.sh"
+
+# Install latest LTS Node
+echo "🟢 Installing Node.js LTS..."
+nvm install --lts
+nvm use --lts
+nvm alias default node
+
 # Install 1Password early if needed for SSH
 if [[ -n "${NON_INTERACTIVE:-}" ]]; then
     echo "Skipping 1Password installation (non-interactive mode)."

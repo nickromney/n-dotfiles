@@ -16,7 +16,7 @@ if [[ -n "${CONFIG_FILES+x}" ]]; then
     CONFIG_FILES=()
   else
     # Parse space-separated list into array
-    IFS=' ' read -ra CONFIG_FILES <<< "$config_files_env"
+    IFS=' ' read -ra CONFIG_FILES <<<"$config_files_env"
   fi
   unset config_files_env
 else
@@ -24,7 +24,7 @@ else
   CONFIG_FILES=("host/common")
 fi
 REQUIRED_COMMANDS=("yq" "which")
-STOW_DIRS=(aerospace aws bat gh ghostty git karabiner kitty nushell nvim prettier starship tmux vscode zsh)
+STOW_DIRS=(aerospace aws bat gh ghostty git kitty nushell nvim prettier starship tmux vscode zsh)
 
 # Default values and argument parsing
 DRY_RUN="${DRY_RUN:-false}"
@@ -45,7 +45,7 @@ is_root() {
 get_vscode_cli() {
   # Default to 'code' if not set
   local cli="${VSCODE_CLI:-code}"
-  
+
   if command_exists "$cli"; then
     echo "$cli"
     return 0
@@ -69,7 +69,7 @@ get_available_managers() {
     while read -r manager; do
       # Skip empty lines
       [[ -z "$manager" ]] && continue
-      
+
       case "$manager" in
       "apt")
         if ! command_exists "apt-get"; then
@@ -135,7 +135,7 @@ get_available_managers() {
       printf '%s\n' "${available[@]}"
     fi
   ) || true
-  
+
   # Always return success
   return 0
 }
@@ -159,7 +159,7 @@ check_requirements() {
 prepare_config_files() {
   local config_file
   local resolved_files=()
-  
+
   # If no config files specified, report and exit
   if [ ${#CONFIG_FILES[@]} -eq 0 ]; then
     # Check if CONFIG_FILES was explicitly set to empty via environment
@@ -172,14 +172,14 @@ prepare_config_files() {
     info "Example: $0 -c development -c productivity"
     return 1
   fi
-  
+
   # Resolve each config file path
   for config_file in "${CONFIG_FILES[@]}"; do
     # Add .yaml extension if not present
     if [[ ! "$config_file" =~ \.(yaml|yml)$ ]]; then
       config_file="${config_file}.yaml"
     fi
-    
+
     # Check if file exists directly
     if [[ -f "$config_file" ]]; then
       resolved_files+=("$config_file")
@@ -190,7 +190,7 @@ prepare_config_files() {
       # Relative CONFIG_DIR path
       local script_dir
       script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-      
+
       if [[ -f "$CONFIG_DIR/$config_file" ]]; then
         resolved_files+=("$CONFIG_DIR/$config_file")
       elif [[ -f "$script_dir/$CONFIG_DIR/$config_file" ]]; then
@@ -205,7 +205,7 @@ prepare_config_files() {
       fi
     fi
   done
-  
+
   # Export resolved files for use by other functions
   RESOLVED_CONFIG_FILES=("${resolved_files[@]}")
   return 0
@@ -289,7 +289,10 @@ install_tool() {
     case "$type" in
     "package")
       if [[ "$DRY_RUN" == "false" ]]; then
-        apt-get update -qq || { error "Failed to update apt cache"; return 1; }
+        apt-get update -qq || {
+          error "Failed to update apt cache"
+          return 1
+        }
       fi
       install_cmd="apt-get install -y $install_args $tool"
       ;;
@@ -476,9 +479,9 @@ main() {
       fi
     done < <(get_available_managers "$config_file")
   done
-  
+
   AVAILABLE_MANAGERS=("${all_managers[@]:-}")
-  
+
   if [ ${#AVAILABLE_MANAGERS[@]} -eq 0 ]; then
     info "No package managers available - skipping package installation"
     # Don't return early - allow stow to run
@@ -489,194 +492,194 @@ main() {
     for CURRENT_CONFIG_FILE in "${RESOLVED_CONFIG_FILES[@]}"; do
       info ""
       info "Processing: $CURRENT_CONFIG_FILE"
-      
+
       # Get all tools from this YAML file
       local tools
       # Handle empty or null tools section
       tools=$(yq '.tools | select(. != null) | keys | .[]' "$CURRENT_CONFIG_FILE" 2>/dev/null || echo "")
 
-  # Only process if we have tools
-  if [[ -n "$tools" ]]; then
-    while read -r tool; do
-      if is_tool_installed "$tool" "$CURRENT_CONFIG_FILE"; then
-        if [[ "$UPDATE" == "true" ]]; then
-          manager=$(yq ".tools.${tool}.manager" "$CURRENT_CONFIG_FILE")
-          type=$(yq ".tools.${tool}.type" "$CURRENT_CONFIG_FILE")
-          
-          case "$manager" in
-          "brew")
-            case "$type" in
-            "package")
-              if [[ "$DRY_RUN" == "true" ]]; then
-                info "Would check: brew outdated $tool"
-              else
-                if brew outdated --quiet | grep -q "^$tool$"; then
-                  info "Updating $tool (brew package)..."
-                  brew upgrade "$tool"
-                  info "✓ Updated $tool (brew package)"
-                else
-                  info "✓ $tool (brew package) is already up to date"
-                fi
-              fi
-              ;;
-            "cask")
-              if [[ "$DRY_RUN" == "true" ]]; then
-                info "Would check: brew outdated --cask $tool"
-              else
-                if brew outdated --cask --quiet | grep -q "^$tool$"; then
-                  info "Updating $tool (brew cask)..."
-                  brew upgrade --cask "$tool"
-                  info "✓ Updated $tool (brew cask)"
-                else
-                  info "✓ $tool (brew cask) is already up to date"
-                fi
-              fi
-              ;;
-            "tap")
-              info "✓ $tool (brew tap) - taps don't need updating"
-              ;;
-            *)
-              info "✓ $tool (brew $type) is already installed"
-              ;;
-            esac
-            ;;
-          "cargo")
-            if [[ "$FORCE" == "true" ]]; then
-              if [[ "$DRY_RUN" == "true" ]]; then
-                info "Would execute: cargo install --force $tool"
-              else
-                info "Force updating $tool (cargo binary)..."
-                cargo install --force "$tool"
-                info "✓ Force updated $tool (cargo binary)"
-              fi
-            else
-              if [[ "$DRY_RUN" == "true" ]]; then
-                info "Would check: cargo install-update -l | grep $tool"
-              else
-                # Check if cargo-update is installed
-                if cargo install-update --version &>/dev/null; then
-                  if cargo install-update -l | grep -q "^$tool.*Yes$"; then
-                    info "Updating $tool (cargo binary)..."
-                    cargo install-update "$tool"
-                    info "✓ Updated $tool (cargo binary)"
+      # Only process if we have tools
+      if [[ -n "$tools" ]]; then
+        while read -r tool; do
+          if is_tool_installed "$tool" "$CURRENT_CONFIG_FILE"; then
+            if [[ "$UPDATE" == "true" ]]; then
+              manager=$(yq ".tools.${tool}.manager" "$CURRENT_CONFIG_FILE")
+              type=$(yq ".tools.${tool}.type" "$CURRENT_CONFIG_FILE")
+
+              case "$manager" in
+              "brew")
+                case "$type" in
+                "package")
+                  if [[ "$DRY_RUN" == "true" ]]; then
+                    info "Would check: brew outdated $tool"
                   else
-                    info "✓ $tool (cargo binary) is already up to date"
+                    if brew outdated --quiet | grep -q "^$tool$"; then
+                      info "Updating $tool (brew package)..."
+                      brew upgrade "$tool"
+                      info "✓ Updated $tool (brew package)"
+                    else
+                      info "✓ $tool (brew package) is already up to date"
+                    fi
+                  fi
+                  ;;
+                "cask")
+                  if [[ "$DRY_RUN" == "true" ]]; then
+                    info "Would check: brew outdated --cask $tool"
+                  else
+                    if brew outdated --cask --quiet | grep -q "^$tool$"; then
+                      info "Updating $tool (brew cask)..."
+                      brew upgrade --cask "$tool"
+                      info "✓ Updated $tool (brew cask)"
+                    else
+                      info "✓ $tool (brew cask) is already up to date"
+                    fi
+                  fi
+                  ;;
+                "tap")
+                  info "✓ $tool (brew tap) - taps don't need updating"
+                  ;;
+                *)
+                  info "✓ $tool (brew $type) is already installed"
+                  ;;
+                esac
+                ;;
+              "cargo")
+                if [[ "$FORCE" == "true" ]]; then
+                  if [[ "$DRY_RUN" == "true" ]]; then
+                    info "Would execute: cargo install --force $tool"
+                  else
+                    info "Force updating $tool (cargo binary)..."
+                    cargo install --force "$tool"
+                    info "✓ Force updated $tool (cargo binary)"
                   fi
                 else
-                  info "✓ $tool (cargo binary) is installed - install 'cargo-update' to check for updates"
-                  info "  Run: cargo install cargo-update"
+                  if [[ "$DRY_RUN" == "true" ]]; then
+                    info "Would check: cargo install-update -l | grep $tool"
+                  else
+                    # Check if cargo-update is installed
+                    if cargo install-update --version &>/dev/null; then
+                      if cargo install-update -l | grep -q "^$tool.*Yes$"; then
+                        info "Updating $tool (cargo binary)..."
+                        cargo install-update "$tool"
+                        info "✓ Updated $tool (cargo binary)"
+                      else
+                        info "✓ $tool (cargo binary) is already up to date"
+                      fi
+                    else
+                      info "✓ $tool (cargo binary) is installed - install 'cargo-update' to check for updates"
+                      info "  Run: cargo install cargo-update"
+                    fi
+                  fi
                 fi
-              fi
-            fi
-            ;;
-          "uv")
-            if [[ "$FORCE" == "true" ]]; then
-              if [[ "$DRY_RUN" == "true" ]]; then
-                info "Would execute: uv tool install --force $tool"
-              else
-                info "Force updating $tool (uv tool)..."
-                uv tool install --force "$tool"
-                info "✓ Force updated $tool (uv tool)"
-              fi
+                ;;
+              "uv")
+                if [[ "$FORCE" == "true" ]]; then
+                  if [[ "$DRY_RUN" == "true" ]]; then
+                    info "Would execute: uv tool install --force $tool"
+                  else
+                    info "Force updating $tool (uv tool)..."
+                    uv tool install --force "$tool"
+                    info "✓ Force updated $tool (uv tool)"
+                  fi
+                else
+                  if [[ "$DRY_RUN" == "true" ]]; then
+                    info "Would check: uv tool install --upgrade $tool"
+                  else
+                    # Check if update is needed by capturing output
+                    local uv_output
+                    uv_output=$(uv tool install --upgrade "$tool" 2>&1)
+                    if echo "$uv_output" | grep -q "Updated"; then
+                      info "Updated $tool (uv tool)"
+                      info "✓ Successfully updated $tool (uv tool)"
+                    elif echo "$uv_output" | grep -q "up to date"; then
+                      info "✓ $tool (uv tool) is already up to date"
+                    else
+                      # If neither message found, show what happened
+                      info "✓ $tool (uv tool) checked for updates"
+                    fi
+                  fi
+                fi
+                ;;
+              "arkade")
+                case "$type" in
+                "get")
+                  if [[ "$FORCE" == "true" ]]; then
+                    if [[ "$DRY_RUN" == "true" ]]; then
+                      info "Would execute: arkade get $tool"
+                    else
+                      info "Force updating $tool (arkade get)..."
+                      arkade get "$tool"
+                      info "✓ Force updated $tool (arkade get)"
+                    fi
+                  else
+                    info "✓ $tool (arkade get) - arkade always downloads latest on 'get'"
+                  fi
+                  ;;
+                *)
+                  info "✓ $tool (arkade $type) is already installed - update not supported"
+                  ;;
+                esac
+                ;;
+              "code")
+                case "$type" in
+                "extension")
+                  if [[ "$DRY_RUN" == "true" ]]; then
+                    info "Would check: code --list-extensions for updates"
+                  else
+                    # VSCode extensions auto-update by default
+                    info "✓ $tool (code extension) - extensions auto-update in VSCode"
+                  fi
+                  ;;
+                *)
+                  info "✓ $tool (code $type) is already installed"
+                  ;;
+                esac
+                ;;
+              *)
+                info "✓ $tool ($manager) is already installed - update not supported"
+                ;;
+              esac
             else
-              if [[ "$DRY_RUN" == "true" ]]; then
-                info "Would check: uv tool install --upgrade $tool"
-              else
-                # Check if update is needed by capturing output
-                local uv_output
-                uv_output=$(uv tool install --upgrade "$tool" 2>&1)
-                if echo "$uv_output" | grep -q "Updated"; then
-                  info "Updated $tool (uv tool)"
-                  info "✓ Successfully updated $tool (uv tool)"
-                elif echo "$uv_output" | grep -q "up to date"; then
-                  info "✓ $tool (uv tool) is already up to date"
-                else
-                  # If neither message found, show what happened
-                  info "✓ $tool (uv tool) checked for updates"
-                fi
-              fi
+              manager=$(yq ".tools.${tool}.manager" "$CURRENT_CONFIG_FILE")
+              type=$(yq ".tools.${tool}.type" "$CURRENT_CONFIG_FILE")
+              case "$manager" in
+              "brew")
+                info "✓ $tool (brew $type) is already installed"
+                ;;
+              "arkade")
+                info "✓ $tool (arkade $type) is already installed"
+                ;;
+              "cargo")
+                info "✓ $tool (cargo $type) is already installed"
+                ;;
+              "uv")
+                info "✓ $tool (uv $type) is already installed"
+                ;;
+              "code")
+                info "✓ $tool (code $type) is already installed"
+                ;;
+              *)
+                info "✓ $tool ($manager $type) is already installed"
+                ;;
+              esac
             fi
-            ;;
-          "arkade")
-            case "$type" in
-            "get")
-              if [[ "$FORCE" == "true" ]]; then
-                if [[ "$DRY_RUN" == "true" ]]; then
-                  info "Would execute: arkade get $tool"
-                else
-                  info "Force updating $tool (arkade get)..."
-                  arkade get "$tool"
-                  info "✓ Force updated $tool (arkade get)"
-                fi
-              else
-                info "✓ $tool (arkade get) - arkade always downloads latest on 'get'"
-              fi
-              ;;
-            *)
-              info "✓ $tool (arkade $type) is already installed - update not supported"
-              ;;
-            esac
-            ;;
-          "code")
-            case "$type" in
-            "extension")
-              if [[ "$DRY_RUN" == "true" ]]; then
-                info "Would check: code --list-extensions for updates"
-              else
-                # VSCode extensions auto-update by default
-                info "✓ $tool (code extension) - extensions auto-update in VSCode"
-              fi
-              ;;
-            *)
-              info "✓ $tool (code $type) is already installed"
-              ;;
-            esac
-            ;;
-          *)
-            info "✓ $tool ($manager) is already installed - update not supported"
-            ;;
-          esac
-        else
-          manager=$(yq ".tools.${tool}.manager" "$CURRENT_CONFIG_FILE")
-          type=$(yq ".tools.${tool}.type" "$CURRENT_CONFIG_FILE")
-          case "$manager" in
-          "brew")
-            info "✓ $tool (brew $type) is already installed"
-            ;;
-          "arkade")
-            info "✓ $tool (arkade $type) is already installed"
-            ;;
-          "cargo")
-            info "✓ $tool (cargo $type) is already installed"
-            ;;
-          "uv")
-            info "✓ $tool (uv $type) is already installed"
-            ;;
-          "code")
-            info "✓ $tool (code $type) is already installed"
-            ;;
-          *)
-            info "✓ $tool ($manager $type) is already installed"
-            ;;
-          esac
-        fi
-      elif can_install_tool "$tool" "$CURRENT_CONFIG_FILE"; then
-        manager=$(yq ".tools.${tool}.manager" "$CURRENT_CONFIG_FILE")
-        type=$(yq ".tools.${tool}.type" "$CURRENT_CONFIG_FILE")
-        info "Installing $tool ($manager $type)..."
-        if install_tool "$tool" "$CURRENT_CONFIG_FILE"; then
-          info "✓ Successfully installed $tool ($manager $type)"
-        else
-          info "Failed to install $tool ($manager $type)"
-        fi
-      else
-        manager=$(yq ".tools.${tool}.manager" "$CURRENT_CONFIG_FILE")
-        info "Skipping $tool: $manager not available"
+          elif can_install_tool "$tool" "$CURRENT_CONFIG_FILE"; then
+            manager=$(yq ".tools.${tool}.manager" "$CURRENT_CONFIG_FILE")
+            type=$(yq ".tools.${tool}.type" "$CURRENT_CONFIG_FILE")
+            info "Installing $tool ($manager $type)..."
+            if install_tool "$tool" "$CURRENT_CONFIG_FILE"; then
+              info "✓ Successfully installed $tool ($manager $type)"
+            else
+              info "Failed to install $tool ($manager $type)"
+            fi
+          else
+            manager=$(yq ".tools.${tool}.manager" "$CURRENT_CONFIG_FILE")
+            info "Skipping $tool: $manager not available"
+          fi
+        done <<<"$tools"
       fi
-    done <<<"$tools"
-  fi
-  done # End of config file loop
-  fi # End of if AVAILABLE_MANAGERS check
+    done # End of config file loop
+  fi     # End of if AVAILABLE_MANAGERS check
 
   if [[ "$STOW" == "true" ]]; then
     info "Running stow..."
