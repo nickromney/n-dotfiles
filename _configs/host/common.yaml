@@ -24,10 +24,19 @@ tools:
     documentation_url: "https://github.com/tmux/tmux"
     category: terminal
   
+  nikitabobko/tap:
+    manager: brew
+    type: tap
+    check_command: "brew tap | grep -q '^nikitabobko/tap$'"
+    description: "Tap for AeroSpace"
+    documentation_url: "https://github.com/nikitabobko/AeroSpace"
+    category: window-manager
+  
   aerospace:
     manager: brew
     type: cask
     check_command: command -v aerospace
+    install_args: ["nikitabobko/tap/aerospace"]
     description: "Tiling window manager"
     documentation_url: "https://github.com/nikitabobko/AeroSpace"
     category: window-manager
@@ -44,6 +53,7 @@ tools:
     manager: brew
     type: package
     check_command: command -v borders
+    install_args: ["felixkratz/formulae/borders"]
     description: "Window borders for tiling window managers"
     documentation_url: "https://github.com/FelixKratz/JankyBorders"
     category: window-manager
@@ -80,6 +90,14 @@ tools:
     documentation_url: "https://www.docker.com/"
     category: containers
   
+  1password:
+    manager: brew
+    type: cask
+    check_command: "[ -d '/Applications/1Password 7.app' ] || [ -d '/Applications/1Password.app' ]"
+    description: "Password manager"
+    documentation_url: "https://1password.com/"
+    category: security
+  
   1password-cli:
     manager: brew
     type: cask
@@ -95,3 +113,11 @@ tools:
     description: "Knowledge base and note-taking app"
     documentation_url: "https://obsidian.md/"
     category: productivity
+  
+  font-jetbrains-mono-nerd-font:
+    manager: brew
+    type: cask
+    check_command: 'brew list --cask font-jetbrains-mono-nerd-font >/dev/null 2>&1 || [ -d "$HOME/Library/Fonts/JetBrainsMono" ] || [ -d "/Library/Fonts/JetBrainsMono" ]'
+    description: "JetBrains Mono font patched with Nerd Font icons"
+    documentation_url: "https://www.nerdfonts.com/"
+    category: fonts

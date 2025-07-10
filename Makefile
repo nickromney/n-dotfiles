@@ -57,7 +57,7 @@ personal:
 
 # Work setup
 work:
-	@CONFIG_FILES="$(WORK_CONFIGS)" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
+	@./setup-work-mac.sh
 
 # Focus targets - install specific tool categories
 focus-vscode:
