@@ -37,12 +37,16 @@ brew install yq      # Required by install.sh
 brew install stow    # Required for symlink management
 
 # Install 1Password early if needed for SSH
-read -p "Do you use 1Password for SSH keys? (y/n) " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo "🔐 Installing 1Password..."
-    brew install --cask 1password
-    brew install --cask 1password-cli
+if [[ -n "${NON_INTERACTIVE:-}" ]]; then
+    echo "Skipping 1Password installation (non-interactive mode)."
+else
+    read -p "Do you use 1Password for SSH keys? (y/n) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo "🔐 Installing 1Password..."
+        brew install --cask 1password
+        brew install --cask 1password-cli
+    fi
 fi
 
 echo "✅ Bootstrap complete!"
