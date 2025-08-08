@@ -446,6 +446,16 @@ install_tool() {
         info "    Then re-run: ./install.sh -c host/personal"
         return 0  # Don't fail the whole script
       fi
+    # Special handling for brew to detect already installed packages
+    elif [[ "$manager" == "brew" ]]; then
+      output=$(eval "$install_cmd" 2>&1)
+      exit_code=$?
+      echo "$output"
+      # Check if it was already installed (brew shows "Not upgrading" warning)
+      if echo "$output" | grep -q "Warning: Not upgrading.*already installed"; then
+        return 2  # Special return code for already installed
+      fi
+      return $exit_code
     else
       eval "$install_cmd"
     fi
@@ -751,8 +761,12 @@ main() {
             manager=$(yq ".tools.${tool}.manager" "$CURRENT_CONFIG_FILE")
             type=$(yq ".tools.${tool}.type" "$CURRENT_CONFIG_FILE")
             info "Installing $tool ($manager $type)..."
-            if install_tool "$tool" "$CURRENT_CONFIG_FILE"; then
+            install_tool "$tool" "$CURRENT_CONFIG_FILE"
+            install_result=$?
+            if [[ $install_result -eq 0 ]]; then
               info "✓ Successfully installed $tool ($manager $type)"
+            elif [[ $install_result -eq 2 ]]; then
+              info "✓ $tool ($manager $type) was already up to date"
             else
               info "Failed to install $tool ($manager $type)"
             fi

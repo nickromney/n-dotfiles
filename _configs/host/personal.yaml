@@ -1,4 +1,7 @@
 # Personal machine additions - tools specific to personal use
+# NOTE: Mac App Store apps (mas) require you to have "purchased" them first
+#       (even free apps) by clicking "Get" in the App Store while signed in.
+#       If mas install fails, manually get the app in App Store first.
 tools:
   atuin:
     manager: brew
@@ -80,12 +83,7 @@ tools:
     type: cask
     check_command: "[ -d '/Applications/Microsoft Teams.app' ]"
     description: "Team collaboration and communication"
-    manager: mas
-    type: app
-    app_id: "1113153706"
-    check_command: "[ -d '/Applications/Microsoft Teams.app' ]"
-    description: "Team collaboration and communication"
-    documentation_url: "https://apps.apple.com/us/app/microsoft-teams/id1113153706"
+    documentation_url: "https://www.microsoft.com/en-us/microsoft-teams/"
     category: communication
   
   microsoft-word:

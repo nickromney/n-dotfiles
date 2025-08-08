@@ -15,6 +15,7 @@ $env.PATH = ($env.PATH | split row (char esep) | prepend [
     $"($env.HOME)/.arkade/bin" 
     $"($env.HOME)/.cargo/bin"
     $"($env.HOME)/.tfenv/bin"
+    "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"  # VSCode CLI
 ] | where { |p| $p | path exists } | uniq | str join (char esep))
 
 # ZScaler Certificates
