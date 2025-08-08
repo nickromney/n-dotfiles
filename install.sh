@@ -433,7 +433,22 @@ install_tool() {
   if [[ "$DRY_RUN" == "true" ]]; then
     info "Would execute: $install_cmd"
   else
-    eval "$install_cmd"
+    # Special handling for mas to provide helpful error message
+    if [[ "$manager" == "mas" ]]; then
+      output=$(eval "$install_cmd" 2>&1)
+      exit_code=$?
+      echo "$output" | grep -v "Warning: "
+      if [[ $exit_code -ne 0 ]]; then
+        info "⚠️  Failed to install $tool from Mac App Store"
+        info "    Common issues:"
+        info "    - Not signed in: Open App Store app and sign in first"
+        info "    - App already purchased on different account"
+        info "    Then re-run: ./install.sh -c host/personal"
+        return 0  # Don't fail the whole script
+      fi
+    else
+      eval "$install_cmd"
+    fi
   fi
   return 0
 }
