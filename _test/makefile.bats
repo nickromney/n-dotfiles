@@ -52,7 +52,7 @@ teardown() {
 @test "make personal runs with correct configs" {
   run make personal
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "CONFIG_FILES: shared/shell shared/git shared/search shared/file-tools shared/data-tools shared/network shared/neovim host/common host/personal focus/vscode" ]]
+  [[ "$output" =~ "CONFIG_FILES: shared/shell shared/git shared/search shared/file-tools shared/data-tools shared/network shared/neovim host/common host/personal host/manual-check focus/vscode" ]]
   [[ ! "$output" =~ "-u" ]]  # Should not have update flag
   [[ ! "$output" =~ "-s" ]]  # Should not have stow flag
 }
