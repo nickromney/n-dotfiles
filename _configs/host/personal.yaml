@@ -1,13 +1,5 @@
 # Personal machine additions - tools specific to personal use
 tools:
-  mas:
-    manager: brew
-    type: package
-    check_command: command -v mas
-    description: "Mac App Store command-line interface"
-    documentation_url: "https://github.com/mas-cli/mas"
-    category: system
-  
   atuin:
     manager: brew
     type: package
@@ -15,14 +7,6 @@ tools:
     description: "Shell history sync/search"
     documentation_url: "https://github.com/atuinsh/atuin"
     category: shell
-  
-  ollama:
-    manager: brew
-    type: cask
-    check_command: command -v ollama
-    description: "Run large language models locally"
-    documentation_url: "https://ollama.ai/"
-    category: ai
   
   brave-browser:
     manager: brew
@@ -32,6 +16,46 @@ tools:
     documentation_url: "https://brave.com/"
     category: internet
   
+  claude:
+    manager: brew
+    type: cask
+    check_command: "[ -d /Applications/Claude.app ]"
+    description: "AI assistant desktop app"
+    documentation_url: "https://claude.ai/"
+    category: ai
+  
+  hey:
+    manager: brew
+    type: cask
+    check_command: "[ -d /Applications/HEY.app ]"
+    description: "Modern email client with built-in workflows"
+    documentation_url: "https://www.hey.com/"
+    category: productivity
+  
+  lm-studio:
+    manager: brew
+    type: cask
+    check_command: "[ -d '/Applications/LM Studio.app' ]"
+    description: "Desktop app for running local LLMs"
+    documentation_url: "https://lmstudio.ai/"
+    category: ai
+  
+  mas:
+    manager: brew
+    type: package
+    check_command: command -v mas
+    description: "Mac App Store command-line interface"
+    documentation_url: "https://github.com/mas-cli/mas"
+    category: system
+  
+  ollama:
+    manager: brew
+    type: cask
+    check_command: command -v ollama
+    description: "Run large language models locally"
+    documentation_url: "https://ollama.ai/"
+    category: ai
+  
   spotify:
     manager: brew
     type: cask
@@ -40,10 +64,39 @@ tools:
     documentation_url: "https://www.spotify.com/"
     category: media
   
-  claude:
-    manager: brew
-    type: cask
-    check_command: "[ -d /Applications/Claude.app ]"
-    description: "AI assistant desktop app"
-    documentation_url: "https://claude.ai/"
-    category: ai
+  # Mac App Store apps (installed via mas)
+  copy-em:
+    manager: mas
+    type: app
+    app_id: "876540291"
+    check_command: "mas list | grep -q '^876540291'"
+    description: "Clipboard manager with paste formatting"
+    documentation_url: "https://apps.apple.com/us/app/copy-em/id876540291"
+    category: productivity
+  
+  nightshift:
+    manager: mas
+    type: app
+    app_id: "1561604170"
+    check_command: "mas list | grep -q '^1561604170'"
+    description: "Night mode color temperature adjustment"
+    documentation_url: "https://apps.apple.com/us/app/nightshift/id1561604170"
+    category: utilities
+  
+  paste:
+    manager: mas
+    type: app
+    app_id: "967805235"
+    check_command: "mas list | grep -q '^967805235'"
+    description: "Clipboard history manager"
+    documentation_url: "https://apps.apple.com/us/app/paste/id967805235"
+    category: productivity
+  
+  things:
+    manager: mas
+    type: app
+    app_id: "904280696"
+    check_command: "mas list | grep -q '^904280696'"
+    description: "Task management and to-do list app"
+    documentation_url: "https://apps.apple.com/us/app/things-3/id904280696"
+    category: productivity

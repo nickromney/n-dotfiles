@@ -1,11 +1,11 @@
 # Network and HTTP tools - available in both host and containers
 tools:
-  wget:
+  httpie:
     manager: brew
     type: package
-    check_command: command -v wget
-    description: "Internet file retriever"
-    documentation_url: "https://www.gnu.org/software/wget/"
+    check_command: command -v http
+    description: "Modern command-line HTTP client"
+    documentation_url: "https://httpie.io/"
     category: network
   
   openssh:
@@ -16,10 +16,10 @@ tools:
     documentation_url: "https://www.openssh.com/"
     category: network
   
-  httpie:
+  wget:
     manager: brew
     type: package
-    check_command: command -v http
-    description: "Modern command-line HTTP client"
-    documentation_url: "https://httpie.io/"
+    check_command: command -v wget
+    description: "Internet file retriever"
+    documentation_url: "https://www.gnu.org/software/wget/"
     category: network

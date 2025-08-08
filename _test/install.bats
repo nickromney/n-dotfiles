@@ -122,6 +122,39 @@ EOF
   fi
 }
 
+@test "get_available_managers detects mas when available" {
+  # Mock yq to return mas as a manager
+  cat > "$MOCK_BIN_DIR/yq" << 'EOF'
+#!/usr/bin/env bash
+case "$*" in
+  *".tools[].manager"*)
+    echo "mas"
+    ;;
+  *)
+    echo "null"
+    ;;
+esac
+EOF
+  chmod +x "$MOCK_BIN_DIR/yq"
+  
+  # Mock mas command
+  if ! command -v mas >/dev/null 2>&1; then
+    echo '#!/usr/bin/env bash
+echo "mas version 1.8.6"' > "$MOCK_BIN_DIR/mas"
+    chmod +x "$MOCK_BIN_DIR/mas"
+  fi
+  
+  run get_available_managers "test.yaml"
+  [ "$status" -eq 0 ]
+  
+  # Check if mas is available
+  if command_exists mas; then
+    [[ "$output" =~ "Available package managers: mas" ]]
+  else
+    [[ "$output" =~ "mas: please install with 'brew install mas'" ]]
+  fi
+}
+
 @test "get_available_managers detects multiple managers" {
   # Mock yq to return common managers
   cat > "$MOCK_BIN_DIR/yq" << 'EOF'
@@ -393,6 +426,65 @@ EOF
   run install_tool "ruff" "test.yaml"
   [ "$status" -eq 0 ]
   assert_mock_called "uv" "tool install ruff"
+}
+
+# Tests for install_tool function - MAS (Mac App Store)
+@test "install_tool installs mas app" {
+  mock_yq
+  mock_mas
+  
+  # Override yq for this test to include app_id
+  yq() {
+    case "$*" in
+      *".tools.things.manager"*) echo "mas" ;;
+      *".tools.things.type"*) echo "app" ;;
+      *".tools.things.app_id"*) echo "904280696" ;;
+      *".tools.things.install_args[]"*) echo "" ;;
+      *) echo "null" ;;
+    esac
+  }
+  export -f yq
+  
+  run install_tool "things" "test.yaml"
+  [ "$status" -eq 0 ]
+  assert_mock_called "mas" "install 904280696"
+}
+
+@test "install_tool fails when mas app_id is missing" {
+  mock_yq
+  
+  # Override yq for this test without app_id
+  yq() {
+    case "$*" in
+      *".tools.paste.manager"*) echo "mas" ;;
+      *".tools.paste.type"*) echo "app" ;;
+      *".tools.paste.app_id"*) echo "null" ;;
+      *) echo "null" ;;
+    esac
+  }
+  export -f yq
+  
+  run install_tool "paste" "test.yaml"
+  [ "$status" -eq 1 ]
+  [[ "$output" =~ "No app_id specified" ]]
+}
+
+@test "install_tool skips unknown mas type" {
+  mock_yq
+  
+  # Override yq for this test with unknown type
+  yq() {
+    case "$*" in
+      *".tools.tool1.manager"*) echo "mas" ;;
+      *".tools.tool1.type"*) echo "unknown" ;;
+      *) echo "null" ;;
+    esac
+  }
+  export -f yq
+  
+  run install_tool "tool1" "test.yaml"
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "unknown mas type" ]]
 }
 
 # Tests for install_tool function - APT
@@ -829,6 +921,51 @@ echo "Installing extension: $*"' > "$MOCK_BIN_DIR/code"
   run install_tool "tool1" "test.yaml"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "no extension_id specified" ]]
+}
+
+@test "is_tool_installed checks mas app installation" {
+  # Mock mas command
+  echo '#!/usr/bin/env bash
+if [[ "$1" == "list" ]]; then
+  echo "904280696   Things                 (3.21.14)"
+  echo "967805235    Paste                  (5.0.9)"
+fi' > "$MOCK_BIN_DIR/mas"
+  chmod +x "$MOCK_BIN_DIR/mas"
+  
+  # Mock yq
+  yq() {
+    case "$*" in
+      *".tools.things.check_command"*) echo "mas list | grep -q '^904280696'" ;;
+      *".tools.things.manager"*) echo "mas" ;;
+      *) echo "null" ;;
+    esac
+  }
+  export -f yq
+  
+  run is_tool_installed "things" "test.yaml"
+  [ "$status" -eq 0 ]
+}
+
+@test "is_tool_installed detects missing mas app" {
+  # Mock mas command without the app
+  echo '#!/usr/bin/env bash
+if [[ "$1" == "list" ]]; then
+  echo "967805235    Paste                  (5.0.9)"
+fi' > "$MOCK_BIN_DIR/mas"
+  chmod +x "$MOCK_BIN_DIR/mas"
+  
+  # Mock yq
+  yq() {
+    case "$*" in
+      *".tools.things.check_command"*) echo "mas list | grep -q '^904280696'" ;;
+      *".tools.things.manager"*) echo "mas" ;;
+      *) echo "null" ;;
+    esac
+  }
+  export -f yq
+  
+  run is_tool_installed "things" "test.yaml"
+  [ "$status" -eq 1 ]
 }
 
 @test "is_tool_installed substitutes VSCode CLI for code extensions" {

@@ -254,6 +254,44 @@ esac
 '
 }
 
+mock_mas() {
+  # shellcheck disable=SC2016  # Single quotes prevent variable expansion in script
+  mock_command_with_script "mas" '
+case "$1" in
+  install)
+    shift
+    echo "==> Downloading and installing app ID: $@"
+    exit 0
+    ;;
+  list)
+    echo "904280696   Things                 (3.21.14)"
+    echo "967805235    Paste                  (5.0.9)"
+    exit 0
+    ;;
+  outdated)
+    # Return empty - nothing outdated
+    exit 0
+    ;;
+  upgrade)
+    shift
+    echo "==> Upgrading app ID: $@"
+    exit 0
+    ;;
+  version)
+    echo "1.8.6"
+    exit 0
+    ;;
+  --version)
+    echo "mas version 1.8.6"
+    exit 0
+    ;;
+  *)
+    exit 1
+    ;;
+esac
+'
+}
+
 mock_stow() {
   # shellcheck disable=SC2016  # Single quotes prevent variable expansion in script
   mock_command_with_script "stow" '

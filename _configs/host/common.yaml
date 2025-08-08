@@ -1,95 +1,5 @@
 # Common host tools - installed on any host machine (personal or work)
 tools:
-  stow:
-    manager: brew
-    type: package
-    check_command: command -v stow
-    description: "Symlink farm manager for dotfiles"
-    documentation_url: "https://www.gnu.org/software/stow/"
-    category: system
-
-  ghostty:
-    manager: brew
-    type: cask
-    check_command: "[ -d /Applications/Ghostty.app ]"
-    description: "Fast, native terminal emulator"
-    documentation_url: "https://github.com/ghostty-org/ghostty"
-    category: terminal
-
-  tmux:
-    manager: brew
-    type: package
-    check_command: command -v tmux
-    description: "Terminal multiplexer"
-    documentation_url: "https://github.com/tmux/tmux"
-    category: terminal
-
-  nikitabobko/tap:
-    manager: brew
-    type: tap
-    check_command: "brew tap | grep -q '^nikitabobko/tap$'"
-    description: "Tap for AeroSpace"
-    documentation_url: "https://github.com/nikitabobko/AeroSpace"
-    category: window-manager
-
-  aerospace:
-    manager: brew
-    type: cask
-    check_command: command -v aerospace
-    install_args: ["nikitabobko/tap/aerospace"]
-    description: "Tiling window manager"
-    documentation_url: "https://github.com/nikitabobko/AeroSpace"
-    category: window-manager
-
-  FelixKratz/formulae/borders:
-    manager: brew
-    type: tap
-    check_command: "brew tap | grep -q '^felixkratz/formulae$'"
-    description: "Tap for JankyBorders"
-    documentation_url: "https://github.com/FelixKratz/JankyBorders"
-    category: window-manager
-
-  borders:
-    manager: brew
-    type: package
-    check_command: command -v borders
-    install_args: ["felixkratz/formulae/borders"]
-    description: "Window borders for tiling window managers"
-    documentation_url: "https://github.com/FelixKratz/JankyBorders"
-    category: window-manager
-
-  # karabiner-elements:
-  #   manager: brew
-  #   type: cask
-  #   check_command: "[ -d '/Applications/Karabiner-Elements.app' ]"
-  #   description: "Keyboard customizer"
-  #   documentation_url: "https://karabiner-elements.pqrs.org/"
-  #   category: productivity
-
-  alfred:
-    manager: brew
-    type: cask
-    check_command: "[ -d '/Applications/Alfred 5.app' ]"
-    description: "Application launcher and productivity tool"
-    documentation_url: "https://www.alfredapp.com/"
-    category: productivity
-
-  visual-studio-code:
-    manager: brew
-    type: cask
-    check_command: "[ -d '/Applications/Visual Studio Code.app' ]"
-    description: "Code editor"
-    documentation_url: "https://code.visualstudio.com/"
-    category: ide
-
-  docker:
-    manager: brew
-    type: cask
-    check_command: command -v docker
-    description: "Container platform"
-    documentation_url: "https://www.docker.com/"
-    category: containers
-
   1password:
     manager: brew
     type: cask
@@ -106,13 +16,47 @@ tools:
     documentation_url: "https://developer.1password.com/docs/cli"
     category: security
 
-  obsidian:
+  aerospace:
     manager: brew
     type: cask
-    check_command: "[ -d '/Applications/Obsidian.app' ]"
-    description: "Knowledge base and note-taking app"
-    documentation_url: "https://obsidian.md/"
+    check_command: command -v aerospace
+    install_args: ["nikitabobko/tap/aerospace"]
+    description: "Tiling window manager"
+    documentation_url: "https://github.com/nikitabobko/AeroSpace"
+    category: window-manager
+
+  alfred:
+    manager: brew
+    type: cask
+    check_command: "[ -d '/Applications/Alfred 5.app' ]"
+    description: "Application launcher and productivity tool"
+    documentation_url: "https://www.alfredapp.com/"
     category: productivity
+
+  borders:
+    manager: brew
+    type: package
+    check_command: command -v borders
+    install_args: ["felixkratz/formulae/borders"]
+    description: "Window borders for tiling window managers"
+    documentation_url: "https://github.com/FelixKratz/JankyBorders"
+    category: window-manager
+
+  docker:
+    manager: brew
+    type: cask
+    check_command: command -v docker
+    description: "Container platform"
+    documentation_url: "https://www.docker.com/"
+    category: containers
+
+  FelixKratz/formulae/borders:
+    manager: brew
+    type: tap
+    check_command: "brew tap | grep -q '^felixkratz/formulae$'"
+    description: "Tap for JankyBorders"
+    documentation_url: "https://github.com/FelixKratz/JankyBorders"
+    category: window-manager
 
   font-jetbrains-mono-nerd-font:
     manager: brew
@@ -121,3 +65,59 @@ tools:
     description: "JetBrains Mono font patched with Nerd Font icons"
     documentation_url: "https://www.nerdfonts.com/"
     category: fonts
+
+  ghostty:
+    manager: brew
+    type: cask
+    check_command: "[ -d /Applications/Ghostty.app ]"
+    description: "Fast, native terminal emulator"
+    documentation_url: "https://github.com/ghostty-org/ghostty"
+    category: terminal
+
+  # karabiner-elements:
+  #   manager: brew
+  #   type: cask
+  #   check_command: "[ -d '/Applications/Karabiner-Elements.app' ]"
+  #   description: "Keyboard customizer"
+  #   documentation_url: "https://karabiner-elements.pqrs.org/"
+  #   category: productivity
+
+  nikitabobko/tap:
+    manager: brew
+    type: tap
+    check_command: "brew tap | grep -q '^nikitabobko/tap$'"
+    description: "Tap for AeroSpace"
+    documentation_url: "https://github.com/nikitabobko/AeroSpace"
+    category: window-manager
+
+  obsidian:
+    manager: brew
+    type: cask
+    check_command: "[ -d '/Applications/Obsidian.app' ]"
+    description: "Knowledge base and note-taking app"
+    documentation_url: "https://obsidian.md/"
+    category: productivity
+
+  stow:
+    manager: brew
+    type: package
+    check_command: command -v stow
+    description: "Symlink farm manager for dotfiles"
+    documentation_url: "https://www.gnu.org/software/stow/"
+    category: system
+
+  tmux:
+    manager: brew
+    type: package
+    check_command: command -v tmux
+    description: "Terminal multiplexer"
+    documentation_url: "https://github.com/tmux/tmux"
+    category: terminal
+
+  visual-studio-code:
+    manager: brew
+    type: cask
+    check_command: "[ -d '/Applications/Visual Studio Code.app' ]"
+    description: "Code editor"
+    documentation_url: "https://code.visualstudio.com/"
+    category: ide

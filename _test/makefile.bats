@@ -76,10 +76,10 @@ EOF
   [[ "$output" =~ "CONFIG_FILES: focus/vscode" ]]
 }
 
-@test "make focus-devops runs with correct configs" {
-  run make focus-devops
+@test "make focus-python runs with correct configs" {
+  run make focus-python
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "CONFIG_FILES: focus/devops" ]]
+  [[ "$output" =~ "CONFIG_FILES: focus/python" ]]
 }
 
 @test "make focus-neovim runs with correct configs" {

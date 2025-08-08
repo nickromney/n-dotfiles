@@ -24,22 +24,27 @@ help:
 	@echo "Usage: make [target] [install|update|stow]"
 	@echo ""
 	@echo "Main targets:"
-	@echo "  common      - Install common tools (shared + host/common)"
-	@echo "  personal    - Install personal configuration (use setup-personal-mac.sh for full setup)"
-	@echo "  work        - Full work Mac setup (runs setup-work-mac.sh)"
+	@echo "  common                   # Install common tools (shared + host/common)"
+	@echo "  personal                 # Install personal configuration" 
+	@echo "  work                     # Full work Mac setup (runs setup-work-mac.sh)"
 	@echo ""
 	@echo "Focus targets (install specific tool categories):"
-	@echo "  focus-vscode    - Install VSCode and extensions"
-	@echo "  focus-devops    - Install DevOps tools"
-	@echo "  focus-neovim    - Install Neovim and plugins"
+	@echo "  focus-ai                 # Install AI/ML tools (ollama, etc.)"
+	@echo "  focus-container-base     # Install Docker and container tools"
+	@echo "  focus-kubernetes         # Install Kubernetes tools (kubectl, k9s, helm)"
+	@echo "  focus-neovim             # Install Neovim and plugins"
+	@echo "  focus-python             # Install Python development tools"
+	@echo "  focus-rust               # Install Rust toolchain and utilities"
+	@echo "  focus-typescript         # Install Node.js and TypeScript tools"
+	@echo "  focus-vscode             # Install VSCode and extensions"
 	@echo ""
 	@echo "Actions (can be combined with targets):"
-	@echo "  install     - Install packages (default action)"
-	@echo "  update      - Update existing packages"
-	@echo "  stow        - Run stow to create symlinks"
+	@echo "  install                  # Install packages (default action)"
+	@echo "  update                   # Update existing packages"
+	@echo "  stow                     # Run stow to create symlinks"
 	@echo ""
 	@echo "Environment variables:"
-	@echo "  VSCODE_CLI  - VSCode binary to use (default: code)"
+	@echo "  VSCODE_CLI               # VSCode binary to use (default: code)"
 	@echo ""
 	@echo "Examples:"
 	@echo "  make common install      # Install common tools"
@@ -60,14 +65,29 @@ work:
 	@./setup-work-mac.sh
 
 # Focus targets - install specific tool categories
-focus-vscode:
-	@CONFIG_FILES="focus/vscode" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
+focus-ai:
+	@CONFIG_FILES="focus/ai" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
 
-focus-devops:
-	@CONFIG_FILES="focus/devops" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
+focus-container-base:
+	@CONFIG_FILES="focus/container-base" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
+
+focus-kubernetes:
+	@CONFIG_FILES="focus/kubernetes" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
 
 focus-neovim:
 	@CONFIG_FILES="focus/neovim" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
+
+focus-python:
+	@CONFIG_FILES="focus/python" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
+
+focus-rust:
+	@CONFIG_FILES="focus/rust" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
+
+focus-typescript:
+	@CONFIG_FILES="focus/typescript" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
+
+focus-vscode:
+	@CONFIG_FILES="focus/vscode" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
 
 # Action targets (these do nothing by themselves, used with main targets)
 install:
@@ -79,4 +99,4 @@ update:
 stow:
 	@:
 
-.PHONY: help common personal work focus-vscode focus-devops focus-neovim install update stow
+.PHONY: help common personal work focus-ai focus-container-base focus-kubernetes focus-neovim focus-python focus-rust focus-typescript focus-vscode install update stow

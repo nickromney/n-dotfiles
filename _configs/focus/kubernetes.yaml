@@ -1,13 +1,5 @@
 # Kubernetes development tools
 tools:
-  kubectl:
-    manager: brew
-    type: package
-    check_command: command -v kubectl
-    description: "Kubernetes command-line tool"
-    documentation_url: "https://kubernetes.io/docs/reference/kubectl/"
-    category: kubernetes
-  
   helm:
     manager: brew
     type: package
@@ -22,4 +14,12 @@ tools:
     check_command: command -v k9s
     description: "Terminal UI for Kubernetes"
     documentation_url: "https://k9scli.io/"
+    category: kubernetes
+  
+  kubectl:
+    manager: brew
+    type: package
+    check_command: command -v kubectl
+    description: "Kubernetes command-line tool"
+    documentation_url: "https://kubernetes.io/docs/reference/kubectl/"
     category: kubernetes
