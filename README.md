@@ -151,6 +151,72 @@ _configs/
     ├── kubernetes.yaml   # Kubernetes tools
     └── container-base.yaml  # Base container tools
 
+## All Available Configurations
+
+### Tool Configurations (_configs/)
+
+| Configuration | Type | Description | Use Case |
+|--------------|------|-------------|----------|
+| **focus/ai** | Focus | AI/ML tools (ollama, etc.) | AI development |
+| **focus/container-base** | Focus | Docker and container tools | Container development |
+| **focus/kubernetes** | Focus | K8s tools (kubectl, k9s, helm) | Kubernetes management |
+| **focus/neovim** | Focus | Extended Neovim plugins | Advanced vim setup |
+| **focus/python** | Focus | Python dev tools (pyenv, poetry, ruff) | Python development |
+| **focus/rust** | Focus | Rust toolchain and utilities | Rust development |
+| **focus/typescript** | Focus | Node.js and TypeScript tools | JavaScript/TypeScript dev |
+| **focus/vscode** | Focus | VSCode + 38 extensions | Full VSCode development |
+| **host/common** | Host | Common Mac apps (Ghostty, VSCode, Obsidian) | Standard Mac productivity |
+| **host/personal** | Host | Personal additions (games, media apps) | Personal Mac extras |
+| **host/work** | Host | Work-specific tools | Work Mac requirements |
+| **shared/data-tools** | Shared | Data processing (jq, yq, csvlens) | JSON/YAML/CSV manipulation |
+| **shared/file-tools** | Shared | File management (eza, tree, etc.) | Directory navigation |
+| **shared/git** | Shared | Git tools (delta, lazygit, gh CLI) | Version control essentials |
+| **shared/neovim** | Shared | Neovim and plugins | Text editor setup |
+| **shared/network** | Shared | Network utilities (httpie, curlie, etc.) | API testing and network debugging |
+| **shared/search** | Shared | Search tools (ripgrep, fzf, fd, etc.) | File and text searching |
+| **shared/shell** | Shared | Shell utilities (zsh, starship, atuin, etc.) | Essential for all setups |
+
+### macOS System Settings (_macos/)
+
+| Configuration | Description | Key Settings |
+|--------------|-------------|--------------|
+| **personal.yaml** | Personal Mac settings | Natural scroll, dock apps, keyboard shortcuts |
+| **work.yaml** | Work Mac settings | Corporate defaults, security settings |
+
+### Makefile Targets (Convenient Combinations)
+
+| Target | Includes | Purpose |
+|--------|----------|---------|
+| **make common** | All shared/ + host/common | Essential Mac setup |
+| **make focus-ai** | focus/ai | AI/ML development tools |
+| **make focus-container-base** | focus/container-base | Docker and container tools |
+| **make focus-kubernetes** | focus/kubernetes | Kubernetes toolchain |
+| **make focus-neovim** | focus/neovim | Enhanced Neovim |
+| **make focus-python** | focus/python | Python development |
+| **make focus-rust** | focus/rust | Rust development |
+| **make focus-typescript** | focus/typescript | TypeScript/Node.js |
+| **make focus-vscode** | focus/vscode | VSCode + extensions |
+| **make personal** | All shared/ + host/common + host/personal + focus/vscode | Full personal Mac |
+| **make work** | Runs setup-work-mac.sh | Complete work setup |
+
+### Quick Setup Guide
+
+For a new personal Mac (like yours):
+
+```bash
+# 1. Install base tools and personal apps
+make personal install
+
+# 2. Apply macOS system settings (mouse scroll, dock, etc.)
+./_macos/macos.sh personal.yaml
+
+# 3. Create configuration symlinks
+make personal stow
+
+# Or all at once:
+make personal stow && ./_macos/macos.sh personal.yaml
+```
+
 ### Package Manager Examples
 
 ### Tap a Homebrew repository

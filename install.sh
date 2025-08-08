@@ -108,6 +108,13 @@ get_available_managers() {
           available+=("uv")
         fi
         ;;
+      "mas")
+        if ! command_exists "mas"; then
+          unavailable+=("mas: please install with 'brew install mas'")
+        else
+          available+=("mas")
+        fi
+        ;;
       "code")
         if ! get_vscode_cli >/dev/null 2>&1; then
           unavailable+=("code: VSCode CLI not found - please install VSCode or set VSCODE_CLI")
@@ -361,6 +368,23 @@ install_tool() {
       ;;
     esac
     ;;
+  "mas")
+    case "$type" in
+    "app")
+      local app_id
+      app_id=$(yq ".tools.${tool}.app_id" "$yaml_file")
+      if [[ -z "$app_id" || "$app_id" == "null" ]]; then
+        error "No app_id specified for $tool"
+        return 1
+      fi
+      install_cmd="mas install $app_id"
+      ;;
+    *)
+      info "Skipping $tool: unknown mas type: $type"
+      return 0
+      ;;
+    esac
+    ;;
   "code")
     case "$type" in
     "extension")
@@ -600,6 +624,21 @@ main() {
                   fi
                 fi
                 ;;
+              "mas")
+                if [[ "$DRY_RUN" == "true" ]]; then
+                  info "Would check: mas outdated"
+                else
+                  local app_id
+                  app_id=$(yq ".tools.${tool}.app_id" "$CURRENT_CONFIG_FILE")
+                  if mas outdated | grep -q "^$app_id"; then
+                    info "Updating $tool (mas app)..."
+                    mas upgrade "$app_id"
+                    info "✓ Updated $tool (mas app)"
+                  else
+                    info "✓ $tool (mas app) is already up to date"
+                  fi
+                fi
+                ;;
               "arkade")
                 case "$type" in
                 "get")
@@ -654,6 +693,9 @@ main() {
                 ;;
               "uv")
                 info "✓ $tool (uv $type) is already installed"
+                ;;
+              "mas")
+                info "✓ $tool (mas $type) is already installed"
                 ;;
               "code")
                 info "✓ $tool (code $type) is already installed"

@@ -1,5 +1,21 @@
 # Shell environment tools - available in both host and containers
 tools:
+  nushell:
+    manager: brew
+    type: package
+    check_command: "command -v nu"
+    description: "A modern shell written in Rust"
+    documentation_url: "https://www.nushell.sh/"
+    category: shell
+  
+  nvm:
+    manager: brew
+    type: package
+    check_command: 'brew --prefix nvm >/dev/null 2>&1 && test -d "$(brew --prefix nvm)"'
+    description: "Node Version Manager - manage multiple Node.js versions (run 'nvm install --lts' after installation)"
+    documentation_url: "https://github.com/nvm-sh/nvm"
+    category: shell
+  
   starship:
     manager: brew
     type: package
@@ -24,14 +40,6 @@ tools:
     documentation_url: "https://github.com/zsh-users/zsh-autosuggestions"
     category: shell
   
-  zsh-syntax-highlighting:
-    manager: brew
-    type: package
-    check_command: "[ -f $(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]"
-    description: "Fish-like syntax highlighting for zsh"
-    documentation_url: "https://github.com/zsh-users/zsh-syntax-highlighting"
-    category: shell
-  
   zsh-completions:
     manager: brew
     type: package
@@ -40,18 +48,10 @@ tools:
     documentation_url: "https://github.com/zsh-users/zsh-completions"
     category: shell
   
-  nushell:
+  zsh-syntax-highlighting:
     manager: brew
     type: package
-    check_command: "command -v nu"
-    description: "A modern shell written in Rust"
-    documentation_url: "https://www.nushell.sh/"
-    category: shell
-  
-  nvm:
-    manager: brew
-    type: package
-    check_command: 'brew --prefix nvm >/dev/null 2>&1 && test -d "$(brew --prefix nvm)"'
-    description: "Node Version Manager - manage multiple Node.js versions (run 'nvm install --lts' after installation)"
-    documentation_url: "https://github.com/nvm-sh/nvm"
+    check_command: "[ -f $(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]"
+    description: "Fish-like syntax highlighting for zsh"
+    documentation_url: "https://github.com/zsh-users/zsh-syntax-highlighting"
     category: shell

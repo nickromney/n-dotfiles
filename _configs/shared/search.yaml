@@ -1,13 +1,5 @@
 # Search and find tools - available in both host and containers
 tools:
-  ripgrep:
-    manager: brew
-    type: package
-    check_command: command -v rg
-    description: "Recursively search directories for regex patterns"
-    documentation_url: "https://github.com/BurntSushi/ripgrep"
-    category: search
-  
   fd:
     manager: brew
     type: package
@@ -22,6 +14,14 @@ tools:
     check_command: command -v fzf
     description: "Command-line fuzzy finder"
     documentation_url: "https://github.com/junegunn/fzf"
+    category: search
+  
+  ripgrep:
+    manager: brew
+    type: package
+    check_command: command -v rg
+    description: "Recursively search directories for regex patterns"
+    documentation_url: "https://github.com/BurntSushi/ripgrep"
     category: search
   
   the_silver_searcher:
