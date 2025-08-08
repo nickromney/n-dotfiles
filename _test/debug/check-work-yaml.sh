@@ -3,6 +3,21 @@
 # Get the repository root (two levels up from _test/debug)
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 
+# Check for required dependency: yq
+if ! command -v yq >/dev/null 2>&1; then
+    echo "Error: 'yq' is not installed. Please install yq to continue." >&2
+    exit 1
+fi
+
+# Check for required YAML file
+YAML_FILE="${REPO_ROOT}/_macos/work.yaml"
+# Get the repository root (two levels up from _test/debug)
+REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+
+if [ ! -f "$YAML_FILE" ]; then
+    echo "Error: YAML file '$YAML_FILE' not found." >&2
+    exit 1
+fi
 echo "=== Checking _macos/work.yaml against actual system settings ==="
 echo ""
 
