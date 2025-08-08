@@ -118,7 +118,7 @@ echo
 info "Next steps:"
 echo "  1. Restart your terminal to load new shell configurations"
 echo "  2. Sign in to 1Password if not already done"
-echo "  3. Configure git with your personal email: git config --global user.email 'your-personal-email@example.com'"
+echo "  3. Configure git with your personal email: git config --global user.email 'your-email@domain.com'"
 echo "  4. Set up SSH keys for GitHub access"
 echo
 info "You may also want to:"
