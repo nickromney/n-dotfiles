@@ -34,7 +34,7 @@ dock:
   # WARNING: This will CLEAR the entire dock and add only these apps
   # Set manage_apps to false if you want to keep existing dock items
   manage_apps: true
-  clear_dock_first: false # Set to true to start with empty dock
+  clear_dock_first: true # Clears default Apple apps and adds only your list
   # Apps are only added if they exist - missing apps are skipped with a warning
   # NOTE: Finder is always in the dock by default - don't add it here
   #       Safari is in /Applications/Safari.app if you want to add it
