@@ -144,7 +144,7 @@ displays:
   # Dock position per display type
   dock_position:
     external: "left"  # When external display is main ("left", "right", "" for bottom)
-    builtin: "left"   # When built-in display is main ("left", "right", "" for bottom)
+    builtin: ""       # When built-in display is main ("left", "right", "" for bottom)
 
 # Screenshots configuration
 screenshots:
