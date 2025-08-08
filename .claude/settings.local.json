@@ -32,7 +32,8 @@
       "Bash(CONFIG_FILES=\"terminal productivity\" ./install.sh -d)",
       "Bash(brew search:*)",
       "Bash(/Users/nickromney/Developer/personal/n-dotfiles/check-migrated-tools.sh:*)",
-      "Bash(./check_all_tools.sh:*)"
+      "Bash(./check_all_tools.sh:*)",
+      "Bash(mas search:*)"
     ],
     "deny": []
   }

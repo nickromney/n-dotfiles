@@ -11,8 +11,8 @@ HOST_WORK = host/work
 COMMON_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON)
 
 # Configuration combinations
-PERSONAL_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON) $(HOST_PERSONAL) focus/vscode
-WORK_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON) $(HOST_WORK) focus/vscode
+PERSONAL_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON) $(HOST_PERSONAL) host/manual-check focus/vscode
+WORK_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON) $(HOST_WORK) host/manual-check focus/vscode
 
 # Default target
 .DEFAULT_GOAL := help
