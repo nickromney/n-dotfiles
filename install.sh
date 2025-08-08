@@ -115,6 +115,10 @@ get_available_managers() {
           available+=("mas")
         fi
         ;;
+      "manual")
+        # Manual manager is always "available" - it just checks, never installs
+        available+=("manual")
+        ;;
       "code")
         if ! get_vscode_cli >/dev/null 2>&1; then
           unavailable+=("code: VSCode CLI not found - please install VSCode or set VSCODE_CLI")
@@ -385,6 +389,22 @@ install_tool() {
       ;;
     esac
     ;;
+  "manual")
+    # Manual tools are never installed, just reported
+    local description doc_url
+    description=$(yq ".tools.${tool}.description" "$yaml_file")
+    doc_url=$(yq ".tools.${tool}.documentation_url" "$yaml_file")
+    
+    if [[ "$DRY_RUN" == "true" ]]; then
+      info "Would report: $tool requires manual installation"
+      [[ "$doc_url" != "null" ]] && info "  Download from: $doc_url"
+    else
+      info "⚠️  $tool requires manual installation"
+      [[ "$description" != "null" ]] && info "    $description"
+      [[ "$doc_url" != "null" ]] && info "    Download from: $doc_url"
+    fi
+    return 0  # Always return success for manual tools
+    ;;
   "code")
     case "$type" in
     "extension")
@@ -639,6 +659,10 @@ main() {
                   fi
                 fi
                 ;;
+              "manual")
+                # Manual tools don't update through the script
+                info "✓ $tool (manual) - check vendor site for updates"
+                ;;
               "arkade")
                 case "$type" in
                 "get")
@@ -696,6 +720,9 @@ main() {
                 ;;
               "mas")
                 info "✓ $tool (mas $type) is already installed"
+                ;;
+              "manual")
+                info "✓ $tool (manual) is already installed"
                 ;;
               "code")
                 info "✓ $tool (code $type) is already installed"

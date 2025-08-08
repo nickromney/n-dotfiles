@@ -100,3 +100,21 @@ tools:
     description: "Task management and to-do list app"
     documentation_url: "https://apps.apple.com/us/app/things-3/id904280696"
     category: productivity
+  
+  slack:
+    manager: mas
+    type: app
+    app_id: "803453959"
+    check_command: "mas list | grep -q '^803453959'"
+    description: "Team communication platform"
+    documentation_url: "https://apps.apple.com/us/app/slack-for-desktop/id803453959"
+    category: communication
+  
+  whatsapp:
+    manager: mas
+    type: app
+    app_id: "310633997"
+    check_command: "mas list | grep -q '^310633997'"
+    description: "WhatsApp Messenger desktop app"
+    documentation_url: "https://apps.apple.com/us/app/whatsapp-messenger/id310633997"
+    category: communication

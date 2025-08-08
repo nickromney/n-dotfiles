@@ -1,0 +1,54 @@
+# Manual installation check - apps that require manual installation
+# These are tracked for completeness but never auto-installed
+tools:
+  # Screen recording and capture
+  snagit:
+    manager: manual
+    type: check
+    check_command: "ls -d '/Applications/Snagit'*.app 2>/dev/null | grep -qE '(Snagit\\.app|Snagit [0-9]{4}\\.app)'"
+    description: "Professional screen capture and recording software by TechSmith"
+    documentation_url: "https://www.techsmith.com/screen-capture.html"
+    category: utilities
+  
+  camtasia:
+    manager: manual
+    type: check
+    check_command: "ls -d '/Applications/Camtasia'*.app 2>/dev/null | grep -qE '(Camtasia\\.app|Camtasia [0-9]{4}\\.app)'"
+    description: "Screen recording and video editing software by TechSmith"
+    documentation_url: "https://www.techsmith.com/video-editor.html"
+    category: utilities
+  
+  # File comparison
+  beyond-compare:
+    manager: manual
+    type: check
+    check_command: "[ -d '/Applications/Beyond Compare.app' ]"
+    description: "File and folder comparison tool by Scooter Software"
+    documentation_url: "https://www.scootersoftware.com/download"
+    category: utilities
+  
+  # Keyboard utilities
+  superkey:
+    manager: manual
+    type: check
+    check_command: "[ -d '/Applications/Superkey.app' ]"
+    description: "Turn Caps Lock into a modifier key for macOS"
+    documentation_url: "https://superkey.app/"
+    category: productivity
+  
+  homerow:
+    manager: manual
+    type: check
+    check_command: "[ -d '/Applications/Homerow.app' ]"
+    description: "Navigate macOS with your keyboard"
+    documentation_url: "https://www.homerow.app/"
+    category: productivity
+  
+  # Other paid apps that might be installed manually
+  gpg-keychain:
+    manager: manual
+    type: check
+    check_command: "[ -d '/Applications/GPG Keychain.app' ]"
+    description: "GPG key management (part of GPG Suite)"
+    documentation_url: "https://gpgtools.org/"
+    category: security

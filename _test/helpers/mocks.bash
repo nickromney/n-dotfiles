@@ -292,6 +292,15 @@ esac
 '
 }
 
+mock_manual() {
+  # Manual doesn't need a command mock since it never executes anything
+  # But we can create a placeholder for consistency
+  echo '#!/usr/bin/env bash
+# Manual manager - does nothing
+exit 0' > "$MOCK_BIN_DIR/manual"
+  chmod +x "$MOCK_BIN_DIR/manual"
+}
+
 mock_stow() {
   # shellcheck disable=SC2016  # Single quotes prevent variable expansion in script
   mock_command_with_script "stow" '
