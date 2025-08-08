@@ -452,7 +452,7 @@ install_tool() {
       exit_code=$?
       echo "$output"
       # Check if it was already installed (brew shows "Not upgrading" warning)
-      if echo "$output" | grep -q "Warning: Not upgrading.*already installed"; then
+      if echo "$output" | grep -E -q "Warning: Not upgrading.*already installed|Warning: .* is already installed"; then
         return 2  # Special return code for already installed
       fi
       return $exit_code
