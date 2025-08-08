@@ -1,6 +1,15 @@
 # Manual installation check - apps that require manual installation
 # These are tracked for completeness but never auto-installed
 tools:
+  # AI Tools
+  claude-code:
+    manager: manual
+    type: check
+    check_command: "[ -f '$HOME/.local/bin/claude' ]"
+    description: "Claude AI coding assistant CLI"
+    documentation_url: "https://claude.ai/code"
+    category: development
+  
   # Screen recording and capture
   snagit:
     manager: manual
