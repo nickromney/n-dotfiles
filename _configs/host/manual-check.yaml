@@ -5,7 +5,7 @@ tools:
   snagit:
     manager: manual
     type: check
-    check_command: "ls -d '/Applications/Snagit'*.app 2>/dev/null | grep -qE '(Snagit\\.app|Snagit 20[0-9]{2}\\.app)'"
+    check_command: "ls -d '/Applications/Snagit'*.app 2>/dev/null | grep -qE '(Snagit\\.app|Snagit [0-9]{4}\\.app)'"
     description: "Professional screen capture and recording software by TechSmith"
     documentation_url: "https://www.techsmith.com/screen-capture.html"
     category: utilities
