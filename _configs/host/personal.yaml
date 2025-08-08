@@ -48,6 +48,55 @@ tools:
     documentation_url: "https://github.com/mas-cli/mas"
     category: system
   
+  microsoft-excel:
+    manager: mas
+    type: app
+    app_id: "462058435"
+    check_command: "[ -d '/Applications/Microsoft Excel.app' ]"
+    description: "Spreadsheet application"
+    documentation_url: "https://apps.apple.com/us/app/microsoft-excel/id462058435"
+    category: productivity
+  
+  microsoft-outlook:
+    manager: mas
+    type: app
+    app_id: "985367838"
+    check_command: "[ -d '/Applications/Microsoft Outlook.app' ]"
+    description: "Email and calendar client"
+    documentation_url: "https://apps.apple.com/us/app/microsoft-outlook/id985367838"
+    category: productivity
+  
+  microsoft-powerpoint:
+    manager: mas
+    type: app
+    app_id: "462062816"
+    check_command: "[ -d '/Applications/Microsoft PowerPoint.app' ]"
+    description: "Presentation software"
+    documentation_url: "https://apps.apple.com/us/app/microsoft-powerpoint/id462062816"
+    category: productivity
+  
+  microsoft-teams:
+    manager: brew
+    type: cask
+    check_command: "[ -d '/Applications/Microsoft Teams.app' ]"
+    description: "Team collaboration and communication"
+    manager: mas
+    type: app
+    app_id: "1113153706"
+    check_command: "[ -d '/Applications/Microsoft Teams.app' ]"
+    description: "Team collaboration and communication"
+    documentation_url: "https://apps.apple.com/us/app/microsoft-teams/id1113153706"
+    category: communication
+  
+  microsoft-word:
+    manager: mas
+    type: app
+    app_id: "462054704"
+    check_command: "[ -d '/Applications/Microsoft Word.app' ]"
+    description: "Word processor"
+    documentation_url: "https://apps.apple.com/us/app/microsoft-word/id462054704"
+    category: productivity
+  
   ollama:
     manager: brew
     type: cask
