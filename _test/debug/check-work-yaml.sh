@@ -107,7 +107,11 @@ check_setting "Natural scrolling" "$(yq '.trackpad.natural_scrolling' "$REPO_ROO
 # Mouse
 echo ""
 echo "=== Mouse ==="
-check_setting "Natural scrolling" "$(yq '.mouse.natural_scrolling' "$REPO_ROOT/_macos/work.yaml")" "$natural_scroll"
+# Get mouse natural scrolling setting
+mouse_natural_scroll="$(defaults read -g com.apple.swipescrolldirection_mouse 2>/dev/null || echo "N/A")"
+echo ""
+echo "=== Mouse ==="
+check_setting "Natural scrolling" "$(yq '.mouse.natural_scrolling' "$REPO_ROOT/_macos/work.yaml")" "$mouse_natural_scroll"
 
 # Mission Control
 echo ""
