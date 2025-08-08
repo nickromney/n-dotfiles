@@ -92,7 +92,14 @@ check_setting "Natural scrolling" "$(yq '.trackpad.natural_scrolling' "$REPO_ROO
 # Mouse
 echo ""
 echo "=== Mouse ==="
-check_setting "Natural scrolling" "$(yq '.mouse.natural_scrolling' "$REPO_ROOT/_macos/personal.yaml")" "$natural_scroll"
+# Get actual mouse natural scrolling setting
+# Example: For macOS, mouse natural scrolling is stored in com.apple.mouse.scaling or com.apple.mouse.swipeScrollDirection
+mouse_natural_scroll="$(defaults read -g com.apple.swipescrolldirection 2>/dev/null && echo 1 || echo 0)"
+
+# Mouse
+echo ""
+echo "=== Mouse ==="
+check_setting "Natural scrolling" "$(yq '.mouse.natural_scrolling' "$REPO_ROOT/_macos/personal.yaml")" "$mouse_natural_scroll"
 
 # Mission Control
 echo ""
