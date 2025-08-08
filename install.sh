@@ -435,7 +435,10 @@ install_tool() {
   else
     # Special handling for mas to provide helpful error message
     if [[ "$manager" == "mas" ]]; then
-      if ! eval "$install_cmd" 2>&1 | grep -v "Warning: "; then
+      output=$(eval "$install_cmd" 2>&1)
+      exit_code=$?
+      echo "$output" | grep -v "Warning: "
+      if [[ $exit_code -ne 0 ]]; then
         info "⚠️  Failed to install $tool from Mac App Store"
         info "    Common issues:"
         info "    - Not signed in: Open App Store app and sign in first"
