@@ -5,29 +5,29 @@
 system:
   # Appearance mode (Dark for reduced eye strain)
   appearance: "Dark"
-  # Show hidden files in Finder (useful for development)
+  # Show hidden files in Finder (useful for dotfiles, git repos, and development)
   show_hidden_files: true
-  # Show file extensions (important for work)
+  # Show file extensions (important for file management and development)
   show_all_extensions: true
 
 dock:
   # Dock size (empty string = default size)
   size: ""
-  # Position (left to maximize screen space)
+  # Position (left to maximize horizontal screen space, bottom for traditional)
   position: "left"
-  # Auto-hide dock to maximize screen space
+  # Auto-hide dock (true to maximize screen space, false for always visible)
   auto_hide: true
   # Don't show recent applications
   show_recents: false
   # Minimize effect (empty string = default)
   minimize_effect: ""
-  # Magnification when hovering
+  # Magnification size when hovering (requires magnification: true to enable)
   magnification_size: 128
-  # Don't animate opening apps
+  # Don't animate opening apps (snappier feel)
   animate_opening: false
   # Show indicators for open apps
   show_indicators: true
-  # Minimize to application icon
+  # Minimize to application icon (cleaner workflow)
   minimize_to_app: true
 
   # Dock applications management
@@ -62,13 +62,13 @@ dock:
     # - "/Applications/Microsoft Excel.app"
 
 finder:
-  # Default view (empty string = default)
+  # Default view ("" = icon view, "Nlsv" = list, "clmv" = column, "glyv" = gallery)
   default_view: ""
-  # Show path bar at bottom (useful for development)
+  # Show path bar at bottom (useful for navigation)
   show_path_bar: true
-  # Show status bar (useful for file sizes)
+  # Show status bar (useful for file sizes and selection count)
   show_status_bar: true
-  # Keep folders on top when sorting
+  # Keep folders on top when sorting (better organization)
   folders_on_top: true
   # Double-click title bar to maximize
   double_click_title_bar: Maximize
@@ -78,36 +78,41 @@ windows:
   prefer_tabs: always
   # Don't ask to keep changes when closing
   ask_to_keep_changes: false
-  # Close windows when quitting
-  # close_windows_on_quit: true
+  # Close windows when quitting (cleaner restart)
+  close_windows_on_quit: true
 
 keyboard:
-  # Fast key repeat for coding
+  # Key repeat rate (lower = faster, 2 = fast for coding, "" = system default)
   key_repeat: "2"
-  # Short initial delay
+  # Initial key repeat delay (lower = shorter, 15 = responsive, "" = system default)
   initial_key_repeat: "15"
 
 trackpad:
-  # Tap to click for efficiency
+  # Tap to click (true for efficiency, false for precision/accidental tap prevention)
   tap_to_click: true
-  # Natural scrolling disabled
+  # Natural scrolling (false = traditional direction, true = iOS-like)
   natural_scrolling: false
-  # Fast tracking speed
-  # tracking_speed: 2.5
+  # Tracking speed (higher = faster cursor, 2.5 = fast for productivity)
+  tracking_speed: 2.5
 
 mouse:
-  # Natural scrolling disabled for mouse
-  # NOTE: This affects BOTH mouse and trackpad despite separate UI checkboxes
+  # Natural scrolling for mouse (false = traditional/Windows-like, true = iOS-like)
+  # WARNING: macOS does NOT support separate scroll directions for mouse and trackpad
+  # This setting will affect BOTH devices despite separate UI checkboxes in System Settings
+  # For independent control, consider third-party tools:
+  #   - Scroll Reverser (free): https://pilotmoon.com/scrollreverser/
+  #   - Mos (free): https://mos.caldis.me/
+  #   - BetterMouse (paid): https://better-mouse.com/
   natural_scrolling: false
 
 mission_control:
-  # Don't automatically rearrange Spaces
+  # Don't automatically rearrange Spaces (maintain workspace organization)
   auto_rearrange_spaces: false
-  # Don't switch to Space with app windows
+  # Don't switch to Space with app windows (stay in control)
   switch_to_space_with_windows: false
-  # Group windows by application
+  # Group windows by application (easier to find related windows)
   group_by_app: true
-  # Displays have separate Spaces for multi-monitor productivity
+  # Displays have separate Spaces (true for multi-monitor productivity, false for unified spaces)
   displays_have_separate_spaces: true
 
 stage_manager:
@@ -134,19 +139,23 @@ displays:
 
   # Dock position per display type
   dock_position:
-    external: "left" # When external display is main
-    builtin: "left" # When built-in display is main
+    external: "left"  # When external display is main ("left", "right", "" for bottom)
+    builtin: "left"   # When built-in display is main ("left", "right", "" for bottom)
 
 # Screenshots configuration
 screenshots:
-  location: "~/Desktop/Screenshots"
+  # Save location (~/Desktop is default, ~/Documents keeps Desktop clean)
+  location: "~/Documents/Screenshots"
+  # File format (png for quality, jpg for smaller size)
   format: png
+  # Include date/time in filename for organization
   include_date: true
+  # Show floating thumbnail after capture for quick edits
   show_thumbnail: true
 
 # Developer settings
 developer:
-  # Show full path in Finder title
+  # Show full path in Finder title for easier navigation
   show_path_in_title: true
-  # Enable Safari developer menu
+  # Enable Safari developer menu for web development
   safari_developer_menu: true

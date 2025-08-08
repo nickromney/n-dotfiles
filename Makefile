@@ -25,7 +25,8 @@ help:
 	@echo ""
 	@echo "Main targets:"
 	@echo "  common                   # Install common tools (shared + host/common)"
-	@echo "  personal                 # Install personal configuration" 
+	@echo "  personal                 # Install personal configuration packages"
+	@echo "  personal-setup           # Full personal Mac setup (packages + macOS settings)"
 	@echo "  work                     # Full work Mac setup (runs setup-work-mac.sh)"
 	@echo ""
 	@echo "Focus targets (install specific tool categories):"
@@ -56,9 +57,13 @@ help:
 common:
 	@CONFIG_FILES="$(COMMON_CONFIGS)" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
 
-# Personal setup
+# Personal setup - just install packages
 personal:
 	@CONFIG_FILES="$(PERSONAL_CONFIGS)" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
+
+# Personal full setup - complete Mac configuration
+personal-setup:
+	@./setup-personal-mac.sh
 
 # Work setup
 work:
@@ -99,4 +104,4 @@ update:
 stow:
 	@:
 
-.PHONY: help common personal work focus-ai focus-container-base focus-kubernetes focus-neovim focus-python focus-rust focus-typescript focus-vscode install update stow
+.PHONY: help common personal personal-setup work focus-ai focus-container-base focus-kubernetes focus-neovim focus-python focus-rust focus-typescript focus-vscode install update stow

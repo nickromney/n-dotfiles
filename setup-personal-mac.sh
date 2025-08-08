@@ -76,6 +76,15 @@ else
   warning "No personal-specific configuration found at _configs/host/personal.yaml"
 fi
 
+# Step 3b: Check for manual installation requirements
+if [[ -f "_configs/host/manual-check.yaml" ]]; then
+  section "Checking manually installed applications"
+  info "Checking for required manual installations..."
+  if ! CONFIG_FILES="host/manual-check" ./install.sh; then
+    warning "Some manual applications may be missing"
+  fi
+fi
+
 # Step 4: Apply macOS system settings
 section "Applying macOS system settings"
 if [[ -f "_macos/personal.yaml" ]]; then
@@ -120,6 +129,9 @@ echo "  1. Restart your terminal to load new shell configurations"
 echo "  2. Sign in to 1Password if not already done"
 echo "  3. Configure git with your personal email: git config --global user.email 'your-email@domain.com'"
 echo "  4. Set up SSH keys for GitHub access"
+echo "  5. Sign into Mac App Store and re-run if any mas apps failed"
+echo "  6. Install any manually tracked apps shown above (Snagit, Camtasia, etc.)"
 echo
 info "You may also want to:"
 echo "  - Run 'make update' periodically to keep tools up to date"
+echo "  - Run 'make personal' to reinstall any missing packages"

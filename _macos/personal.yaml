@@ -1,35 +1,33 @@
 # Personal macOS configuration
-# Documents the exact current system state (December 2024)
+# Optimized for power user productivity with personal preferences
 # Use this to reproduce your preferred setup on other machines
 
 system:
-  # Appearance mode (Dark)
+  # Appearance mode (Dark for reduced eye strain)
   appearance: "Dark"
-  # Show hidden files in Finder (currently NO)
-  show_hidden_files: false
-  # Show file extensions (currently 0)
-  show_all_extensions: false
+  # Show hidden files in Finder (useful for dotfiles, git repos, and development)
+  show_hidden_files: true
+  # Show file extensions (important for file management and development)
+  show_all_extensions: true
 
 dock:
   # Dock size (empty string = default size)
   size: ""
-  # Position (empty string = bottom, "left" = left, "right" = right)
+  # Position (left to maximize horizontal screen space, bottom for traditional)
   position: "left"
-  # Auto-hide dock (currently visible)
+  # Auto-hide dock (true to maximize screen space, false for always visible)
   auto_hide: false
-  # Don't show recent applications
+  # Don't show recent applications (cleaner dock)
   show_recents: false
   # Minimize effect (empty string = default)
   minimize_effect: ""
-  # Magnification not currently set
-  # magnification: false
-  # Magnification size when hovering
+  # Magnification size when hovering (requires magnification: true to enable)
   magnification_size: 128
-  # Don't animate opening apps
+  # Don't animate opening apps (snappier feel)
   animate_opening: false
   # Show indicators for open apps
   show_indicators: true
-  # Minimize to application icon
+  # Minimize to application icon (cleaner workflow)
   minimize_to_app: true
 
   # Dock applications management
@@ -68,14 +66,14 @@ dock:
     # Utilities (U workspace)
 
 finder:
-  # Default view (currently empty string)
+  # Default view ("" = icon view, "Nlsv" = list, "clmv" = column, "glyv" = gallery)
   default_view: ""
-  # Show path bar at bottom (currently 0)
-  show_path_bar: false
-  # Show status bar (currently 0)
-  show_status_bar: false
-  # Keep folders on top when sorting (currently 0)
-  folders_on_top: false
+  # Show path bar at bottom (useful for navigation)
+  show_path_bar: true
+  # Show status bar (useful for file sizes and selection count)
+  show_status_bar: true
+  # Keep folders on top when sorting (better organization)
+  folders_on_top: true
   # Double-click title bar to maximize
   double_click_title_bar: Maximize
 
@@ -84,42 +82,42 @@ windows:
   prefer_tabs: always
   # Don't ask to keep changes when closing
   ask_to_keep_changes: false
-  # Close windows when quitting (not currently set)
-  # close_windows_on_quit: true
+  # Close windows when quitting (cleaner restart)
+  close_windows_on_quit: true
 
 keyboard:
-  # Key repeat rate (currently empty string)
-  key_repeat: ""
-  # Initial key repeat delay (currently empty string)
-  initial_key_repeat: ""
+  # Key repeat rate (lower = faster, 2 = fast for coding, "" = system default)
+  key_repeat: "2"
+  # Initial key repeat delay (lower = shorter, 15 = responsive, "" = system default)
+  initial_key_repeat: "15"
 
 trackpad:
-  # Tap to click disabled
-  tap_to_click: false
-  # Natural scrolling disabled
+  # Tap to click (true for efficiency, false for precision/accidental tap prevention)
+  tap_to_click: true
+  # Natural scrolling (false = traditional direction, true = iOS-like)
   natural_scrolling: false
-  # Tracking speed not set in defaults
-  # tracking_speed: 2.5
+  # Tracking speed (higher = faster cursor, 2.5 = fast for productivity)
+  tracking_speed: 2.5
 
 mouse:
-  # Natural scrolling disabled for mouse (0 = traditional, 1 = natural)
-  # NOTE: macOS does NOT support separate scroll directions for mouse and trackpad
-  # This setting will affect BOTH mouse and trackpad despite separate UI checkboxes
-  # For independent control, consider third-party tools like:
-  # - Scroll Reverser (free): https://pilotmoon.com/scrollreverser/
-  # - Mos (free): https://mos.caldis.me/
-  # - BetterMouse (paid): https://better-mouse.com/
+  # Natural scrolling for mouse (false = traditional/Windows-like, true = iOS-like)
+  # WARNING: macOS does NOT support separate scroll directions for mouse and trackpad
+  # This setting will affect BOTH devices despite separate UI checkboxes in System Settings
+  # For independent control, consider third-party tools:
+  #   - Scroll Reverser (free): https://pilotmoon.com/scrollreverser/
+  #   - Mos (free): https://mos.caldis.me/
+  #   - BetterMouse (paid): https://better-mouse.com/
   natural_scrolling: false
 
 mission_control:
-  # Don't automatically rearrange Spaces
+  # Don't automatically rearrange Spaces (maintain workspace organization)
   auto_rearrange_spaces: false
-  # Don't switch to Space with app windows
+  # Don't switch to Space with app windows (stay in control)
   switch_to_space_with_windows: false
-  # Group windows by application (expose-group-by-app is 1)
+  # Group windows by application (easier to find related windows)
   group_by_app: true
-  # Displays don't have separate Spaces
-  displays_have_separate_spaces: false
+  # Displays have separate Spaces (true for multi-monitor productivity, false for unified spaces)
+  displays_have_separate_spaces: true
 
 stage_manager:
   # Stage Manager is disabled
@@ -145,17 +143,23 @@ displays:
 
   # Dock position per display type
   dock_position:
-    external: "left" # When external display is main
-    builtin: "" # When built-in display is main (empty = bottom)
+    external: "left"  # When external display is main ("left", "right", "" for bottom)
+    builtin: "left"   # When built-in display is main ("left", "right", "" for bottom)
 
-# Screenshots configuration (if you want to set these)
-# screenshots:
-#   location: "~/Pictures/Screenshots"
-#   format: png
-#   include_date: true
-#   show_thumbnail: true
+# Screenshots configuration
+screenshots:
+  # Save location (~/Desktop is default, ~/Documents keeps Desktop clean)
+  location: "~/Documents/Screenshots"
+  # File format (png for quality, jpg for smaller size)
+  format: png
+  # Include date/time in filename for organization
+  include_date: true
+  # Show floating thumbnail after capture for quick edits
+  show_thumbnail: true
 
-# Developer settings (if you want to enable these)
-# developer:
-#   show_path_in_title: true
-#   safari_developer_menu: true
+# Developer settings
+developer:
+  # Show full path in Finder title for easier navigation
+  show_path_in_title: true
+  # Enable Safari developer menu for web development
+  safari_developer_menu: true
