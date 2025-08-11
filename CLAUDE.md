@@ -2,6 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Markdown Standards
+
+All markdown files in this repository MUST be checked against `.markdownlint.json` configuration. When creating or editing markdown:
+
+1. Run `markdownlint <file>.md` to check for issues
+2. Use `markdownlint --fix <file>.md` to auto-fix where possible
+3. Follow the configured rules (line length ignored, fenced code blocks preferred)
+4. Always add language specifiers to code blocks
+5. Ensure proper spacing around headers and lists
+6. Files must end with a single newline
+
 ## Repository Overview
 
 This is a personal dotfiles repository designed for cross-platform configuration management. It uses GNU Stow for symlink management and supports multiple package managers (brew, arkade, uv, cargo, apt). The design is modular and idempotent.
