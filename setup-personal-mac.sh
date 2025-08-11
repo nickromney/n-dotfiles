@@ -120,7 +120,21 @@ else
   warning "VSCode not found, skipping extensions"
 fi
 
-# Step 7: Additional setup reminders
+# Step 7: SSH Setup from 1Password
+section "SSH Configuration"
+if [[ -f "./setup-ssh-from-1password.sh" ]] && command -v op >/dev/null 2>&1; then
+  info "Setting up SSH configuration and keys from 1Password..."
+  if ./setup-ssh-from-1password.sh; then
+    success "SSH configuration completed"
+  else
+    warning "SSH setup encountered issues - you may need to run ./setup-ssh-from-1password.sh manually"
+  fi
+else
+  warning "1Password CLI not found or SSH setup script missing"
+  echo "  To set up SSH later, run: ./setup-ssh-from-1password.sh"
+fi
+
+# Step 8: Additional setup reminders
 section "Setup Complete!"
 success "Personal Mac setup completed successfully"
 echo
@@ -128,7 +142,7 @@ info "Next steps:"
 echo "  1. Restart your terminal to load new shell configurations"
 echo "  2. Sign in to 1Password if not already done"
 echo "  3. Configure git with your personal email: git config --global user.email 'your-email@domain.com'"
-echo "  4. Set up SSH keys for GitHub access"
+echo "  4. Verify SSH keys are working: ssh -T git@github.com"
 echo "  5. Sign into Mac App Store and re-run if any mas apps failed"
 echo "  6. Install any manually tracked apps shown above (Snagit, Camtasia, etc.)"
 echo

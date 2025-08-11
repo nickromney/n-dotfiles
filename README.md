@@ -129,7 +129,7 @@ See [_macos/README.md](_macos/README.md) for detailed macOS configuration option
 
 The `_configs/` directory uses a layered approach:
 
-```
+```text
 _configs/
 ├── shared/           # Cross-platform tools
 │   ├── shell.yaml        # Shell utilities (zsh, starship, etc.)

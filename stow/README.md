@@ -1,16 +1,19 @@
+# Stow Configuration
+
 **Config files for `stow`<<https://www.gnu.org/software/stow/>>, the symlink farm manager.**
 
-    ├── .stow-global-ignore     Ignore files based on i-dotfiles naming scheme
-    └── .stowrc                 Set $HOME as default target dir
+```text
+├── .stow-global-ignore     Ignore files based on i-dotfiles naming scheme
+└── .stowrc                 Set $HOME as default target dir
+```
 
-### Install notes
+## Install notes
 
 **Important:** This should be the first package you install as it is responsible for filtering *README*, *TODO* and subpackages files trees when you stow a package.
 
 Edit your `$HOME` full path in [.stowrc](.stowrc)
 
-
-#### Install GNU Stow
+### Install GNU Stow
 
 ```shell
 # Debian / Ubuntu

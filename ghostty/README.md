@@ -4,7 +4,7 @@ Modern configuration for [Ghostty](https://ghostty.org/), a fast, GPU-accelerate
 
 ## Features
 
-- **Advanced Font Support**: 
+- **Advanced Font Support**:
   - Multiple font fallback chain (Monaco → JetBrainsMono Nerd Font)
   - Per-codepoint font mapping capability
   - Variable font support
@@ -21,7 +21,11 @@ The configuration will be symlinked to `~/.config/ghostty/config` when you run:
 
 ```bash
 make personal stow
-# or
+```
+
+or
+
+```bash
 ./install.sh -s
 ```
 
@@ -33,17 +37,22 @@ Ghostty's font support is exceptional. You can:
 
 1. **List available fonts**: `ghostty +list-fonts`
 2. **Set multiple fallbacks** (each on its own line):
-   ```
+
+   ```toml
    font-family = Monaco
    font-family = "JetBrainsMono Nerd Font"
    font-family = "Apple Color Emoji"
    ```
+
 3. **Map specific Unicode ranges** to fonts:
-   ```
+
+   ```toml
    font-codepoint-map = U+E000-U+F8FF="JetBrainsMono Nerd Font"
    ```
+
 4. **Configure variable fonts**:
-   ```
+
+   ```toml
    font-variation = wght=450
    font-variation = slnt=-10
    ```
@@ -52,7 +61,7 @@ Ghostty's font support is exceptional. You can:
 
 Ghostty supports custom themes. Place theme files in `~/.config/ghostty/themes/` and reference them:
 
-```
+```toml
 theme = catppuccin-mocha
 ```
 
@@ -60,7 +69,7 @@ theme = catppuccin-mocha
 
 Uncomment the quick terminal settings to enable dropdown terminal:
 
-```
+```toml
 quick-terminal-position = top
 quick-terminal-screen = current
 quick-terminal-animation-duration = 0.2
