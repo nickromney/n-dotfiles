@@ -2,8 +2,12 @@
 
 # Setup SSH config and keys from 1Password
 # This script retrieves SSH configuration and private keys from 1Password
+# Usage: ./setup-ssh-from-1password.sh [-d|--dry-run]
 
 set -euo pipefail
+
+# Default values
+DRY_RUN="${DRY_RUN:-false}"
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -13,8 +17,38 @@ NC='\033[0m' # No Color
 
 info() { echo -e "${GREEN}ℹ${NC} $1"; }
 warning() { echo -e "${YELLOW}⚠${NC} $1"; }
-error() { echo -e "${RED}✗${NC} $1"; }
+error() { echo -e "${RED}✗${NC} $1" >&2; }
 success() { echo -e "${GREEN}✓${NC} $1"; }
+
+usage() {
+  echo "Usage: $0 [OPTIONS]"
+  echo "Options:"
+  echo "  -d, --dry-run    Check 1Password items without downloading"
+  echo "  -h, --help       Show this help message"
+  echo ""
+  echo "Examples:"
+  echo "  $0                # Download and setup SSH configuration"
+  echo "  $0 --dry-run      # Check what would be downloaded"
+  exit 0
+}
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -d | --dry-run)
+      DRY_RUN=true
+      shift
+      ;;
+    -h | --help)
+      usage
+      ;;
+    *)
+      error "Unknown option: $1"
+      echo "Use -h or --help for usage information" >&2
+      exit 1
+      ;;
+  esac
+done
 
 # Check if op is installed
 if ! command -v op >/dev/null 2>&1; then
@@ -33,7 +67,7 @@ if ! op account list >/dev/null 2>&1; then
 fi
 
 # Configuration
-readonly VAULT="Personal" # Adjust to your vault name
+readonly VAULT="Private" # Adjust to your vault name
 readonly SSH_DIR="$HOME/.ssh"
 declare BACKUP_DIR
 BACKUP_DIR="$SSH_DIR/backups/$(date +%Y%m%d-%H%M%S)"
@@ -48,6 +82,73 @@ declare -a SSH_KEYS=(
   "aws_work_2024_client_1:aws_work_2024_client_1.pem"
   "github_work_2025_client_1:github_work_2025_client_1"
 )
+
+# Dry run mode - just check what's available
+if [[ "$DRY_RUN" == "true" ]]; then
+  echo
+  echo "========================================="
+  echo "SSH Config Dry Run - Checking 1Password"
+  echo "========================================="
+  echo
+  
+  info "Checking for SSH configuration items in 1Password..."
+  
+  available_items=()
+  missing_items=()
+  
+  # Check SSH Config
+  if op item get "SSH Config" --vault="$VAULT" >/dev/null 2>&1; then
+    available_items+=("SSH Config (Secure Note)")
+  else
+    missing_items+=("SSH Config (Secure Note)")
+  fi
+  
+  # Check SSH Keys
+  for key_mapping in "${SSH_KEYS[@]}"; do
+    IFS=':' read -r op_name local_name <<<"$key_mapping"
+    
+    if op item get "$op_name" --vault="$VAULT" >/dev/null 2>&1; then
+      available_items+=("$op_name → $local_name")
+    else
+      missing_items+=("$op_name → $local_name")
+    fi
+  done
+  
+  if [ ${#available_items[@]} -gt 0 ]; then
+    success "Found in 1Password:"
+    for item in "${available_items[@]}"; do
+      echo "  ✓ $item"
+    done
+  fi
+  
+  if [ ${#missing_items[@]} -gt 0 ]; then
+    echo
+    warning "Not found in 1Password:"
+    for item in "${missing_items[@]}"; do
+      echo "  ✗ $item"
+    done
+    echo
+    echo "To add missing items:"
+    echo "  • SSH Config: Create a Secure Note named 'SSH Config'"
+    echo "  • SSH Keys: Create SSH Key items with exact names shown above"
+    echo "  • Save all items in the '$VAULT' vault"
+  fi
+  
+  # Check SSH agent
+  echo
+  info "Checking SSH agent..."
+  if [ -S "$HOME/.1password/agent.sock" ]; then
+    success "1Password SSH agent socket is available"
+  else
+    warning "1Password SSH agent socket not found"
+    echo "  Enable it in 1Password Settings → Developer → SSH Agent"
+  fi
+  
+  echo
+  success "Dry run complete! No files were modified."
+  echo "Run without --dry-run to actually download and apply configurations."
+  exit 0
+fi
 
 # Create backup directory
 mkdir -p "$BACKUP_DIR"

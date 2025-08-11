@@ -58,6 +58,13 @@ check_file() {
 check_file "install.sh" "install.sh"
 check_file "_macos/macos.sh" "_macos/macos.sh"
 
+# Check setup scripts at root
+for script in setup-*.sh; do
+    if [[ -f "$script" ]]; then
+        check_file "$script" "$script"
+    fi
+done
+
 # Check test scripts
 echo -e "${YELLOW}Checking test scripts...${NC}"
 for script in _test/*.sh; do
