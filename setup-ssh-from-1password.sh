@@ -83,7 +83,7 @@ if ! op account list >/dev/null 2>&1; then
 fi
 
 # Configuration
-readonly VAULT="Private" # Adjust to your vault name
+readonly VAULT="$VAULT" # Vault name is now configurable
 readonly SSH_DIR="$HOME/.ssh"
 declare BACKUP_DIR
 BACKUP_DIR="$SSH_DIR/backups/$(date +%Y%m%d-%H%M%S)"
