@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 
 # Setup SSH config and keys from 1Password
-# This script retrieves SSH configuration and private keys from 1Password
-# Usage: ./setup-ssh-from-1password.sh [-d|--dry-run]
+# This script retrieves SSH configuration from 1Password
+# By default, only public keys are downloaded (private keys stay in 1Password)
+# Usage: ./setup-ssh-from-1password.sh [-d|--dry-run] [-u|--unsafe]
 
 set -euo pipefail
 
 # Default values
 DRY_RUN="${DRY_RUN:-false}"
+UNSAFE_MODE="${UNSAFE_MODE:-false}"
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -24,11 +26,21 @@ usage() {
   echo "Usage: $0 [OPTIONS]"
   echo "Options:"
   echo "  -d, --dry-run    Check 1Password items without downloading"
+  echo "  -u, --unsafe     Download private keys (DANGEROUS - breaks 1Password SSH Agent model)"
   echo "  -h, --help       Show this help message"
   echo ""
+  echo "Default behavior:"
+  echo "  - Downloads SSH config from 1Password"
+  echo "  - Downloads public keys only (private keys stay in 1Password)"
+  echo "  - Uses 1Password SSH Agent for authentication"
+  echo ""
   echo "Examples:"
-  echo "  $0                # Download and setup SSH configuration"
+  echo "  $0                # Safe mode: config + public keys only"
   echo "  $0 --dry-run      # Check what would be downloaded"
+  echo "  $0 --unsafe       # Download private keys (requires confirmation)"
+  echo ""
+  echo "WARNING: The --unsafe option defeats the purpose of 1Password SSH Agent!"
+  echo "         Private keys should remain in 1Password for security."
   exit 0
 }
 
@@ -37,6 +49,10 @@ while [[ $# -gt 0 ]]; do
   case $1 in
     -d | --dry-run)
       DRY_RUN=true
+      shift
+      ;;
+    -u | --unsafe)
+      UNSAFE_MODE=true
       shift
       ;;
     -h | --help)
@@ -67,15 +83,16 @@ if ! op account list >/dev/null 2>&1; then
 fi
 
 # Configuration
-readonly VAULT
+readonly VAULT="$VAULT" # Vault name is now configurable
 readonly SSH_DIR="$HOME/.ssh"
 declare BACKUP_DIR
 BACKUP_DIR="$SSH_DIR/backups/$(date +%Y%m%d-%H%M%S)"
 readonly BACKUP_DIR
 
-# SSH Keys to download from 1Password
+# SSH Keys to verify in 1Password (only public keys will be downloaded)
 # Format: "1password_item_name:local_filename"
 # Use generic names to avoid exposing client information
+# NOTE: Private keys stay in 1Password - only public keys are downloaded for reference
 declare -a SSH_KEYS=(
   "github_personal_authentication:id_ed25519"
   "github_personal_signing:github_personal_signing"
@@ -150,6 +167,45 @@ if [[ "$DRY_RUN" == "true" ]]; then
   exit 0
 fi
 
+# Unsafe mode warning and confirmation
+if [[ "$UNSAFE_MODE" == "true" ]]; then
+  echo
+  warning "════════════════════════════════════════════════════════════════"
+  warning "                    PRIVATE KEY DOWNLOAD MODE"
+  warning "════════════════════════════════════════════════════════════════"
+  echo
+  info "You are about to download PRIVATE SSH keys to disk."
+  echo
+  echo "This may be necessary if:"
+  echo "  • 1Password SSH Agent cannot be installed in your environment"
+  echo "  • You're using a restricted system without agent support"
+  echo "  • You need keys for backup/migration purposes"
+  echo
+  warning "Security considerations:"
+  echo "  • Private keys will be stored on disk (~/.ssh/)"
+  echo "  • Keys may be included in system backups"
+  echo "  • Ensure proper file permissions (600)"
+  echo "  • Never commit private keys to version control"
+  echo
+  info "Recommended approach (when possible):"
+  echo "  • Use 1Password SSH Agent for authentication"
+  echo "  • Keep private keys in 1Password only"
+  echo "  • Only store public keys locally for reference"
+  echo
+  warning "════════════════════════════════════════════════════════════════"
+  echo
+  read -r -p "Do you want to download private keys? (type 'yes' to continue): " confirmation
+  
+  if [[ "$confirmation" != "yes" ]]; then
+    info "Cancelled. Running in safe mode (public keys only)."
+    UNSAFE_MODE=false
+  else
+    warning "Private keys will be downloaded to $SSH_DIR"
+    echo "Starting in 3 seconds... Press Ctrl+C to cancel"
+    sleep 3
+  fi
+fi
+
 # Create backup directory
 mkdir -p "$BACKUP_DIR"
 info "Created backup directory: $BACKUP_DIR"
@@ -198,52 +254,86 @@ else
 fi
 
 # Step 3: Download SSH Keys
-info "Retrieving SSH keys from 1Password..."
+if [[ "$UNSAFE_MODE" == "true" ]]; then
+  info "Retrieving SSH keys from 1Password (PRIVATE + PUBLIC)..."
+else
+  info "Retrieving SSH public keys from 1Password (safe mode)..."
+fi
+
 failed_keys=()
 successful_keys=()
 
 for key_mapping in "${SSH_KEYS[@]}"; do
   IFS=':' read -r op_name local_name <<<"$key_mapping"
 
-  info "Downloading $op_name..."
+  info "Processing $op_name..."
 
-  # Try as an SSH Key item type (the proper way)
-  if op item get "$op_name" --vault="$VAULT" --fields "private key" 2>/dev/null >"$SSH_DIR/$local_name" && [ -s "$SSH_DIR/$local_name" ]; then
-    chmod 600 "$SSH_DIR/$local_name"
-    successful_keys+=("$local_name (private)")
-
-    # Try to get the public key
-    if op item get "$op_name" --vault="$VAULT" --fields "public key" 2>/dev/null >"$SSH_DIR/${local_name}.pub" && [ -s "$SSH_DIR/${local_name}.pub" ]; then
-      chmod 644 "$SSH_DIR/${local_name}.pub"
-      successful_keys+=("$local_name (public)")
-    else
-      # Generate public key from private if not stored
-      if command -v ssh-keygen >/dev/null 2>&1; then
-        if ssh-keygen -y -f "$SSH_DIR/$local_name" >"$SSH_DIR/${local_name}.pub" 2>/dev/null; then
-          chmod 644 "$SSH_DIR/${local_name}.pub"
-          info "Generated public key for $local_name"
-          successful_keys+=("$local_name (public - generated)")
-        fi
-      fi
-    fi
-  else
-    # Alternative: Try with different field names or as JSON
-    if op item get "$op_name" --vault="$VAULT" --format json 2>/dev/null |
-      jq -r '.fields[] | select(.id == "private_key").value' >"$SSH_DIR/$local_name" 2>/dev/null &&
-      [ -s "$SSH_DIR/$local_name" ]; then
+  # In UNSAFE mode, download private keys
+  if [[ "$UNSAFE_MODE" == "true" ]]; then
+    # Try as an SSH Key item type (the proper way)
+    if op item get "$op_name" --vault="$VAULT" --fields "private key" 2>/dev/null >"$SSH_DIR/$local_name" && [ -s "$SSH_DIR/$local_name" ]; then
       chmod 600 "$SSH_DIR/$local_name"
       successful_keys+=("$local_name (private)")
 
-      # Get public key
+      # Try to get the public key
+      if op item get "$op_name" --vault="$VAULT" --fields "public key" 2>/dev/null >"$SSH_DIR/${local_name}.pub" && [ -s "$SSH_DIR/${local_name}.pub" ]; then
+        chmod 644 "$SSH_DIR/${local_name}.pub"
+        successful_keys+=("$local_name (public)")
+      else
+        # Generate public key from private if not stored
+        if command -v ssh-keygen >/dev/null 2>&1; then
+          if ssh-keygen -y -f "$SSH_DIR/$local_name" >"$SSH_DIR/${local_name}.pub" 2>/dev/null; then
+            chmod 644 "$SSH_DIR/${local_name}.pub"
+            info "Generated public key for $local_name"
+            successful_keys+=("$local_name (public - generated)")
+          fi
+        fi
+      fi
+    else
+      # Alternative: Try with different field names or as JSON
+      if op item get "$op_name" --vault="$VAULT" --format json 2>/dev/null |
+        jq -r '.fields[] | select(.id == "private_key").value' >"$SSH_DIR/$local_name" 2>/dev/null &&
+        [ -s "$SSH_DIR/$local_name" ]; then
+        chmod 600 "$SSH_DIR/$local_name"
+        successful_keys+=("$local_name (private)")
+
+        # Get public key
+        if op item get "$op_name" --vault="$VAULT" --format json 2>/dev/null |
+          jq -r '.fields[] | select(.id == "public_key").value' >"$SSH_DIR/${local_name}.pub" 2>/dev/null &&
+          [ -s "$SSH_DIR/${local_name}.pub" ]; then
+          chmod 644 "$SSH_DIR/${local_name}.pub"
+          successful_keys+=("$local_name (public)")
+        fi
+      else
+        failed_keys+=("$op_name → $local_name")
+        rm -f "$SSH_DIR/$local_name" # Remove empty file if created
+      fi
+    fi
+  else
+    # SAFE MODE: Only download public keys
+    if op item get "$op_name" --vault="$VAULT" --fields "public key" 2>/dev/null >"$SSH_DIR/${local_name}.pub" && [ -s "$SSH_DIR/${local_name}.pub" ]; then
+      chmod 644 "$SSH_DIR/${local_name}.pub"
+      successful_keys+=("$local_name (public only)")
+    else
+      # Alternative: Try with JSON format
       if op item get "$op_name" --vault="$VAULT" --format json 2>/dev/null |
         jq -r '.fields[] | select(.id == "public_key").value' >"$SSH_DIR/${local_name}.pub" 2>/dev/null &&
         [ -s "$SSH_DIR/${local_name}.pub" ]; then
         chmod 644 "$SSH_DIR/${local_name}.pub"
-        successful_keys+=("$local_name (public)")
+        successful_keys+=("$local_name (public only)")
+      else
+        # Try to extract from the SSH key item itself
+        if op item get "$op_name" --vault="$VAULT" --format json 2>/dev/null |
+          jq -r '.public_key // empty' >"$SSH_DIR/${local_name}.pub" 2>/dev/null &&
+          [ -s "$SSH_DIR/${local_name}.pub" ]; then
+          chmod 644 "$SSH_DIR/${local_name}.pub"
+          successful_keys+=("$local_name (public only)")
+        else
+          warning "Could not retrieve public key for $op_name"
+          failed_keys+=("$op_name → ${local_name}.pub")
+          rm -f "$SSH_DIR/${local_name}.pub" # Remove empty file if created
+        fi
       fi
-    else
-      failed_keys+=("$op_name → $local_name")
-      rm -f "$SSH_DIR/$local_name" # Remove empty file if created
     fi
   fi
 done

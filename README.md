@@ -125,6 +125,135 @@ Light-touch macOS configuration management:
 
 See [_macos/README.md](_macos/README.md) for detailed macOS configuration options.
 
+## 1Password Integration
+
+This repository includes comprehensive 1Password integration for secure credential and configuration management.
+
+### SSH Configuration Management
+
+The `setup-ssh-from-1password.sh` script manages SSH configuration with security by default:
+
+#### Default (Safe) Mode
+
+```bash
+# Download SSH config + public keys only (private keys stay in 1Password)
+./setup-ssh-from-1password.sh
+
+# Check what's available without downloading
+./setup-ssh-from-1password.sh --dry-run
+```
+
+In safe mode:
+
+- Downloads SSH config from 1Password (stored as Secure Note)
+- Downloads **public keys only** for reference
+- Private keys remain in 1Password
+- Uses 1Password SSH Agent for authentication
+
+#### Unsafe Mode (When 1Password SSH Agent Isn't Available)
+
+```bash
+# Download private keys (requires explicit confirmation)
+./setup-ssh-from-1password.sh --unsafe
+```
+
+Use unsafe mode when:
+
+- 1Password SSH Agent cannot be installed in your environment
+- You're using a restricted system without agent support
+- You need keys for backup/migration purposes
+
+### Git Configuration Management
+
+The `setup-gitconfig-from-1password.sh` script manages work-specific Git configurations:
+
+```bash
+# Download work Git config from 1Password
+./setup-gitconfig-from-1password.sh
+
+# Check availability without downloading
+./setup-gitconfig-from-1password.sh --dry-run
+```
+
+This allows you to:
+
+- Store work-specific Git config in 1Password
+- Automatically apply it to `~/Developer/work/.gitconfig_include`
+- Keep work email and GitHub Enterprise settings secure
+- Use `includeIf` in main `.gitconfig` for automatic switching
+
+### AWS Credentials Helper
+
+The `aws/.aws/aws-1password` script provides on-demand AWS credential fetching:
+
+```bash
+# Configure AWS CLI to use 1Password
+aws configure set credential_process "$HOME/.aws/aws-1password --username default"
+
+# For different profiles
+aws configure set credential_process "$HOME/.aws/aws-1password --username tfcli" --profile terraform
+```
+
+This approach:
+
+- Never stores AWS credentials on disk
+- Fetches credentials from 1Password when needed
+- Works seamlessly with AWS CLI and SDKs
+- Supports multiple AWS accounts/profiles
+
+### Setting Up 1Password Items
+
+#### SSH Keys
+
+1. Open 1Password and create new item → SSH Key
+2. Name it exactly as expected by the script:
+   - `github_personal_authentication`
+   - `github_personal_signing`
+   - `aws_work_2024_client_1`
+   - `github_work_2025_client_1`
+3. Paste your private key
+4. Save to "Private" vault (or adjust `VAULT` in script)
+
+#### SSH Config
+
+1. Create new item → Secure Note
+2. Name it: `SSH Config`
+3. Paste your complete SSH configuration
+4. Save to "Private" vault
+
+#### Git Config
+
+1. Create new item → Secure Note
+2. Name it: `work .gitconfig_include`
+3. Add your work-specific Git configuration:
+
+   ```ini
+   [url "github-work:OrgName/"]
+     insteadOf = git@github.com:OrgName/
+   [user]
+     email = work@company.com
+   ```
+
+4. Save to "Private" vault
+
+#### AWS Credentials
+
+1. Create new item → API Credential (or custom item)
+2. Name it based on your mapping (e.g., `AWSCredsUsernameDefault`)
+3. Add fields:
+   - `ACCESS_KEY`: Your AWS Access Key ID
+   - `SECRET_KEY`: Your AWS Secret Access Key
+4. Save to "CLI" vault (or adjust in script)
+
+### Security Benefits
+
+- **No secrets in version control**: All sensitive data stays in 1Password
+- **Encrypted at rest**: 1Password handles all encryption
+- **Audit trail**: 1Password logs all access to credentials
+- **Easy rotation**: Update credentials in one place
+- **Team sharing**: Safely share vaults with team members
+- **MFA protection**: Additional security with 1Password's MFA
+
 ## Configuration Structure
 
 The `_configs/` directory uses a layered approach:
