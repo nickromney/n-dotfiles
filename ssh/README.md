@@ -21,33 +21,48 @@ SSH configuration contains sensitive information that shouldn't be in version co
 
 ## Secure Setup via 1Password
 
-SSH configuration can be managed two ways:
+The setup script manages SSH configuration with security in mind:
 
-1. **Preferred**: Store complete config in 1Password (Secure Note)
-2. **Fallback**: Use `config.example` as a template if no 1Password config exists
+### Default (Safe) Mode
 
-The setup script tries 1Password first, then falls back to the example template.
+- Downloads SSH config from 1Password (Secure Note)
+- Downloads **public keys only** for reference
+- Private keys remain in 1Password
+- Uses 1Password SSH Agent for authentication
+
+### Unsafe Mode (`--unsafe` flag)
+
+- Downloads both private and public keys to disk
+- Required for environments where 1Password SSH Agent isn't available
+- Requires explicit confirmation
+- Use only when absolutely necessary
 
 ### What Gets Configured
 
-| 1Password Item                     | Local File                           | Purpose                          |
-| ---------------------------------- | ------------------------------------ | -------------------------------- |
-| `SSH Config` (Secure Note)         | `~/.ssh/config`                      | Complete SSH configuration       |
-| `github_personal_authentication`   | `~/.ssh/id_ed25519`                  | Personal GitHub authentication   |
-| `github_personal_signing`          | `~/.ssh/github_personal_signing`     | GitHub commit signing            |
-| `aws_work_2024_client_1`           | `~/.ssh/aws_work_2024_client_1.pem` | AWS EC2 access (client 1)        |
-| `github_work_2025_client_1`        | `~/.ssh/github_work_2025_client_1`   | Work GitHub (client anonymized)  |
+| 1Password Item                     | Safe Mode (Default)                  | Unsafe Mode                          | Purpose                          |
+| ---------------------------------- | ------------------------------------ | ------------------------------------ | -------------------------------- |
+| `SSH Config` (Secure Note)         | `~/.ssh/config`                      | `~/.ssh/config`                      | Complete SSH configuration       |
+| `github_personal_authentication`   | `~/.ssh/id_ed25519.pub`              | `~/.ssh/id_ed25519` + `.pub`         | Personal GitHub authentication   |
+| `github_personal_signing`          | `~/.ssh/github_personal_signing.pub` | `~/.ssh/github_personal_signing` + `.pub` | GitHub commit signing       |
+| `aws_work_2024_client_1`           | `~/.ssh/aws_work_2024_client_1.pem.pub` | `~/.ssh/aws_work_2024_client_1.pem` + `.pub` | AWS EC2 access        |
+| `github_work_2025_client_1`        | `~/.ssh/github_work_2025_client_1.pub` | `~/.ssh/github_work_2025_client_1` + `.pub` | Work GitHub access      |
 
 ### Running Setup
 
 The setup script `setup-ssh-from-1password.sh` (in repository root) handles everything:
 
 ```bash
-# Manual setup
+# Safe mode (default) - config + public keys only
 ./setup-ssh-from-1password.sh
 
+# Check what would be downloaded without making changes
+./setup-ssh-from-1password.sh --dry-run
+
+# Unsafe mode - download private keys (requires confirmation)
+./setup-ssh-from-1password.sh --unsafe
+
 # Or automatic during Mac setup
-./setup-personal-mac.sh  # Includes SSH setup as Step 7
+./setup-personal-mac.sh  # Includes SSH setup as Step 7 (safe mode)
 ```
 
 ## 1Password Configuration

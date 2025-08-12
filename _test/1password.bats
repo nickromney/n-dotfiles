@@ -136,6 +136,107 @@ EOF
   [[ "$output" == *"No files were modified"* ]]
 }
 
+@test "SSH setup: safe mode downloads only public keys" {
+  cd "$TEST_DIR"
+  cp "${BATS_TEST_DIRNAME}/../setup-ssh-from-1password.sh" .
+  
+  # Create mock that tracks what fields are requested
+  cat > "$MOCK_BIN_DIR/op" <<'EOF'
+#!/bin/bash
+echo "$@" >> "$TEST_DIR/op-calls.log"
+
+if [[ "$1" == "account" ]] && [[ "$2" == "list" ]]; then
+  echo "Account ID: test-account"
+  exit 0
+fi
+
+if [[ "$1" == "item" ]] && [[ "$2" == "get" ]]; then
+  if [[ "$@" == *"--fields notes"* ]]; then
+    echo "Host *"
+    echo "  IdentityAgent ~/.1password/agent.sock"
+    exit 0
+  fi
+  
+  if [[ "$@" == *"--fields \"public key\""* ]]; then
+    echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN... test@example.com"
+    exit 0
+  fi
+  
+  if [[ "$@" == *"--fields \"private key\""* ]]; then
+    echo "ERROR: Should not request private key in safe mode!" >&2
+    exit 1
+  fi
+fi
+exit 1
+EOF
+  chmod +x "$MOCK_BIN_DIR/op"
+  
+  # Run in safe mode (default)
+  run ./setup-ssh-from-1password.sh
+  
+  # Check that only public keys were requested
+  grep -q "public key" "$TEST_DIR/op-calls.log"
+  ! grep -q "private key" "$TEST_DIR/op-calls.log"
+}
+
+@test "SSH setup: unsafe mode requires confirmation" {
+  cd "$TEST_DIR"
+  cp "${BATS_TEST_DIRNAME}/../setup-ssh-from-1password.sh" .
+  
+  # Simulate user declining
+  echo "no" | run ./setup-ssh-from-1password.sh --unsafe
+  
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"PRIVATE KEY DOWNLOAD MODE"* ]]
+  [[ "$output" == *"Do you want to download private keys?"* ]]
+  [[ "$output" == *"Cancelled. Running in safe mode"* ]]
+}
+
+@test "SSH setup: unsafe mode with confirmation downloads private keys" {
+  cd "$TEST_DIR"
+  cp "${BATS_TEST_DIRNAME}/../setup-ssh-from-1password.sh" .
+  
+  # Mock sleep to avoid waiting
+  cat > "$MOCK_BIN_DIR/sleep" <<'EOF'
+#!/bin/bash
+exit 0
+EOF
+  chmod +x "$MOCK_BIN_DIR/sleep"
+  
+  # Create mock that allows private key download
+  cat > "$MOCK_BIN_DIR/op" <<'EOF'
+#!/bin/bash
+echo "$@" >> "$TEST_DIR/op-calls.log"
+
+if [[ "$1" == "account" ]] && [[ "$2" == "list" ]]; then
+  echo "Account ID: test-account"
+  exit 0
+fi
+
+if [[ "$1" == "item" ]] && [[ "$2" == "get" ]]; then
+  if [[ "$@" == *"--fields \"private key\""* ]]; then
+    echo "-----BEGIN OPENSSH PRIVATE KEY-----"
+    echo "mock private key content"
+    echo "-----END OPENSSH PRIVATE KEY-----"
+    exit 0
+  fi
+  
+  if [[ "$@" == *"--fields \"public key\""* ]]; then
+    echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN... test@example.com"
+    exit 0
+  fi
+fi
+exit 0
+EOF
+  chmod +x "$MOCK_BIN_DIR/op"
+  
+  # Simulate user confirming
+  echo "yes" | run ./setup-ssh-from-1password.sh --unsafe
+  
+  # Check that private keys were requested
+  grep -q "private key" "$TEST_DIR/op-calls.log"
+}
+
 @test "SSH setup: help option shows usage" {
   cd "$TEST_DIR"
   cp "${BATS_TEST_DIRNAME}/../setup-ssh-from-1password.sh" .
@@ -145,6 +246,9 @@ EOF
   [ "$status" -eq 0 ]
   [[ "$output" == *"Usage:"* ]]
   [[ "$output" == *"--dry-run"* ]]
+  [[ "$output" == *"--unsafe"* ]]
+  [[ "$output" == *"Default behavior:"* ]]
+  [[ "$output" == *"public keys only"* ]]
   [[ "$output" == *"Examples:"* ]]
 }
 
