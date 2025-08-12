@@ -182,7 +182,7 @@ if [[ "$UNSAFE_MODE" == "true" ]]; then
   echo "  • You need keys for backup/migration purposes"
   echo
   warning "Security considerations:"
-  echo "  • Private keys will be stored on disk (~/ssh/)"
+  echo "  • Private keys will be stored on disk (~/.ssh/)"
   echo "  • Keys may be included in system backups"
   echo "  • Ensure proper file permissions (600)"
   echo "  • Never commit private keys to version control"
