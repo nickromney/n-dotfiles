@@ -200,21 +200,21 @@ apply_config() {
   if [[ "$DRY_RUN" == "false" ]]; then
     info ""
     info "Restarting affected services..."
-    
+
     # Restart Dock for dock-related changes
     killall Dock 2>/dev/null || true
-    
+
     # Restart SystemUIServer for menu bar changes
     killall SystemUIServer 2>/dev/null || true
-    
+
     # Restart Finder for Finder-related changes
     killall Finder 2>/dev/null || true
-    
+
     # Activate settings using private framework (needed for scroll direction changes)
     if [[ -x "/System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings" ]]; then
       /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u 2>/dev/null || true
     fi
-    
+
     success "Configuration applied. Some changes may still require logout or restart."
   fi
 }
@@ -366,17 +366,17 @@ apply_dock_settings() {
       value=$([[ "$minimize_to_app" == "true" ]] && echo "1" || echo "0")
       apply_default "Minimize to application icon" "com.apple.dock" "minimize-to-application" "$value"
     fi
-    
+
     # Manage dock applications
     local manage_apps
     manage_apps=$(yq ".$section.manage_apps" "$config_file")
     if [[ "$manage_apps" == "true" ]]; then
       warning "Dock application management is enabled"
-      
+
       # Get current dock apps to check for duplicates
       local current_dock_apps
       current_dock_apps=$(defaults read com.apple.dock persistent-apps 2>/dev/null | grep -o '"_CFURLString" = "[^"]*"' | sed 's/"_CFURLString" = "//; s/"$//; s|^file://||; s|/$||' | python3 -c "import sys, urllib.parse; [print(urllib.parse.unquote(line.strip())) for line in sys.stdin]" || echo "")
-      
+
       # Check if we should clear dock first
       local clear_first
       clear_first=$(yq ".$section.clear_dock_first" "$config_file")
@@ -390,7 +390,7 @@ apply_dock_settings() {
           warning "[DRY RUN] Would clear all dock applications"
         fi
       fi
-      
+
       # Add specified apps
       local apps_count
       apps_count=$(yq ".$section.apps | length" "$config_file")
@@ -398,7 +398,7 @@ apply_dock_settings() {
         info "Processing $apps_count applications for dock..."
         local added_count=0
         local skipped_count=0
-        
+
         for ((i=0; i<apps_count; i++)); do
           local app_path
           app_path=$(yq ".$section.apps[$i]" "$config_file")
@@ -421,7 +421,7 @@ apply_dock_settings() {
             warning "App not found: $app_path"
           fi
         done
-        
+
         if [[ "$DRY_RUN" == "false" ]]; then
           info "Summary: Added $added_count apps, skipped $skipped_count already present"
         fi
@@ -548,20 +548,20 @@ apply_mouse_settings() {
     if [[ "$natural_scrolling" != "null" ]]; then
       local value
       value=$([[ "$natural_scrolling" == "true" ]] && echo "1" || echo "0")
-      
+
       # Set all possible mouse scroll settings to ensure consistency
       # Global scroll direction (primary setting)
       apply_default "Scroll direction (global)" "NSGlobalDomain" "com.apple.swipescrolldirection" "$value"
-      
+
       # Apple Magic Mouse
       apply_default "Mouse natural scrolling (Magic Mouse)" "com.apple.AppleMultitouchMouse" "MouseVerticalScroll" "$value"
-      
+
       # Bluetooth mice
       apply_default "Mouse natural scrolling (Bluetooth)" "com.apple.driver.AppleBluetoothMultitouch.mouse" "MouseVerticalScroll" "$value"
-      
+
       # HID/Generic mice (same logic as others: 0=natural OFF, 1=natural ON)
       apply_default "Mouse natural scrolling (HID/Generic)" "com.apple.driver.AppleHIDMouse" "ScrollV" "$value"
-      
+
     fi
   fi
 }
@@ -812,14 +812,14 @@ apply_widgets_settings() {
 apply_display_settings() {
   local config_file="$1"
   local section="displays"
-  
+
   if ! yq ".$section" "$config_file" | grep -q '^null$'; then
     echo "Display Settings:"
-    
+
     # Show main display priority for reference
     local priority_count
     priority_count=$(yq ".displays.preferred_main_display | length" "$config_file" 2>/dev/null || echo "0")
-    
+
     if [[ "$priority_count" -gt 0 ]]; then
       info "Main display priority:"
       for ((i=0; i<priority_count; i++)); do
@@ -828,25 +828,25 @@ apply_display_settings() {
         info "  $((i+1)). $display_name"
       done
     fi
-    
+
     # Show mirror preference
     local mirror_builtin
     mirror_builtin=$(yq ".displays.mirror_builtin_when_both_external_connected" "$config_file" 2>/dev/null || echo "null")
     if [[ "$mirror_builtin" == "true" ]]; then
       info "Mirror built-in display when both external monitors connected: Yes"
     fi
-    
+
     # Check if we have any external displays
     local has_external=false
     local is_builtin_main=false
-    
+
     # Check current main display
     if system_profiler SPDisplaysDataType 2>/dev/null | grep -B1 "Main Display: Yes" | grep -q "Built-in"; then
       is_builtin_main=true
     else
       has_external=true
     fi
-    
+
     # Get dock position preference based on display type
     local dock_position_key
     if [[ "$has_external" == "true" ]] && [[ "$is_builtin_main" == "false" ]]; then
@@ -854,17 +854,17 @@ apply_display_settings() {
     else
       dock_position_key="builtin"
     fi
-    
+
     local preferred_dock_position
     preferred_dock_position=$(yq ".displays.dock_position.$dock_position_key" "$config_file" 2>/dev/null || echo "null")
-    
+
     if [[ "$preferred_dock_position" != "null" ]]; then
       info "Display type: $dock_position_key, preferred dock position: $preferred_dock_position"
-      
+
       # Apply the dock position
       local current_position
       current_position=$(defaults read com.apple.dock orientation 2>/dev/null || echo "")
-      
+
       if [[ "$current_position" != "$preferred_dock_position" ]]; then
         if [[ "$DRY_RUN" == "false" ]]; then
           defaults write com.apple.dock orientation "$preferred_dock_position"
@@ -876,7 +876,7 @@ apply_display_settings() {
         success "Dock position: already set to '$preferred_dock_position' for $dock_position_key display"
       fi
     fi
-    
+
   fi
 }
 
@@ -977,7 +977,7 @@ while [[ $# -gt 0 ]]; do
   *.yaml | *.yml)
     MODE="apply"
     CONFIG_FILE="$1"
-    
+
     # If file doesn't exist as given, check in script's directory
     if [[ ! -f "$CONFIG_FILE" ]]; then
       SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -985,7 +985,7 @@ while [[ $# -gt 0 ]]; do
         CONFIG_FILE="$SCRIPT_DIR/$CONFIG_FILE"
       fi
     fi
-    
+
     shift
     ;;
   *)

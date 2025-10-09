@@ -6,10 +6,10 @@ setup() {
   # Save current directory
   export ORIGINAL_DIR="$PWD"
   export TEST_DIR="$(mktemp -d)"
-  
+
   # Create a minimal test environment
   cd "$TEST_DIR"
-  
+
   # Create mock install.sh that just prints its arguments
   cat > install.sh << 'EOF'
 #!/usr/bin/env bash
@@ -17,7 +17,7 @@ echo "CONFIG_FILES: $CONFIG_FILES"
 echo "Arguments: $@"
 EOF
   chmod +x install.sh
-  
+
   # Copy the Makefile
   cp "$ORIGINAL_DIR/../Makefile" .
 }
@@ -64,7 +64,7 @@ teardown() {
 echo "Running setup-work-mac.sh"
 EOF
   chmod +x setup-work-mac.sh
-  
+
   run make work
   [ "$status" -eq 0 ]
   [[ "$output" =~ "Running setup-work-mac.sh" ]]
@@ -180,7 +180,7 @@ echo "VSCODE_CLI: $VSCODE_CLI"
 echo "Arguments: $@"
 EOF
   chmod +x install.sh
-  
+
   VSCODE_CLI=cursor run make focus-vscode
   [ "$status" -eq 0 ]
   [[ "$output" =~ "VSCODE_CLI: cursor" ]]

@@ -16,4 +16,3 @@ tools:
     description: "Symlink farm manager for dotfiles"
     documentation_url: "https://www.gnu.org/software/stow/"
     category: "dotfiles"
-

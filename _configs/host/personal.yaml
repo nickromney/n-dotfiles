@@ -10,7 +10,7 @@ tools:
     description: "Shell history sync/search"
     documentation_url: "https://github.com/atuinsh/atuin"
     category: shell
-  
+
   brave-browser:
     manager: brew
     type: cask
@@ -18,7 +18,7 @@ tools:
     description: "Privacy-focused web browser"
     documentation_url: "https://brave.com/"
     category: internet
-  
+
   claude:
     manager: brew
     type: cask
@@ -26,7 +26,7 @@ tools:
     description: "AI assistant desktop app"
     documentation_url: "https://claude.ai/"
     category: ai
-  
+
   hey:
     manager: brew
     type: cask
@@ -34,7 +34,7 @@ tools:
     description: "Modern email client with built-in workflows"
     documentation_url: "https://www.hey.com/"
     category: productivity
-  
+
   lm-studio:
     manager: brew
     type: cask
@@ -42,7 +42,7 @@ tools:
     description: "Desktop app for running local LLMs"
     documentation_url: "https://lmstudio.ai/"
     category: ai
-  
+
   mas:
     manager: brew
     type: package
@@ -50,7 +50,7 @@ tools:
     description: "Mac App Store command-line interface"
     documentation_url: "https://github.com/mas-cli/mas"
     category: system
-  
+
   microsoft-excel:
     manager: mas
     type: app
@@ -59,7 +59,7 @@ tools:
     description: "Spreadsheet application"
     documentation_url: "https://apps.apple.com/us/app/microsoft-excel/id462058435"
     category: productivity
-  
+
   microsoft-outlook:
     manager: mas
     type: app
@@ -68,7 +68,7 @@ tools:
     description: "Email and calendar client"
     documentation_url: "https://apps.apple.com/us/app/microsoft-outlook/id985367838"
     category: productivity
-  
+
   microsoft-powerpoint:
     manager: mas
     type: app
@@ -77,7 +77,7 @@ tools:
     description: "Presentation software"
     documentation_url: "https://apps.apple.com/us/app/microsoft-powerpoint/id462062816"
     category: productivity
-  
+
   microsoft-teams:
     manager: brew
     type: cask
@@ -85,7 +85,7 @@ tools:
     description: "Team collaboration and communication"
     documentation_url: "https://www.microsoft.com/en-us/microsoft-teams/"
     category: communication
-  
+
   microsoft-word:
     manager: mas
     type: app
@@ -94,7 +94,7 @@ tools:
     description: "Word processor"
     documentation_url: "https://apps.apple.com/us/app/microsoft-word/id462054704"
     category: productivity
-  
+
   ollama:
     manager: brew
     type: cask
@@ -102,7 +102,7 @@ tools:
     description: "Run large language models locally"
     documentation_url: "https://ollama.ai/"
     category: ai
-  
+
   spotify:
     manager: brew
     type: cask
@@ -110,7 +110,7 @@ tools:
     description: "Music streaming"
     documentation_url: "https://www.spotify.com/"
     category: media
-  
+
   # Mac App Store apps (installed via mas)
   copy-em:
     manager: mas
@@ -120,7 +120,7 @@ tools:
     description: "Clipboard manager with paste formatting"
     documentation_url: "https://apps.apple.com/us/app/copy-em/id876540291"
     category: productivity
-  
+
   nightshift:
     manager: mas
     type: app
@@ -129,7 +129,7 @@ tools:
     description: "Night mode color temperature adjustment"
     documentation_url: "https://apps.apple.com/us/app/nightshift/id1561604170"
     category: utilities
-  
+
   paste:
     manager: mas
     type: app
@@ -138,7 +138,7 @@ tools:
     description: "Clipboard history manager"
     documentation_url: "https://apps.apple.com/us/app/paste/id967805235"
     category: productivity
-  
+
   things:
     manager: mas
     type: app
@@ -147,7 +147,7 @@ tools:
     description: "Task management and to-do list app"
     documentation_url: "https://apps.apple.com/us/app/things-3/id904280696"
     category: productivity
-  
+
   slack:
     manager: mas
     type: app
@@ -156,7 +156,7 @@ tools:
     description: "Team communication platform"
     documentation_url: "https://apps.apple.com/us/app/slack-for-desktop/id803453959"
     category: communication
-  
+
   whatsapp:
     manager: mas
     type: app

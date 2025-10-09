@@ -107,37 +107,37 @@ if [[ "$DRY_RUN" == "true" ]]; then
   echo "SSH Config Dry Run - Checking 1Password"
   echo "========================================="
   echo
-  
+
   info "Checking for SSH configuration items in 1Password..."
-  
+
   available_items=()
   missing_items=()
-  
+
   # Check SSH Config
   if op item get "SSH Config" --vault="$VAULT" >/dev/null 2>&1; then
     available_items+=("SSH Config (Secure Note)")
   else
     missing_items+=("SSH Config (Secure Note)")
   fi
-  
+
   # Check SSH Keys
   for key_mapping in "${SSH_KEYS[@]}"; do
     IFS=':' read -r op_name local_name <<<"$key_mapping"
-    
+
     if op item get "$op_name" --vault="$VAULT" >/dev/null 2>&1; then
       available_items+=("$op_name → $local_name")
     else
       missing_items+=("$op_name → $local_name")
     fi
   done
-  
+
   if [ ${#available_items[@]} -gt 0 ]; then
     success "Found in 1Password:"
     for item in "${available_items[@]}"; do
       echo "  ✓ $item"
     done
   fi
-  
+
   if [ ${#missing_items[@]} -gt 0 ]; then
     echo
     warning "Not found in 1Password:"
@@ -150,7 +150,7 @@ if [[ "$DRY_RUN" == "true" ]]; then
     echo "  • SSH Keys: Create SSH Key items with exact names shown above"
     echo "  • Save all items in the '$VAULT' vault"
   fi
-  
+
   # Check SSH agent
   echo
   info "Checking SSH agent..."
@@ -160,7 +160,7 @@ if [[ "$DRY_RUN" == "true" ]]; then
     warning "1Password SSH agent socket not found"
     echo "  Enable it in 1Password Settings → Developer → SSH Agent"
   fi
-  
+
   echo
   success "Dry run complete! No files were modified."
   echo "Run without --dry-run to actually download and apply configurations."
@@ -195,7 +195,7 @@ if [[ "$UNSAFE_MODE" == "true" ]]; then
   warning "════════════════════════════════════════════════════════════════"
   echo
   read -r -p "Do you want to download private keys? (type 'yes' to continue): " confirmation
-  
+
   if [[ "$confirmation" != "yes" ]]; then
     info "Cancelled. Running in safe mode (public keys only)."
     UNSAFE_MODE=false

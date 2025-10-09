@@ -19,7 +19,7 @@
     "comments": false,
     "strings": false
   },
-  "editor.renderWhitespace": "none",
+  "editor.renderWhitespace": "all",
   "editor.suggestSelection": "first",
   "editor.tabCompletion": "on",
   "editor.tabSize": 2,
@@ -67,7 +67,9 @@
   "terminal.integrated.profiles.osx": {
     "zsh": {
       "path": "/bin/zsh",
-      "args": ["-l"]
+      "args": [
+        "-l"
+      ]
     },
     "nu": {
       "path": "/opt/homebrew/bin/nu",

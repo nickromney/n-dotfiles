@@ -87,4 +87,3 @@ tools:
     description: "Web-based interactive development environment"
     documentation_url: "https://jupyter.org/"
     category: "python"
-

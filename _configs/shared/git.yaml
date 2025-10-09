@@ -7,7 +7,7 @@ tools:
     description: "GitHub's official command line tool"
     documentation_url: "https://cli.github.com/"
     category: git
-  
+
   git:
     manager: brew
     type: package
@@ -15,7 +15,7 @@ tools:
     description: "Distributed version control system"
     documentation_url: "https://git-scm.com/"
     category: git
-  
+
   git-delta:
     manager: brew
     type: package
@@ -23,7 +23,7 @@ tools:
     description: "Syntax-highlighting pager for git"
     documentation_url: "https://github.com/dandavison/delta"
     category: git
-  
+
   lazygit:
     manager: brew
     type: package

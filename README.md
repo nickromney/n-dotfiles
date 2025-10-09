@@ -268,7 +268,7 @@ _configs/
 │   ├── file-tools.yaml   # File management utilities
 │   ├── data-tools.yaml   # Data processing tools
 │   └── network.yaml      # Network utilities
-├── host/             # Host-specific configurations  
+├── host/             # Host-specific configurations
 │   ├── common.yaml       # Tools for any Mac (Ghostty, VSCode, Obsidian, etc.)
 │   ├── personal.yaml     # Personal additions
 │   └── work.yaml         # Work-specific tools
@@ -287,7 +287,7 @@ _configs/
 | Configuration | Type | Description | Use Case |
 |--------------|------|-------------|----------|
 | **focus/ai** | Focus | AI/ML tools (ollama, etc.) | AI development |
-| **focus/container-base** | Focus | Docker and container tools | Container development |
+| **focus/container-base** | Focus | Podman and container tools | Container development |
 | **focus/kubernetes** | Focus | K8s tools (kubectl, k9s, helm) | Kubernetes management |
 | **focus/neovim** | Focus | Extended Neovim plugins | Advanced vim setup |
 | **focus/python** | Focus | Python dev tools (pyenv, poetry, ruff) | Python development |
@@ -318,7 +318,7 @@ _configs/
 |--------|----------|---------|
 | **make common** | All shared/ + host/common | Essential Mac setup |
 | **make focus-ai** | focus/ai | AI/ML development tools |
-| **make focus-container-base** | focus/container-base | Docker and container tools |
+| **make focus-container-base** | focus/container-base | Podman and container tools |
 | **make focus-kubernetes** | focus/kubernetes | Kubernetes toolchain |
 | **make focus-neovim** | focus/neovim | Enhanced Neovim |
 | **make focus-python** | focus/python | Python development |
@@ -505,9 +505,9 @@ get_available_managers() {
   local old_errexit
   old_errexit=$(set +o | grep errexit)
   set +e
-  
+
   # ... function body that may have failing commands ...
-  
+
   # Restore errexit setting before returning
   eval "$old_errexit"
   return 0
