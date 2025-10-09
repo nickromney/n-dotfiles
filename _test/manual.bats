@@ -5,7 +5,7 @@ load helpers/mocks
 # Setup and teardown
 setup() {
   setup_mocks
-  
+
   # Set up test environment
   export CONFIG_DIR="_configs"
   export CONFIG_FILES=("test")
@@ -15,10 +15,10 @@ setup() {
   export FORCE="false"
   export UPDATE="false"
   export CONFIG_FILES_SET_VIA_CLI="false"
-  
+
   # Change to the script directory to ensure relative paths work
   cd "$BATS_TEST_DIRNAME/.."
-  
+
   # Source the install script functions only (not main)
   set +e  # Temporarily disable errexit
   # shellcheck source=/dev/null
@@ -45,7 +45,7 @@ case "$*" in
 esac
 EOF
   chmod +x "$MOCK_BIN_DIR/yq"
-  
+
   run get_available_managers "test.yaml"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "Available package managers: manual" ]]
@@ -65,7 +65,7 @@ EOF
     esac
   }
   export -f yq
-  
+
   run install_tool "snagit" "test.yaml"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "snagit requires manual installation" ]]
@@ -76,7 +76,7 @@ EOF
 # Test manual tool in dry run mode
 @test "manual: respects dry run mode" {
   export DRY_RUN="true"
-  
+
   # Mock yq for manual tool
   yq() {
     case "$*" in
@@ -88,7 +88,7 @@ EOF
     esac
   }
   export -f yq
-  
+
   run install_tool "homerow" "test.yaml"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "Would report: homerow requires manual installation" ]]
@@ -99,7 +99,7 @@ EOF
 @test "manual: detects installed app" {
   # Create mock app directory structure
   mkdir -p "$BATS_TEST_TMPDIR/Applications/Snagit 2024.app"
-  
+
   # Mock yq
   yq() {
     case "$*" in
@@ -109,7 +109,7 @@ EOF
     esac
   }
   export -f yq
-  
+
   run is_tool_installed "snagit" "test.yaml"
   [ "$status" -eq 0 ]
 }
@@ -125,7 +125,7 @@ EOF
     esac
   }
   export -f yq
-  
+
   # Don't create the app directory, so the check will fail
   run is_tool_installed "superkey" "test.yaml"
   [ "$status" -eq 1 ]
@@ -135,7 +135,7 @@ EOF
 @test "manual: skips updates" {
   export UPDATE="true"
   export CURRENT_CONFIG_FILE="test.yaml"
-  
+
   # Mock yq
   yq() {
     case "$*" in
@@ -145,15 +145,15 @@ EOF
     esac
   }
   export -f yq
-  
+
   # Simulate the update check (this would be in main loop)
   manager=$(yq ".tools.camtasia.manager" "$CURRENT_CONFIG_FILE")
   type=$(yq ".tools.camtasia.type" "$CURRENT_CONFIG_FILE")
-  
+
   if [[ "$manager" == "manual" ]]; then
     echo "✓ camtasia (manual) - check vendor site for updates"
   fi
-  
+
   run echo "✓ camtasia (manual) - check vendor site for updates"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "check vendor site for updates" ]]
@@ -165,14 +165,14 @@ EOF
   manager="manual"
   type="check"
   tool="beyond-compare"
-  
+
   # Simulate the already installed message
   case "$manager" in
     "manual")
       output="✓ $tool (manual) is already installed"
       ;;
   esac
-  
+
   run echo "$output"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "✓ beyond-compare (manual) is already installed" ]]
@@ -188,9 +188,9 @@ EOF
     esac
   }
   export -f yq
-  
+
   AVAILABLE_MANAGERS=("manual" "brew")
-  
+
   run can_install_tool "gpg-keychain" "test.yaml"
   [ "$status" -eq 0 ]
 }
@@ -208,7 +208,7 @@ tools:
     documentation_url: "https://www.techsmith.com/screen-capture.html"
     category: utilities
 EOF
-  
+
   # Mock yq to read our test file
   echo '#!/usr/bin/env bash
 if [[ "$*" == *"keys"* ]]; then
@@ -217,7 +217,7 @@ elif [[ "$*" == *"snagit.manager"* ]]; then
   echo "manual"
 fi' > "$MOCK_BIN_DIR/yq"
   chmod +x "$MOCK_BIN_DIR/yq"
-  
+
   # Get tools from config
   run yq '.tools | keys | .[]' "$BATS_TEST_TMPDIR/manual-check.yaml"
   [ "$status" -eq 0 ]

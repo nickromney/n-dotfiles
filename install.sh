@@ -394,7 +394,7 @@ install_tool() {
     local description doc_url
     description=$(yq ".tools.${tool}.description" "$yaml_file")
     doc_url=$(yq ".tools.${tool}.documentation_url" "$yaml_file")
-    
+
     if [[ "$DRY_RUN" == "true" ]]; then
       info "Would report: $tool requires manual installation"
       [[ "$doc_url" != "null" ]] && info "  Download from: $doc_url"

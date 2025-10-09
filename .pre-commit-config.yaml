@@ -1,0 +1,49 @@
+# Pre-commit hooks for n-dotfiles repository
+# Install: brew install pre-commit (or use the shared/shell.yaml config)
+# Setup: pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trim trailing whitespace
+        exclude: ^_test/(bats-assert|bats-support)/
+      - id: end-of-file-fixer
+        name: Fix end of files
+        exclude: ^_test/(bats-assert|bats-support)/
+      - id: check-yaml
+        name: Check YAML syntax
+        args: ['--unsafe']  # Allow custom YAML tags if needed
+      - id: check-added-large-files
+        name: Check for added large files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+        name: Check for merge conflicts
+      - id: detect-private-key
+        name: Detect private keys
+        exclude: ^_test/
+      - id: mixed-line-ending
+        name: Check for mixed line endings
+        args: ['--fix=lf']
+
+  # Shellcheck for shell scripts
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        name: Shellcheck
+        files: \.(sh|bash)$
+        exclude: ^_test/(bats-assert|bats-support)/
+        args: ['--severity=warning']
+
+  # Markdown linting and fixing
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.16.0
+    hooks:
+      - id: markdownlint-cli2
+        name: Markdown linting
+        args: ["--fix"]
+        exclude: ^_test/(bats-assert|bats-support)/|^\.github/

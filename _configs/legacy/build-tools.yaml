@@ -17,4 +17,3 @@ tools:
     description: "Tool for generating GNU Standards-compliant Makefiles"
     documentation_url: "https://www.gnu.org/software/automake/"
     category: "build-tools"
-

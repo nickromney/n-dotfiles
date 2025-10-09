@@ -38,7 +38,7 @@ tools:
     description: "Claude AI assistant"
     documentation_url: "https://claude.ai/code"
     category: vscode-extension
-    
+
   code-spell-checker-vscode:
     manager: code
     type: extension
@@ -55,15 +55,6 @@ tools:
     check_command: "code --list-extensions | grep -q ms-dotnettools.csharp"
     description: "C# language support"
     documentation_url: "https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csharp"
-    category: vscode-extension
-
-  docker-vscode:
-    manager: code
-    type: extension
-    extension_id: ms-azuretools.vscode-docker
-    check_command: "code --list-extensions | grep -q ms-azuretools.vscode-docker"
-    description: "Docker support"
-    documentation_url: "https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-docker"
     category: vscode-extension
 
   dracula-theme-vscode:
@@ -83,7 +74,7 @@ tools:
     description: "AI chat assistant"
     documentation_url: "https://github.com/features/copilot"
     category: vscode-extension
-    
+
   github-copilot-vscode:
     manager: code
     type: extension
@@ -92,7 +83,7 @@ tools:
     description: "AI pair programmer"
     documentation_url: "https://github.com/features/copilot"
     category: vscode-extension
-    
+
   # Git Extensions
   gitlens-vscode:
     manager: code
@@ -102,7 +93,7 @@ tools:
     description: "Git supercharged"
     documentation_url: "https://gitlens.amod.io/"
     category: vscode-extension
-    
+
   kubernetes-vscode:
     manager: code
     type: extension
@@ -148,7 +139,7 @@ tools:
     description: "Markdown linting"
     documentation_url: "https://github.com/DavidAnson/markdownlint"
     category: vscode-extension
-    
+
   marp-vscode:
     manager: code
     type: extension
@@ -175,7 +166,7 @@ tools:
     description: "PowerShell language support"
     documentation_url: "https://marketplace.visualstudio.com/items?itemName=ms-vscode.powershell"
     category: vscode-extension
-    
+
   # Core Development Extensions
   prettier-vscode:
     manager: code
@@ -185,7 +176,7 @@ tools:
     description: "Code formatter"
     documentation_url: "https://prettier.io/"
     category: vscode-extension
-    
+
   # Language Support
   pylance-vscode:
     manager: code
@@ -204,7 +195,7 @@ tools:
     description: "Python language support"
     documentation_url: "https://marketplace.visualstudio.com/items?itemName=ms-python.python"
     category: vscode-extension
-    
+
   # Container/Remote Development
   remote-containers-vscode:
     manager: code
@@ -232,7 +223,7 @@ tools:
     description: "Shell script analysis"
     documentation_url: "https://github.com/koalaman/shellcheck"
     category: vscode-extension
-    
+
   sqltools-mysql-vscode:
     manager: code
     type: extension

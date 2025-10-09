@@ -7,7 +7,7 @@ tools:
     description: "Generate prompts from codebases for LLMs"
     documentation_url: "https://github.com/raphaelmansuy/code2prompt"
     category: ai
-  
+
   fx:
     manager: brew
     type: package
@@ -15,7 +15,7 @@ tools:
     description: "Terminal JSON viewer"
     documentation_url: "https://github.com/antonmedv/fx"
     category: data-tools
-  
+
   jq:
     manager: brew
     type: package
@@ -23,7 +23,7 @@ tools:
     description: "Command-line JSON processor"
     documentation_url: "https://stedolan.github.io/jq/"
     category: data-tools
-  
+
   jqp:
     manager: brew
     type: package
@@ -32,7 +32,7 @@ tools:
     description: "TUI playground for jq"
     documentation_url: "https://github.com/noahgorstein/jqp"
     category: data-tools
-  
+
   noahgorstein/tap:
     manager: brew
     type: tap
@@ -40,7 +40,7 @@ tools:
     description: "Tap for noahgorstein tools"
     documentation_url: "https://github.com/noahgorstein/homebrew-tap"
     category: data-tools
-  
+
   yq:
     manager: brew
     type: package

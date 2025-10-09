@@ -35,7 +35,13 @@
       "Bash(./check_all_tools.sh:*)",
       "Bash(mas search:*)",
       "Bash(find:*)",
-      "Bash(markdownlint:*)"
+      "Bash(markdownlint:*)",
+      "Bash(python3:*)",
+      "Bash(./_macos/macos.sh:*)",
+      "Bash(defaults:*)",
+      "Bash(yq eval:*)",
+      "Read(//Users/nickromney/Developer/personal/public-cloud-experiments/**)",
+      "Bash(make:*)"
     ],
     "deny": []
   }

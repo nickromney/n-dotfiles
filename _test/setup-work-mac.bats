@@ -4,19 +4,19 @@ setup() {
   # Set test environment
   export BATS_TEST_TMPDIR="${BATS_TEST_TMPDIR:-/tmp/bats-test-$$}"
   mkdir -p "$BATS_TEST_TMPDIR"
-  
+
   # Copy the setup script
   cp "${BATS_TEST_DIRNAME}/../setup-work-mac.sh" "$BATS_TEST_TMPDIR/setup-work-mac.sh"
   chmod +x "$BATS_TEST_TMPDIR/setup-work-mac.sh"
-  
+
   # Create mock directories
   mkdir -p "$BATS_TEST_TMPDIR/mocks"
   mkdir -p "$BATS_TEST_TMPDIR/_configs/host"
   mkdir -p "$BATS_TEST_TMPDIR/_macos"
-  
+
   # Set PATH to use mocks
   export PATH="$BATS_TEST_TMPDIR/mocks:$PATH"
-  
+
   # Change to test directory
   cd "$BATS_TEST_TMPDIR"
 }
@@ -31,7 +31,7 @@ create_mock() {
   local cmd="$1"
   local exit_code="${2:-0}"
   local output="${3:-}"
-  
+
   cat > "$BATS_TEST_TMPDIR/mocks/$cmd" << EOF
 #!/usr/bin/env bash
 [[ -n "$output" ]] && echo "$output"
@@ -43,7 +43,7 @@ EOF
 @test "setup-work-mac: fails on non-macOS" {
   export UNAME_OUTPUT="Linux"
   create_mock "uname" 0 "$UNAME_OUTPUT"
-  
+
   run ./setup-work-mac.sh
   [ "$status" -eq 1 ]
   [[ "$output" =~ "This script is for macOS only" ]]
@@ -52,7 +52,7 @@ EOF
 @test "setup-work-mac: runs bootstrap when tools missing" {
   create_mock "uname" 0 "Darwin"
   create_mock "command" 1  # Simulate tools not found
-  
+
   # Create mock bootstrap
   cat > "./bootstrap.sh" << 'EOF'
 #!/usr/bin/env bash
@@ -60,10 +60,10 @@ echo "Bootstrap executed"
 exit 0
 EOF
   chmod +x "./bootstrap.sh"
-  
+
   # Create mock install.sh
   create_mock "./install.sh" 0 "Install executed"
-  
+
   run ./setup-work-mac.sh
   [ "$status" -eq 0 ]
   [[ "$output" =~ "Bootstrap executed" ]]
@@ -76,7 +76,7 @@ EOF
   create_mock "yq" 0
   create_mock "stow" 0
   create_mock "./install.sh" 0
-  
+
   run ./setup-work-mac.sh
   [ "$status" -eq 0 ]
   [[ "$output" =~ "Essential tools already installed" ]]
@@ -85,7 +85,7 @@ EOF
 @test "setup-work-mac: installs shared and common packages" {
   create_mock "uname" 0 "Darwin"
   create_mock "command" 0
-  
+
   # Track install.sh calls
   cat > "./install.sh" << 'EOF'
 #!/usr/bin/env bash
@@ -93,7 +93,7 @@ echo "install.sh called with: $*"
 exit 0
 EOF
   chmod +x "./install.sh"
-  
+
   run ./setup-work-mac.sh
   [ "$status" -eq 0 ]
   [[ "$output" =~ "CONFIG_FILES=\"shared/shell shared/git shared/search shared/file-tools shared/data-tools shared/network shared/neovim host/common\"" ]]
@@ -102,10 +102,10 @@ EOF
 @test "setup-work-mac: installs work packages when config exists" {
   create_mock "uname" 0 "Darwin"
   create_mock "command" 0
-  
+
   # Create work config
   touch "_configs/host/work.yaml"
-  
+
   # Track install.sh calls
   cat > "./install.sh" << 'EOF'
 #!/usr/bin/env bash
@@ -114,7 +114,7 @@ echo "install.sh called with: $*"
 exit 0
 EOF
   chmod +x "./install.sh"
-  
+
   run ./setup-work-mac.sh
   [ "$status" -eq 0 ]
   [[ "$output" =~ "CONFIG_FILES=\"host/work\"" ]]
@@ -124,9 +124,9 @@ EOF
   create_mock "uname" 0 "Darwin"
   create_mock "command" 0
   create_mock "./install.sh" 0
-  
+
   # No work.yaml file
-  
+
   run ./setup-work-mac.sh
   [ "$status" -eq 0 ]
   [[ "$output" =~ "No work-specific configuration found" ]]
@@ -136,10 +136,10 @@ EOF
   create_mock "uname" 0 "Darwin"
   create_mock "command" 0
   create_mock "./install.sh" 0
-  
+
   # Create work macOS config
   touch "_macos/work.yaml"
-  
+
   # Create mock macos.sh
   cat > "./_macos/macos.sh" << 'EOF'
 #!/usr/bin/env bash
@@ -147,7 +147,7 @@ echo "macos.sh called with: $*"
 exit 0
 EOF
   chmod +x "./_macos/macos.sh"
-  
+
   run ./setup-work-mac.sh
   [ "$status" -eq 0 ]
   [[ "$output" =~ "macos.sh called with: work.yaml" ]]
@@ -156,7 +156,7 @@ EOF
 @test "setup-work-mac: runs stow" {
   create_mock "uname" 0 "Darwin"
   create_mock "command" 0
-  
+
   # Track install.sh calls
   cat > "./install.sh" << 'EOF'
 #!/usr/bin/env bash
@@ -164,7 +164,7 @@ EOF
 exit 0
 EOF
   chmod +x "./install.sh"
-  
+
   run ./setup-work-mac.sh
   [ "$status" -eq 0 ]
   [[ "$output" =~ "Stow executed" ]]
@@ -174,7 +174,7 @@ EOF
   create_mock "uname" 0 "Darwin"
   create_mock "command" 0
   create_mock "code" 0
-  
+
   # Track install.sh calls
   cat > "./install.sh" << 'EOF'
 #!/usr/bin/env bash
@@ -182,7 +182,7 @@ EOF
 exit 0
 EOF
   chmod +x "./install.sh"
-  
+
   run ./setup-work-mac.sh
   [ "$status" -eq 0 ]
   [[ "$output" =~ "VSCode extensions installed" ]]
@@ -190,7 +190,7 @@ EOF
 
 @test "setup-work-mac: skips VSCode when not available" {
   create_mock "uname" 0 "Darwin"
-  
+
   # Make command return failure for 'code'
   cat > "$BATS_TEST_TMPDIR/mocks/command" << 'EOF'
 #!/usr/bin/env bash
@@ -198,9 +198,9 @@ EOF
 exit 0
 EOF
   chmod +x "$BATS_TEST_TMPDIR/mocks/command"
-  
+
   create_mock "./install.sh" 0
-  
+
   run ./setup-work-mac.sh
   [ "$status" -eq 0 ]
   [[ "$output" =~ "VSCode not found, skipping extensions" ]]
@@ -210,7 +210,7 @@ EOF
   create_mock "uname" 0 "Darwin"
   create_mock "command" 0
   create_mock "./install.sh" 0
-  
+
   run ./setup-work-mac.sh
   [ "$status" -eq 0 ]
   [[ "$output" =~ "Setup Complete!" ]]

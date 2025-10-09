@@ -122,7 +122,7 @@ def mkenv [envname?: string] {
 def --wrapped man [...args] {
     $env.GROFF_NO_SGR = 1
     $env.LESS_TERMCAP_mb = ansi --escape '01;31m'  #\E[01;31m'
-    $env.LESS_TERMCAP_md = ansi --escape '01;38;5;74m'  #\E[01;38;5;74m' 
+    $env.LESS_TERMCAP_md = ansi --escape '01;38;5;74m'  #\E[01;38;5;74m'
     $env.LESS_TERMCAP_me = ansi reset
     $env.LESS_TERMCAP_se = ansi reset
     $env.LESS_TERMCAP_ue = ansi reset
@@ -143,7 +143,7 @@ def g [] {
     }
 }
 
-# File listing aliases  
+# File listing aliases
 def l [...args] {
     if ((which eza | length) > 0) {
         if ($args | length) > 0 {

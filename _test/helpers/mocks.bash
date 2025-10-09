@@ -8,11 +8,11 @@ export MOCK_BIN_DIR="$BATS_TEST_TMPDIR/mock_bin"
 setup_mocks() {
   mkdir -p "$MOCK_BIN_DIR"
   export PATH="$MOCK_BIN_DIR:$PATH"
-  
+
   # Create a directory for mock outputs
   export MOCK_OUTPUT_DIR="$BATS_TEST_TMPDIR/mock_output"
   mkdir -p "$MOCK_OUTPUT_DIR"
-  
+
   # Create a directory for recording mock calls
   export MOCK_CALLS_DIR="$BATS_TEST_TMPDIR/mock_calls"
   mkdir -p "$MOCK_CALLS_DIR"
@@ -23,7 +23,7 @@ mock_command() {
   local cmd="$1"
   local exit_code="${2:-0}"
   local output="${3:-}"
-  
+
   cat > "$MOCK_BIN_DIR/$cmd" << EOF
 #!/usr/bin/env bash
 # Record the call
@@ -55,7 +55,7 @@ EOF
 mock_command_with_script() {
   local cmd="$1"
   local script="$2"
-  
+
   cat > "$MOCK_BIN_DIR/$cmd" << EOF
 #!/usr/bin/env bash
 # Record the call
@@ -71,12 +71,12 @@ EOF
 assert_mock_called() {
   local cmd="$1"
   local expected_args="${2:-}"
-  
+
   if [[ ! -f "$MOCK_CALLS_DIR/$cmd.calls" ]]; then
     echo "Mock command '$cmd' was not called" >&2
     return 1
   fi
-  
+
   if [[ -n "$expected_args" ]]; then
     if ! grep -qF -- "$expected_args" "$MOCK_CALLS_DIR/$cmd.calls"; then
       echo "Mock command '$cmd' was not called with expected args: $expected_args" >&2
@@ -85,28 +85,28 @@ assert_mock_called() {
       return 1
     fi
   fi
-  
+
   return 0
 }
 
 # Check if a mock command was NOT called
 assert_mock_not_called() {
   local cmd="$1"
-  
+
   if [[ -f "$MOCK_CALLS_DIR/$cmd.calls" ]]; then
     echo "Mock command '$cmd' was called but should not have been" >&2
     echo "Calls:" >&2
     cat "$MOCK_CALLS_DIR/$cmd.calls" >&2
     return 1
   fi
-  
+
   return 0
 }
 
 # Get the number of times a mock was called
 get_mock_call_count() {
   local cmd="$1"
-  
+
   if [[ ! -f "$MOCK_CALLS_DIR/$cmd.calls" ]]; then
     echo "0"
   else
@@ -354,7 +354,7 @@ exit 0
 mock_yq() {
   # shellcheck disable=SC2034  # tools_yaml reserved for future use
   local tools_yaml="${1:-$BATS_TEST_DIRNAME/fixtures/tools.yaml}"
-  
+
   mock_command_with_script "yq" "
 case \"\$*\" in
   \".tools | keys | .[]\"*)
@@ -633,7 +633,7 @@ esac
 # Mock command_exists function
 mock_command_exists() {
   local commands=("$@")
-  
+
   # Build case patterns
   local case_patterns=""
   for cmd in "${commands[@]}"; do
@@ -643,7 +643,7 @@ mock_command_exists() {
       case_patterns="$case_patterns|$cmd"
     fi
   done
-  
+
   # Override the command_exists function
   # shellcheck disable=SC2016  # Single quotes prevent variable expansion
   eval "command_exists() {
@@ -659,7 +659,7 @@ mock_command_exists() {
 teardown_mocks() {
   # Remove mock binaries from PATH
   export PATH="${PATH#"$MOCK_BIN_DIR:"}"
-  
+
   # Clean up temporary directories
   rm -rf "$MOCK_BIN_DIR" "$MOCK_OUTPUT_DIR" "$MOCK_CALLS_DIR"
 }

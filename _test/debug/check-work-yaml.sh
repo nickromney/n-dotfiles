@@ -26,7 +26,7 @@ check_setting() {
     local name="$1"
     local yaml_value="$2"
     local actual_value="$3"
-    
+
     if [[ "$yaml_value" == "$actual_value" ]]; then
         echo "✓ $name: $yaml_value (matches)"
     else

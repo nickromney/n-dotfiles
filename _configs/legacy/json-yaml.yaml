@@ -66,4 +66,3 @@ tools:
     description: "Linter for YAML files"
     documentation_url: "https://yamllint.readthedocs.io/"
     category: "json-yaml"
-

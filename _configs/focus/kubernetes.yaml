@@ -7,7 +7,7 @@ tools:
     description: "Kubernetes package manager"
     documentation_url: "https://helm.sh/"
     category: kubernetes
-  
+
   k9s:
     manager: brew
     type: package
@@ -15,7 +15,7 @@ tools:
     description: "Terminal UI for Kubernetes"
     documentation_url: "https://k9scli.io/"
     category: kubernetes
-  
+
   kubectl:
     manager: brew
     type: package

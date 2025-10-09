@@ -24,7 +24,7 @@ check_yaml() {
       ((failed++))
     fi
   done < <(find "$CONFIG_DIR" -name "*.yaml" -type f)
-  
+
   [ "$failed" -eq 0 ]
 }
 
@@ -67,7 +67,7 @@ check_yaml() {
   # Check that noahgorstein/tap exists
   run grep -q "noahgorstein/tap:" "$CONFIG_DIR/shared/data-tools.yaml"
   [ "$status" -eq 0 ]
-  
+
   # Check that jqp has install_args
   run grep -A5 "jqp:" "$CONFIG_DIR/shared/data-tools.yaml"
   [ "$status" -eq 0 ]
@@ -89,32 +89,32 @@ check_yaml() {
   local failed=0
   local yaml_files
   yaml_files=$(find "$CONFIG_DIR" -name "*.yaml" -type f)
-  
+
   for yaml_file in $yaml_files; do
     # Skip if no tools section
     if ! yq eval '.tools' "$yaml_file" >/dev/null 2>&1; then
       continue
     fi
-    
+
     # Check each tool has required fields
     local tools
     tools=$(yq eval '.tools | keys | .[]' "$yaml_file" 2>/dev/null || true)
-    
+
     while IFS= read -r tool; do
       [[ -z "$tool" ]] && continue
-      
+
       # Check for manager
       if ! yq eval ".tools.\"$tool\".manager" "$yaml_file" >/dev/null 2>&1; then
         echo "Missing manager for $tool in $yaml_file"
         ((failed++))
       fi
-      
+
       # Check for type
       if ! yq eval ".tools.\"$tool\".type" "$yaml_file" >/dev/null 2>&1; then
         echo "Missing type for $tool in $yaml_file"
         ((failed++))
       fi
-      
+
       # Check for check_command
       if ! yq eval ".tools.\"$tool\".check_command" "$yaml_file" >/dev/null 2>&1; then
         echo "Missing check_command for $tool in $yaml_file"
@@ -122,6 +122,6 @@ check_yaml() {
       fi
     done <<< "$tools"
   done
-  
+
   [ "$failed" -eq 0 ]
 }

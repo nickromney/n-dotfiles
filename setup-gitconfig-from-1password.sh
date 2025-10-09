@@ -86,29 +86,29 @@ if [ "$DRY_RUN" = true ]; then
   echo "Git Config Dry Run - Checking 1Password"
   echo "========================================="
   echo
-  
+
   info "Checking for Git configuration items in 1Password..."
-  
+
   available_items=()
   missing_items=()
-  
+
   for config_mapping in "${GIT_CONFIGS[@]}"; do
     IFS=':' read -r op_name local_name <<<"$config_mapping"
-    
+
     if op item get "$op_name" --vault="$VAULT" >/dev/null 2>&1; then
       available_items+=("$op_name → $local_name")
     else
       missing_items+=("$op_name → $local_name")
     fi
   done
-  
+
   if [ ${#available_items[@]} -gt 0 ]; then
     success "Found in 1Password:"
     for item in "${available_items[@]}"; do
       echo "  ✓ $item"
     done
   fi
-  
+
   if [ ${#missing_items[@]} -gt 0 ]; then
     echo
     warning "Not found in 1Password:"
@@ -123,13 +123,13 @@ if [ "$DRY_RUN" = true ]; then
     echo "  4. Paste your Git config content in the notes field"
     echo "  5. Save in the '$VAULT' vault"
   fi
-  
+
   # Check includeIf directive
   echo
   info "Checking main .gitconfig for includeIf directive..."
   GITCONFIG="$HOME/.gitconfig"
   INCLUDE_PATTERN='includeIf "gitdir:~/Developer/work/"'
-  
+
   if [ -f "$GITCONFIG" ]; then
     if grep -q "$INCLUDE_PATTERN" "$GITCONFIG"; then
       success "Found includeIf directive in .gitconfig"
@@ -140,7 +140,7 @@ if [ "$DRY_RUN" = true ]; then
   else
     warning "Main .gitconfig not found at $GITCONFIG"
   fi
-  
+
   echo
   success "Dry run complete! No files were modified."
   echo "Run without --dry-run to actually download and apply configurations."

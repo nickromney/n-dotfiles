@@ -5,7 +5,7 @@ load helpers/mocks
 # Setup and teardown
 setup() {
   setup_mocks
-  
+
   # Set up test environment
   export CONFIG_DIR="_configs"
   export CONFIG_FILES=("test")
@@ -15,13 +15,13 @@ setup() {
   export FORCE="false"
   export UPDATE="false"
   export CONFIG_FILES_SET_VIA_CLI="false"
-  
+
   # Change to the script directory to ensure relative paths work
   cd "$BATS_TEST_DIRNAME/.."
-  
+
   # Save the original type builtin
   # Note: We can't actually save builtins, but we can override them
-  
+
   # Source the install script functions only (not main)
   set +e  # Temporarily disable errexit
   # shellcheck source=/dev/null
@@ -36,7 +36,7 @@ teardown() {
 # Tests for command_exists function
 @test "command_exists returns success for existing command" {
   mock_command "test-cmd"
-  
+
   run command_exists "test-cmd"
   [ "$status" -eq 0 ]
 }
@@ -50,7 +50,7 @@ teardown() {
 @test "check_requirements succeeds when all required commands exist" {
   mock_command "yq"
   mock_command "which"
-  
+
   run check_requirements
   [ "$status" -eq 0 ]
 }
@@ -63,7 +63,7 @@ teardown() {
     return 1
   }
   export -f command_exists
-  
+
   run check_requirements
   [ "$status" -eq 1 ]
   [[ "$output" =~ "Missing required commands: yq" ]]
@@ -77,7 +77,7 @@ teardown() {
     return 1
   }
   export -f command_exists
-  
+
   run check_requirements
   [ "$status" -eq 1 ]
   [[ "$output" =~ "Missing required commands: which" ]]
@@ -89,7 +89,7 @@ teardown() {
     return 1
   }
   export -f command_exists
-  
+
   run check_requirements
   [ "$status" -eq 1 ]
   [[ "$output" =~ "Missing required commands: yq which" ]]
@@ -110,10 +110,10 @@ case "$*" in
 esac
 EOF
   chmod +x "$MOCK_BIN_DIR/yq"
-  
+
   run get_available_managers "test.yaml"
   [ "$status" -eq 0 ]
-  
+
   # Check if brew is actually available on the system
   if command_exists brew; then
     [[ "$output" =~ "Available package managers: brew" ]]
@@ -136,17 +136,17 @@ case "$*" in
 esac
 EOF
   chmod +x "$MOCK_BIN_DIR/yq"
-  
+
   # Mock mas command
   if ! command -v mas >/dev/null 2>&1; then
     echo '#!/usr/bin/env bash
 echo "mas version 1.8.6"' > "$MOCK_BIN_DIR/mas"
     chmod +x "$MOCK_BIN_DIR/mas"
   fi
-  
+
   run get_available_managers "test.yaml"
   [ "$status" -eq 0 ]
-  
+
   # Check if mas is available
   if command_exists mas; then
     [[ "$output" =~ "Available package managers: mas" ]]
@@ -171,10 +171,10 @@ case "$*" in
 esac
 EOF
   chmod +x "$MOCK_BIN_DIR/yq"
-  
+
   run get_available_managers "test.yaml"
   [ "$status" -eq 0 ]
-  
+
   # Should show some managers as available based on what's actually installed
   [[ "$output" =~ "Available package managers:" ]] || [[ "$output" =~ "Unavailable package managers:" ]]
 }
@@ -196,11 +196,11 @@ case "$*" in
 esac
 EOF
   chmod +x "$MOCK_BIN_DIR/yq"
-  
+
   # Make sure required commands exist for check_requirements
   mock_command "which"
   mock_id 1000  # Mock id to return non-root
-  
+
   # Override command_exists to ensure consistent behavior
   command_exists() {
     case "$1" in
@@ -210,19 +210,19 @@ EOF
     esac
   }
   export -f command_exists
-  
+
   run get_available_managers "test.yaml"
   [ "$status" -eq 0 ]
-  
+
   # Should report at least one unavailable manager
   [[ "$output" =~ "Unavailable package managers:" ]]
-  
+
   # Check for specific messages based on platform
   if [[ "$(uname)" == "Darwin" ]]; then
     # On macOS, apt should be unavailable
     [[ "$output" =~ "apt: apt-get is not available on this system" ]]
   fi
-  
+
   # fakemgr should always be reported as unknown
   [[ "$output" =~ "unknown package manager: fakemgr" ]]
 }
@@ -246,10 +246,10 @@ case "$*" in
 esac
 EOF
   chmod +x "$MOCK_BIN_DIR/yq"
-  
+
   # Mock brew as available
   mock_command "brew"
-  
+
   run get_available_managers "test.yaml"
   [ "$status" -eq 0 ]
   # Check that brew is listed as available (might be with other managers)
@@ -262,7 +262,7 @@ EOF
   if [[ "$(uname)" != "Linux" ]]; then
     skip "apt test only relevant on Linux"
   fi
-  
+
   # Mock yq to include apt as a manager
   cat > "$MOCK_BIN_DIR/yq" << 'EOF'
 #!/usr/bin/env bash
@@ -276,13 +276,13 @@ case "$*" in
 esac
 EOF
   chmod +x "$MOCK_BIN_DIR/yq"
-  
+
   # Mock id to return non-root
   mock_id 1000
-  
+
   run get_available_managers "test.yaml"
   [ "$status" -eq 0 ]
-  
+
   # On Linux with apt-get available but not root, should show permission message
   if command_exists apt-get; then
     [[ "$output" =~ "apt: requires root privileges - please run with sudo" ]]
@@ -295,7 +295,7 @@ EOF
   mock_yq
   mock_command "apt-get"
   mock_id 0
-  
+
   run get_available_managers "test.yaml"
   [ "$status" -eq 0 ]
   [[ "${lines[0]}" =~ "Available package managers:" ]] && [[ "${lines[0]}" =~ "apt" ]]
@@ -305,21 +305,21 @@ EOF
 @test "is_tool_installed returns success when tool is installed" {
   mock_yq
   mock_command "tool1" 0
-  
+
   run is_tool_installed "tool1" "test.yaml"
   [ "$status" -eq 0 ]
 }
 
 @test "is_tool_installed returns failure when tool is not installed" {
   mock_yq
-  
+
   run is_tool_installed "tool2" "test.yaml"
   [ "$status" -eq 1 ]
 }
 
 @test "is_tool_installed handles tools with no check command" {
   mock_yq
-  
+
   run is_tool_installed "special-tool" "test.yaml"
   [ "$status" -eq 1 ]
   [[ "$output" =~ "no check command specified" ]]
@@ -329,7 +329,7 @@ EOF
 @test "can_install_tool returns success when manager is available" {
   mock_yq
   AVAILABLE_MANAGERS=("brew" "arkade")
-  
+
   run can_install_tool "tool1" "test.yaml"
   [ "$status" -eq 0 ]
 }
@@ -338,7 +338,7 @@ EOF
   mock_yq
   # shellcheck disable=SC2034  # Used by can_install_tool function
   AVAILABLE_MANAGERS=("arkade")
-  
+
   run can_install_tool "tool1" "test.yaml"
   [ "$status" -eq 1 ]
 }
@@ -347,7 +347,7 @@ EOF
 @test "install_tool installs brew package" {
   mock_yq
   mock_brew
-  
+
   run install_tool "jq" "test.yaml"
   [ "$status" -eq 0 ]
   assert_mock_called "brew" "install jq"
@@ -356,7 +356,7 @@ EOF
 @test "install_tool installs brew cask" {
   mock_yq
   mock_brew
-  
+
   run install_tool "docker" "test.yaml"
   [ "$status" -eq 0 ]
   assert_mock_called "brew" "install --cask docker"
@@ -365,7 +365,7 @@ EOF
 @test "install_tool installs brew tap" {
   mock_yq
   mock_brew
-  
+
   run install_tool "homebrew/cask-fonts" "test.yaml"
   [ "$status" -eq 0 ]
   assert_mock_called "brew" "tap homebrew/cask-fonts"
@@ -375,7 +375,7 @@ EOF
 @test "install_tool installs arkade get tool" {
   mock_yq
   mock_arkade
-  
+
   run install_tool "kubectl" "test.yaml"
   [ "$status" -eq 0 ]
   assert_mock_called "arkade" "get kubectl"
@@ -384,7 +384,7 @@ EOF
 @test "install_tool installs arkade system tool" {
   mock_yq
   mock_arkade
-  
+
   run install_tool "prometheus" "test.yaml"
   [ "$status" -eq 0 ]
   assert_mock_called "arkade" "system install prometheus"
@@ -393,7 +393,7 @@ EOF
 @test "install_tool installs arkade app" {
   mock_yq
   mock_arkade
-  
+
   run install_tool "openfaas" "test.yaml"
   [ "$status" -eq 0 ]
   assert_mock_called "arkade" "install openfaas --namespace openfaas"
@@ -403,7 +403,7 @@ EOF
 @test "install_tool installs cargo binary" {
   mock_yq
   mock_cargo
-  
+
   run install_tool "ripgrep" "test.yaml"
   [ "$status" -eq 0 ]
   assert_mock_called "cargo" "install ripgrep"
@@ -412,7 +412,7 @@ EOF
 @test "install_tool installs cargo git package" {
   mock_yq
   mock_cargo
-  
+
   run install_tool "zoxide" "test.yaml"
   [ "$status" -eq 0 ]
   assert_mock_called "cargo" "install --git https://github.com/ajeetdsouza/zoxide zoxide"
@@ -422,7 +422,7 @@ EOF
 @test "install_tool installs uv tool" {
   mock_yq
   mock_uv
-  
+
   run install_tool "ruff" "test.yaml"
   [ "$status" -eq 0 ]
   assert_mock_called "uv" "tool install ruff"
@@ -432,7 +432,7 @@ EOF
 @test "install_tool installs mas app" {
   mock_yq
   mock_mas
-  
+
   # Override yq for this test to include app_id
   yq() {
     case "$*" in
@@ -444,7 +444,7 @@ EOF
     esac
   }
   export -f yq
-  
+
   run install_tool "things" "test.yaml"
   [ "$status" -eq 0 ]
   assert_mock_called "mas" "install 904280696"
@@ -452,7 +452,7 @@ EOF
 
 @test "install_tool fails when mas app_id is missing" {
   mock_yq
-  
+
   # Override yq for this test without app_id
   yq() {
     case "$*" in
@@ -463,7 +463,7 @@ EOF
     esac
   }
   export -f yq
-  
+
   run install_tool "paste" "test.yaml"
   [ "$status" -eq 1 ]
   [[ "$output" =~ "No app_id specified" ]]
@@ -471,7 +471,7 @@ EOF
 
 @test "install_tool skips unknown mas type" {
   mock_yq
-  
+
   # Override yq for this test with unknown type
   yq() {
     case "$*" in
@@ -481,7 +481,7 @@ EOF
     esac
   }
   export -f yq
-  
+
   run install_tool "tool1" "test.yaml"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "unknown mas type" ]]
@@ -491,7 +491,7 @@ EOF
 @test "install_tool installs apt package" {
   mock_yq
   mock_apt_get
-  
+
   run install_tool "curl" "test.yaml"
   [ "$status" -eq 0 ]
   assert_mock_called "apt-get" "update -qq"
@@ -504,7 +504,7 @@ EOF
   mock_brew
   # shellcheck disable=SC2030  # DRY_RUN modification is intentional in test
   export DRY_RUN="true"
-  
+
   run install_tool "jq" "test.yaml"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "Would execute: brew install" ]] && [[ "$output" =~ "jq" ]]
@@ -519,7 +519,7 @@ EOF
     return 1
   }
   export -f command_exists
-  
+
   run run_stow
   [ "$status" -eq 1 ]
   [[ "$output" =~ "stow is not installed" ]]
@@ -527,11 +527,11 @@ EOF
 
 @test "run_stow processes directories correctly" {
   mock_stow
-  
+
   # Create test directories
   mkdir -p "$BATS_TEST_DIRNAME/../zsh"
   mkdir -p "$BATS_TEST_DIRNAME/../git"
-  
+
   run run_stow
   [ "$status" -eq 0 ]
   assert_mock_called "stow"
@@ -541,9 +541,9 @@ EOF
   mock_stow
   # shellcheck disable=SC2030,SC2031  # DRY_RUN modification is intentional in test
   export DRY_RUN="true"
-  
+
   mkdir -p "$BATS_TEST_DIRNAME/../zsh"
-  
+
   run run_stow
   [ "$status" -eq 0 ]
   assert_mock_called "stow" "--no"
@@ -552,9 +552,9 @@ EOF
 @test "run_stow respects force mode" {
   mock_stow
   export FORCE="true"
-  
+
   mkdir -p "$BATS_TEST_DIRNAME/../zsh"
-  
+
   run run_stow
   [ "$status" -eq 0 ]
   assert_mock_called "stow" "--adopt"
@@ -563,14 +563,14 @@ EOF
 # Tests for is_root function
 @test "is_root returns true when uid is 0" {
   mock_id 0
-  
+
   run is_root
   [ "$status" -eq 0 ]
 }
 
 @test "is_root returns false when uid is not 0" {
   mock_id 1000
-  
+
   run is_root
   [ "$status" -eq 1 ]
 }
@@ -598,13 +598,13 @@ case "$*" in
 esac
 '
   mock_command "which"
-  
+
   # Create a test config file
   mkdir -p "$BATS_TEST_TMPDIR/_configs"
   touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
   export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
   export CONFIG_FILES=("test")
-  
+
   # Override command_exists to simulate no managers available
   command_exists() {
     [[ "$1" == "yq" ]] && return 0
@@ -612,7 +612,7 @@ esac
     return 1
   }
   export -f command_exists
-  
+
   run main
   [ "$status" -eq 0 ]
   # The output should show unavailable managers since they don't exist
@@ -656,15 +656,15 @@ esac
 '
   mock_command "which"
   mock_brew
-  
+
   # Create a test config file
   mkdir -p "$BATS_TEST_TMPDIR/_configs"
   touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
   export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
   export CONFIG_FILES=("test")
-  
+
   # tool1 is not installed (not in our mock bin)
-  
+
   run main
   [ "$status" -eq 0 ]
   [[ "$output" =~ "Installing tool1" ]]
@@ -706,16 +706,16 @@ esac
 '
   mock_command "which"
   mock_brew
-  
+
   # Create a test config file
   mkdir -p "$BATS_TEST_TMPDIR/_configs"
   touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
   export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
   export CONFIG_FILES=("test")
-  
+
   # Mock tool1 as installed
   mock_command "tool1" 0
-  
+
   run main
   [ "$status" -eq 0 ]
   [[ "$output" =~ tool1\ \(brew\ package\)\ is\ already\ installed ]]
@@ -744,15 +744,15 @@ esac
   mock_brew
   mock_stow
   export STOW="true"
-  
+
   # Create a test config file
   mkdir -p "$BATS_TEST_TMPDIR/_configs"
   touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
   export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
   export CONFIG_FILES=("test")
-  
+
   mkdir -p "$BATS_TEST_DIRNAME/../zsh"
-  
+
   run main
   [ "$status" -eq 0 ]
   [[ "$output" =~ "Running stow" ]]
@@ -790,16 +790,16 @@ case "$*" in
 esac
 EOF
   chmod +x "$MOCK_BIN_DIR/yq"
-  
+
   mock_command "brew"
   mock_command "tool1"  # Mark tool1 as already installed
-  
+
   # Create a test config file
   mkdir -p "$BATS_TEST_TMPDIR/_configs"
   touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
   export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
   export CONFIG_FILES=("test")
-  
+
   # Create a smart 'which' mock that checks if commands exist in mock dir
   cat > "$MOCK_BIN_DIR/which" << 'EOF'
 #!/usr/bin/env bash
@@ -813,7 +813,7 @@ else
 fi
 EOF
   chmod +x "$MOCK_BIN_DIR/which"
-  
+
   run main
   [ "$status" -eq 0 ]
   [[ "$output" =~ "unknown package manager: foo" ]]
@@ -825,7 +825,7 @@ EOF
   echo '#!/usr/bin/env bash
 echo "code"' > "$MOCK_BIN_DIR/code"
   chmod +x "$MOCK_BIN_DIR/code"
-  
+
   run get_vscode_cli
   [ "$status" -eq 0 ]
   [ "$output" = "code" ]
@@ -833,12 +833,12 @@ echo "code"' > "$MOCK_BIN_DIR/code"
 
 @test "get_vscode_cli uses VSCODE_CLI environment variable" {
   export VSCODE_CLI="cursor"
-  
+
   # Mock cursor command
   echo '#!/usr/bin/env bash
 echo "cursor"' > "$MOCK_BIN_DIR/cursor"
   chmod +x "$MOCK_BIN_DIR/cursor"
-  
+
   run get_vscode_cli
   [ "$status" -eq 0 ]
   [ "$output" = "cursor" ]
@@ -846,7 +846,7 @@ echo "cursor"' > "$MOCK_BIN_DIR/cursor"
 
 @test "get_vscode_cli fails when specified CLI not found" {
   export VSCODE_CLI="nonexistent"
-  
+
   run get_vscode_cli
   [ "$status" -eq 1 ]
   [[ "$output" =~ "VSCode CLI 'nonexistent' not found" ]]
@@ -867,12 +867,12 @@ case "$*" in
 esac
 EOF
   chmod +x "$MOCK_BIN_DIR/yq"
-  
+
   # Mock code command
   echo '#!/usr/bin/env bash
 echo "code"' > "$MOCK_BIN_DIR/code"
   chmod +x "$MOCK_BIN_DIR/code"
-  
+
   run get_available_managers "test.yaml"
   [ "$status" -eq 0 ]
   # get_available_managers outputs to stdout, we need to check for "code" in output
@@ -881,12 +881,12 @@ echo "code"' > "$MOCK_BIN_DIR/code"
 
 @test "install_tool installs code extension" {
   mock_yq
-  
+
   # Mock code command
   echo '#!/usr/bin/env bash
 echo "Installing extension: $*"' > "$MOCK_BIN_DIR/code"
   chmod +x "$MOCK_BIN_DIR/code"
-  
+
   # Add extension_id to yq mock
   yq() {
     case "$*" in
@@ -898,7 +898,7 @@ echo "Installing extension: $*"' > "$MOCK_BIN_DIR/code"
     esac
   }
   export -f yq
-  
+
   run install_tool "tool1" "test.yaml"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "Installing extension: --install-extension esbenp.prettier-vscode" ]]
@@ -906,7 +906,7 @@ echo "Installing extension: $*"' > "$MOCK_BIN_DIR/code"
 
 @test "install_tool skips code extension without extension_id" {
   mock_yq
-  
+
   # Override yq for this test
   yq() {
     case "$*" in
@@ -917,7 +917,7 @@ echo "Installing extension: $*"' > "$MOCK_BIN_DIR/code"
     esac
   }
   export -f yq
-  
+
   run install_tool "tool1" "test.yaml"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "no extension_id specified" ]]
@@ -931,7 +931,7 @@ if [[ "$1" == "list" ]]; then
   echo "967805235    Paste                  (5.0.9)"
 fi' > "$MOCK_BIN_DIR/mas"
   chmod +x "$MOCK_BIN_DIR/mas"
-  
+
   # Mock yq
   yq() {
     case "$*" in
@@ -941,7 +941,7 @@ fi' > "$MOCK_BIN_DIR/mas"
     esac
   }
   export -f yq
-  
+
   run is_tool_installed "things" "test.yaml"
   [ "$status" -eq 0 ]
 }
@@ -953,7 +953,7 @@ if [[ "$1" == "list" ]]; then
   echo "967805235    Paste                  (5.0.9)"
 fi' > "$MOCK_BIN_DIR/mas"
   chmod +x "$MOCK_BIN_DIR/mas"
-  
+
   # Mock yq
   yq() {
     case "$*" in
@@ -963,21 +963,21 @@ fi' > "$MOCK_BIN_DIR/mas"
     esac
   }
   export -f yq
-  
+
   run is_tool_installed "things" "test.yaml"
   [ "$status" -eq 1 ]
 }
 
 @test "is_tool_installed substitutes VSCode CLI for code extensions" {
   export VSCODE_CLI="cursor"
-  
+
   # Mock cursor command
   echo '#!/usr/bin/env bash
 if [[ "$1" == "--list-extensions" ]]; then
   echo "esbenp.prettier-vscode"
 fi' > "$MOCK_BIN_DIR/cursor"
   chmod +x "$MOCK_BIN_DIR/cursor"
-  
+
   # Mock yq
   yq() {
     case "$*" in
@@ -987,7 +987,7 @@ fi' > "$MOCK_BIN_DIR/cursor"
     esac
   }
   export -f yq
-  
+
   run is_tool_installed "prettier-vscode" "test.yaml"
   [ "$status" -eq 0 ]
 }
@@ -1002,7 +1002,7 @@ package_managers:
     types:
       - package
 EOF
-  
+
   # Mock yq to handle the file
   mock_command_with_script "yq" '
 case "$*" in
@@ -1022,10 +1022,10 @@ esac
 '
   mock_command "which"
   mock_brew
-  
+
   export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
   export CONFIG_FILES=("empty")
-  
+
   run main
   [ "$status" -eq 0 ]
   [[ "$output" =~ "Processing: $BATS_TEST_TMPDIR/_configs/empty.yaml" ]]

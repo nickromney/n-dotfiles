@@ -19,6 +19,27 @@ This is a personal dotfiles repository designed for cross-platform configuration
 
 ## Key Commands
 
+### Quick Start (Recommended)
+
+```bash
+# Fresh macOS installation (installs Homebrew, yq, stow)
+./bootstrap.sh
+
+# Personal Mac full setup (packages + macOS settings + stow + SSH)
+./setup-personal-mac.sh
+
+# Work Mac full setup
+./setup-work-mac.sh
+
+# Using Makefile (most convenient)
+make common install          # Install common tools only
+make personal stow           # Personal setup + stow configurations
+make focus-vscode            # Install VSCode + 38 extensions
+VSCODE_CLI=cursor make focus-vscode  # Install extensions for Cursor
+```
+
+### Direct install.sh Usage
+
 ```bash
 # Install packages and stow configurations
 ./install.sh -s
@@ -29,11 +50,17 @@ This is a personal dotfiles repository designed for cross-platform configuration
 # Force mode (adopt existing files during stow)
 ./install.sh -s -f
 
+# Update existing packages
+./install.sh -u
+
 # Verbose output
 ./install.sh -v
 
 # Install only (no stowing)
 ./install.sh
+
+# Install specific configuration sets
+CONFIG_FILES="shared/shell shared/git" ./install.sh
 ```
 
 ## Architecture
@@ -48,9 +75,26 @@ This is a personal dotfiles repository designed for cross-platform configuration
 
 ### Configuration Structure
 
-- Each application has its own directory (e.g., `zsh/`, `git/`, `nvim/`)
+The repository uses a layered configuration approach:
+
+- **`_configs/shared/`** - Cross-platform tools (shell, git, search, file-tools, data-tools, network, neovim)
+- **`_configs/host/`** - Host-specific configurations (common, personal, work, manual-check)
+- **`_configs/focus/`** - Development focus areas (vscode, python, rust, typescript, kubernetes, ai, etc.)
+- **Stow directories** - Each application has its own directory (e.g., `zsh/`, `git/`, `nvim/`)
 - GNU Stow symlinks these directories to `$HOME`
 - Configurations dynamically check for installed tools before loading features
+
+### Makefile Configuration Sets
+
+The Makefile defines convenient configuration combinations:
+
+```makefile
+SHARED_CONFIGS = shared/shell shared/git shared/search shared/file-tools shared/data-tools shared/network shared/neovim
+COMMON_CONFIGS = $(SHARED_CONFIGS) + host/common
+PERSONAL_CONFIGS = $(SHARED_CONFIGS) + host/common + host/personal + host/manual-check + focus/vscode
+```
+
+This allows simple commands like `make personal stow` to install entire configuration sets.
 
 ### Package Manager Priority
 
@@ -59,6 +103,8 @@ This is a personal dotfiles repository designed for cross-platform configuration
 3. **uv** - Python tools
 4. **cargo** - Rust binaries
 5. **apt** - Ubuntu/Debian systems
+6. **code** - VSCode extensions (supports `code`, `cursor`, `vscodium` via `VSCODE_CLI` env var)
+7. **mas** - Mac App Store applications (requires signing into App Store first)
 
 ### Configuration Files
 
@@ -144,17 +190,43 @@ The script searches for configuration files in this order:
 
 ### Running Tests
 
-The repository includes a comprehensive BATS test suite for `install.sh`:
+The repository includes comprehensive BATS test suites:
 
 ```bash
 # Run all tests
 ./_test/run_tests.sh
 
-# Run specific tests
+# Run specific test suites
+./_test/run_install_tests.sh        # install.sh tests only
+./_test/run_macos_tests.sh          # macOS configuration tests only
+
+# Run specific test file
+cd _test && bats install.bats
+cd _test && bats macos.bats
+cd _test && bats makefile.bats
+cd _test && bats 1password.bats
+cd _test && bats bootstrap.bats
+
+# Run with filter for specific test
 cd _test && bats install.bats --filter "command_exists"
+cd _test && bats macos.bats --filter "dock app management"
+
+# Shellcheck all scripts
+./_test/shellcheck.sh
 ```
 
-The test suite uses mocking to simulate all external commands (brew, apt, cargo, etc.) without requiring actual installations.
+Test coverage includes:
+
+- **install.bats** - Core installation script functions and package manager handling
+- **macos.bats** - macOS system configuration and dock management
+- **makefile.bats** - Makefile target execution
+- **1password.bats** - 1Password SSH and Git config integration
+- **bootstrap.bats** - Fresh installation bootstrap process
+- **configs.bats** - YAML configuration validation
+- **manual.bats** - Manual installation checking
+- **mas.bats** - Mac App Store integration
+
+The test suite uses mocking to simulate all external commands (brew, apt, cargo, defaults, etc.) without requiring actual installations.
 
 ## Implementation Details
 
@@ -317,3 +389,96 @@ Key testing patterns:
 3. **Script exits unexpectedly**
    - Check for arithmetic operations without `|| true`
    - Ensure all `grep` commands that might not match use `|| echo ""`
+
+## 1Password Integration
+
+The repository includes secure credential and configuration management via 1Password CLI.
+
+### SSH Configuration Management
+
+```bash
+# Safe mode (default) - downloads SSH config + public keys only
+# Private keys remain in 1Password, uses 1Password SSH Agent
+./setup-ssh-from-1password.sh
+
+# Dry run to check what's available
+./setup-ssh-from-1password.sh --dry-run
+
+# Unsafe mode - downloads private keys (requires confirmation)
+# Only use when 1Password SSH Agent isn't available
+./setup-ssh-from-1password.sh --unsafe
+```
+
+**Security Model:**
+
+- Default mode never downloads private keys to disk
+- Uses 1Password SSH Agent for authentication
+- Only downloads SSH config and public keys for reference
+- Unsafe mode should only be used in restricted environments
+
+### Git Configuration Management
+
+```bash
+# Download work-specific Git config from 1Password
+./setup-gitconfig-from-1password.sh
+
+# Dry run to check availability
+./setup-gitconfig-from-1password.sh --dry-run
+```
+
+This allows storing work-specific Git configuration (email, GitHub Enterprise URLs) in 1Password and automatically applying it to `~/Developer/work/.gitconfig_include`.
+
+### 1Password Item Naming Convention
+
+The scripts expect specific item names in 1Password:
+
+- **SSH Keys:** `github_personal_authentication`, `github_personal_signing`, `aws_work_2024_client_1`, etc.
+- **SSH Config:** Secure Note named `SSH Config`
+- **Git Config:** Secure Note named `work .gitconfig_include`
+- **AWS Credentials:** API Credential items mapped in `aws/.aws/aws-1password` script
+
+See README.md "Setting Up 1Password Items" section for detailed setup instructions.
+
+## Complete Setup Workflows
+
+### Fresh Personal Mac
+
+```bash
+# 1. Bootstrap (installs Homebrew, yq, stow)
+./bootstrap.sh
+
+# 2. Full personal setup (or run ./setup-personal-mac.sh for all at once)
+make personal install
+
+# 3. Apply macOS settings
+./_macos/macos.sh personal.yaml
+
+# 4. Stow configurations
+make personal stow
+
+# 5. Set up SSH from 1Password (requires 1Password CLI)
+./setup-ssh-from-1password.sh
+```
+
+### Fresh Work Mac
+
+```bash
+# Complete work setup (includes SSH and Git config from 1Password)
+./setup-work-mac.sh
+```
+
+### Adding New Tools
+
+```bash
+# 1. Edit appropriate YAML in _configs/
+vim _configs/shared/shell.yaml
+
+# 2. Preview changes
+./install.sh -d
+
+# 3. Install
+./install.sh
+
+# 4. Test
+cd _test && bats install.bats
+```

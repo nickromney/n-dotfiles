@@ -42,14 +42,6 @@ tools:
     documentation_url: "https://github.com/FelixKratz/JankyBorders"
     category: window-manager
 
-  docker:
-    manager: brew
-    type: cask
-    check_command: command -v docker
-    description: "Container platform"
-    documentation_url: "https://www.docker.com/"
-    category: containers
-
   FelixKratz/formulae/borders:
     manager: brew
     type: tap

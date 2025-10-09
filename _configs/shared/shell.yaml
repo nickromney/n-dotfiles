@@ -7,7 +7,7 @@ tools:
     description: "A modern shell written in Rust"
     documentation_url: "https://www.nushell.sh/"
     category: shell
-  
+
   nvm:
     manager: brew
     type: package
@@ -15,7 +15,7 @@ tools:
     description: "Node Version Manager - manage multiple Node.js versions (run 'nvm install --lts' after installation)"
     documentation_url: "https://github.com/nvm-sh/nvm"
     category: shell
-  
+
   starship:
     manager: brew
     type: package
@@ -23,7 +23,7 @@ tools:
     description: "Cross-shell prompt for astronauts"
     documentation_url: "https://starship.rs/"
     category: shell
-  
+
   zoxide:
     manager: brew
     type: package
@@ -31,7 +31,7 @@ tools:
     description: "Smarter cd command"
     documentation_url: "https://github.com/ajeetdsouza/zoxide"
     category: shell
-  
+
   zsh-autosuggestions:
     manager: brew
     type: package
@@ -39,7 +39,7 @@ tools:
     description: "Fish-like autosuggestions for zsh"
     documentation_url: "https://github.com/zsh-users/zsh-autosuggestions"
     category: shell
-  
+
   zsh-completions:
     manager: brew
     type: package
@@ -47,7 +47,7 @@ tools:
     description: "Additional completion definitions for zsh"
     documentation_url: "https://github.com/zsh-users/zsh-completions"
     category: shell
-  
+
   zsh-syntax-highlighting:
     manager: brew
     type: package

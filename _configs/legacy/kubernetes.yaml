@@ -38,4 +38,3 @@ tools:
     description: "Kubernetes CLI to manage your clusters in style"
     documentation_url: "https://k9scli.io/"
     category: "kubernetes"
-

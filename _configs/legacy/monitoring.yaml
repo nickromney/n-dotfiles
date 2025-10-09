@@ -28,4 +28,3 @@ tools:
     description: "NCurses Disk Usage - disk usage analyzer"
     documentation_url: "https://dev.yorhel.nl/ncdu"
     category: "monitoring"
-

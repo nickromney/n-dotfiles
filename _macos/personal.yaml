@@ -136,7 +136,7 @@ displays:
     - "PL2792Q"         # Primary external monitor
     - "DELL U2412M"     # Secondary external monitor
     - "Built-in Display" # Laptop screen (fallback)
-  
+
   # Mirror configuration - when both external monitors are connected,
   # mirror the built-in display to the main display
   mirror_builtin_when_both_external_connected: true

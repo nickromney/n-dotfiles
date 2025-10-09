@@ -29,6 +29,7 @@ Create the following entries in your 1Password CLI vault:
 ## Configuration Setup
 
 1. Copy the example configuration:
+
    ```bash
    cp config.example config
    ```
@@ -36,6 +37,7 @@ Create the following entries in your 1Password CLI vault:
 2. Update the account ID in `role_arn` (replace `123456789` with your actual AWS account ID)
 
 3. Ensure the helper script is executable:
+
    ```bash
    chmod +x aws-1password
    ```
@@ -43,11 +45,13 @@ Create the following entries in your 1Password CLI vault:
 ## How credential_process Works
 
 Each profile in `config` includes:
+
 ```ini
 credential_process = /Users/[username]/.aws/aws-1password --username [profile]
 ```
 
 When you run an AWS command, the CLI:
+
 1. Calls `aws-1password` with the specified username
 2. The script maps the username to a 1Password entry
 3. Fetches credentials from 1Password using `op`

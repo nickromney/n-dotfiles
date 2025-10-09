@@ -7,7 +7,7 @@ tools:
     description: "Simple, fast and user-friendly alternative to find"
     documentation_url: "https://github.com/sharkdp/fd"
     category: search
-  
+
   fzf:
     manager: brew
     type: package
@@ -15,7 +15,7 @@ tools:
     description: "Command-line fuzzy finder"
     documentation_url: "https://github.com/junegunn/fzf"
     category: search
-  
+
   ripgrep:
     manager: brew
     type: package
@@ -23,7 +23,7 @@ tools:
     description: "Recursively search directories for regex patterns"
     documentation_url: "https://github.com/BurntSushi/ripgrep"
     category: search
-  
+
   the_silver_searcher:
     manager: brew
     type: package

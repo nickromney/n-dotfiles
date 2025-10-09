@@ -29,7 +29,7 @@ any_failed=false
 check_file() {
     local file="$1"
     local name="$2"
-    
+
     echo -e "${YELLOW}Checking $name...${NC}"
     if shellcheck "$file" 2>&1 | tee /tmp/shellcheck_output.txt; then
         echo -e "  ${GREEN}✓ No issues found${NC}"
@@ -40,7 +40,7 @@ check_file() {
         error_count=$(grep -c "error" /tmp/shellcheck_output.txt || true)
         warning_count=$(grep -c "warning" /tmp/shellcheck_output.txt || true)
         info_count=$(grep -c "info" /tmp/shellcheck_output.txt || true)
-        
+
         if [[ $error_count -gt 0 ]]; then
             echo -e "  ${RED}✗ Found $error_count errors${NC}"
             any_failed=true

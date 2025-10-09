@@ -56,4 +56,3 @@ tools:
     description: "Fuzzy finder in rust (skim)"
     documentation_url: "https://github.com/lotabout/skim"
     category: "search"
-

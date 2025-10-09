@@ -7,7 +7,7 @@ tools:
     description: "Modern command-line HTTP client"
     documentation_url: "https://httpie.io/"
     category: network
-  
+
   openssh:
     manager: brew
     type: package
@@ -15,7 +15,7 @@ tools:
     description: "OpenSSH connectivity tools"
     documentation_url: "https://www.openssh.com/"
     category: network
-  
+
   wget:
     manager: brew
     type: package

@@ -7,7 +7,7 @@ tools:
     description: "Cat clone with syntax highlighting"
     documentation_url: "https://github.com/sharkdp/bat"
     category: file-tools
-  
+
   eza:
     manager: brew
     type: package
@@ -15,7 +15,7 @@ tools:
     description: "Modern replacement for ls"
     documentation_url: "https://github.com/eza-community/eza"
     category: file-tools
-  
+
   ranger:
     manager: brew
     type: package

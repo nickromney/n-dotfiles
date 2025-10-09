@@ -1,5 +1,5 @@
 # Container runtime and management tools
-# Docker, Podman, and container management utilities
+# Podman and container management utilities
 
 package_managers:
   brew:
@@ -75,25 +75,25 @@ tools:
     category: "containers"
 
   # Container Management Tools
-  lazydocker:
-    manager: brew
-    type: package
-    check_command: "lazydocker --version"
-    install_args: []
-    description: "Terminal UI for Docker and docker-compose"
-    documentation_url: "https://github.com/jesseduffield/lazydocker"
-    category: "containers"
+  # lazydocker:
+  #   manager: brew
+  #   type: package
+  #   check_command: "lazydocker --version"
+  #   install_args: []
+  #   description: "Terminal UI for Docker and docker-compose"
+  #   documentation_url: "https://github.com/jesseduffield/lazydocker"
+  #   category: "containers"
 
 
   # Container Registry Tools
-  docker-credential-helper:
-    manager: brew
-    type: package
-    check_command: "docker-credential-osxkeychain version"
-    install_args: []
-    description: "Docker credential helper for macOS keychain"
-    documentation_url: "https://github.com/docker/docker-credential-helpers"
-    category: "containers"
+  # docker-credential-helper:
+  #   manager: brew
+  #   type: package
+  #   check_command: "docker-credential-osxkeychain version"
+  #   install_args: []
+  #   description: "Docker credential helper for macOS keychain"
+  #   documentation_url: "https://github.com/docker/docker-credential-helpers"
+  #   category: "containers"
 
   # # Container Build Tools
   # buildx:
@@ -104,4 +104,3 @@ tools:
   #   description: "Docker CLI plugin for extended build capabilities"
   #   documentation_url: "https://github.com/docker/buildx"
   #   category: "containers"
-

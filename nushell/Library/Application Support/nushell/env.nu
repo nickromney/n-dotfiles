@@ -12,7 +12,7 @@ $env.HISTFILE = $"($env.HOME)/.zsh_history"  # Keep compatibility with zsh histo
 $env.PATH = ($env.PATH | split row (char esep) | prepend [
     "/opt/homebrew/bin"  # Add homebrew first for macOS
     $"($env.HOME)/.local/bin"
-    $"($env.HOME)/.arkade/bin" 
+    $"($env.HOME)/.arkade/bin"
     $"($env.HOME)/.cargo/bin"
     $"($env.HOME)/.tfenv/bin"
     "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"  # VSCode CLI
@@ -23,7 +23,7 @@ let zscaler_cert_dir = $"($env.HOME)/.zscalerCerts"
 if ($zscaler_cert_dir | path exists) {
     let zscaler_ca_bundle = $"($zscaler_cert_dir)/zscalerCAbundle.pem"
     let azure_ca_cert = $"($zscaler_cert_dir)/azure-cacert.pem"
-    
+
     if ($zscaler_ca_bundle | path exists) {
         $env.AWS_CA_BUNDLE = $zscaler_ca_bundle
         $env.CURL_CA_BUNDLE = $zscaler_ca_bundle
@@ -31,7 +31,7 @@ if ($zscaler_cert_dir | path exists) {
         $env.NODE_EXTRA_CA_CERTS = $zscaler_ca_bundle
         $env.SSL_CERT_FILE = $zscaler_ca_bundle
     }
-    
+
     if ($azure_ca_cert | path exists) {
         $env.REQUESTS_CA_BUNDLE = $azure_ca_cert
     }
@@ -46,13 +46,13 @@ if ((which op | length) > 0) {
         if ($op_socket_path | path exists) {
             # Create ~/.1password directory if needed
             mkdir $"($env.HOME)/.1password"
-            
+
             # Create symlink for easier access
             let symlink_path = $"($env.HOME)/.1password/agent.sock"
             if not ($symlink_path | path exists) {
                 ^ln -sf $op_socket_path $symlink_path
             }
-            
+
             $env.SSH_AUTH_SOCK = $symlink_path
         }
     } else {

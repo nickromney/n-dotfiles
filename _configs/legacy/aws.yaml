@@ -17,4 +17,3 @@ tools:
     description: "Official Amazon AWS command-line interface"
     documentation_url: "https://aws.amazon.com/cli/"
     category: "aws"
-
