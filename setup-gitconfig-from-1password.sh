@@ -67,6 +67,7 @@ if ! op account list >/dev/null 2>&1; then
 fi
 
 # Configuration
+readonly VAULT="${VAULT:-Private}" # Vault name is now configurable, defaults to "Private"
 readonly WORK_DIR="$HOME/Developer/work"
 readonly GIT_CONFIG_FILE="$WORK_DIR/.gitconfig_include"
 declare BACKUP_DIR

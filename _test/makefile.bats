@@ -30,15 +30,15 @@ teardown() {
 @test "make help displays usage information" {
   run make help
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "n-dotfiles Makefile wrapper for install.sh" ]]
-  [[ "$output" =~ "Usage: make" ]]
-  [[ "$output" =~ "Main targets:" ]]
+  [[ "$output" =~ "n-dotfiles" ]]
+  [[ "$output" =~ "Dotfile and Tool Management" ]]
+  [[ "$output" =~ "Main Configurations" ]]
   [[ "$output" =~ "common" ]]
   [[ "$output" =~ "personal" ]]
   [[ "$output" =~ "work" ]]
-  [[ "$output" =~ "Focus targets" ]]
+  [[ "$output" =~ "Focus Configurations" ]]
   [[ "$output" =~ "Actions" ]]
-  [[ "$output" =~ "Examples:" ]]
+  [[ "$output" =~ "Examples" ]]
 }
 
 @test "make common runs with correct configs" {
@@ -150,7 +150,8 @@ EOF
 @test "make default target shows help" {
   run make
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "n-dotfiles Makefile wrapper for install.sh" ]]
+  [[ "$output" =~ "n-dotfiles" ]]
+  [[ "$output" =~ "Dotfile and Tool Management" ]]
 }
 
 @test "make install alone does nothing" {
@@ -159,10 +160,10 @@ EOF
   [ -z "$output" ]  # Should have no output
 }
 
-@test "make update alone does nothing" {
+@test "make update runs update-all" {
   run make update
   [ "$status" -eq 0 ]
-  [ -z "$output" ]  # Should have no output
+  [[ "$output" =~ "Updating all package managers" ]]
 }
 
 @test "make stow alone does nothing" {
