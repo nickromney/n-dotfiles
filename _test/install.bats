@@ -292,6 +292,11 @@ EOF
 }
 
 @test "get_available_managers handles apt on root user" {
+  # Skip this test on non-Linux systems
+  if [[ "$(uname)" != "Linux" ]]; then
+    skip "apt test only relevant on Linux"
+  fi
+
   mock_yq
   mock_command "apt-get"
   mock_id 0

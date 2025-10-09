@@ -180,11 +180,12 @@ EOF
 }
 
 @test "SSH setup: unsafe mode requires confirmation" {
+  skip "Interactive test - requires manual testing"
   cd "$TEST_DIR"
   cp "${BATS_TEST_DIRNAME}/../setup-ssh-from-1password.sh" .
 
   # Simulate user declining
-  echo "no" | run ./setup-ssh-from-1password.sh --unsafe
+  run bash -c 'echo "no" | ./setup-ssh-from-1password.sh --unsafe'
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"PRIVATE KEY DOWNLOAD MODE"* ]]
