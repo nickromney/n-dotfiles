@@ -19,6 +19,7 @@ font-codepoint-map = U+E000-U+F8FF="JetBrainsMono Nerd Font"
 
 # Cursor
 cursor-style = block
+cursor-style-blink = false
 
 # Window
 window-padding-x = 10
@@ -41,6 +42,7 @@ macos-option-as-alt = true
 
 # Shell integration
 shell-integration = detect
+shell-integration-features = no-cursor
 
 # Use Nushell as the default shell
 command = /opt/homebrew/bin/nu
@@ -61,3 +63,12 @@ confirm-close-surface = true
 # quick-terminal-animation-duration = 0.2
 
 # Custom themes can be placed in ~/.config/ghostty/themes/
+
+# Keybindings
+# Shift+Enter for soft return (newline without submitting) - works with Claude Code
+keybind = shift+enter=text:\n
+
+# Tab navigation
+# Cmd+Shift+[ for previous tab, Cmd+Shift+] for next tab (macOS standard)
+keybind = cmd+shift+left_bracket=previous_tab
+keybind = cmd+shift+right_bracket=next_tab

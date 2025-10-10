@@ -16,7 +16,8 @@
       "Bash(yq eval:*)",
       "Bash(uv:*)",
       "Bash(./install.sh:*)",
-      "Bash(defaults read:*)"
+      "Bash(defaults read:*)",
+      "Bash(readlink:*)"
     ],
     "deny": [],
     "ask": []
