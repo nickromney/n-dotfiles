@@ -290,9 +290,9 @@ _configs/
 | **focus/container-base** | Focus | Podman and container tools | Container development |
 | **focus/kubernetes** | Focus | K8s tools (kubectl, k9s, helm) | Kubernetes management |
 | **focus/neovim** | Focus | Extended Neovim plugins | Advanced vim setup |
-| **focus/python** | Focus | Python dev tools (pyenv, poetry, ruff) | Python development |
+| **focus/python** | Focus | Python dev tools (uv, ruff) | Python development with Rust-based tooling |
 | **focus/rust** | Focus | Rust toolchain and utilities | Rust development |
-| **focus/typescript** | Focus | Node.js and TypeScript tools | JavaScript/TypeScript dev |
+| **focus/typescript** | Focus | Node.js, TypeScript, Biome | JavaScript/TypeScript dev with Rust-based linting |
 | **focus/vscode** | Focus | VSCode + 38 extensions | Full VSCode development |
 | **host/common** | Host | Common Mac apps (Ghostty, VSCode, Obsidian) | Standard Mac productivity |
 | **host/personal** | Host | Personal additions (games, media apps) | Personal Mac extras |

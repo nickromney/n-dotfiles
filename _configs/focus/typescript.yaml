@@ -23,3 +23,11 @@ tools:
     description: "TypeScript language"
     documentation_url: "https://www.typescriptlang.org/"
     category: javascript
+
+  "@biomejs/biome":
+    manager: brew
+    type: package
+    check_command: command -v biome
+    description: "Extremely fast JS/TS linter and formatter (Rust-based, 15x faster than ESLint)"
+    documentation_url: "https://biomejs.dev/"
+    category: javascript

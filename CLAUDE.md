@@ -159,6 +159,7 @@ The script searches for configuration files in this order:
 - **Cross-platform**: Works on macOS (primary) and Ubuntu
 - **No hard dependencies**: Gracefully skips unavailable package managers
 - **Modular**: Each tool/config can be managed independently
+- **Fix Properly, Never Suppress**: NEVER fix errors by suppressing warnings or error messages. Always fix the root cause. If something is broken, diagnose and repair it correctly, or remove the problematic component entirely if it cannot be fixed properly.
 
 ## Working with the Codebase
 
