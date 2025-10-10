@@ -24,7 +24,7 @@ else
   CONFIG_FILES=("host/common")
 fi
 REQUIRED_COMMANDS=("yq" "which")
-STOW_DIRS=(aerospace aws bat gh ghostty git kitty nushell nvim prettier starship tmux vscode zsh)
+STOW_DIRS=(aerospace aws bat claude gh ghostty git kitty nushell nvim prettier starship tmux vscode zsh)
 
 # Default values and argument parsing
 DRY_RUN="${DRY_RUN:-false}"
