@@ -15,7 +15,8 @@
       "Bash(make precommit:*)",
       "Bash(yq eval:*)",
       "Bash(uv:*)",
-      "Bash(./install.sh:*)"
+      "Bash(./install.sh:*)",
+      "Bash(defaults read:*)"
     ],
     "deny": [],
     "ask": []
