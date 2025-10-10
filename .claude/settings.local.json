@@ -1,12 +1,21 @@
 {
   "permissions": {
     "allow": [
-      "Bash(done)",
-      "Bash(do bats:*)",
-      "Bash(/Users/nickromney/Developer/personal/n-dotfiles/_test/run_tests.sh:*)",
-      "Bash(timeout:*)",
-      "Bash(for file in *.bats)",
-      "Bash(do echo \"=== $file ===\")"
+      "Bash(nvim:*)",
+      "Read(//private/tmp/**)",
+      "Read(//Users/nickromney/.local/share/nvim/lazy/**)",
+      "Bash(gem install:*)",
+      "WebSearch",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Read(//Users/nickromney/.config/github-copilot/**)",
+      "Read(//Users/nickromney/.config/nvim/**)",
+      "WebFetch(domain:github.com)",
+      "Bash(curl -s \"https://raw.githubusercontent.com/josean-dev/dev-environment-files/refs/heads/main/.config/nvim/lua/josean/plugins/lsp/lspconfig.lua\")",
+      "Bash(curl:*)",
+      "Bash(make precommit:*)",
+      "Bash(yq eval:*)",
+      "Bash(uv:*)",
+      "Bash(./install.sh:*)"
     ],
     "deny": [],
     "ask": []

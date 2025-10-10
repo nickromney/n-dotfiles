@@ -77,7 +77,36 @@ quick-terminal-animation-duration = 0.2
 
 Then bind a global hotkey to toggle it.
 
+## Clipboard Support
+
+Ghostty has built-in clipboard support with default macOS keybindings:
+
+- **Copy**: `Cmd+C` (super+c)
+- **Paste**: `Cmd+V` (super+v)
+- **Copy on select**: Enabled by default (configured as `copy-on-select = clipboard`)
+
+No additional keybinding configuration is needed.
+
+### Nushell Integration
+
+When using Nushell as the default shell (configured in this repo), bracketed paste mode is enabled by default in Nushell 0.107+. This means:
+
+- Multi-line pastes work correctly
+- Pasted content is properly escaped
+- No manual configuration needed in Nushell
+
+Nushell's `bracketed_paste` setting (found in `config.nu`) is `true` by default, which properly handles Ghostty's bracketed paste sequences.
+
+### Verifying Keybindings
+
+To see all active keybindings:
+
+```bash
+ghostty +list-keybinds
+```
+
 ## Resources
 
 - [Ghostty Documentation](https://ghostty.org/docs)
 - [Ghostty Themes](https://github.com/ghostty-org/ghostty-themes)
+- [Ghostty Keybinding Reference](https://ghostty.org/docs/config/keybind/reference)

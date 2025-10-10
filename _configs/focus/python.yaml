@@ -7,3 +7,11 @@ tools:
     description: "Fast Python package installer and resolver"
     documentation_url: "https://github.com/astral-sh/uv"
     category: python
+
+  ruff:
+    manager: uv
+    type: tool
+    check_command: command -v ruff
+    description: "Extremely fast Python linter and formatter (Rust-based, 10-100x faster than pylint/black)"
+    documentation_url: "https://docs.astral.sh/ruff/"
+    category: python
