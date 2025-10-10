@@ -2,15 +2,12 @@
 # A modern, GPU-accelerated terminal emulator
 
 # Font configuration
-# Match VSCode font preferences
-font-family = "JetBrains Mono"
+# Match VSCode font preferences: JetBrainsMono Nerd Font → Fira Code → Consolas
 font-family = "JetBrainsMono Nerd Font"
 font-family = "Fira Code"
 font-family = Consolas
-font-family = "Courier New"
-font-family = monospace
 
-font-size = 16
+font-size = 24
 
 # Font features
 # font-thicken = true  # macOS only - makes fonts slightly bolder
@@ -18,7 +15,7 @@ font-size = 16
 
 # Optional: If you have Nerd Fonts installed, uncomment to use for icons
 # font-family = "JetBrainsMono Nerd Font"
-# font-codepoint-map = U+E000-U+F8FF="JetBrainsMono Nerd Font"
+font-codepoint-map = U+E000-U+F8FF="JetBrainsMono Nerd Font"
 
 # Cursor
 cursor-style = block
@@ -48,26 +45,9 @@ shell-integration = detect
 # Use Nushell as the default shell
 command = /opt/homebrew/bin/nu
 
-# Colours (optional - defaults are good)
-# background = 1e1e2e
-# foreground = cdd6f4
-# Ghostty uses a good default palette, but you can customise:
-# palette = 0=#45475a
-# palette = 1=#f38ba8
-# palette = 2=#a6e3a1
-# palette = 3=#f9e2af
-# palette = 4=#89b4fa
-# palette = 5=#f5c2e7
-# palette = 6=#94e2d5
-# palette = 7=#bac2de
-# palette = 8=#585b70
-# palette = 9=#f38ba8
-# palette = 10=#a6e3a1
-# palette = 11=#f9e2af
-# palette = 12=#89b4fa
-# palette = 13=#f5c2e7
-# palette = 14=#94e2d5
-# palette = 15=#a6adc8
+# Theme
+# Using Monokai Dimmed to match VSCode
+theme = Dimmed Monokai
 
 # Window title
 title = Ghostty
@@ -81,5 +61,3 @@ confirm-close-surface = true
 # quick-terminal-animation-duration = 0.2
 
 # Custom themes can be placed in ~/.config/ghostty/themes/
-# To use a theme, uncomment and set:
-# theme = catppuccin-mocha

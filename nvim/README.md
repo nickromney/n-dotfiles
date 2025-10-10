@@ -25,7 +25,7 @@ Modern Neovim configuration for nvim 0.11.4+ with LSP support, completions, and 
 - **Git Integration**: Fugitive, Gitsigns, Lazygit
 - **AI**: GitHub Copilot support
 - **Testing**: vim-test with vimux integration
-- **Theme**: Catppuccin
+- **Theme**: Monokai Classic
 - **Additional**: Alpha dashboard, Treesitter, and more
 
 ## Installation
@@ -57,7 +57,7 @@ nvim/.config/nvim/
 │       │   ├── mason.lua      # LSP server management
 │       │   └── lspconfig.lua  # LSP configuration and keymaps
 │       ├── alpha.lua
-│       ├── catppuccin.lua
+│       ├── monokai.lua
 │       ├── completions.lua
 │       ├── copilot.lua
 │       ├── git-stuff.lua

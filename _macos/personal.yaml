@@ -9,6 +9,12 @@ system:
   show_hidden_files: true
   # Show file extensions (important for file management and development)
   show_all_extensions: true
+  # Reduce transparency system-wide (removes translucent effects from menu bar, dock, windows)
+  # Set to true for solid backgrounds everywhere (better performance and clarity)
+  reduce_transparency: true
+  # Show menu bar background (macOS 26 Tahoe feature - makes menu bar opaque)
+  # Set to true to remove menu bar transparency
+  show_menu_bar_background: true
 
 dock:
   # Dock size (empty string = default size)

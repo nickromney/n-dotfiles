@@ -391,6 +391,12 @@ Key testing patterns:
    - Check for arithmetic operations without `|| true`
    - Ensure all `grep` commands that might not match use `|| echo ""`
 
+4. **Accessibility settings fail to apply**
+   - The `com.apple.universalaccess` domain (for settings like "Reduce transparency") cannot be modified via `defaults write` due to macOS security restrictions
+   - The script will detect this failure and offer to open System Settings to the correct pane
+   - Users can press 'y' to automatically open System Settings → Accessibility → Display
+   - Once manually enabled, the script will detect and confirm the setting on subsequent runs
+
 ## 1Password Integration
 
 The repository includes secure credential and configuration management via 1Password CLI.

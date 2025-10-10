@@ -274,6 +274,51 @@ apply_system_settings() {
       value=$([[ "$show_extensions" == "true" ]] && echo "1" || echo "0")
       apply_default "Show all file extensions" "NSGlobalDomain" "AppleShowAllExtensions" "$value"
     fi
+
+    # Reduce transparency (system-wide)
+    local reduce_transparency
+    reduce_transparency=$(yq ".$section.reduce_transparency" "$config_file")
+    if [[ "$reduce_transparency" != "null" ]]; then
+      local value
+      value=$([[ "$reduce_transparency" == "true" ]] && echo "1" || echo "0")
+
+      # Check if already set correctly
+      local current
+      current=$(defaults read com.apple.universalaccess reduceTransparency 2>/dev/null || echo "0")
+
+      if [[ "$current" == "$value" ]]; then
+        success "Reduce transparency: already set to $value"
+      else
+        # Try to set it
+        if defaults write com.apple.universalaccess reduceTransparency "$value" 2>/dev/null; then
+          success "Reduce transparency: changed from '$current' to '$value'"
+        else
+          # Failed due to permissions - offer to open System Settings
+          warning "Cannot modify accessibility settings via defaults command"
+          info "To enable 'Reduce transparency':"
+          echo "  1. Open System Settings → Accessibility → Display"
+          echo "  2. Toggle 'Reduce transparency' to $([ "$value" == "1" ] && echo "ON" || echo "OFF")"
+          echo ""
+          if [[ "$DRY_RUN" == "false" ]]; then
+            read -p "Would you like to open System Settings now? (y/N) " -n 1 -r
+            echo
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+              open "x-apple.systempreferences:com.apple.preference.universalaccess?Seeing_Display"
+              info "Opened Accessibility → Display settings"
+            fi
+          fi
+        fi
+      fi
+    fi
+
+    # Show menu bar background (macOS 26 Tahoe feature)
+    local show_menu_bar_bg
+    show_menu_bar_bg=$(yq ".$section.show_menu_bar_background" "$config_file")
+    if [[ "$show_menu_bar_bg" != "null" ]]; then
+      local value
+      value=$([[ "$show_menu_bar_bg" == "true" ]] && echo "1" || echo "0")
+      apply_default "Show menu bar background" "NSGlobalDomain" "NSWindowShowMenuBarBackground" "$value"
+    fi
   fi
 }
 
