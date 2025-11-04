@@ -1,8 +1,0 @@
-{
-  "default": true,
-  "MD013": false,
-  "line-length": false,
-  "MD046": {
-    "style": "fenced"
-  }
-}
