@@ -285,3 +285,5 @@ AWS_LAMBDA_VENV="$HOME/.venvs/aws-lambda/bin/activate"
 if [ -f "$AWS_LAMBDA_VENV" ]; then
   alias aws-lambda-env='source "$AWS_LAMBDA_VENV"'
 fi
+
+eval "$(direnv hook zsh)"
