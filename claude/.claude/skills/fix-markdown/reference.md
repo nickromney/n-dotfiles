@@ -2,21 +2,23 @@
 
 ## Script Details
 
-### remove-emojis.py
+### detect-emojis.py
 
 **Language:** Python 3
 
-**Purpose:** Remove all emoji characters from markdown files
+**Purpose:** Detect and optionally remove emoji characters from markdown files
 
 **Usage:**
 
 ```bash
-uv run scripts/remove-emojis.py <file-or-directory>
+uv run scripts/detect-emojis.py <file-or-directory>           # Detect only
+uv run scripts/detect-emojis.py --remove <file-or-directory>  # Remove emojis
 ```
 
-**What it fixes:**
+**What it does:**
 
-- Strips all Unicode emoji characters (emoticons, symbols, dingbats, pictographs)
+- **Detect mode (default)**: Scans for emojis and exits with code 1 if found
+- **Remove mode (`--remove`)**: Strips all Unicode emoji characters
 - Cleans up multiple spaces left by emoji removal
 - Preserves all markdown formatting
 - Works on single files or recursively processes directories
@@ -24,8 +26,9 @@ uv run scripts/remove-emojis.py <file-or-directory>
 **How it works:**
 
 - Uses regex pattern covering emoji ranges: U+1F300-1FAF6, U+2600-26FF, etc.
-- Processes files in-place with UTF-8 encoding
-- Only modifies files that contain emojis
+- Processes files with UTF-8 encoding
+- In detect mode: exits 0 if clean, exits 1 if emojis found
+- In remove mode: only modifies files that contain emojis
 
 ---
 
@@ -190,7 +193,7 @@ uv run scripts/fix-step-headings.py <file-or-directory>
 3. `fix-image-alt-text.sh` - Add missing alt text
 4. `fix-bold-h1.sh` - Convert bold headings to H2
 5. `fix-ordered-lists.sh` - Standardize list prefixes
-6. `uv run remove-emojis.py` - Strip emojis
+6. `uv run detect-emojis.py --remove` - Strip emojis
 7. Re-check with markdownlint-cli2 and report remaining issues
 
 **Output:**
@@ -236,6 +239,42 @@ uv run scripts/fix-step-headings.py <file-or-directory>
 
 **Note:** Uses markdownlint-cli2 (faster, newer) instead of markdownlint-cli
 
+---
+
+### setup-precommit.sh
+
+**Language:** Bash
+
+**Purpose:** Set up pre-commit hooks for markdown linting and emoji checking
+
+**Usage:**
+
+```bash
+./scripts/setup-precommit.sh [directory]
+```
+
+**Default directory:** current directory (if not specified)
+
+**What it creates:**
+
+- `.pre-commit-config.yaml` - Pre-commit configuration with:
+  - markdownlint-cli2 (linting only, no auto-fix)
+  - emoji checker (fails if emojis detected)
+  - General file checks (trailing whitespace, end-of-file, YAML validation)
+- `.git-hooks/check-emojis.sh` - Shell script for emoji detection in pre-commit
+
+**Behavior:**
+
+- If `.pre-commit-config.yaml` exists: shows instructions for manual addition
+- If not present: offers to create minimal config
+- Interactive prompts before creating files
+- Sets executable permissions on hook scripts
+
+**Exit codes:**
+
+- 0 if successful or config already exists
+- 1 if user cancels or pre-commit not installed
+
 ## Dependencies
 
 **Required:**
@@ -262,7 +301,13 @@ brew install uv
 
 ## Configuration
 
-These scripts respect `.markdownlint.yaml` configuration in the repository root.
+**Config file detection (priority order):**
+
+1. `.markdownlint.yaml` in current working directory (local project config)
+2. `scripts/../.markdownlint.yaml` in skill directory (bundled config)
+3. markdownlint-cli2 defaults (if no config found)
+
+This allows the skill to work in any directory while respecting local project standards when present.
 
 **Common rules these scripts address:**
 
@@ -270,13 +315,14 @@ These scripts respect `.markdownlint.yaml` configuration in the repository root.
 - `MD029` - Ordered list item prefix (fixed by fix-ordered-lists.sh)
 - `MD045` - Missing image alt text (fixed by fix-image-alt-text.sh)
 
-**Typical .markdownlint.yaml:**
+**Bundled .markdownlint.yaml:**
 
 ```yaml
-MD013: false  # Line length - disabled
-MD025: true   # Single H1
-MD029: true   # Ordered list prefix (one style)
-MD045: true   # Images must have alt text
+default: true
+MD013: false  # Line length - disabled (code blocks exceed 80 chars)
+MD024: false  # Duplicate headings - allow repeated section headings
+MD033: false  # Inline HTML - allow for special formatting
+MD041: false  # First-line heading - not always applicable
 ```
 
 ## Notes
