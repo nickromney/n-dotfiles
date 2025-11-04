@@ -274,3 +274,7 @@ alias o = z
 if (($nu.data-dir | path join "vendor/autoload/uv-completions.nu") | path exists) {
     source ($nu.data-dir | path join "vendor/autoload/uv-completions.nu")
 }
+
+$env.config.hooks.env_change.PWD = [
+  { || if (which direnv | is-empty) { return }; direnv export json | from json | default {} | load-env }
+]

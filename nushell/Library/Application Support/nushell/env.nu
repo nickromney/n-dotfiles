@@ -11,6 +11,7 @@ $env.HISTFILE = $"($env.HOME)/.zsh_history"  # Keep compatibility with zsh histo
 # PATH Management
 $env.PATH = ($env.PATH | split row (char esep) | prepend [
     "/opt/homebrew/bin"  # Add homebrew first for macOS
+    "/opt/homebrew/opt/python@3.11/bin"  # Python 3.11
     $"($env.HOME)/.local/bin"
     $"($env.HOME)/.arkade/bin"
     $"($env.HOME)/.cargo/bin"
@@ -64,21 +65,26 @@ if ((which op | length) > 0) {
     }
 }
 
-# NVM Node path - dynamically find latest version
-let nvm_dir = $"($env.HOME)/.nvm"
-if ($nvm_dir | path exists) {
-    let versions_dir = $"($nvm_dir)/versions/node"
-    if ($versions_dir | path exists) {
-        # Get latest node version
-        let versions = (ls $versions_dir | where type == dir | get name | sort)
-        if ($versions | length) > 0 {
-            let latest_node = ($versions | last)
-            let node_bin = $"($latest_node)/bin"
-            if ($node_bin | path exists) {
-                $env.PATH = ([$node_bin] ++ ($env.PATH | split row (char esep)) | uniq | str join (char esep))
-            }
-        }
-    }
+# FNM (Fast Node Manager) - supports .node-version files
+if ((which fnm | length) > 0) {
+    # Load FNM environment variables
+    load-env (fnm env --shell bash
+        | lines
+        | str replace 'export ' ''
+        | str replace -a '"' ''
+        | split column "="
+        | rename name value
+        | where name != "FNM_ARCH" and name != "PATH"
+        | reduce -f {} {|it, acc| $acc | upsert $it.name $it.value }
+    )
+
+    # Add FNM_MULTISHELL_PATH to PATH
+    $env.PATH = ($env.PATH
+        | split row (char esep)
+        | prepend $"($env.FNM_MULTISHELL_PATH)/bin"
+        | uniq
+        | str join (char esep)
+    )
 }
 
 # Podman socket for Docker compatibility
