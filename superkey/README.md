@@ -14,6 +14,7 @@ Configuration documentation for [SuperKey](https://superkey.app/), a keyboard cu
 ## Why SuperKey?
 
 SuperKey was chosen over Karabiner-Elements because:
+
 - ✅ Simpler setup and configuration
 - ✅ Works on work Macs where Karabiner may have installation restrictions
 - ✅ Native macOS integration
@@ -61,6 +62,7 @@ With SuperKey providing the Hyper key, these shortcuts are active:
 ### Aerospace Window Management
 
 **Workspace Switching:**
+
 - **Hyper+W** → Work workspace (browser profiles)
 - **Hyper+T** → Terminal workspace (Ghostty, Kitty)
 - **Hyper+Y** → YDE workspace (VSCode, Cursor, IDEs)
@@ -72,6 +74,7 @@ With SuperKey providing the Hyper key, these shortcuts are active:
 - **Hyper+]** → Messaging workspace (Teams, WhatsApp, Slack, Zoom)
 
 **Layout Control:**
+
 - **Hyper+N** → Accordion layout (horizontal/vertical)
 - **Hyper+M** → Tiles layout (horizontal/vertical)
 - **Hyper+Semicolon** → Enter move mode (press Escape or Enter to exit)
@@ -86,12 +89,14 @@ With SuperKey providing the Hyper key, these shortcuts are active:
   - **Escape/Enter** → Return to normal mode
 
 **Window Focus:**
+
 - **Alt+H** → Focus left
 - **Alt+J** → Focus down
 - **Alt+K** → Focus up
 - **Alt+L** → Focus right
 
 **Move Window + Switch Workspace:**
+
 - **Hyper+2** → Move to Work workspace (W) and switch to it
 - **Hyper+5** → Move to Terminal workspace (T) and switch to it
 - **Hyper+6** → Move to YDE workspace (Y) and switch to it
@@ -103,10 +108,12 @@ With SuperKey providing the Hyper key, these shortcuts are active:
 - **Hyper+Equal** → Move to Messaging workspace (]) and switch to it
 
 **Workspace Navigation:**
+
 - **Hyper+H** → Workspace back-and-forth (toggle between last two workspaces)
 - **Hyper+L** → Move workspace to next monitor
 
 **Window Resizing:**
+
 - **Alt+Shift+Minus** → Resize smart -100
 - **Alt+Shift+Equal** → Resize smart +100
 
@@ -127,11 +134,13 @@ Configured in Ghostty config, works with SuperKey's Shift modifier.
 The keyboard customization setup has evolved:
 
 ### Phase 1: Karabiner-Elements
+
 - Used Karabiner for all keyboard customization
 - Hyper+N → Right Arrow → Accept zsh suggestions
 - Complex JSON configuration
 
 ### Phase 2: SuperKey (Current)
+
 - Switched to SuperKey for simplicity
 - Quick-press CapsLock → Accept zsh suggestions
 - Freed up Hyper+N/M for Aerospace layouts
@@ -142,6 +151,7 @@ The keyboard customization setup has evolved:
 SuperKey stores its configuration in a proprietary format managed through the GUI. Unlike Karabiner-Elements which uses `karabiner.json`, SuperKey doesn't have a CLI or documented config file format.
 
 This README serves as the "config" by documenting:
+
 1. What SuperKey features are enabled
 2. How the Hyper key is configured
 3. What shortcuts depend on SuperKey
@@ -185,6 +195,7 @@ If you need to switch back to Karabiner-Elements:
 ### Conflicts with Karabiner
 
 If both are running:
+
 1. Quit Karabiner: `/Applications/Karabiner-Elements.app/Contents/Library/bin/karabiner_cli --quit-karabiner-elements`
 2. Ensure only SuperKey is in Login Items
 

@@ -21,6 +21,7 @@ stow claude
 ### Status Line
 
 The status line displays:
+
 - **Current directory** (with `~` for home)
 - **Git branch** (if in a git repository)
 - **Git status indicators**:
@@ -40,4 +41,5 @@ Example: `~/Developer/project git main ✓2 !1 ?3 󰎙 20.0.0 [14:23]`
 ## Location
 
 When stowed, this creates:
+
 - `~/.claude/settings.json` → symlink to dotfiles

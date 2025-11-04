@@ -37,12 +37,17 @@ All scripts are in the `scripts/` directory and accept file or directory paths:
 
 ### Shell Scripts
 
-- **fix-duplicate-h1.sh** - Convert H1 to H2 when title exists in frontmatter (MD025)
-- **fix-bold-h1.sh** - Convert bold text on its own line to H2 headings (after frontmatter)
 - **fix-ordered-lists.sh** - Replace sequential numbering (2., 3.) with "1." (MD029)
 - **fix-image-alt-text.sh** - Add "Image" alt text to images with empty alt text (MD045)
 - **fix-all-docs.sh** - Run all fixes in sequence with progress reporting
 - **report-markdownlint-issues.sh** - Generate detailed report grouped by type and file
+
+### Frontmatter-Aware Scripts (require perl)
+
+- **fix-duplicate-h1.sh** - Convert H1 to H2 when title exists in frontmatter (MD025)
+- **fix-bold-h1.sh** - Convert bold text on its own line to H2 headings (after frontmatter)
+
+Note: Perl is pre-installed on macOS and most Linux systems.
 
 ## Quick Start
 

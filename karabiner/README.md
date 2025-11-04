@@ -48,6 +48,7 @@ This provides a fifth modifier key for powerful shortcuts without conflicts.
 ### App Launcher (o + key)
 
 Press **o** followed by another key to launch apps:
+
 - **o+n** → Notion
 - **o+m** → Mail
 - **o+s** → Spotify
@@ -86,12 +87,14 @@ cp -r karabiner/.config/karabiner ~/.config/
 ## Current Alternative: SuperKey
 
 On the personal Mac, [SuperKey](https://superkey.app/) is used instead because:
+
 - ✅ Simpler setup
 - ✅ Works on work Macs where Karabiner may have installation restrictions
 - ✅ Native macOS integration
 - ✅ "Quick press CapsLock to execute" feature for zsh autosuggestions
 
 SuperKey provides the Hyper key functionality (CapsLock → Shift+Cmd+Option+Ctrl) which is all that's needed for:
+
 - **Aerospace workspace switching** (Hyper+W/T/Y/U/I/O/P/[/])
 - **Aerospace layout switching** (Hyper+N for accordion, Hyper+M for tiles)
 - **zsh autosuggestion acceptance** (Quick-press CapsLock, not Hyper+N anymore)
@@ -102,6 +105,7 @@ The move from Hyper+N (right arrow) to quick-press CapsLock for autosuggestions 
 ## Why Keep This Config?
 
 This configuration is preserved for:
+
 1. **Reference**: Documents the full keyboard customization setup
 2. **Work Mac**: May need Karabiner if SuperKey can't be installed
 3. **Backup**: Easy to restore if needed
