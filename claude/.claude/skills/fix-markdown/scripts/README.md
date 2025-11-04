@@ -46,12 +46,12 @@ uv run scripts/remove-emojis.py documentation/
 
 After running `stow -R claude`, these scripts are available at:
 
-```
+```text
 ~/.claude/skills/fix-markdown/scripts/
 ```
 
 The skill is version-controlled in your dotfiles repo at:
 
-```
+```text
 claude/.claude/skills/fix-markdown/scripts/
 ```
