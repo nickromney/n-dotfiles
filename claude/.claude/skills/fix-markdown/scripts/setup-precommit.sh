@@ -75,24 +75,17 @@ fi
 # Create .git-hooks directory and check-emojis.sh
 mkdir -p .git-hooks
 
-cat > .git-hooks/check-emojis.sh <<'EOF'
+# Get absolute path to detect-emojis.py for the hook
+DETECT_EMOJIS_PATH="$SCRIPT_DIR/detect-emojis.py"
+
+cat > .git-hooks/check-emojis.sh <<EOF
 #!/usr/bin/env bash
-# Check for emojis in markdown files
+# Check for emojis in markdown files using the Python script
+# This ensures consistency with the comprehensive Unicode emoji detection
 # This script is called by pre-commit for each staged markdown file
 
-# Common emojis to check for
-EMOJI_PATTERN="✅|❌|⚠️|🚀|💡|📝|🎯|🔥|⭐|🎉|👍|👎|✨|🛠️|📦|🔧|🏗️|📊|🌟"
-
-# Check files passed as arguments
-if grep -E "$EMOJI_PATTERN" "$@" > /dev/null 2>&1; then
-    echo "Error: Emojis found in markdown files"
-    grep -Hn -E "$EMOJI_PATTERN" "$@" | head -10
-    echo ""
-    echo "Run 'uv run scripts/detect-emojis.py --remove .' to fix automatically"
-    exit 1
-fi
-
-exit 0
+# Use the detect-emojis.py script for comprehensive emoji detection
+uv run "$DETECT_EMOJIS_PATH" "\$@"
 EOF
 
 chmod +x .git-hooks/check-emojis.sh
