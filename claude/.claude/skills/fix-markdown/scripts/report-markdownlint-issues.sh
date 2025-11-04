@@ -7,15 +7,31 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TARGET_DIR="${1:-documentation}"
 TEMP_FILE="/tmp/markdownlint-report.$$"
 
+# Use local config if present, otherwise fall back to skill's bundled config
+if [[ -f .markdownlint.yaml ]]; then
+    MARKDOWNLINT_CONFIG=".markdownlint.yaml"
+elif [[ -f "$SCRIPT_DIR/../.markdownlint.yaml" ]]; then
+    MARKDOWNLINT_CONFIG="$SCRIPT_DIR/../.markdownlint.yaml"
+else
+    echo "Warning: No .markdownlint.yaml found, using markdownlint-cli2 defaults"
+    MARKDOWNLINT_CONFIG=""
+fi
+
 echo "Markdown Linting Report for: $TARGET_DIR"
+[[ -n "$MARKDOWNLINT_CONFIG" ]] && echo "Using config: $MARKDOWNLINT_CONFIG"
 echo "=========================================="
 echo ""
 
 # Run markdownlint and save to temp file
-find "$TARGET_DIR" -name '*.md' -print0 | xargs -0 markdownlint-cli2 --config .markdownlint.yaml > "$TEMP_FILE" 2>&1 || true
+if [[ -n "$MARKDOWNLINT_CONFIG" ]]; then
+    find "$TARGET_DIR" -name '*.md' -print0 | xargs -0 markdownlint-cli2 --config "$MARKDOWNLINT_CONFIG" > "$TEMP_FILE" 2>&1 || true
+else
+    find "$TARGET_DIR" -name '*.md' -print0 | xargs -0 markdownlint-cli2 > "$TEMP_FILE" 2>&1 || true
+fi
 
 # Check if there are any issues
 if [[ ! -s "$TEMP_FILE" ]]; then

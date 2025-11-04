@@ -32,7 +32,7 @@ All scripts are in the `scripts/` directory and accept file or directory paths:
 
 ### Python Scripts (use `uv run`)
 
-- **remove-emojis.py** - Strip all emoji characters from markdown files
+- **detect-emojis.py** - Detect emojis in markdown files (use `--remove` to strip them)
 - **fix-step-headings.py** - Convert `**Step X: text**` to `### Step X: text`
 
 ### Shell Scripts
@@ -41,6 +41,7 @@ All scripts are in the `scripts/` directory and accept file or directory paths:
 - **fix-image-alt-text.sh** - Add "Image" alt text to images with empty alt text (MD045)
 - **fix-all-docs.sh** - Run all fixes in sequence with progress reporting
 - **report-markdownlint-issues.sh** - Generate detailed report grouped by type and file
+- **setup-precommit.sh** - Set up pre-commit hooks for markdown linting and emoji checking
 
 ### Frontmatter-Aware Scripts (require perl)
 
@@ -59,13 +60,31 @@ Note: Perl is pre-installed on macOS and most Linux systems.
 ./scripts/fix-all-docs.sh documentation/
 
 # Or fix specific issues
-uv run ./scripts/remove-emojis.py path/to/file.md
+uv run ./scripts/detect-emojis.py --remove path/to/file.md
 ./scripts/fix-ordered-lists.sh documentation/
+
+# Set up pre-commit hooks (optional)
+./scripts/setup-precommit.sh
 ```
+
+## Configuration
+
+The scripts automatically detect and use markdownlint configuration:
+
+1. **Local config** - Uses `.markdownlint.yaml` in current directory (if present)
+2. **Bundled config** - Falls back to skill's included `.markdownlint.yaml`
+3. **Defaults** - Uses markdownlint-cli2 defaults if no config found
+
+The bundled config includes sensible defaults:
+
+- **MD013**: Disabled (line-length) - code blocks often exceed 80 chars
+- **MD024**: Disabled (duplicate headings) - repeated section headings OK
+- **MD033**: Disabled (inline HTML) - allow for special formatting
+- **MD041**: Disabled (first-line heading) - not always applicable
 
 ## Integration with Repository Standards
 
-These tools enforce markdown standards defined in `.markdownlint.yaml`:
+These tools enforce markdown standards:
 
 - **MD025**: Only one H1 per document (use H2 when frontmatter has title)
 - **MD029**: Ordered list items all use "1." prefix
