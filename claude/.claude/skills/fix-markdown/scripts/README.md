@@ -37,7 +37,7 @@ uv run scripts/remove-emojis.py documentation/
 
 ## Requirements
 
-- **markdownlint-cli** - `npm install -g markdownlint-cli`
+- **markdownlint-cli2** - `npm install -g markdownlint-cli2` (faster, newer than markdownlint-cli)
 - **uv** - For Python scripts (installed via dotfiles)
 - **perl** - For multiline regex editing
 - **sed** - For single-line editing (macOS BSD sed)

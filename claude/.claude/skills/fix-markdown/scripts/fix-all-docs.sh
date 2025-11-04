@@ -14,7 +14,7 @@ echo "Fixing markdown issues in: $TARGET_DIR"
 echo ""
 
 echo "Step 1: Running markdownlint auto-fix..."
-markdownlint --fix -c .markdownlint.yaml "$TARGET_DIR/**/*.md" || true
+markdownlint-cli2 --fix --config .markdownlint.yaml "$TARGET_DIR/**/*.md" || true
 echo ""
 
 echo "Step 2: Fixing duplicate H1 headings..."
@@ -38,13 +38,12 @@ uv run "$SCRIPT_DIR/remove-emojis.py" "$TARGET_DIR"
 echo ""
 
 echo "Step 7: Re-checking issues..."
-issue_count=$(markdownlint -c .markdownlint.yaml "$TARGET_DIR/**/*.md" 2>&1 | wc -l)
-echo "Remaining issues: $issue_count"
-echo ""
+markdownlint_output=$(markdownlint-cli2 --config .markdownlint.yaml "$TARGET_DIR/**/*.md" 2>&1)
+markdownlint_exit=$?
 
-if [[ $issue_count -eq 0 ]]; then
+if [[ $markdownlint_exit -eq 0 ]]; then
     echo "✓ All markdown issues fixed!"
 else
     echo "Remaining issues require manual review:"
-    markdownlint -c .markdownlint.yaml "$TARGET_DIR/**/*.md" 2>&1 | head -20
+    echo "$markdownlint_output" | head -20
 fi

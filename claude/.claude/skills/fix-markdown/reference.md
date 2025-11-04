@@ -163,13 +163,13 @@ uv run scripts/fix-step-headings.py <file-or-directory>
 **Default directory:** `documentation` (if not specified)
 
 **Process:**
-1. `markdownlint --fix` - Auto-fix simple issues
+1. `markdownlint-cli2 --fix` - Auto-fix simple issues
 2. `fix-duplicate-h1.sh` - Fix H1 in files with frontmatter
 3. `fix-image-alt-text.sh` - Add missing alt text
 4. `fix-bold-h1.sh` - Convert bold headings to H2
 5. `fix-ordered-lists.sh` - Standardize list prefixes
 6. `uv run remove-emojis.py` - Strip emojis
-7. Re-check with markdownlint and report remaining issues
+7. Re-check with markdownlint-cli2 and report remaining issues
 
 **Output:**
 - Progress messages for each step
@@ -199,7 +199,7 @@ uv run scripts/fix-step-headings.py <file-or-directory>
 4. **Detailed issues** - Full markdownlint output
 
 **How it works:**
-- Runs `markdownlint -c .markdownlint.yaml`
+- Runs `markdownlint-cli2 --config .markdownlint.yaml`
 - Parses output with `awk` to group and count
 - Uses temp file for processing: `/tmp/markdownlint-report.$$`
 
@@ -207,18 +207,20 @@ uv run scripts/fix-step-headings.py <file-or-directory>
 - 0 if no issues found
 - Non-zero if issues exist (but doesn't fail the script)
 
+**Note:** Uses markdownlint-cli2 (faster, newer) instead of markdownlint-cli
+
 ## Dependencies
 
 **Required:**
-- `markdownlint-cli` - For linting validation and auto-fixing
+- `markdownlint-cli2` - For linting validation and auto-fixing (faster than markdownlint-cli)
 - `uv` - For running Python scripts
 - `perl` - For multiline regex editing (fix-duplicate-h1, fix-bold-h1)
 - `sed` - For single-line editing (fix-ordered-lists, fix-image-alt-text)
 
 **Installation:**
 ```bash
-# markdownlint
-npm install -g markdownlint-cli
+# markdownlint-cli2 (installed via npm, managed by fnm Node version)
+npm install -g markdownlint-cli2
 
 # uv (if not already installed)
 brew install uv
