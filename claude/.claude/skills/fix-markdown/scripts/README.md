@@ -37,10 +37,17 @@ uv run scripts/remove-emojis.py documentation/
 
 ## Requirements
 
+**Required:**
+
 - **markdownlint-cli2** - `npm install -g markdownlint-cli2` (faster, newer than markdownlint-cli)
 - **uv** - For Python scripts (installed via dotfiles)
-- **perl** - For multiline regex editing
 - **sed** - For single-line editing (BSD sed on macOS, GNU sed on Linux - auto-detected)
+
+**Optional:**
+
+- **perl** - For frontmatter-aware scripts (fix-duplicate-h1.sh, fix-bold-h1.sh)
+  - Pre-installed on macOS and most Linux distributions
+  - Only needed for markdown files with YAML frontmatter
 
 ## Integration with Dotfiles
 

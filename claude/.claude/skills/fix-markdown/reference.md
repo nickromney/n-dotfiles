@@ -242,8 +242,13 @@ uv run scripts/fix-step-headings.py <file-or-directory>
 
 - `markdownlint-cli2` - For linting validation and auto-fixing (faster than markdownlint-cli)
 - `uv` - For running Python scripts
-- `perl` - For multiline regex editing (fix-duplicate-h1, fix-bold-h1)
 - `sed` - For single-line editing (fix-ordered-lists, fix-image-alt-text)
+
+**Optional:**
+
+- `perl` - For multiline regex editing in frontmatter-aware scripts (fix-duplicate-h1, fix-bold-h1)
+  - Pre-installed on macOS and most Linux distributions
+  - Only needed if fixing markdown files with YAML frontmatter
 
 **Installation:**
 
