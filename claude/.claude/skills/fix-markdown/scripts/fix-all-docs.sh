@@ -14,7 +14,7 @@ echo "Fixing markdown issues in: $TARGET_DIR"
 echo ""
 
 echo "Step 1: Running markdownlint auto-fix..."
-markdownlint-cli2 --fix --config .markdownlint.yaml "$TARGET_DIR/**/*.md" || true
+find "$TARGET_DIR" -name '*.md' -print0 | xargs -0 markdownlint-cli2 --fix --config .markdownlint.yaml || true
 echo ""
 
 echo "Step 2: Fixing duplicate H1 headings..."
@@ -38,7 +38,7 @@ uv run "$SCRIPT_DIR/remove-emojis.py" "$TARGET_DIR"
 echo ""
 
 echo "Step 7: Re-checking issues..."
-markdownlint_output=$(markdownlint-cli2 --config .markdownlint.yaml "$TARGET_DIR/**/*.md" 2>&1)
+markdownlint_output=$(find "$TARGET_DIR" -name '*.md' -print0 | xargs -0 markdownlint-cli2 --config .markdownlint.yaml 2>&1)
 markdownlint_exit=$?
 
 if [[ $markdownlint_exit -eq 0 ]]; then

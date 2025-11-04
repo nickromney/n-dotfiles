@@ -15,7 +15,7 @@ echo "=========================================="
 echo ""
 
 # Run markdownlint and save to temp file
-markdownlint-cli2 --config .markdownlint.yaml "$TARGET_DIR/**/*.md" > "$TEMP_FILE" 2>&1 || true
+find "$TARGET_DIR" -name '*.md' -print0 | xargs -0 markdownlint-cli2 --config .markdownlint.yaml > "$TEMP_FILE" 2>&1 || true
 
 # Check if there are any issues
 if [[ ! -s "$TEMP_FILE" ]]; then
