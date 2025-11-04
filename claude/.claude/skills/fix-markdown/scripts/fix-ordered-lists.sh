@@ -7,13 +7,20 @@
 
 set -euo pipefail
 
+# Detect platform for sed in-place editing
+if [[ "$(uname)" == "Darwin" ]]; then
+    SED_INPLACE=(-i '')
+else
+    SED_INPLACE=(-i)
+fi
+
 fix_file() {
     local file=$1
 
     # Replace numbered list items (2., 3., 4., etc.) with 1.
     # This matches lines starting with optional whitespace, a number > 1, and a period
     if grep -qE '^[[:space:]]*[2-9][0-9]*\.' "$file"; then
-        sed -i '' -E 's/^([[:space:]]*)([2-9][0-9]*)\./\11./' "$file"
+        sed "${SED_INPLACE[@]}" -E 's/^([[:space:]]*)([2-9][0-9]*)\./\11./' "$file"
         echo "Fixed: $file"
     fi
 }

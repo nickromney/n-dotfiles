@@ -248,6 +248,6 @@ MD045: true   # Images must have alt text
 - **No backups created** - Scripts modify files in-place (use git for safety)
 - **Idempotent** - Safe to run multiple times (won't create duplicate fixes)
 - **UTF-8 encoding** - Python scripts require UTF-8 support
-- **macOS sed** - Uses BSD sed with `-i ''` syntax (not GNU sed)
+- **Cross-platform sed** - Detects macOS (BSD sed) vs Linux (GNU sed) and adjusts syntax automatically
 - **uv run** - Python scripts use `uv run` instead of `python3` for dependency management
 - **Perl multiline** - Uses `-0pe` flags for processing entire file as single string

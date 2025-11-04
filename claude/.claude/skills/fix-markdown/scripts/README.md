@@ -40,7 +40,7 @@ uv run scripts/remove-emojis.py documentation/
 - **markdownlint-cli2** - `npm install -g markdownlint-cli2` (faster, newer than markdownlint-cli)
 - **uv** - For Python scripts (installed via dotfiles)
 - **perl** - For multiline regex editing
-- **sed** - For single-line editing (macOS BSD sed)
+- **sed** - For single-line editing (BSD sed on macOS, GNU sed on Linux - auto-detected)
 
 ## Integration with Dotfiles
 

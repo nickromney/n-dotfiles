@@ -7,13 +7,20 @@
 
 set -euo pipefail
 
+# Detect platform for sed in-place editing
+if [[ "$(uname)" == "Darwin" ]]; then
+    SED_INPLACE=(-i '')
+else
+    SED_INPLACE=(-i)
+fi
+
 fix_file() {
     local file=$1
     local changed=false
 
     # Add "Image" as alt text for images with empty alt text
     if grep -qE '!\[\]\(' "$file"; then
-        sed -i '' 's/!\[\](\([^)]*\))/![Image](\1)/g' "$file"
+        sed "${SED_INPLACE[@]}" 's/!\[\](\([^)]*\))/![Image](\1)/g' "$file"
         changed=true
     fi
 
