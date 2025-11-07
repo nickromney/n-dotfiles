@@ -91,13 +91,13 @@ readonly BACKUP_DIR
 
 # SSH Keys to verify in 1Password (only public keys will be downloaded)
 # Format: "1password_item_name:local_filename"
-# Use generic names to avoid exposing client information
+# Naming convention: personal_ or work_ prefix
 # NOTE: Private keys stay in 1Password - only public keys are downloaded for reference
 declare -a SSH_KEYS=(
-  "github_personal_authentication:id_ed25519"
-  "github_personal_signing:github_personal_signing"
-  "aws_work_2024_client_1:aws_work_2024_client_1.pem"
-  "github_work_2025_client_1:github_work_2025_client_1"
+  "personal_github_authentication:id_ed25519"
+  "personal_github_signing:github_personal_signing"
+  "work_aws_2024_client_1:aws_work_2024_client_1.pem"
+  "work_github_2025_client_1:github_work_2025_client_1"
 )
 
 # Dry run mode - just check what's available
