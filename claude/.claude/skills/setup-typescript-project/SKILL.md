@@ -112,7 +112,7 @@ project-root/
  "noFallthroughCasesInSwitch": true,
  "forceConsistentCasingInFileNames": true
  },
- "include": ["src/**/*", "src/**/*.ts"]
+ "include": ["src"]
 }
 ```
 
