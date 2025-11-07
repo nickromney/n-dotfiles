@@ -231,7 +231,91 @@ updates:
  dependency-type: "production"
 ```
 
-### 4. TruffleHog - Secret Detection
+### 4. Pre-commit Framework - Local Security Checks
+
+**Installation:**
+
+```bash
+# macOS
+brew install pre-commit
+
+# Linux/Other
+pip install pre-commit
+```
+
+**Setup in repository:**
+
+```bash
+cd your-repo
+pre-commit install
+```
+
+**Configuration (.pre-commit-config.yaml):**
+
+```yaml
+# Pre-commit hooks for security scanning
+# Install: brew install pre-commit
+# Setup: pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trim trailing whitespace
+      - id: end-of-file-fixer
+        name: Fix end of files
+      - id: check-yaml
+        name: Check YAML syntax
+      - id: check-added-large-files
+        name: Check for added large files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+        name: Check for merge conflicts
+      - id: detect-private-key
+        name: Detect private keys
+        exclude: ^tests/
+      - id: mixed-line-ending
+        name: Check for mixed line endings
+        args: ['--fix=lf']
+
+  # Secret scanning with Gitleaks
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+```
+
+**Key hooks for security:**
+
+- **detect-private-key** - Detects private SSH/GPG keys before commit
+- **gitleaks** - Comprehensive secret scanning (API keys, passwords, tokens)
+- **check-added-large-files** - Prevents accidentally committing large files (databases, binaries)
+
+**Advantages of pre-commit:**
+
+- Runs locally before commit (faster feedback than CI)
+- Language-agnostic (works with any project type)
+- Easy to share across team (commit .pre-commit-config.yaml)
+- Auto-updates hooks with `pre-commit autoupdate`
+- Lighter weight than Husky (no npm dependency)
+
+**Running manually:**
+
+```bash
+# Run on all files
+pre-commit run --all-files
+
+# Run on specific files
+pre-commit run --files file1.py file2.js
+
+# Auto-update hook versions
+pre-commit autoupdate
+```
+
+### 5. TruffleHog - Secret Detection
 
 **GitHub Action:**
 
@@ -556,7 +640,7 @@ jobs:
 
 **Configuration (.github/CODEOWNERS):**
 
-```
+```text
 # Global owners
 * @org/team-name
 
@@ -615,21 +699,24 @@ We will respond within 48 hours and work with you to resolve the issue.
 **Recommended security settings:**
 
 1. **Require pull request reviews:**
- - At least 1 approval
- - Dismiss stale reviews
- - Require review from code owners
+
+- At least 1 approval
+- Dismiss stale reviews
+- Require review from code owners
 
 1. **Require status checks:**
- - Security scanning must pass
- - npm audit must pass
- - All tests must pass
+
+- Security scanning must pass
+- npm audit must pass
+- All tests must pass
 
 1. **Require branches to be up to date**
 
 1. **Do not allow bypassing required pull requests**
 
 1. **Restrict who can push to main:**
- - Only admins and release bot
+
+- Only admins and release bot
 
 ## Pre-commit Security Checks
 
@@ -682,7 +769,7 @@ done
 
 **Example .gitignore:**
 
-```
+```text
 .env
 .env.local
 .env.*.local
