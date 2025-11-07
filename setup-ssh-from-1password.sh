@@ -91,7 +91,7 @@ readonly BACKUP_DIR
 
 # SSH Keys to verify in 1Password (only public keys will be downloaded)
 # Format: "1password_item_name:local_filename"
-# Naming convention: personal_ or work_ prefix
+# Naming convention: personal_ or work_ prefix (to avoid exposing client information in item names)
 # NOTE: Private keys stay in 1Password - only public keys are downloaded for reference
 declare -a SSH_KEYS=(
   "personal_github_authentication:id_ed25519"
