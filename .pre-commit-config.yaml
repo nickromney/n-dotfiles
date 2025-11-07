@@ -47,3 +47,9 @@ repos:
         name: Markdown linting
         args: ["--fix"]
         exclude: ^_test/(bats-assert|bats-support)/|^\.github/
+
+  # Secret scanning with Gitleaks
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
