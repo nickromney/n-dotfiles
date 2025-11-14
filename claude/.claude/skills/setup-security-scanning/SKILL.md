@@ -915,7 +915,7 @@ jobs:
         run: bin/brakeman --no-pager
 
       - name: Scan for known security vulnerabilities in gems
-        run: bin/bundler-audit
+        run: bundle exec bundler-audit check
 ```
 
 **Brakeman configuration (config/brakeman.yml):**
@@ -960,12 +960,11 @@ gem 'vulnerable_gem', '~> 1.0'
 ```yaml
 # In .pre-commit-config.yaml
 repos:
-  - repo: https://github.com/rubocop/rubocop
+  - repo: https://github.com/pre-commit/mirrors-rubocop
     rev: v1.69.2
     hooks:
       - id: rubocop
-        name: Rubocop
-        args: ['--auto-correct']
+        args: ['-A']
 ```
 
 **Dependabot for Ruby (.github/dependabot.yml):**
@@ -1107,20 +1106,36 @@ on:
 jobs:
   backend-lint:
     name: Backend Linting
+    runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v5
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
       - run: bundle exec rubocop
       - run: bundle exec brakeman
-      - run: bundle exec bundler-audit
+      - run: bundle exec bundler-audit check
 
   frontend-lint:
     name: Frontend Linting
+    runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - run: yarn install --frozen-lockfile
       - run: yarn run sass:lint
       - run: yarn run js:lint
 
   db-lint:
     name: Database Checks
+    runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v5
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
       - run: bundle exec database_consistency
 ```
 
