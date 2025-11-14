@@ -47,12 +47,11 @@ Use this skill when:
 name: Security Scanning
 
 on:
- push:
- branches-ignore:
- - main
  pull_request:
  branches:
  - main
+ schedule:
+ - cron: '0 0 * * 1' # Weekly on Monday at midnight
 
 permissions:
  contents: read
@@ -878,3 +877,320 @@ git secrets --scan-history
 ```
 
 Your project now has comprehensive security scanning!
+
+### 2b. Bundler Audit & Brakeman - Ruby/Rails Security Scanning
+
+**Bundler Audit** scans Ruby gem dependencies for known vulnerabilities.
+**Brakeman** performs static analysis on Rails applications for security vulnerabilities.
+
+**Basic scans:**
+
+```bash
+# Scan for vulnerable gems
+bundle audit
+
+# Update vulnerability database
+bundle audit update
+
+# Scan Rails app for security issues
+brakeman
+```
+
+**GitHub Action (.github/workflows/ci.yml):**
+
+```yaml
+jobs:
+  scan_ruby:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Scan for common Rails security vulnerabilities
+        run: bin/brakeman --no-pager
+
+      - name: Scan for known security vulnerabilities in gems
+        run: bin/bundler-audit
+```
+
+**Brakeman configuration (config/brakeman.yml):**
+
+```yaml
+---
+:skip_checks:
+  - BasicAuth  # If using basic auth intentionally
+:ignore_file: config/brakeman.ignore.yml
+:rails6: true
+:output_formats:
+  - text
+  - json
+:output_files:
+  - brakeman.txt
+  - brakeman.json
+```
+
+**Common Brakeman checks:**
+
+- SQL Injection
+- Cross-Site Scripting (XSS)
+- Cross-Site Request Forgery (CSRF)
+- Mass Assignment
+- Command Injection
+- File Access
+- Dangerous Send
+- Redirect
+- Session Settings
+- SSL Verification
+
+**Bundler Audit ignore pattern:**
+
+```ruby
+# In Gemfile
+# bundler-audit: ignore CVE-2023-xxxxx until: 2024-01-01
+gem 'vulnerable_gem', '~> 1.0'
+```
+
+**Pre-commit hook for Ruby:**
+
+```yaml
+# In .pre-commit-config.yaml
+repos:
+  - repo: https://github.com/rubocop/rubocop
+    rev: v1.69.2
+    hooks:
+      - id: rubocop
+        name: Rubocop
+        args: ['--auto-correct']
+```
+
+**Dependabot for Ruby (.github/dependabot.yml):**
+
+```yaml
+version: 2
+updates:
+  - package-ecosystem: "bundler"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "ruby"
+```
+
+**Best practices for Rails security:**
+
+1. Keep Rails and all gems updated
+2. Run Brakeman on every commit
+3. Use `bundle audit` in CI pipeline
+4. Enable Strong Parameters
+5. Use parameterized SQL queries
+6. Validate and sanitize user input
+7. Use Content Security Policy
+8. Enable HTTPS only
+9. Set secure cookie flags
+10. Review `config/initializers/content_security_policy.rb`
+
+**Rails-specific Gemfile additions:**
+
+```ruby
+group :development do
+  gem 'brakeman', require: false
+  gem 'bundler-audit', require: false
+  gem 'rubocop', require: false
+  gem 'rubocop-rails', require: false
+  gem 'rubocop-performance', require: false
+end
+```
+
+### Additional Rails Patterns from Production Apps
+
+#### Database Consistency Checks
+
+The `database_consistency` gem finds inconsistencies between database constraints and ActiveRecord validations.
+
+```bash
+# Add to Gemfile
+gem 'database_consistency', require: false, group: [:development, :test]
+
+# Run checks
+bundle exec database_consistency
+```
+
+**CI Integration (PostgreSQL):**
+
+```yaml
+db-lint:
+  name: Run Database consistency checks
+  runs-on: ubuntu-latest
+  env:
+    DATABASE_URL: postgis://postgres:postgres@localhost:5432/app_test
+    RAILS_ENV: test
+  services:
+    postgres:
+      image: postgres:14-alpine
+      env:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+      ports:
+        - 5432:5432
+      options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+  steps:
+    - uses: actions/checkout@v5
+    - uses: ruby/setup-ruby@v1
+      with:
+        bundler-cache: true
+    - name: Set up test database
+      run: bin/rails db:create db:schema:load
+    - name: Run Database Consistency check
+      run: bundle exec database_consistency
+```
+
+**CI Integration (SQLite):**
+
+```yaml
+db-lint:
+  name: Run Database consistency checks
+  runs-on: ubuntu-latest
+  env:
+    RAILS_ENV: test
+  steps:
+    - uses: actions/checkout@v5
+    - uses: ruby/setup-ruby@v1
+      with:
+        bundler-cache: true
+    - name: Set up test database
+      run: bin/rails db:test:prepare
+    - name: Run Database Consistency check
+      run: bundle exec database_consistency
+```
+
+#### Slim-Lint for Rails Views
+
+For projects using Slim templates:
+
+```yaml
+- name: Run Slim-Lint
+  run: bundle exec slim-lint app/views app/components
+```
+
+#### Test Coverage with Undercover
+
+Undercover checks test coverage for changed files only:
+
+```ruby
+# Add to Gemfile
+gem 'undercover', require: false, group: :test
+
+# In CI
+- name: Check coverage
+  run: bundle exec undercover -c origin/main
+```
+
+#### Separate Lint Jobs Pattern
+
+```yaml
+name: Lint
+
+on:
+  push:
+    branches:
+      - '**'
+      - '!main'
+
+jobs:
+  backend-lint:
+    name: Backend Linting
+    steps:
+      - run: bundle exec rubocop
+      - run: bundle exec brakeman
+      - run: bundle exec bundler-audit
+
+  frontend-lint:
+    name: Frontend Linting
+    steps:
+      - run: yarn run sass:lint
+      - run: yarn run js:lint
+
+  db-lint:
+    name: Database Checks
+    steps:
+      - run: bundle exec database_consistency
+```
+
+#### Advanced Dependabot Configuration
+
+```yaml
+version: 2
+updates:
+  - package-ecosystem: "bundler"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    groups:
+      gem-dependencies:
+        update-types:
+          - "minor"
+          - "patch"
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "rails*"
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+    groups:
+      npm-dependencies:
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+    labels:
+      - devops
+      - dependencies
+```
+
+#### Pull Request Template
+
+Create `.github/pull_request_template.md`:
+
+```markdown
+## Changes in this PR:
+
+- [ ] What changed?
+
+## Security Checklist:
+
+- [ ] No secrets or credentials committed
+- [ ] Dependencies scanned for vulnerabilities
+- [ ] Security tests passing
+- [ ] Brakeman warnings reviewed
+
+## Database Changes:
+
+- [ ] Adds/removes model validations
+- [ ] Adds/removes database fields
+- [ ] Migration is reversible
+```
