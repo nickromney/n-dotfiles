@@ -8,8 +8,20 @@ $env.LANG = "en_GB.UTF-8"
 # History configuration
 $env.HISTFILE = $"($env.HOME)/.zsh_history"  # Keep compatibility with zsh history location
 
+# rbenv
+$env.RBENV_ROOT = ($env.HOME | path join ".rbenv")
+
+if ($env.RBENV_ROOT | path exists) {
+    $env.PATH = ($env.PATH
+        | split row (char esep)
+        | prepend $"($env.RBENV_ROOT)/shims"
+        | prepend $"($env.RBENV_ROOT)/bin"
+        | uniq
+        | str join (char esep))
+}
+
 # PATH Management
-$env.PATH = ($env.PATH | split row (char esep) | prepend [
+let additional_paths = [
     "/opt/homebrew/bin"  # Add homebrew first for macOS
     "/opt/homebrew/opt/python@3.11/bin"  # Python 3.11
     $"($env.HOME)/.local/bin"
@@ -17,7 +29,13 @@ $env.PATH = ($env.PATH | split row (char esep) | prepend [
     $"($env.HOME)/.cargo/bin"
     $"($env.HOME)/.tfenv/bin"
     "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"  # VSCode CLI
-] | where { |p| $p | path exists } | uniq | str join (char esep))
+]
+
+$env.PATH = ($env.PATH
+    | split row (char esep)
+    | prepend ($additional_paths | where { |p| $p | path exists })
+    | uniq
+    | str join (char esep))
 
 # ZScaler Certificates
 let zscaler_cert_dir = $"($env.HOME)/.zscalerCerts"
