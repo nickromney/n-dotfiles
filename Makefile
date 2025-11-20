@@ -5,6 +5,7 @@ CONFIG_DIR := _configs
 GREEN := \033[0;32m
 YELLOW := \033[1;33m
 BLUE := \033[0;34m
+RED := \033[0;31m
 NC := \033[0m
 
 # Configuration sets
@@ -17,8 +18,25 @@ HOST_WORK = host/work
 COMMON_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON)
 
 # Configuration combinations
-PERSONAL_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON) $(HOST_PERSONAL) host/manual-check focus/vscode
+PERSONAL_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON) $(HOST_PERSONAL) host/manual-check focus/kubernetes focus/vscode
 WORK_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON) $(HOST_WORK) host/manual-check focus/vscode
+
+PROFILES = personal work common
+ACTIONS = install update stow configure
+DEFAULT_PROFILE := personal
+REQUESTED_PROFILE := $(firstword $(filter $(PROFILES),$(MAKECMDGOALS)))
+SELECTED_PROFILE := $(strip $(if $(PROFILE),$(PROFILE),$(if $(REQUESTED_PROFILE),$(REQUESTED_PROFILE),$(DEFAULT_PROFILE))))
+
+define profile-configs
+$(if $(filter personal,$1),$(PERSONAL_CONFIGS),$(if $(filter work,$1),$(WORK_CONFIGS),$(COMMON_CONFIGS)))
+endef
+
+define macos-profile
+$(if $(filter work,$1),work,$(if $(filter personal,$1),personal,personal))
+endef
+
+PROFILE_CONFIGS := $(call profile-configs,$(SELECTED_PROFILE))
+SELECTED_MACOS_PROFILE := $(call macos-profile,$(SELECTED_PROFILE))
 
 # Default target
 .DEFAULT_GOAL := help
@@ -41,27 +59,38 @@ help: ## Show this help message
 	@echo "  VSCODE_CLI                VSCode binary to use (default: code)"
 	@echo ""
 	@echo "$(BLUE)Examples:$(NC)"
-	@echo "  make common install       Install common tools"
-	@echo "  make personal stow        Install personal config and create symlinks"
+	@echo "  make work install         Install tools for the work profile"
+	@echo "  make personal configure   Apply macOS settings for personal profile"
+	@echo "  make stow work            Symlink configs for the work profile"
 	@echo "  make focus-vscode         Install VSCode with extensions"
 	@echo "  VSCODE_CLI=cursor make focus-vscode"
 
 ##@ Main Configurations
 
-.PHONY: common
-common: ## Install common tools (shared + host/common)
-	@CONFIG_FILES="$(COMMON_CONFIGS)" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
-
 .PHONY: personal
-personal: ## Install personal configuration packages
-	@CONFIG_FILES="$(PERSONAL_CONFIGS)" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
+personal: ## Personal profile (default) - combine with install/update/stow/configure
+	@if [ -z "$(filter $(ACTIONS),$(MAKECMDGOALS))" ]; then \
+		$(MAKE) PROFILE=personal install; \
+	fi
+
+.PHONY: work
+work: ## Work profile - combine with install/update/stow/configure
+	@if [ -z "$(filter $(ACTIONS),$(MAKECMDGOALS))" ]; then \
+		$(MAKE) PROFILE=work install; \
+	fi
+
+.PHONY: common
+common: ## Shared profile - combine with install/update/stow/configure
+	@if [ -z "$(filter $(ACTIONS),$(MAKECMDGOALS))" ]; then \
+		$(MAKE) PROFILE=common install; \
+	fi
 
 .PHONY: personal-setup
 personal-setup: ## Full personal Mac setup (packages + macOS settings)
 	@./setup-personal-mac.sh
 
-.PHONY: work
-work: ## Full work Mac setup (runs setup-work-mac.sh)
+.PHONY: work-setup
+work-setup: ## Full work Mac setup (runs setup-work-mac.sh)
 	@./setup-work-mac.sh
 
 .PHONY: update-all
@@ -143,6 +172,10 @@ focus-container-base: ## Install Podman and container tools
 focus-kubernetes: ## Install Kubernetes tools (kubectl, k9s, helm)
 	@CONFIG_FILES="focus/kubernetes" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
 
+.PHONY: focus-mas
+focus-mas: ## Optional Mac App Store apps (requires prior purchase)
+	@CONFIG_FILES="focus/mas" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
+
 .PHONY: focus-neovim
 focus-neovim: ## Install Neovim and plugins
 	@CONFIG_FILES="focus/neovim" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
@@ -221,14 +254,27 @@ clean: ## Clean cached files and build artifacts
 	@find . -name ".DS_Store" -delete 2>/dev/null || true
 	@echo "$(GREEN)✓ Cleaned$(NC)"
 
-# Action targets (these do nothing by themselves, used with main targets)
 .PHONY: install
-install:
-	@:
+install: ## Install packages for the selected profile
+	@echo "$(BLUE)Installing $(SELECTED_PROFILE) profile...$(NC)"
+	@CONFIG_FILES="$(PROFILE_CONFIGS)" ./install.sh
 
 .PHONY: update
-update: update-all  ## Alias for update-all (updates everything)
+update: ## Update packages for the selected profile
+	@echo "$(BLUE)Updating $(SELECTED_PROFILE) profile...$(NC)"
+	@CONFIG_FILES="$(PROFILE_CONFIGS)" ./install.sh -u
 
 .PHONY: stow
-stow:
-	@:
+stow: ## Stow dotfiles for the selected profile
+	@echo "$(BLUE)Stowing dotfiles for $(SELECTED_PROFILE) profile...$(NC)"
+	@CONFIG_FILES="$(PROFILE_CONFIGS)" ./install.sh -s
+
+.PHONY: configure
+configure: ## Apply macOS settings (dock, defaults) for the selected profile
+	@CONFIG_FILE="_macos/$(SELECTED_MACOS_PROFILE).yaml"; \
+	if [ ! -f "$$CONFIG_FILE" ]; then \
+		echo "$(RED)No macOS config found for $(SELECTED_PROFILE) profile ($$CONFIG_FILE missing)$(NC)"; \
+		exit 1; \
+	fi; \
+	echo "$(BLUE)Applying macOS settings from $$CONFIG_FILE...$(NC)"; \
+	./_macos/macos.sh "$(SELECTED_MACOS_PROFILE).yaml"

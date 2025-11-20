@@ -23,3 +23,11 @@ tools:
     description: "Kubernetes command-line tool"
     documentation_url: "https://kubernetes.io/docs/reference/kubectl/"
     category: kubernetes
+
+  kind:
+    manager: brew
+    type: package
+    check_command: command -v kind
+    description: "Run local Kubernetes clusters with container runtimes"
+    documentation_url: "https://kind.sigs.k8s.io/"
+    category: kubernetes
