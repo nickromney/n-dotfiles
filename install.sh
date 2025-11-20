@@ -570,6 +570,16 @@ main() {
       # Only process if we have tools
       if [[ -n "$tools" ]]; then
         while read -r tool; do
+          # Skip brew taps during update mode - they don't need updating
+          if [[ "$UPDATE" == "true" ]]; then
+            local manager type
+            manager=$(yq ".tools.${tool}.manager" "$CURRENT_CONFIG_FILE")
+            type=$(yq ".tools.${tool}.type" "$CURRENT_CONFIG_FILE")
+            if [[ "$manager" == "brew" && "$type" == "tap" ]]; then
+              continue
+            fi
+          fi
+
           if is_tool_installed "$tool" "$CURRENT_CONFIG_FILE"; then
             if [[ "$UPDATE" == "true" ]]; then
               manager=$(yq ".tools.${tool}.manager" "$CURRENT_CONFIG_FILE")
@@ -603,9 +613,6 @@ main() {
                       info "✓ $tool (brew cask) is already up to date"
                     fi
                   fi
-                  ;;
-                "tap")
-                  info "✓ $tool (brew tap) - taps don't need updating"
                   ;;
                 *)
                   info "✓ $tool (brew $type) is already installed"
