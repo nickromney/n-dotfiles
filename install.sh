@@ -132,10 +132,7 @@ get_available_managers() {
       esac
     done <<<"$required_managers"
 
-    # Report available and unavailable package managers to stderr
-    if [ ${#available[@]} -gt 0 ]; then
-      echo "Available package managers: ${available[*]}" >&2
-    fi
+    # Report unavailable package managers to stderr (if any)
     if [ ${#unavailable[@]} -gt 0 ]; then
       echo "Unavailable package managers:" >&2
       printf '  - %s\n' "${unavailable[@]}" >&2
@@ -554,6 +551,8 @@ main() {
   if [ ${#AVAILABLE_MANAGERS[@]} -eq 0 ]; then
     info "No package managers available - skipping package installation"
     # Don't return early - allow stow to run
+  else
+    info "Available package managers: ${AVAILABLE_MANAGERS[*]}"
   fi
 
   # Process each configuration file only if we have managers
