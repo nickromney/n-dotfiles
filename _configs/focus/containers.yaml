@@ -1,0 +1,24 @@
+tools:
+  podman:
+    manager: brew
+    type: package
+    check_command: podman --version
+    description: "Daemonless container engine compatible with Docker"
+    documentation_url: "https://podman.io/"
+    category: containers
+
+  podman-compose:
+    manager: brew
+    type: package
+    check_command: podman-compose --version
+    description: "docker-compose compatible wrapper for Podman"
+    documentation_url: "https://github.com/containers/podman-compose"
+    category: containers
+
+  podman-desktop:
+    manager: brew
+    type: cask
+    check_command: '[ -d "/Applications/Podman Desktop.app" ]'
+    description: "GUI management tool for Podman containers"
+    documentation_url: "https://podman-desktop.io/"
+    category: containers

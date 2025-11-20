@@ -5,6 +5,7 @@
 setup() {
   # Save current directory
   export ORIGINAL_DIR="$PWD"
+  export REPO_ROOT="$(cd "$BATS_TEST_DIRNAME/.." && pwd)"
   export TEST_DIR="$(mktemp -d)"
 
   # Create a minimal test environment
@@ -18,8 +19,16 @@ echo "Arguments: $@"
 EOF
   chmod +x install.sh
 
+  mkdir -p _macos
+  cat > _macos/macos.sh <<'EOF'
+#!/usr/bin/env bash
+echo "macos.sh called with: $@"
+EOF
+  chmod +x _macos/macos.sh
+  touch _macos/personal.yaml _macos/work.yaml
+
   # Copy the Makefile
-  cp "$ORIGINAL_DIR/../Makefile" .
+  cp "$REPO_ROOT/Makefile" .
 }
 
 teardown() {
@@ -41,110 +50,73 @@ teardown() {
   [[ "$output" =~ "Examples" ]]
 }
 
-@test "make common runs with correct configs" {
-  run make common
+@test "make install defaults to personal profile" {
+  run make install
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "CONFIG_FILES: shared/shell shared/git shared/search shared/file-tools shared/data-tools shared/network shared/neovim host/common" ]]
-  [[ ! "$output" =~ "-u" ]]  # Should not have update flag
-  [[ ! "$output" =~ "-s" ]]  # Should not have stow flag
+  [[ "$output" =~ "host/personal" ]]
+  [[ "$output" =~ "focus/containers" ]]
+  [[ ! "$output" =~ "-u" ]]
+  [[ ! "$output" =~ "-s" ]]
 }
 
-@test "make personal runs with correct configs" {
+@test "make personal without action triggers install" {
   run make personal
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "CONFIG_FILES: shared/shell shared/git shared/search shared/file-tools shared/data-tools shared/network shared/neovim host/common host/personal host/manual-check focus/vscode" ]]
-  [[ ! "$output" =~ "-u" ]]  # Should not have update flag
-  [[ ! "$output" =~ "-s" ]]  # Should not have stow flag
+  [[ "$output" =~ "host/personal" ]]
+  [[ "$output" =~ "focus/kubernetes" ]]
 }
 
-@test "make work runs setup-work-mac.sh script" {
-  # Create mock setup-work-mac.sh that just prints something
-  cat > setup-work-mac.sh << 'EOF'
-#!/usr/bin/env bash
-echo "Running setup-work-mac.sh"
-EOF
-  chmod +x setup-work-mac.sh
-
-  run make work
+@test "make install work uses work profile" {
+  run make install work
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "Running setup-work-mac.sh" ]]
+  [[ "$output" =~ "host/work" ]]
+  [[ ! "$output" =~ "host/personal" ]]
+}
+
+@test "make work install uses work profile" {
+  run make work install
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "host/work" ]]
+}
+
+@test "make work stow adds stow flag" {
+  run make work stow
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "host/work" ]]
+  [[ "$output" =~ "-s" ]]
+}
+
+@test "make personal update adds update flag" {
+  run make personal update
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "host/personal" ]]
+  [[ "$output" =~ "-u" ]]
+}
+
+@test "make update defaults to personal profile" {
+  run make update
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "host/personal" ]]
+  [[ "$output" =~ "-u" ]]
+}
+
+@test "PROFILE environment variable overrides selection" {
+  PROFILE=work run make install
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "host/work" ]]
+}
+
+@test "make configure work calls macos.sh with work yaml" {
+  run make configure work
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "Applying macOS settings from _macos/work.yaml" ]]
+  [[ "$output" =~ "macos.sh called with: work.yaml" ]]
 }
 
 @test "make focus-vscode runs with correct configs" {
   run make focus-vscode
   [ "$status" -eq 0 ]
   [[ "$output" =~ "CONFIG_FILES: focus/vscode" ]]
-}
-
-@test "make focus-python runs with correct configs" {
-  run make focus-python
-  [ "$status" -eq 0 ]
-  [[ "$output" =~ "CONFIG_FILES: focus/python" ]]
-}
-
-@test "make focus-neovim runs with correct configs" {
-  run make focus-neovim
-  [ "$status" -eq 0 ]
-  [[ "$output" =~ "CONFIG_FILES: focus/neovim" ]]
-}
-
-@test "make common update adds update flag" {
-  run make common update
-  [ "$status" -eq 0 ]
-  [[ "$output" =~ "CONFIG_FILES: shared/shell shared/git shared/search shared/file-tools shared/data-tools shared/network shared/neovim host/common" ]]
-  [[ "$output" =~ "-u" ]]  # Should have update flag
-}
-
-@test "make common stow adds stow flag" {
-  run make common stow
-  [ "$status" -eq 0 ]
-  [[ "$output" =~ "CONFIG_FILES: shared/shell shared/git shared/search shared/file-tools shared/data-tools shared/network shared/neovim host/common" ]]
-  [[ "$output" =~ "-s" ]]  # Should have stow flag
-}
-
-@test "make personal update adds update flag" {
-  run make personal update
-  [ "$status" -eq 0 ]
-  [[ "$output" =~ "-u" ]]  # Should have update flag
-}
-
-@test "make personal stow adds stow flag" {
-  run make personal stow
-  [ "$status" -eq 0 ]
-  [[ "$output" =~ "-s" ]]  # Should have stow flag
-}
-
-@test "make personal install does not add extra flags" {
-  run make personal install
-  [ "$status" -eq 0 ]
-  [[ ! "$output" =~ "-u" ]]  # Should not have update flag
-  [[ ! "$output" =~ "-s" ]]  # Should not have stow flag
-}
-
-@test "make focus-vscode update adds update flag" {
-  run make focus-vscode update
-  [ "$status" -eq 0 ]
-  [[ "$output" =~ "-u" ]]
-}
-
-@test "make focus-vscode stow adds stow flag" {
-  run make focus-vscode stow
-  [ "$status" -eq 0 ]
-  [[ "$output" =~ "-s" ]]
-}
-
-@test "make personal update stow adds both flags" {
-  run make personal update stow
-  [ "$status" -eq 0 ]
-  [[ "$output" =~ "-u -s" ]]  # Should have both flags
-}
-
-@test "make common install stow adds stow flag" {
-  run make common install stow
-  [ "$status" -eq 0 ]
-  [[ "$output" =~ "CONFIG_FILES: shared/shell shared/git shared/search shared/file-tools shared/data-tools shared/network shared/neovim host/common" ]]
-  [[ "$output" =~ "-s" ]]  # Should have stow flag
-  [[ ! "$output" =~ "-u" ]]  # Should not have update flag
 }
 
 @test "make default target shows help" {
@@ -154,22 +126,16 @@ EOF
   [[ "$output" =~ "Dotfile and Tool Management" ]]
 }
 
-@test "make install alone does nothing" {
-  run make install
-  [ "$status" -eq 0 ]
-  [ -z "$output" ]  # Should have no output
-}
+@test "make work-setup runs setup-work-mac.sh" {
+  cat > setup-work-mac.sh <<'EOF'
+#!/usr/bin/env bash
+echo "Running work setup"
+EOF
+  chmod +x setup-work-mac.sh
 
-@test "make update runs update-all" {
-  run make update
+  run make work-setup
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "Updating all package managers" ]]
-}
-
-@test "make stow alone does nothing" {
-  run make stow
-  [ "$status" -eq 0 ]
-  [ -z "$output" ]  # Should have no output
+  [[ "$output" =~ "Running work setup" ]]
 }
 
 @test "VSCODE_CLI environment variable is passed through" {

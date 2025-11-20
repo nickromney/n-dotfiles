@@ -260,5 +260,11 @@
   "carbon.useBrowserCache": true,
   "carbon.theme": "one-dark",
   "window.zoomLevel": 1,
-  "workbench.colorTheme": "Monokai Dimmed"
+  "workbench.colorTheme": "Monokai Dimmed",
+  "gitlens.ai.model": "vscode",
+  "gitlens.ai.vscode.model": "copilot:gpt-4.1",
+  "azureTerraform.survey": {
+    "surveyPromptDate": "2025-11-30T16:23:25.027Z",
+    "surveyPromptIgnoredCount": 0
+  }
 }

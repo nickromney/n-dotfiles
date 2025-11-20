@@ -45,11 +45,14 @@ If you already have Homebrew and basic tools:
 git clone https://github.com/nickromney/n-dotfiles.git ~/n-dotfiles
 cd ~/n-dotfiles
 
-# Install common Mac tools (recommended starting point)
-make common install
+# Install the default (personal) toolchain
+make personal install
 
-# Or install my personal setup (includes VSCode extensions)
-make personal stow
+# Provision a work Mac
+make work install
+
+# Apply macOS tweaks (dock, defaults) for the active profile
+make personal configure
 
 # Or just install VSCode and extensions
 make focus-vscode
@@ -59,24 +62,26 @@ make focus-vscode
 
 The Makefile provides convenient targets for different configurations:
 
+Combine a profile (`personal`, `work`, or `common`) with an action (`install`, `update`, `stow`, `configure`). Order does not matter, so `make work install` equals `make install work`.
+
 ```bash
-# Main targets
-make common       # Essential Mac tools (shared + host/common)
-make personal     # My personal machine setup
-make work         # Work machine setup
+# Profile + action examples
+make personal install     # Install personal apps and CLIs
+make work update          # Update tooling for work machines
+make stow work            # Symlink configs for the work profile
+make personal configure   # Apply macOS defaults (dock, keyboard, etc.)
+make install PROFILE=work # Alternate syntax using PROFILE env var
+make focus-mas install    # Optional Mac App Store apps (after "purchasing" once)
 
 # Focus targets (specific tool categories)
-make focus-vscode     # VSCode and extensions
-make focus-devops     # DevOps tools
-make focus-neovim     # Neovim and plugins
-
-# Actions (combine with targets)
-make personal install  # Install packages only
-make personal update   # Update existing packages
-make personal stow     # Install and create symlinks
+make focus-vscode         # VSCode and extensions
+make focus-neovim         # Neovim and plugins
+make focus-mas            # Mac App Store apps (requires App Store login)
 
 # VSCode for different editors
 VSCODE_CLI=cursor make focus-vscode  # Install extensions for Cursor
+
+> **Note:** Mac App Store installs require you to sign in via the App Store app and click “Get” once per app before `make focus-mas install` (or any `mas install`) can succeed.
 ```
 
 ## Features
@@ -92,20 +97,18 @@ VSCODE_CLI=cursor make focus-vscode  # Install extensions for Cursor
 ### Package Installation and Configuration
 
 ```bash
-# Install packages only
-./install.sh
+# Preferred workflow
+make personal install        # or: make work install
+make focus-mas install       # optional, run after clicking "Get" in App Store
+make stow personal           # symlink dotfiles
+make personal configure      # apply macOS settings
 
-# Install packages and stow configurations
-./install.sh -s
-
-# Preview changes without making them
-./install.sh -d -s
-
-# Force stow to adopt existing files
-./install.sh -s -f
-
-# Update installed packages
-./install.sh -u
+# Direct install.sh usage (advanced/CI)
+./install.sh              # Install packages only
+./install.sh -s           # Install packages and stow configurations
+./install.sh -d -s        # Preview changes
+./install.sh -s -f        # Force stow
+./install.sh -u           # Update installed packages
 ```
 
 ### macOS System Configuration
@@ -121,6 +124,9 @@ Light-touch macOS configuration management:
 
 # Dry run to preview changes
 ./_macos/macos.sh -d personal.yaml
+
+# Equivalent Makefile helper
+make personal configure
 ```
 
 See [_macos/README.md](_macos/README.md) for detailed macOS configuration options.
@@ -316,17 +322,20 @@ _configs/
 
 | Target | Includes | Purpose |
 |--------|----------|---------|
-| **make common** | All shared/ + host/common | Essential Mac setup |
+| **make common install** | All shared/ + host/common | Essential Mac setup |
 | **make focus-ai** | focus/ai | AI/ML development tools |
 | **make focus-container-base** | focus/container-base | Podman and container tools |
+| **make focus-containers** | focus/containers | Podman container tools |
 | **make focus-kubernetes** | focus/kubernetes | Kubernetes toolchain |
 | **make focus-neovim** | focus/neovim | Enhanced Neovim |
 | **make focus-python** | focus/python | Python development |
 | **make focus-rust** | focus/rust | Rust development |
 | **make focus-typescript** | focus/typescript | TypeScript/Node.js |
 | **make focus-vscode** | focus/vscode | VSCode + extensions |
-| **make personal** | All shared/ + host/common + host/personal + focus/vscode | Full personal Mac |
-| **make work** | Runs setup-work-mac.sh | Complete work setup |
+| **make focus-mas** | focus/mas | Optional Mac App Store apps (requires prior purchase) |
+| **make personal install** | Shared + host/common + host/personal + focus/containers + focus/kubernetes + focus/vscode | Full personal Mac |
+| **make work install** | Shared + host/common + host/work + focus/containers + focus/kubernetes + focus/vscode | Work laptop tooling |
+| **make work-setup** | Runs setup-work-mac.sh | Legacy scripted work setup |
 
 ### Quick Setup Guide
 
@@ -336,14 +345,17 @@ For a new personal Mac (like yours):
 # 1. Install base tools and personal apps
 make personal install
 
-# 2. Apply macOS system settings (mouse scroll, dock, etc.)
-./_macos/macos.sh personal.yaml
+# 2. Optional: install Mac App Store apps once you're signed in + clicked "Get"
+make focus-mas install
 
 # 3. Create configuration symlinks
 make personal stow
 
-# Or all at once:
-make personal stow && ./_macos/macos.sh personal.yaml
+# 4. Apply macOS system settings (mouse scroll, dock, etc.)
+make personal configure
+
+# Or stow + configure together:
+make personal stow && make personal configure
 ```
 
 ### Package Manager Examples

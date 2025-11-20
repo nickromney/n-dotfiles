@@ -1,0 +1,92 @@
+# Optional Mac App Store apps
+# Install with: make focus-mas install
+tools:
+  microsoft-excel:
+    manager: mas
+    type: app
+    app_id: "462058435"
+    check_command: "[ -d '/Applications/Microsoft Excel.app' ]"
+    description: "Spreadsheet application"
+    documentation_url: "https://apps.apple.com/us/app/microsoft-excel/id462058435"
+    category: productivity
+
+  microsoft-outlook:
+    manager: mas
+    type: app
+    app_id: "985367838"
+    check_command: "[ -d '/Applications/Microsoft Outlook.app' ]"
+    description: "Email and calendar client"
+    documentation_url: "https://apps.apple.com/us/app/microsoft-outlook/id985367838"
+    category: productivity
+
+  microsoft-powerpoint:
+    manager: mas
+    type: app
+    app_id: "462062816"
+    check_command: "[ -d '/Applications/Microsoft PowerPoint.app' ]"
+    description: "Presentation software"
+    documentation_url: "https://apps.apple.com/us/app/microsoft-powerpoint/id462062816"
+    category: productivity
+
+  microsoft-word:
+    manager: mas
+    type: app
+    app_id: "462054704"
+    check_command: "[ -d '/Applications/Microsoft Word.app' ]"
+    description: "Word processor"
+    documentation_url: "https://apps.apple.com/us/app/microsoft-word/id462054704"
+    category: productivity
+
+  copy-em:
+    manager: mas
+    type: app
+    app_id: "876540291"
+    check_command: "mas list | grep -q '^876540291'"
+    description: "Clipboard manager with paste formatting"
+    documentation_url: "https://apps.apple.com/us/app/copy-em/id876540291"
+    category: productivity
+
+  nightshift:
+    manager: mas
+    type: app
+    app_id: "1561604170"
+    check_command: "mas list | grep -q '^1561604170'"
+    description: "Night mode color temperature adjustment"
+    documentation_url: "https://apps.apple.com/us/app/nightshift/id1561604170"
+    category: utilities
+
+  paste:
+    manager: mas
+    type: app
+    app_id: "967805235"
+    check_command: "mas list | grep -q '^967805235'"
+    description: "Clipboard history manager"
+    documentation_url: "https://apps.apple.com/us/app/paste/id967805235"
+    category: productivity
+
+  things:
+    manager: mas
+    type: app
+    app_id: "904280696"
+    check_command: "mas list | grep -q '^904280696'"
+    description: "Task management and to-do list app"
+    documentation_url: "https://apps.apple.com/us/app/things-3/id904280696"
+    category: productivity
+
+  slack:
+    manager: mas
+    type: app
+    app_id: "803453959"
+    check_command: "mas list | grep -q '^803453959'"
+    description: "Team communication platform"
+    documentation_url: "https://apps.apple.com/us/app/slack-for-desktop/id803453959"
+    category: communication
+
+  whatsapp:
+    manager: mas
+    type: app
+    app_id: "310633997"
+    check_command: "mas list | grep -q '^310633997'"
+    description: "WhatsApp Messenger desktop app"
+    documentation_url: "https://apps.apple.com/us/app/whatsapp-messenger/id310633997"
+    category: communication
