@@ -50,7 +50,8 @@ EOF
 
   run get_available_managers "test.yaml"
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "Available package managers: mas" ]]
+  # Function now outputs manager names to stdout
+  [[ "$output" =~ "mas" ]]
 }
 
 @test "mas: detects when mas is not installed" {

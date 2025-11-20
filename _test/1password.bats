@@ -97,7 +97,7 @@ GITCONFIG
       fi
       exit 0
       ;;
-    "github_personal_authentication"|"github_personal_signing"|"aws_work_2024_client_1"|"github_work_2025_client_1")
+    "personal_github_authentication"|"personal_github_signing"|"work_aws_2024_client_1"|"work_github_2025_client_1")
       echo "$item_name found"
       exit 0
       ;;
@@ -132,7 +132,7 @@ EOF
   [[ "$output" == *"SSH Config Dry Run"* ]]
   [[ "$output" == *"Found in 1Password:"* ]]
   [[ "$output" == *"SSH Config (Secure Note)"* ]]
-  [[ "$output" == *"github_personal_authentication"* ]]
+  [[ "$output" == *"personal_github_authentication"* ]]
   [[ "$output" == *"No files were modified"* ]]
 }
 
@@ -302,7 +302,7 @@ EOF
   [[ "$output" == *"Found in 1Password:"* ]]
   [[ "$output" == *"SSH Config"* ]]
   [[ "$output" == *"Not found in 1Password:"* ]]
-  [[ "$output" == *"github_personal_authentication"* ]]
+  [[ "$output" == *"personal_github_authentication"* ]]
 }
 
 @test "SSH setup: checks for SSH agent socket in dry-run" {

@@ -53,3 +53,14 @@ repos:
     rev: v8.21.2
     hooks:
       - id: gitleaks
+
+  # Local hooks
+  - repo: local
+    hooks:
+      - id: bats-tests
+        name: Run BATS tests
+        entry: _test/run_tests.sh
+        language: system
+        pass_filenames: false
+        files: \.(sh|bash|bats|yaml)$
+        exclude: ^_test/(bats-assert|bats-support)/

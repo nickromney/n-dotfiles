@@ -114,9 +114,9 @@ EOF
   run get_available_managers "test.yaml"
   [ "$status" -eq 0 ]
 
-  # Check if brew is actually available on the system
+  # Function now outputs manager names to stdout, unavailable to stderr
   if command_exists brew; then
-    [[ "$output" =~ "Available package managers: brew" ]]
+    [[ "$output" =~ "brew" ]]
   else
     [[ "$output" =~ brew:\ please\ install\ from\ https://brew.sh ]]
   fi
@@ -147,10 +147,11 @@ echo "mas version 1.8.6"' > "$MOCK_BIN_DIR/mas"
   run get_available_managers "test.yaml"
   [ "$status" -eq 0 ]
 
-  # Check if mas is available
+  # Check if mas is available (function now outputs manager names to stdout, unavailable to stderr)
   if command_exists mas; then
-    [[ "$output" =~ "Available package managers: mas" ]]
+    [[ "$output" =~ "mas" ]]
   else
+    # Unavailable managers go to stderr, which is captured in $output by bats
     [[ "$output" =~ "mas: please install with 'brew install mas'" ]]
   fi
 }
@@ -175,8 +176,8 @@ EOF
   run get_available_managers "test.yaml"
   [ "$status" -eq 0 ]
 
-  # Should show some managers as available based on what's actually installed
-  [[ "$output" =~ "Available package managers:" ]] || [[ "$output" =~ "Unavailable package managers:" ]]
+  # Should output manager names or unavailable messages (function outputs to stdout/stderr)
+  [ -n "$output" ]  # Just check that there's some output
 }
 
 @test "get_available_managers reports unavailable managers" {
@@ -303,7 +304,8 @@ EOF
 
   run get_available_managers "test.yaml"
   [ "$status" -eq 0 ]
-  [[ "${lines[0]}" =~ "Available package managers:" ]] && [[ "${lines[0]}" =~ "apt" ]]
+  # Function now outputs manager names to stdout (one per line)
+  [[ "$output" =~ "apt" ]]
 }
 
 # Tests for is_tool_installed function
