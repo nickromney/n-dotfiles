@@ -766,15 +766,23 @@ main() {
           elif can_install_tool "$tool" "$CURRENT_CONFIG_FILE"; then
             manager=$(yq ".tools.${tool}.manager" "$CURRENT_CONFIG_FILE")
             type=$(yq ".tools.${tool}.type" "$CURRENT_CONFIG_FILE")
-            info "Installing $tool ($manager $type)..."
-            install_tool "$tool" "$CURRENT_CONFIG_FILE"
-            install_result=$?
-            if [[ $install_result -eq 0 ]]; then
-              info "✓ Successfully installed $tool ($manager $type)"
-            elif [[ $install_result -eq 2 ]]; then
-              info "✓ $tool ($manager $type) was already up to date"
+
+            # Special handling for manual tools - they're only checked, not installed
+            if [[ "$manager" == "manual" ]]; then
+              info "Checking $tool ($manager $type)..."
+              install_tool "$tool" "$CURRENT_CONFIG_FILE"
+              # Manual tools always return 0 after reporting, no success message needed
             else
-              info "Failed to install $tool ($manager $type)"
+              info "Installing $tool ($manager $type)..."
+              install_tool "$tool" "$CURRENT_CONFIG_FILE"
+              install_result=$?
+              if [[ $install_result -eq 0 ]]; then
+                info "✓ Successfully installed $tool ($manager $type)"
+              elif [[ $install_result -eq 2 ]]; then
+                info "✓ $tool ($manager $type) was already up to date"
+              else
+                info "Failed to install $tool ($manager $type)"
+              fi
             fi
           else
             manager=$(yq ".tools.${tool}.manager" "$CURRENT_CONFIG_FILE")
