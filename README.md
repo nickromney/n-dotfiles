@@ -52,7 +52,7 @@ make personal install
 make work install
 
 # Apply macOS tweaks (dock, defaults) for the active profile
-make configure personal
+make personal configure
 
 # Or just install VSCode and extensions
 make focus-vscode
@@ -325,6 +325,7 @@ _configs/
 | **make common install** | All shared/ + host/common | Essential Mac setup |
 | **make focus-ai** | focus/ai | AI/ML development tools |
 | **make focus-container-base** | focus/container-base | Podman and container tools |
+| **make focus-containers** | focus/containers | Podman container tools |
 | **make focus-kubernetes** | focus/kubernetes | Kubernetes toolchain |
 | **make focus-neovim** | focus/neovim | Enhanced Neovim |
 | **make focus-python** | focus/python | Python development |

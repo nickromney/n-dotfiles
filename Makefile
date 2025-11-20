@@ -18,8 +18,8 @@ HOST_WORK = host/work
 COMMON_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON)
 
 # Configuration combinations
-PERSONAL_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON) $(HOST_PERSONAL) host/manual-check focus/kubernetes focus/vscode
-WORK_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON) $(HOST_WORK) host/manual-check focus/vscode
+PERSONAL_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON) $(HOST_PERSONAL) host/manual-check focus/containers focus/kubernetes focus/vscode
+WORK_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON) $(HOST_WORK) host/manual-check focus/containers focus/kubernetes focus/vscode
 
 PROFILES = personal work common
 ACTIONS = install update stow configure
@@ -167,6 +167,10 @@ focus-ai: ## Install AI/ML tools (ollama, etc.)
 .PHONY: focus-container-base
 focus-container-base: ## Install Podman and container tools
 	@CONFIG_FILES="focus/container-base" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
+
+.PHONY: focus-containers
+focus-containers: ## Install Podman and container management tools
+	@CONFIG_FILES="focus/containers" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
 
 .PHONY: focus-kubernetes
 focus-kubernetes: ## Install Kubernetes tools (kubectl, k9s, helm)
