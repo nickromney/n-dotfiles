@@ -23,7 +23,9 @@
       "Bash(git add:*)",
       "Bash(nu -c:*)",
       "Bash(command -v:*)",
-      "Bash(nu -n -c:*)"
+      "Bash(nu -n -c:*)",
+      "Bash(bash -c:*)",
+      "Bash(bash:*)"
     ],
     "deny": [],
     "ask": []

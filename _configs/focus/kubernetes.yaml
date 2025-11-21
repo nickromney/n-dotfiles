@@ -34,9 +34,9 @@ tools:
 
   kubectx:
     manager: arkade
-    type: package
+    type: get
     check_command: command -v kubectx
-    description: "Fast way to switch between Kubernetes contexts"
+    description: "Fast way to switch between Kubernetes contexts (includes kubens)"
     documentation_url: "https://github.com/ahmetb/kubectx"
     category: kubernetes
 
