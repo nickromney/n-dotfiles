@@ -65,7 +65,7 @@ for path_entry in "${paths[@]}"; do
 done
 
 # De-duplicate PATH
-PATH=$(echo "$PATH" | awk -v RS=: '!a[$0]++' | tr "\n" ":")
+PATH=$(echo "$PATH" | awk -v RS=: '!a[$0]++' | paste -sd:)
 export PATH
 
 #

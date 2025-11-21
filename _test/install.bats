@@ -1004,7 +1004,7 @@ fi' > "$MOCK_BIN_DIR/cursor"
   [ "$status" -eq 0 ]
 
   # Cleanup
-  rm -rf "$HOME/.cursor/extensions/esbenp.prettier-vscode-1.0.0"
+  rm -rf "$HOME/.cursor/extensions"
 }
 
 @test "main function handles config file with no tools key" {

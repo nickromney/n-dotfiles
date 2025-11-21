@@ -491,16 +491,17 @@ is_tool_installed() {
 
   # For code extensions, check filesystem first (faster and more reliable)
   if [[ "$manager" == "code" && "$type" == "extension" ]]; then
+    # Get VSCode CLI first (needed for both filesystem check and fallback)
+    local vscode_cli extensions_dir
+    vscode_cli=$(get_vscode_cli) || return 1
+
     # Extract extension ID from check command (format: publisher.extension)
     # Example check_command: "code --list-extensions | grep -q vscodevim.vim"
     local extension_id
-    extension_id=$(echo "$check_command" | grep -oE '[a-zA-Z0-9-]+\.[a-zA-Z0-9-]+' | head -1)
+    extension_id=$(echo "$check_command" | grep -oE '[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+' | head -1)
 
     if [[ -n "$extension_id" ]]; then
       # Determine extensions directory based on VSCode CLI
-      local vscode_cli extensions_dir
-      vscode_cli=$(get_vscode_cli) || return 1
-
       case "$vscode_cli" in
         *cursor*)
           extensions_dir="$HOME/.cursor/extensions"
