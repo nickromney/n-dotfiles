@@ -64,19 +64,13 @@ help: ## Show this help message
 ##@ Main Configurations
 
 .PHONY: personal
-personal: ## Personal profile (default) - combine with install/update/stow/configure
+personal: ## Personal profile (default) <configure|install|stow|update>
 	@if [ -z "$(filter $(ACTIONS),$(MAKECMDGOALS))" ]; then \
 		$(MAKE) PROFILE=personal install; \
 	fi
 
-.PHONY: work
-work: ## Work profile - combine with install/update/stow/configure
-	@if [ -z "$(filter $(ACTIONS),$(MAKECMDGOALS))" ]; then \
-		$(MAKE) PROFILE=work install; \
-	fi
-
 .PHONY: common
-common: ## Shared profile - combine with install/update/stow/configure
+common: ## Shared profile <configure|install|stow|update>
 	@if [ -z "$(filter $(ACTIONS),$(MAKECMDGOALS))" ]; then \
 		$(MAKE) PROFILE=common install; \
 	fi
@@ -84,6 +78,12 @@ common: ## Shared profile - combine with install/update/stow/configure
 .PHONY: personal-setup
 personal-setup: ## Full personal Mac setup (packages + macOS settings)
 	@./setup-personal-mac.sh
+
+.PHONY: work
+work: ## Work profile <configure|install|stow|update>
+	@if [ -z "$(filter $(ACTIONS),$(MAKECMDGOALS))" ]; then \
+		$(MAKE) PROFILE=work install; \
+	fi
 
 .PHONY: work-setup
 work-setup: ## Full work Mac setup (runs setup-work-mac.sh)
@@ -157,43 +157,43 @@ update-all: ## Update all installed tools (brew, apt, cargo, uv, mas)
 ##@ Focus Configurations
 
 .PHONY: focus-ai
-focus-ai: ## AI/ML tools (combine with install/update/stow)
+focus-ai: ## AI/ML tools <install|stow|update>
 	@CONFIG_FILES="focus/ai" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
 
 .PHONY: focus-container-base
-focus-container-base: ## Podman and container tools (combine with install/update/stow)
+focus-container-base: ## Podman and container tools <install|stow|update>
 	@CONFIG_FILES="focus/container-base" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
 
 .PHONY: focus-containers
-focus-containers: ## Podman container management (combine with install/update/stow)
+focus-containers: ## Podman container management <install|stow|update>
 	@CONFIG_FILES="focus/containers" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
 
 .PHONY: focus-kubernetes
-focus-kubernetes: ## Kubernetes tools (combine with install/update/stow)
+focus-kubernetes: ## Kubernetes tools <install|stow|update>
 	@CONFIG_FILES="focus/kubernetes" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
 
 .PHONY: focus-mas
-focus-mas: ## Mac App Store apps (combine with install/update/stow)
+focus-mas: ## Mac App Store apps <install|stow|update>
 	@CONFIG_FILES="focus/mas" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
 
 .PHONY: focus-neovim
-focus-neovim: ## Neovim and plugins (combine with install/update/stow)
+focus-neovim: ## Neovim and plugins <install|stow|update>
 	@CONFIG_FILES="focus/neovim" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
 
 .PHONY: focus-python
-focus-python: ## Python development tools (combine with install/update/stow)
+focus-python: ## Python development tools <install|stow|update>
 	@CONFIG_FILES="focus/python" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
 
 .PHONY: focus-rust
-focus-rust: ## Rust toolchain (combine with install/update/stow)
+focus-rust: ## Rust toolchain <install|stow|update>
 	@CONFIG_FILES="focus/rust" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
 
 .PHONY: focus-typescript
-focus-typescript: ## Node.js and TypeScript (combine with install/update/stow)
+focus-typescript: ## Node.js and TypeScript <install|stow|update>
 	@CONFIG_FILES="focus/typescript" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
 
 .PHONY: focus-vscode
-focus-vscode: ## VSCode and extensions (combine with install/update/stow)
+focus-vscode: ## VSCode and extensions <install|stow|update>
 	@CONFIG_FILES="focus/vscode" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
 
 ##@ Actions
