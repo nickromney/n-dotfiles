@@ -6,11 +6,11 @@
 
 if ((which kubectl | length) > 0) {
     # Generate kubectl completions
-    # Ensure cache directory exists and generate completions
-    mkdir ~/.cache
+    # Ensure kubectl cache directory exists and generate completions
+    mkdir ~/.cache/kubectl
     try {
-        kubectl completion nu | save --force ~/.cache/kubectl-completions.nu
-        source ~/.cache/kubectl-completions.nu
+        kubectl completion nu | save --force ~/.cache/kubectl/completions.nu
+        source ~/.cache/kubectl/completions.nu
     }
 
     # kubectl aliases (mirrored from scripts/kubectl-aliases.sh)
