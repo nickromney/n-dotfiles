@@ -20,7 +20,14 @@
       "Bash(readlink:*)",
       "Bash(markdownlint-cli2:*)",
       "Bash(make:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(nu -c:*)",
+      "Bash(command -v:*)",
+      "Bash(nu -n -c:*)",
+      "Bash(bash -c:*)",
+      "Bash(bash:*)",
+      "Bash(gh pr create:*)",
+      "Bash(bats install.bats:*)"
     ],
     "deny": [],
     "ask": []

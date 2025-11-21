@@ -44,8 +44,8 @@ macos-option-as-alt = true
 shell-integration = detect
 shell-integration-features = no-cursor
 
-# Use Nushell as the default shell
-command = /opt/homebrew/bin/nu
+# Use Zsh as the default shell
+command = /bin/zsh
 
 # Theme
 # Using Monokai Dimmed to match VSCode
