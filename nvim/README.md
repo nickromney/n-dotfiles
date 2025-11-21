@@ -1,6 +1,6 @@
 # Neovim Configuration
 
-Modern Neovim configuration for nvim 0.11.4+ with LSP support, completions, and more.
+Modern Neovim configuration for nvim 0.11.5+ with LSP support, completions, and more.
 
 ## Features
 
@@ -281,7 +281,7 @@ nvim --headless +'Lazy update' +qa
 
 ## Compatibility
 
-- **Neovim**: 0.11.4+ (tested on 0.11.4)
+- **Neovim**: 0.11.5+ (tested on 0.11.5)
 - **OS**: macOS (primary), Linux compatible
 - **Dependencies**: git, ripgrep (for Telescope), a Nerd Font (for icons)
 
