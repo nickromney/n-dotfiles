@@ -68,7 +68,8 @@ if command -v kubectl >/dev/null 2>&1; then
   # shellcheck disable=SC1091
   DOTFILES_DIR="${DOTFILES_DIR:-$HOME/Developer/personal/n-dotfiles}"
   source "$DOTFILES_DIR/scripts/kubectl-aliases.sh"
-  complete -F __start_kubectl k
+  # In zsh, use compdef instead of bash's complete
+  compdef __start_kubectl k
 fi
 
 # Local environment will be sourced later in the file
@@ -128,11 +129,13 @@ fi
 #
 # Plugin Management
 #
-ZSH_AUTOSUGGESTIONS="$(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
-ZSH_SYNTAX_HIGHLIGHTING="$(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+if command -v brew >/dev/null 2>&1; then
+  ZSH_AUTOSUGGESTIONS="$(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
+  ZSH_SYNTAX_HIGHLIGHTING="$(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
-[ -f "$ZSH_AUTOSUGGESTIONS" ] && source "$ZSH_AUTOSUGGESTIONS"
-[ -f "$ZSH_SYNTAX_HIGHLIGHTING" ] && source "$ZSH_SYNTAX_HIGHLIGHTING"
+  [ -f "$ZSH_AUTOSUGGESTIONS" ] && source "$ZSH_AUTOSUGGESTIONS"
+  [ -f "$ZSH_SYNTAX_HIGHLIGHTING" ] && source "$ZSH_SYNTAX_HIGHLIGHTING"
+fi
 
 #
 # FNM Setup (Fast Node Manager)
@@ -205,7 +208,7 @@ for path_entry in "${paths[@]}"; do
 done
 
 # De-duplicate PATH
-PATH=$(echo "$PATH" | awk -v RS=: '!a[$0]++' | tr "\n" ":")
+PATH=$(echo "$PATH" | awk -v RS=: '!a[$0]++' | paste -sd:)
 export PATH
 
 # Podman socket for Docker compatibility
@@ -288,4 +291,7 @@ if [ -f "$AWS_LAMBDA_VENV" ]; then
   alias aws-lambda-env='source "$AWS_LAMBDA_VENV"'
 fi
 
-eval "$(direnv hook zsh)"
+# direnv integration
+if command -v direnv >/dev/null 2>&1; then
+  eval "$(direnv hook zsh)"
+fi
