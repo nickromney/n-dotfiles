@@ -188,13 +188,6 @@ if command -v op >/dev/null 2>&1; then
   fi
 fi
 
-# rbenv (Homebrew install lives in ~/.rbenv and shims need to be first on PATH)
-export RBENV_ROOT="$HOME/.rbenv"
-if [ -d "$RBENV_ROOT" ]; then
-  export PATH="$RBENV_ROOT/bin:$RBENV_ROOT/shims:$PATH"
-  eval "$("$RBENV_ROOT/bin/rbenv" init - zsh)"
-fi
-
 #
 # PATH Management
 #
