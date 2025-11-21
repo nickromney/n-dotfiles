@@ -48,7 +48,8 @@ EOF
 
   run get_available_managers "test.yaml"
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "Available package managers: manual" ]]
+  # Function now outputs manager names to stdout
+  [[ "$output" =~ "manual" ]]
 }
 
 # Test manual tool "installation" (should just report, not install)

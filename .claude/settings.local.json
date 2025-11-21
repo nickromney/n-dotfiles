@@ -18,7 +18,8 @@
       "Bash(./install.sh:*)",
       "Bash(defaults read:*)",
       "Bash(readlink:*)",
-      "Bash(markdownlint-cli2:*)"
+      "Bash(markdownlint-cli2:*)",
+      "Bash(make:*)"
     ],
     "deny": [],
     "ask": []

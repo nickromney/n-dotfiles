@@ -132,10 +132,7 @@ get_available_managers() {
       esac
     done <<<"$required_managers"
 
-    # Report available and unavailable package managers to stderr
-    if [ ${#available[@]} -gt 0 ]; then
-      echo "Available package managers: ${available[*]}" >&2
-    fi
+    # Report unavailable package managers to stderr (if any)
     if [ ${#unavailable[@]} -gt 0 ]; then
       echo "Unavailable package managers:" >&2
       printf '  - %s\n' "${unavailable[@]}" >&2
@@ -554,6 +551,8 @@ main() {
   if [ ${#AVAILABLE_MANAGERS[@]} -eq 0 ]; then
     info "No package managers available - skipping package installation"
     # Don't return early - allow stow to run
+  else
+    info "Available package managers: ${AVAILABLE_MANAGERS[*]}"
   fi
 
   # Process each configuration file only if we have managers
@@ -570,10 +569,18 @@ main() {
       # Only process if we have tools
       if [[ -n "$tools" ]]; then
         while read -r tool; do
+          # Fetch manager and type once per tool to avoid duplicate yq calls
+          local manager type
+          manager=$(yq ".tools.${tool}.manager" "$CURRENT_CONFIG_FILE")
+          type=$(yq ".tools.${tool}.type" "$CURRENT_CONFIG_FILE")
+
+          # Skip brew taps during update mode - they don't need updating
+          if [[ "$UPDATE" == "true" && "$manager" == "brew" && "$type" == "tap" ]]; then
+            continue
+          fi
+
           if is_tool_installed "$tool" "$CURRENT_CONFIG_FILE"; then
             if [[ "$UPDATE" == "true" ]]; then
-              manager=$(yq ".tools.${tool}.manager" "$CURRENT_CONFIG_FILE")
-              type=$(yq ".tools.${tool}.type" "$CURRENT_CONFIG_FILE")
 
               case "$manager" in
               "brew")
@@ -603,9 +610,6 @@ main() {
                       info "✓ $tool (brew cask) is already up to date"
                     fi
                   fi
-                  ;;
-                "tap")
-                  info "✓ $tool (brew tap) - taps don't need updating"
                   ;;
                 *)
                   info "✓ $tool (brew $type) is already installed"
@@ -758,20 +762,24 @@ main() {
               esac
             fi
           elif can_install_tool "$tool" "$CURRENT_CONFIG_FILE"; then
-            manager=$(yq ".tools.${tool}.manager" "$CURRENT_CONFIG_FILE")
-            type=$(yq ".tools.${tool}.type" "$CURRENT_CONFIG_FILE")
-            info "Installing $tool ($manager $type)..."
-            install_tool "$tool" "$CURRENT_CONFIG_FILE"
-            install_result=$?
-            if [[ $install_result -eq 0 ]]; then
-              info "✓ Successfully installed $tool ($manager $type)"
-            elif [[ $install_result -eq 2 ]]; then
-              info "✓ $tool ($manager $type) was already up to date"
+            # Special handling for manual tools - they're only checked, not installed
+            if [[ "$manager" == "manual" ]]; then
+              info "Checking $tool ($manager $type)..."
+              install_tool "$tool" "$CURRENT_CONFIG_FILE"
+              # Manual tools always return 0 after reporting, no success message needed
             else
-              info "Failed to install $tool ($manager $type)"
+              info "Installing $tool ($manager $type)..."
+              install_tool "$tool" "$CURRENT_CONFIG_FILE"
+              install_result=$?
+              if [[ $install_result -eq 0 ]]; then
+                info "✓ Successfully installed $tool ($manager $type)"
+              elif [[ $install_result -eq 2 ]]; then
+                info "✓ $tool ($manager $type) was already up to date"
+              else
+                info "Failed to install $tool ($manager $type)"
+              fi
             fi
           else
-            manager=$(yq ".tools.${tool}.manager" "$CURRENT_CONFIG_FILE")
             info "Skipping $tool: $manager not available"
           fi
         done <<<"$tools"
