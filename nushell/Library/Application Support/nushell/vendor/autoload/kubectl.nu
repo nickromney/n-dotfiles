@@ -1,5 +1,4 @@
 # kubectl completions and aliases
-# Only loads if kubectl is available
 #
 # NOTE: Aliases are defined in scripts/kubectl-aliases.sh (canonical source)
 #       These nushell aliases mirror that file but use nushell syntax
@@ -9,31 +8,32 @@
 #   mkdir ~/.cache/kubectl
 #   kubectl completion nu | save --force ~/.cache/kubectl/completions.nu
 # Then add to your config: source ~/.cache/kubectl/completions.nu
+#
+# Note: These aliases are defined unconditionally. They will only work if kubectl
+# is installed and in your PATH.
 
-if ((which kubectl | length) > 0) {
-    # kubectl aliases (mirrored from scripts/kubectl-aliases.sh)
-    alias k = kubectl
+# kubectl aliases (mirrored from scripts/kubectl-aliases.sh)
+export alias k = kubectl
 
-    # Get commands
-    alias kgp = kubectl get pods
-    alias kgs = kubectl get services
-    alias kgd = kubectl get deployments
-    alias kgn = kubectl get nodes
-    alias kgi = kubectl get ingress
+# Get commands
+export alias kgp = kubectl get pods
+export alias kgs = kubectl get services
+export alias kgd = kubectl get deployments
+export alias kgn = kubectl get nodes
+export alias kgi = kubectl get ingress
 
-    # Describe and logs
-    alias kd = kubectl describe
-    alias kl = kubectl logs
-    alias klf = kubectl logs -f
+# Describe and logs
+export alias kd = kubectl describe
+export alias kl = kubectl logs
+export alias klf = kubectl logs -f
 
-    # Exec
-    alias ke = kubectl exec -it
+# Exec
+export alias ke = kubectl exec -it
 
-    # Apply and delete
-    alias ka = kubectl apply -f
-    alias kdel = kubectl delete
+# Apply and delete
+export alias ka = kubectl apply -f
+export alias kdel = kubectl delete
 
-    # Context and namespace
-    alias kctx = kubectl config current-context
-    alias kns = kubectl config set-context --current --namespace
-}
+# Context and namespace
+export alias kctx = kubectl config current-context
+export alias kns = kubectl config set-context --current --namespace

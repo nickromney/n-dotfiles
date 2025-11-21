@@ -1,5 +1,13 @@
 # Kubernetes development tools
 tools:
+  arkade:
+    manager: brew
+    type: package
+    check_command: command -v arkade
+    description: "Kubernetes apps installer and marketplace"
+    documentation_url: "https://github.com/alexellis/arkade"
+    category: kubernetes
+
   helm:
     manager: brew
     type: package
@@ -22,6 +30,14 @@ tools:
     check_command: command -v kubectl
     description: "Kubernetes command-line tool"
     documentation_url: "https://kubernetes.io/docs/reference/kubectl/"
+    category: kubernetes
+
+  kubectx:
+    manager: arkade
+    type: package
+    check_command: command -v kubectx
+    description: "Fast way to switch between Kubernetes contexts"
+    documentation_url: "https://github.com/ahmetb/kubectx"
     category: kubernetes
 
   kind:
