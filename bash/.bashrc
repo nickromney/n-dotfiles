@@ -49,6 +49,16 @@ if command -v fnm >/dev/null 2>&1; then
 fi
 
 #
+# kubectl completion and aliases
+#
+if command -v kubectl >/dev/null 2>&1; then
+  source <(kubectl completion bash)
+  # shellcheck disable=SC1091
+  source "$HOME/Developer/personal/n-dotfiles/scripts/kubectl-aliases.sh"
+  complete -F __start_kubectl k
+fi
+
+#
 # 1Password SSH Agent
 #
 if [ -S "$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock" ]; then

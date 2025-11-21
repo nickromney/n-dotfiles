@@ -62,6 +62,14 @@ if command -v brew >/dev/null 2>&1 && command -v az >/dev/null 2>&1; then
   [ -f "$AZ_COMPLETION" ] && source "$AZ_COMPLETION"
 fi
 
+# kubectl completion and aliases
+if command -v kubectl >/dev/null 2>&1; then
+  source <(kubectl completion zsh)
+  # shellcheck disable=SC1091
+  source "$HOME/Developer/personal/n-dotfiles/scripts/kubectl-aliases.sh"
+  complete -F __start_kubectl k
+fi
+
 # Local environment will be sourced later in the file
 
 # Completion menu
