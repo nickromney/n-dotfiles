@@ -207,8 +207,8 @@ for path_entry in "${paths[@]}"; do
   fi
 done
 
-# De-duplicate PATH
-PATH=$(echo "$PATH" | awk -v RS=: '!a[$0]++' | paste -sd: -)
+# De-duplicate PATH and remove empty entries
+PATH=$(echo "$PATH" | awk -v RS=: '!a[$0]++' | grep -v '^$' | paste -sd: -)
 export PATH
 
 # Podman socket for Docker compatibility
