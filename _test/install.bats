@@ -990,13 +990,21 @@ fi' > "$MOCK_BIN_DIR/cursor"
     case "$*" in
       *".tools.prettier-vscode.check_command"*) echo "code --list-extensions | grep -q esbenp.prettier-vscode" ;;
       *".tools.prettier-vscode.manager"*) echo "code" ;;
+      *".tools.prettier-vscode.type"*) echo "extension" ;;
       *) echo "null" ;;
     esac
   }
   export -f yq
 
+  # Mock the extensions directory with the extension installed
+  mkdir -p "$HOME/.cursor/extensions"
+  mkdir -p "$HOME/.cursor/extensions/esbenp.prettier-vscode-1.0.0"
+
   run is_tool_installed "prettier-vscode" "test.yaml"
   [ "$status" -eq 0 ]
+
+  # Cleanup
+  rm -rf "$HOME/.cursor/extensions/esbenp.prettier-vscode-1.0.0"
 }
 
 @test "main function handles config file with no tools key" {
