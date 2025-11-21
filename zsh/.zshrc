@@ -126,17 +126,10 @@ ZSH_SYNTAX_HIGHLIGHTING="$(brew --prefix)/share/zsh-syntax-highlighting/zsh-synt
 [ -f "$ZSH_SYNTAX_HIGHLIGHTING" ] && source "$ZSH_SYNTAX_HIGHLIGHTING"
 
 #
-# NVM Setup
+# FNM Setup (Fast Node Manager)
 #
-if command -v brew >/dev/null 2>&1; then
-  if NVM_PREFIX=$(brew --prefix nvm 2>/dev/null) && [ -d "$NVM_PREFIX" ]; then
-    export NVM_DIR="$HOME/.nvm"
-    NVM_SCRIPT="$NVM_PREFIX/nvm.sh"
-    NVM_COMPLETION="$NVM_PREFIX/etc/bash_completion.d/nvm"
-
-    [ -s "$NVM_SCRIPT" ] && source "$NVM_SCRIPT"
-    [ -s "$NVM_COMPLETION" ] && source "$NVM_COMPLETION"
-  fi
+if command -v fnm >/dev/null 2>&1; then
+  eval "$(fnm env --use-on-cd)"
 fi
 
 #
