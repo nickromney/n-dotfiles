@@ -479,19 +479,47 @@ install_tool() {
 is_tool_installed() {
   local tool=$1
   local yaml_file=$2
-  local check_command manager
+  local check_command manager type
   check_command=$(yq ".tools.${tool}.check_command" "$yaml_file")
   manager=$(yq ".tools.${tool}.manager" "$yaml_file")
+  type=$(yq ".tools.${tool}.type" "$yaml_file")
 
   if [ "$check_command" = "null" ]; then
     info "Skipping check for $tool: no check command specified"
     return 1 # Tool is not verified as installed if no check command
   fi
 
-  # For code extensions, substitute the VSCode CLI in the check command
-  if [[ "$manager" == "code" ]]; then
-    local vscode_cli
-    vscode_cli=$(get_vscode_cli) || return 1
+  # For code extensions, check filesystem first (faster and more reliable)
+  if [[ "$manager" == "code" && "$type" == "extension" ]]; then
+    # Extract extension ID from check command (format: publisher.extension)
+    # Example check_command: "code --list-extensions | grep -q vscodevim.vim"
+    local extension_id
+    extension_id=$(echo "$check_command" | grep -oE '[a-zA-Z0-9-]+\.[a-zA-Z0-9-]+' | head -1)
+
+    if [[ -n "$extension_id" ]]; then
+      # Determine extensions directory based on VSCode CLI
+      local vscode_cli extensions_dir
+      vscode_cli=$(get_vscode_cli) || return 1
+
+      case "$vscode_cli" in
+        *cursor*)
+          extensions_dir="$HOME/.cursor/extensions"
+          ;;
+        *vscodium*)
+          extensions_dir="$HOME/.vscode-oss/extensions"
+          ;;
+        *)
+          extensions_dir="$HOME/.vscode/extensions"
+          ;;
+      esac
+
+      # Check if extension directory exists (format: publisher.extension-version)
+      if [ -d "$extensions_dir" ] && ls -d "$extensions_dir/$extension_id"-* >/dev/null 2>&1; then
+        return 0 # Extension is installed
+      fi
+    fi
+
+    # If filesystem check failed, fall back to running the check command
     # Replace 'code' with the actual CLI in the check command
     check_command="${check_command//code --list-extensions/$vscode_cli --list-extensions}"
   fi
