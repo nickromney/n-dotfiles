@@ -69,7 +69,7 @@ if command -v kubectl >/dev/null 2>&1; then
   DOTFILES_DIR="${DOTFILES_DIR:-$HOME/Developer/personal/n-dotfiles}"
   source "$DOTFILES_DIR/scripts/kubectl-aliases.sh"
   # In zsh, use compdef instead of bash's complete
-  compdef __start_kubectl k
+  compdef _kubectl k
 fi
 
 # Local environment will be sourced later in the file
