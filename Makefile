@@ -50,11 +50,6 @@ help: ## Show this help message
 	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$|^##@.*$$' $(MAKEFILE_LIST) | \
 		awk 'BEGIN {FS = ":.*?## "}; /^##@/ {printf "\n$(YELLOW)%s$(NC)\n", substr($$0, 5)} /^[a-zA-Z_-]+:.*?## / {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
 	@echo ""
-	@echo "$(BLUE)Actions (can be combined with targets):$(NC)"
-	@echo "  install                   Install packages (default action)"
-	@echo "  update                    Update existing packages"
-	@echo "  stow                      Run stow to create symlinks"
-	@echo ""
 	@echo "$(BLUE)Environment variables:$(NC)"
 	@echo "  VSCODE_CLI                VSCode binary to use (default: code)"
 	@echo ""
@@ -200,7 +195,56 @@ focus-typescript: ## Install Node.js and TypeScript tools
 focus-vscode: ## Install VSCode and extensions
 	@CONFIG_FILES="focus/vscode" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
 
+##@ Actions
+
+.PHONY: configure
+configure: ## Apply macOS settings (dock, defaults) for the selected profile
+	@CONFIG_FILE="_macos/$(SELECTED_MACOS_PROFILE).yaml"; \
+	if [ ! -f "$$CONFIG_FILE" ]; then \
+		echo "$(RED)No macOS config found for $(SELECTED_PROFILE) profile ($$CONFIG_FILE missing)$(NC)"; \
+		exit 1; \
+	fi; \
+	echo "$(BLUE)Applying macOS settings from $$CONFIG_FILE...$(NC)"; \
+	./_macos/macos.sh "$(SELECTED_MACOS_PROFILE).yaml"
+
+.PHONY: install
+install: ## Install packages for the selected profile
+	@echo "$(BLUE)Installing $(SELECTED_PROFILE) profile...$(NC)"
+	@CONFIG_FILES="$(PROFILE_CONFIGS)" ./install.sh
+
+.PHONY: stow
+stow: ## Stow dotfiles for the selected profile
+	@echo "$(BLUE)Stowing dotfiles for $(SELECTED_PROFILE) profile...$(NC)"
+	@CONFIG_FILES="$(PROFILE_CONFIGS)" ./install.sh -s
+
+.PHONY: update
+update: ## Update packages for the selected profile
+	@echo "$(BLUE)Updating $(SELECTED_PROFILE) profile...$(NC)"
+	@CONFIG_FILES="$(PROFILE_CONFIGS)" ./install.sh -u
+
 ##@ Quality and Maintenance
+
+.PHONY: clean
+clean: ## Clean cached files and build artifacts
+	@echo "$(YELLOW)Cleaning cached files...$(NC)"
+	@find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	@find . -name "*.pyc" -delete 2>/dev/null || true
+	@find . -name ".DS_Store" -delete 2>/dev/null || true
+	@echo "$(GREEN)✓ Cleaned$(NC)"
+
+.PHONY: fmt
+fmt: ## Format all code (markdown, shell scripts)
+	@echo "$(YELLOW)Formatting markdown files...$(NC)"
+	@find . -name "*.md" -not -path "./_test/*" -not -path "./.git/*" -exec markdownlint --fix {} + 2>/dev/null || echo "  markdownlint not available"
+	@echo "$(GREEN)✓ Formatting complete$(NC)"
+
+.PHONY: lint
+lint: ## Run linters (shellcheck, markdownlint)
+	@echo "$(YELLOW)Running shellcheck...$(NC)"
+	@./_test/shellcheck.sh
+	@echo "$(YELLOW)Running markdownlint...$(NC)"
+	@find . -name "*.md" -not -path "./_test/*" -not -path "./.git/*" -exec markdownlint {} + 2>/dev/null || echo "  markdownlint not available"
+	@echo "$(GREEN)✓ Linting complete$(NC)"
 
 .PHONY: precommit
 precommit: ## Run all pre-commit hooks on all files
@@ -235,50 +279,3 @@ test-install: ## Run install.sh tests only
 test-macos: ## Run macOS configuration tests only
 	@echo "$(YELLOW)Running macOS tests...$(NC)"
 	@./_test/run_macos_tests.sh
-
-.PHONY: fmt
-fmt: ## Format all code (markdown, shell scripts)
-	@echo "$(YELLOW)Formatting markdown files...$(NC)"
-	@find . -name "*.md" -not -path "./_test/*" -not -path "./.git/*" -exec markdownlint --fix {} + 2>/dev/null || echo "  markdownlint not available"
-	@echo "$(GREEN)✓ Formatting complete$(NC)"
-
-.PHONY: lint
-lint: ## Run linters (shellcheck, markdownlint)
-	@echo "$(YELLOW)Running shellcheck...$(NC)"
-	@./_test/shellcheck.sh
-	@echo "$(YELLOW)Running markdownlint...$(NC)"
-	@find . -name "*.md" -not -path "./_test/*" -not -path "./.git/*" -exec markdownlint {} + 2>/dev/null || echo "  markdownlint not available"
-	@echo "$(GREEN)✓ Linting complete$(NC)"
-
-.PHONY: clean
-clean: ## Clean cached files and build artifacts
-	@echo "$(YELLOW)Cleaning cached files...$(NC)"
-	@find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-	@find . -name "*.pyc" -delete 2>/dev/null || true
-	@find . -name ".DS_Store" -delete 2>/dev/null || true
-	@echo "$(GREEN)✓ Cleaned$(NC)"
-
-.PHONY: install
-install: ## Install packages for the selected profile
-	@echo "$(BLUE)Installing $(SELECTED_PROFILE) profile...$(NC)"
-	@CONFIG_FILES="$(PROFILE_CONFIGS)" ./install.sh
-
-.PHONY: update
-update: ## Update packages for the selected profile
-	@echo "$(BLUE)Updating $(SELECTED_PROFILE) profile...$(NC)"
-	@CONFIG_FILES="$(PROFILE_CONFIGS)" ./install.sh -u
-
-.PHONY: stow
-stow: ## Stow dotfiles for the selected profile
-	@echo "$(BLUE)Stowing dotfiles for $(SELECTED_PROFILE) profile...$(NC)"
-	@CONFIG_FILES="$(PROFILE_CONFIGS)" ./install.sh -s
-
-.PHONY: configure
-configure: ## Apply macOS settings (dock, defaults) for the selected profile
-	@CONFIG_FILE="_macos/$(SELECTED_MACOS_PROFILE).yaml"; \
-	if [ ! -f "$$CONFIG_FILE" ]; then \
-		echo "$(RED)No macOS config found for $(SELECTED_PROFILE) profile ($$CONFIG_FILE missing)$(NC)"; \
-		exit 1; \
-	fi; \
-	echo "$(BLUE)Applying macOS settings from $$CONFIG_FILE...$(NC)"; \
-	./_macos/macos.sh "$(SELECTED_MACOS_PROFILE).yaml"
