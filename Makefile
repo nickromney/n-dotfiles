@@ -86,8 +86,11 @@ update-all: ## Update all installed tools (brew, apt, cargo, uv, mas)
 	@echo ""
 	@if command -v brew >/dev/null 2>&1; then \
 		echo "$(BLUE)Updating Homebrew...$(NC)"; \
-		brew update && brew upgrade && brew upgrade --cask && brew cleanup; \
-		echo "$(GREEN)✓ Homebrew updated$(NC)"; \
+		brew update || echo "$(YELLOW)  Warning: brew update failed$(NC)"; \
+		brew upgrade || echo "$(YELLOW)  Warning: brew upgrade failed$(NC)"; \
+		brew upgrade --cask || echo "$(YELLOW)  Warning: brew cask upgrade failed (some casks may have issues)$(NC)"; \
+		brew cleanup || echo "$(YELLOW)  Warning: brew cleanup failed$(NC)"; \
+		echo "$(GREEN)✓ Homebrew update completed$(NC)"; \
 		echo ""; \
 	fi
 	@if command -v apt-get >/dev/null 2>&1 && [ "$$(id -u)" -eq 0 ]; then \
