@@ -53,13 +53,14 @@ help: ## Show this help message
 	@echo "$(BLUE)Environment variables:$(NC)"
 	@echo "  VSCODE_CLI                VSCode binary to use (default: code)"
 	@echo ""
-	@echo "$(BLUE)Examples:$(NC)"
-	@echo "  make work install         Install tools for the work profile"
+	@echo "$(BLUE)Profile Examples:$(NC)"
 	@echo "  make personal configure   Apply macOS settings for personal profile"
-	@echo "  make stow work            Symlink configs for the work profile"
+	@echo "  make work install         Install tools for the work profile"
+	@echo "  make work stow            Symlink configs for the work profile"
+	@echo ""
+	@echo "$(BLUE)Focus Examples:$(NC)"
 	@echo "  make focus-vscode         Install VSCode with extensions"
 	@echo "  make focus-python update  Update Python development tools"
-	@echo "  VSCODE_CLI=cursor make focus-vscode"
 
 ##@ Main Configurations
 
