@@ -283,7 +283,8 @@ nvim --headless +'Lazy update' +qa
 
 - **Neovim**: 0.11.5+ (tested on 0.11.5)
 - **OS**: macOS (primary), Linux compatible
-- **Dependencies**: git, ripgrep (for Telescope), a Nerd Font (for icons)
+- **Required**: git, ripgrep (for Telescope), a Nerd Font (for icons)
+- **Optional**: Node.js/npm (for some plugins like swagger-preview.nvim)
 
 ## Best Practices Analysis
 
