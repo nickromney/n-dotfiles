@@ -1,4 +1,6 @@
 # TypeScript/Node development tools
+# NOTE: Node.js should be installed via fnm (from shared/shell.yaml)
+#       Run: fnm install --lts
 tools:
   bun:
     manager: brew
@@ -6,14 +8,6 @@ tools:
     check_command: command -v bun
     description: "All-in-one JavaScript runtime & toolkit"
     documentation_url: "https://bun.sh/"
-    category: javascript
-
-  node:
-    manager: brew
-    type: package
-    check_command: command -v node
-    description: "JavaScript runtime"
-    documentation_url: "https://nodejs.org/"
     category: javascript
 
   typescript:

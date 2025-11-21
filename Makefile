@@ -17,9 +17,9 @@ HOST_WORK = host/work
 # Common is an alias for host/common + shared configs
 COMMON_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON)
 
-# Configuration combinations
-PERSONAL_CONFIGS = $(HOST_PERSONAL) $(HOST_COMMON) $(SHARED_CONFIGS) host/manual-check focus/containers focus/kubernetes focus/vscode
-WORK_CONFIGS = $(HOST_WORK) $(HOST_COMMON) $(SHARED_CONFIGS) host/manual-check focus/containers focus/kubernetes focus/vscode
+# Configuration combinations (shared first for dependencies like fnm)
+PERSONAL_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON) $(HOST_PERSONAL) host/manual-check focus/containers focus/kubernetes focus/vscode
+WORK_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON) $(HOST_WORK) host/manual-check focus/containers focus/kubernetes focus/vscode
 
 PROFILES = personal work common
 ACTIONS = install update stow configure

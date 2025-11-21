@@ -8,12 +8,12 @@ tools:
     documentation_url: "https://www.nushell.sh/"
     category: shell
 
-  nvm:
+  fnm:
     manager: brew
     type: package
-    check_command: 'brew --prefix nvm >/dev/null 2>&1 && test -d "$(brew --prefix nvm)"'
-    description: "Node Version Manager - manage multiple Node.js versions (run 'nvm install --lts' after installation)"
-    documentation_url: "https://github.com/nvm-sh/nvm"
+    check_command: command -v fnm
+    description: "Fast Node Manager - manage Node.js versions (Rust-based, faster than nvm)"
+    documentation_url: "https://github.com/Schniz/fnm"
     category: shell
 
   starship:
@@ -22,6 +22,14 @@ tools:
     check_command: command -v starship
     description: "Cross-shell prompt for astronauts"
     documentation_url: "https://starship.rs/"
+    category: shell
+
+  ast-grep:
+    manager: brew
+    type: package
+    check_command: command -v ast-grep
+    description: "A fast and polyglot tool for code structural search, lint, and rewriting"
+    documentation_url: "https://ast-grep.github.io/"
     category: shell
 
   zoxide:

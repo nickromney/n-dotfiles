@@ -20,44 +20,57 @@ return {
       },
     })
 
+    -- Build server list based on available tools
+    local ensure_installed = {
+      -- Core development
+      "lua_ls",         -- Lua
+      "ruby_lsp",       -- Ruby
+
+      -- Web development (Node.js-independent)
+      "html",           -- HTML
+
+      -- Python
+      "pyright",        -- Python type checking and completion
+
+      -- Shell & DevOps
+      "bashls",         -- Bash/shell scripts
+      "dockerls",       -- Dockerfile
+      "autotools_ls",   -- Makefile
+    }
+
+    -- Add Node.js-dependent servers if npm is available
+    if vim.fn.executable("npm") == 1 then
+      table.insert(ensure_installed, "tailwindcss")  -- Tailwind CSS
+      table.insert(ensure_installed, "ts_ls")        -- TypeScript/JavaScript
+    end
+
     mason_lspconfig.setup({
-      -- List of servers for mason to install
-      ensure_installed = {
-        -- Core development
-        "lua_ls",         -- Lua
-        "ruby_lsp",       -- Ruby
-
-        -- Web development
-        "html",           -- HTML
-        "tailwindcss",    -- Tailwind CSS
-        "ts_ls",          -- TypeScript/JavaScript
-
-        -- Python
-        "pyright",        -- Python type checking and completion
-
-        -- Shell & DevOps
-        "bashls",         -- Bash/shell scripts
-        "dockerls",       -- Dockerfile
-        "autotools_ls",   -- Makefile
-      },
+      ensure_installed = ensure_installed,
       -- Auto-install configured servers (with lspconfig)
       automatic_installation = true,
     })
 
+    -- Build tool list based on available tools
+    local ensure_tools = {
+      -- Formatters
+      "stylua",         -- Lua formatter
+      "shfmt",          -- Shell script formatter
+
+      -- Modern Rust-based tools (10-100x faster)
+      "ruff",           -- Python linter + formatter (replaces black, isort, pylint)
+
+      -- Additional linters
+      "shellcheck",     -- Shell script linter
+    }
+
+    -- Add Node.js-dependent tools if npm is available
+    if vim.fn.executable("npm") == 1 then
+      table.insert(ensure_tools, "prettier")  -- JS/TS/HTML/CSS formatter
+      table.insert(ensure_tools, "biome")     -- JS/TS linter + formatter
+    end
+
     mason_tool_installer.setup({
-      ensure_installed = {
-        -- Formatters
-        "stylua",         -- Lua formatter
-        "prettier",       -- JS/TS/HTML/CSS formatter (fallback for unsupported files)
-        "shfmt",          -- Shell script formatter
-
-        -- Modern Rust-based tools (10-100x faster)
-        "ruff",           -- Python linter + formatter (replaces black, isort, pylint)
-        "biome",          -- JS/TS linter + formatter (replaces ESLint + Prettier)
-
-        -- Additional linters
-        "shellcheck",     -- Shell script linter
-      },
+      ensure_installed = ensure_tools,
     })
   end,
 }

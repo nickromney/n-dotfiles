@@ -24,7 +24,7 @@ else
   CONFIG_FILES=("host/common")
 fi
 REQUIRED_COMMANDS=("yq" "which")
-STOW_DIRS=(aerospace aws bat claude gh ghostty git kitty nushell nvim prettier starship tmux vscode zsh)
+STOW_DIRS=(aerospace aws bash bat claude gh ghostty git kitty nushell nvim prettier starship tmux vscode zsh)
 
 # Default values and argument parsing
 DRY_RUN="${DRY_RUN:-false}"
@@ -453,6 +453,22 @@ install_tool() {
         return 2  # Special return code for already installed
       fi
       return $exit_code
+    # Special handling for code extensions to prevent VSCode crashes from failing the whole script
+    elif [[ "$manager" == "code" ]]; then
+      output=$(eval "$install_cmd" 2>&1)
+      exit_code=$?
+      echo "$output"
+      # Check if it was already installed
+      if echo "$output" | grep -qi "is already installed"; then
+        return 2 # Return 2 to indicate already up to date
+      fi
+      # VSCode sometimes crashes (V8 errors) - don't fail the whole script
+      if [[ $exit_code -ne 0 ]]; then
+        echo "Warning: VSCode extension installation failed (exit code $exit_code)"
+        echo "This may be a VSCode/Electron bug. Try manually: $install_cmd"
+        return 1
+      fi
+      return 0
     else
       eval "$install_cmd"
     fi
