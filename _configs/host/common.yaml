@@ -1,5 +1,13 @@
 # Common host tools - installed on any host machine (personal or work)
 tools:
+  node-lts:
+    manager: manual
+    type: check
+    check_command: 'command -v node >/dev/null && [ -n "${NVM_DIR:-}" ] && [[ "$(command -v node)" == *"$NVM_DIR"* ]]'
+    description: "Node.js LTS via nvm (run: ./scripts/install-node-via-nvm.sh or nvm install --lts)"
+    documentation_url: "https://nodejs.org/"
+    category: development
+
   1password:
     manager: brew
     type: cask

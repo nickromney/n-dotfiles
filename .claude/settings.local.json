@@ -19,7 +19,8 @@
       "Bash(defaults read:*)",
       "Bash(readlink:*)",
       "Bash(markdownlint-cli2:*)",
-      "Bash(make:*)"
+      "Bash(make:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
