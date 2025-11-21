@@ -17,7 +17,7 @@ HOST_WORK = host/work
 # Common is an alias for host/common + shared configs
 COMMON_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON)
 
-# Configuration combinations (shared first for dependencies like nvm)
+# Configuration combinations (shared first for dependencies like fnm)
 PERSONAL_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON) $(HOST_PERSONAL) host/manual-check focus/containers focus/kubernetes focus/vscode
 WORK_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON) $(HOST_WORK) host/manual-check focus/containers focus/kubernetes focus/vscode
 

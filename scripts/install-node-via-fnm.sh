@@ -67,7 +67,8 @@ else
   exit 1
 fi
 
-info ""
+echo
 info "Note: You may need to restart your shell or run:"
+info "  For bash: source ~/.bashrc"
 info "  For zsh: source ~/.zshrc"
 info "  For nushell: restart nu"

@@ -54,7 +54,8 @@ fi
 if command -v kubectl >/dev/null 2>&1; then
   source <(kubectl completion bash)
   # shellcheck disable=SC1091
-  source "$HOME/Developer/personal/n-dotfiles/scripts/kubectl-aliases.sh"
+  DOTFILES_DIR="${DOTFILES_DIR:-$HOME/Developer/personal/n-dotfiles}"
+  source "$DOTFILES_DIR/scripts/kubectl-aliases.sh"
   complete -F __start_kubectl k
 fi
 

@@ -3,7 +3,7 @@ tools:
   node-lts:
     manager: manual
     type: check
-    check_command: 'command -v node >/dev/null && [ -n "${FNM_MULTISHELL_PATH:-}" ] && [[ "$(command -v node)" == *"fnm_multishells"* ]]'
+    check_command: 'command -v node >/dev/null && command -v fnm >/dev/null && [ -n "${FNM_MULTISHELL_PATH:-}" ]'
     description: "Node.js LTS via fnm (run: ./scripts/install-node-via-fnm.sh or fnm install --lts)"
     documentation_url: "https://nodejs.org/"
     category: development
