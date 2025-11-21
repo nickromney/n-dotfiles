@@ -49,6 +49,26 @@ if command -v fnm >/dev/null 2>&1; then
 fi
 
 #
+# PATH Management
+#
+paths=(
+  "$HOME/.local/bin"
+  "$HOME/.arkade/bin"
+  "$HOME/.cargo/bin"
+  "$HOME/.tfenv/bin"
+)
+
+for path_entry in "${paths[@]}"; do
+  if [ -d "$path_entry" ] && ! echo "$PATH" | grep -q "$path_entry"; then
+    export PATH="$path_entry:$PATH"
+  fi
+done
+
+# De-duplicate PATH
+PATH=$(echo "$PATH" | awk -v RS=: '!a[$0]++' | tr "\n" ":")
+export PATH
+
+#
 # kubectl completion and aliases
 #
 if command -v kubectl >/dev/null 2>&1; then
