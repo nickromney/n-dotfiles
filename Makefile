@@ -58,6 +58,7 @@ help: ## Show this help message
 	@echo "  make personal configure   Apply macOS settings for personal profile"
 	@echo "  make stow work            Symlink configs for the work profile"
 	@echo "  make focus-vscode         Install VSCode with extensions"
+	@echo "  make focus-python update  Update Python development tools"
 	@echo "  VSCODE_CLI=cursor make focus-vscode"
 
 ##@ Main Configurations
@@ -156,43 +157,43 @@ update-all: ## Update all installed tools (brew, apt, cargo, uv, mas)
 ##@ Focus Configurations
 
 .PHONY: focus-ai
-focus-ai: ## Install AI/ML tools (ollama, etc.)
+focus-ai: ## AI/ML tools (combine with install/update/stow)
 	@CONFIG_FILES="focus/ai" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
 
 .PHONY: focus-container-base
-focus-container-base: ## Install Podman and container tools
+focus-container-base: ## Podman and container tools (combine with install/update/stow)
 	@CONFIG_FILES="focus/container-base" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
 
 .PHONY: focus-containers
-focus-containers: ## Install Podman and container management tools
+focus-containers: ## Podman container management (combine with install/update/stow)
 	@CONFIG_FILES="focus/containers" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
 
 .PHONY: focus-kubernetes
-focus-kubernetes: ## Install Kubernetes tools (kubectl, k9s, helm)
+focus-kubernetes: ## Kubernetes tools (combine with install/update/stow)
 	@CONFIG_FILES="focus/kubernetes" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
 
 .PHONY: focus-mas
-focus-mas: ## Optional Mac App Store apps (requires prior purchase)
+focus-mas: ## Mac App Store apps (combine with install/update/stow)
 	@CONFIG_FILES="focus/mas" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
 
 .PHONY: focus-neovim
-focus-neovim: ## Install Neovim and plugins
+focus-neovim: ## Neovim and plugins (combine with install/update/stow)
 	@CONFIG_FILES="focus/neovim" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
 
 .PHONY: focus-python
-focus-python: ## Install Python development tools
+focus-python: ## Python development tools (combine with install/update/stow)
 	@CONFIG_FILES="focus/python" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
 
 .PHONY: focus-rust
-focus-rust: ## Install Rust toolchain and utilities
+focus-rust: ## Rust toolchain (combine with install/update/stow)
 	@CONFIG_FILES="focus/rust" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
 
 .PHONY: focus-typescript
-focus-typescript: ## Install Node.js and TypeScript tools
+focus-typescript: ## Node.js and TypeScript (combine with install/update/stow)
 	@CONFIG_FILES="focus/typescript" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
 
 .PHONY: focus-vscode
-focus-vscode: ## Install VSCode and extensions
+focus-vscode: ## VSCode and extensions (combine with install/update/stow)
 	@CONFIG_FILES="focus/vscode" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
 
 ##@ Actions
