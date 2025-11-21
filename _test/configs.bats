@@ -28,8 +28,8 @@ check_yaml() {
   [ "$failed" -eq 0 ]
 }
 
-@test "configs: shared/shell.yaml contains nvm" {
-  run grep -q "nvm:" "$CONFIG_DIR/shared/shell.yaml"
+@test "configs: shared/shell.yaml contains fnm" {
+  run grep -q "fnm:" "$CONFIG_DIR/shared/shell.yaml"
   [ "$status" -eq 0 ]
 }
 

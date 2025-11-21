@@ -8,12 +8,12 @@ tools:
     documentation_url: "https://www.nushell.sh/"
     category: shell
 
-  nvm:
+  fnm:
     manager: brew
     type: package
-    check_command: 'brew --prefix nvm >/dev/null 2>&1 && test -d "$(brew --prefix nvm)"'
-    description: "Node Version Manager - manage multiple Node.js versions (run 'nvm install --lts' after installation)"
-    documentation_url: "https://github.com/nvm-sh/nvm"
+    check_command: command -v fnm
+    description: "Fast Node Manager - manage Node.js versions (Rust-based, faster than nvm)"
+    documentation_url: "https://github.com/Schniz/fnm"
     category: shell
 
   starship:

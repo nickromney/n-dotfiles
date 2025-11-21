@@ -1,6 +1,6 @@
 # TypeScript/Node development tools
-# NOTE: Node.js should be installed via nvm (from shared/shell.yaml)
-#       Run: nvm install --lts
+# NOTE: Node.js should be installed via fnm (from shared/shell.yaml)
+#       Run: fnm install --lts
 tools:
   bun:
     manager: brew

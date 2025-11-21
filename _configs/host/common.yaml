@@ -3,8 +3,8 @@ tools:
   node-lts:
     manager: manual
     type: check
-    check_command: 'command -v node >/dev/null && [ -n "${NVM_DIR:-}" ] && [[ "$(command -v node)" == *"$NVM_DIR"* ]]'
-    description: "Node.js LTS via nvm (run: ./scripts/install-node-via-nvm.sh or nvm install --lts)"
+    check_command: 'command -v node >/dev/null && [ -n "${FNM_MULTISHELL_PATH:-}" ] && [[ "$(command -v node)" == *"fnm_multishells"* ]]'
+    description: "Node.js LTS via fnm (run: ./scripts/install-node-via-fnm.sh or fnm install --lts)"
     documentation_url: "https://nodejs.org/"
     category: development
 
