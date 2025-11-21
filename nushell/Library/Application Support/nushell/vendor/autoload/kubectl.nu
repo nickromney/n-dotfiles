@@ -3,16 +3,14 @@
 #
 # NOTE: Aliases are defined in scripts/kubectl-aliases.sh (canonical source)
 #       These nushell aliases mirror that file but use nushell syntax
+#
+# Completions are not auto-generated because nushell's 'source' command requires
+# files to exist at parse time. To enable kubectl completions manually:
+#   mkdir ~/.cache/kubectl
+#   kubectl completion nu | save --force ~/.cache/kubectl/completions.nu
+# Then add to your config: source ~/.cache/kubectl/completions.nu
 
 if ((which kubectl | length) > 0) {
-    # Generate kubectl completions
-    # Ensure kubectl cache directory exists and generate completions
-    mkdir ~/.cache/kubectl
-    try {
-        kubectl completion nu | save --force ~/.cache/kubectl/completions.nu
-        source ~/.cache/kubectl/completions.nu
-    }
-
     # kubectl aliases (mirrored from scripts/kubectl-aliases.sh)
     alias k = kubectl
 

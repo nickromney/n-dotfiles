@@ -190,7 +190,7 @@ fi
 
 # rbenv (Homebrew install lives in ~/.rbenv and shims need to be first on PATH)
 export RBENV_ROOT="$HOME/.rbenv"
-if [ -d "$RBENV_ROOT" ]; then
+if [ -x "$RBENV_ROOT/bin/rbenv" ]; then
   export PATH="$RBENV_ROOT/bin:$RBENV_ROOT/shims:$PATH"
   eval "$("$RBENV_ROOT/bin/rbenv" init - zsh)"
 fi
