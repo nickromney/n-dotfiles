@@ -27,7 +27,12 @@
       "Bash(bash -c:*)",
       "Bash(bash:*)",
       "Bash(gh pr create:*)",
-      "Bash(bats install.bats:*)"
+      "Bash(bats install.bats:*)",
+      "Bash(bats:*)",
+      "Bash(paste:*)",
+      "Bash(/usr/bin/awk:*)",
+      "Bash(/usr/bin/grep -v '^$')",
+      "Bash(/usr/bin/paste:*)"
     ],
     "deny": [],
     "ask": []
