@@ -198,16 +198,6 @@ focus-vscode: ## VSCode and extensions (combine with install/update/stow)
 
 ##@ Actions
 
-.PHONY: configure
-configure: ## Apply macOS settings (dock, defaults) for the selected profile
-	@CONFIG_FILE="_macos/$(SELECTED_MACOS_PROFILE).yaml"; \
-	if [ ! -f "$$CONFIG_FILE" ]; then \
-		echo "$(RED)No macOS config found for $(SELECTED_PROFILE) profile ($$CONFIG_FILE missing)$(NC)"; \
-		exit 1; \
-	fi; \
-	echo "$(BLUE)Applying macOS settings from $$CONFIG_FILE...$(NC)"; \
-	./_macos/macos.sh "$(SELECTED_MACOS_PROFILE).yaml"
-
 .PHONY: install
 install: ## Install packages for the selected profile
 	@echo "$(BLUE)Installing $(SELECTED_PROFILE) profile...$(NC)"
@@ -222,6 +212,18 @@ stow: ## Stow dotfiles for the selected profile
 update: ## Update packages for the selected profile
 	@echo "$(BLUE)Updating $(SELECTED_PROFILE) profile...$(NC)"
 	@CONFIG_FILES="$(PROFILE_CONFIGS)" ./install.sh -u
+
+##@ macOS Configuration
+
+.PHONY: configure
+configure: ## Apply macOS settings (dock, defaults) for the selected profile
+	@CONFIG_FILE="_macos/$(SELECTED_MACOS_PROFILE).yaml"; \
+	if [ ! -f "$$CONFIG_FILE" ]; then \
+		echo "$(RED)No macOS config found for $(SELECTED_PROFILE) profile ($$CONFIG_FILE missing)$(NC)"; \
+		exit 1; \
+	fi; \
+	echo "$(BLUE)Applying macOS settings from $$CONFIG_FILE...$(NC)"; \
+	./_macos/macos.sh "$(SELECTED_MACOS_PROFILE).yaml"
 
 ##@ Quality and Maintenance
 
