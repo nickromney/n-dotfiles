@@ -46,7 +46,6 @@ SELECTED_MACOS_PROFILE := $(call macos-profile,$(SELECTED_PROFILE))
 .PHONY: help
 help: ## Show this help message
 	@echo "$(GREEN)n-dotfiles - Dotfile and Tool Management$(NC)"
-	@echo ""
 	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$|^##@.*$$' $(MAKEFILE_LIST) | \
 		awk 'BEGIN {FS = ":.*?## "}; /^##@/ {printf "\n$(YELLOW)%s$(NC)\n", substr($$0, 5)} /^[a-zA-Z_-]+:.*?## / {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
 	@echo ""
@@ -57,6 +56,7 @@ help: ## Show this help message
 	@echo "  make personal configure   Apply macOS settings for personal profile"
 	@echo "  make work install         Install tools for the work profile"
 	@echo "  make work stow            Symlink configs for the work profile"
+	@echo "  make work update          Update tools for the work profile"
 	@echo ""
 	@echo "$(BLUE)Focus Examples:$(NC)"
 	@echo "  make focus-vscode         Install VSCode with extensions"
@@ -79,16 +79,6 @@ common: ## Shared profile <configure|install|stow|update>
 .PHONY: personal-setup
 personal-setup: ## Full personal Mac setup (packages + macOS settings)
 	@./setup-personal-mac.sh
-
-.PHONY: work
-work: ## Work profile <configure|install|stow|update>
-	@if [ -z "$(filter $(ACTIONS),$(MAKECMDGOALS))" ]; then \
-		$(MAKE) PROFILE=work install; \
-	fi
-
-.PHONY: work-setup
-work-setup: ## Full work Mac setup (runs setup-work-mac.sh)
-	@./setup-work-mac.sh
 
 .PHONY: update-all
 update-all: ## Update all installed tools (brew, apt, cargo, uv, mas)
@@ -154,6 +144,16 @@ update-all: ## Update all installed tools (brew, apt, cargo, uv, mas)
 		echo "$(YELLOW)Tip: Set GITHUB_TOKEN to avoid GitHub API rate limits$(NC)"; \
 		echo "     export GITHUB_TOKEN=ghp_your_token_here"; \
 	fi
+
+.PHONY: work
+work: ## Work profile <configure|install|stow|update>
+	@if [ -z "$(filter $(ACTIONS),$(MAKECMDGOALS))" ]; then \
+		$(MAKE) PROFILE=work install; \
+	fi
+
+.PHONY: work-setup
+work-setup: ## Full work Mac setup (runs setup-work-mac.sh)
+	@./setup-work-mac.sh
 
 ##@ Focus Configurations
 
