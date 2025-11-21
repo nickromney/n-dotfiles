@@ -8,17 +8,41 @@ tools:
     documentation_url: "https://github.com/alexellis/arkade"
     category: kubernetes
 
+  argocd:
+    manager: arkade
+    type: get
+    check_command: command -v argocd
+    description: "Declarative GitOps CD for Kubernetes"
+    documentation_url: "https://argo-cd.readthedocs.io/"
+    category: kubernetes
+
+  cilium:
+    manager: arkade
+    type: get
+    check_command: command -v cilium
+    description: "eBPF-based Networking, Security, and Observability"
+    documentation_url: "https://cilium.io/"
+    category: kubernetes
+
   helm:
-    manager: brew
-    type: package
+    manager: arkade
+    type: get
     check_command: command -v helm
     description: "Kubernetes package manager"
     documentation_url: "https://helm.sh/"
     category: kubernetes
 
+  hubble:
+    manager: arkade
+    type: get
+    check_command: command -v hubble
+    description: "Network, Service & Security Observability for Kubernetes using eBPF"
+    documentation_url: "https://github.com/cilium/hubble"
+    category: kubernetes
+
   k9s:
-    manager: brew
-    type: package
+    manager: arkade
+    type: get
     check_command: command -v k9s
     description: "Terminal UI for Kubernetes"
     documentation_url: "https://k9scli.io/"
@@ -36,8 +60,24 @@ tools:
     manager: arkade
     type: get
     check_command: command -v kubectx
-    description: "Fast way to switch between Kubernetes contexts (includes kubens)"
+    description: "Fast way to switch between Kubernetes contexts"
     documentation_url: "https://github.com/ahmetb/kubectx"
+    category: kubernetes
+
+  kubens:
+    manager: arkade
+    type: get
+    check_command: command -v kubens
+    description: "Fast way to switch between Kubernetes namespaces"
+    documentation_url: "https://github.com/ahmetb/kubectx"
+    category: kubernetes
+
+  ktop:
+    manager: arkade
+    type: get
+    check_command: command -v ktop
+    description: "Top-like tool for Kubernetes"
+    documentation_url: "https://github.com/vladimirvivien/ktop"
     category: kubernetes
 
   kind:
