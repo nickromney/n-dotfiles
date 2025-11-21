@@ -200,17 +200,17 @@ focus-vscode: ## VSCode and extensions <install|stow|update>
 ##@ Actions
 
 .PHONY: install
-install: ## Install packages for the selected profile
+install: ## Install packages for the selected profile/focus
 	@echo "$(BLUE)Installing $(SELECTED_PROFILE) profile...$(NC)"
 	@CONFIG_FILES="$(PROFILE_CONFIGS)" ./install.sh
 
 .PHONY: stow
-stow: ## Stow dotfiles for the selected profile
+stow: ## Stow dotfiles for the selected profile/focus
 	@echo "$(BLUE)Stowing dotfiles for $(SELECTED_PROFILE) profile...$(NC)"
 	@CONFIG_FILES="$(PROFILE_CONFIGS)" ./install.sh -s
 
 .PHONY: update
-update: ## Update packages for the selected profile
+update: ## Update packages for the selected profile/focus
 	@echo "$(BLUE)Updating $(SELECTED_PROFILE) profile...$(NC)"
 	@CONFIG_FILES="$(PROFILE_CONFIGS)" ./install.sh -u
 
