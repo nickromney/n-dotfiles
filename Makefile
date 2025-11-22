@@ -59,8 +59,10 @@ help: ## Show this help message
 	@echo "  make work update          Update tools for the work profile"
 	@echo ""
 	@echo "$(BLUE)Focus Examples:$(NC)"
-	@echo "  make focus-vscode         Install VSCode with extensions"
+	@echo "  make focus-vscode         Install VSCode with extensions (install is default)"
+	@echo "  make focus-kubernetes install  Same as above (install keyword optional)"
 	@echo "  make focus-python update  Update Python development tools"
+	@echo "  make focus-vscode stow    Stow VSCode configurations"
 
 ##@ Main Configurations
 
@@ -204,18 +206,30 @@ focus-vscode: ## VSCode and extensions <install|stow|update>
 
 .PHONY: install
 install: ## Install packages for the selected profile/focus
+ifneq ($(filter focus-%,$(MAKECMDGOALS)),)
+	@: # No-op if a focus target was specified
+else
 	@echo "$(BLUE)Installing $(SELECTED_PROFILE) profile...$(NC)"
 	@CONFIG_FILES="$(PROFILE_CONFIGS)" ./install.sh
+endif
 
 .PHONY: stow
 stow: ## Stow dotfiles for the selected profile/focus
+ifneq ($(filter focus-%,$(MAKECMDGOALS)),)
+	@: # No-op if a focus target was specified
+else
 	@echo "$(BLUE)Stowing dotfiles for $(SELECTED_PROFILE) profile...$(NC)"
 	@CONFIG_FILES="$(PROFILE_CONFIGS)" ./install.sh -s
+endif
 
 .PHONY: update
 update: ## Update packages for the selected profile/focus
+ifneq ($(filter focus-%,$(MAKECMDGOALS)),)
+	@: # No-op if a focus target was specified
+else
 	@echo "$(BLUE)Updating $(SELECTED_PROFILE) profile...$(NC)"
 	@CONFIG_FILES="$(PROFILE_CONFIGS)" ./install.sh -u
+endif
 
 ##@ macOS Configuration
 
