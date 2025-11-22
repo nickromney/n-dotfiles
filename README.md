@@ -260,6 +260,34 @@ This approach:
 - **Team sharing**: Safely share vaults with team members
 - **MFA protection**: Additional security with 1Password's MFA
 
+## Shell Configuration
+
+The ZSH configuration (in `zsh/.zshrc`) uses **defensive programming** - every tool is checked before use, ensuring it works across all environments (personal Mac, work Mac, fresh installs, dev containers).
+
+### FZF + Bat File Preview Helpers
+
+Quick file finding with syntax-highlighted previews:
+
+```bash
+f          # Launch fzf fuzzy finder
+bf         # Browse files - fzf preview → open in bat pager
+nf         # Navigate to nvim - fzf preview → open in neovim
+pf         # Preview and copy - fzf preview → copy path to clipboard
+```
+
+All commands show bat-powered syntax highlighting with line numbers in the preview pane.
+
+### Conditional Features
+
+The shell adapts based on installed tools:
+
+- **Completions**: kubectl, gh, and other CLI tools
+- **Integrations**: direnv, zoxide, starship, fnm (Fast Node Manager)
+- **Plugins**: zsh-autosuggestions, zsh-syntax-highlighting (via Homebrew)
+- **Aliases**: Conditional git, navigation, and file listing shortcuts
+
+See [zsh/README.md](zsh/README.md) for complete shell configuration documentation.
+
 ## Configuration Structure
 
 The `_configs/` directory uses a layered approach:

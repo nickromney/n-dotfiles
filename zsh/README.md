@@ -35,6 +35,17 @@ The configuration sets up extensive history with 100,000 entries and several opt
   - This means if you type part of a command and press Up, it finds commands in your history that start with what you've typed
   - Much more efficient than cycling through your entire history
 
+### Defensive Programming
+
+The configuration is **fully modular and defensive** - every tool invocation checks for existence first using `command -v`. This ensures the configuration works across different environments:
+
+- Personal Mac (all tools installed)
+- Work Mac (minimal tools)
+- Fresh installations (missing optional tools)
+- Dev containers (restricted environments)
+
+All tool-specific features (completions, plugins, integrations) are wrapped in conditional checks, so missing tools never cause errors.
+
 ### Conditional Tool Loading
 
 The configuration dynamically adapts based on which tools are installed:
@@ -42,8 +53,10 @@ The configuration dynamically adapts based on which tools are installed:
 - **Zoxide** (smart cd command) is used if available
 - **FZF** (fuzzy finder) with optimizations if available
 - **Starship** prompt if available
-- **NVM** (Node Version Manager) if installed via Homebrew
-- Plugins like **zsh-autosuggestions** and **zsh-syntax-highlighting** if available
+- **fnm** (Fast Node Manager) if installed via Homebrew
+- **kubectl** completions and aliases if available
+- **direnv** integration if available
+- Plugins like **zsh-autosuggestions** and **zsh-syntax-highlighting** if available via Homebrew
 
 ### Smart Aliases
 
@@ -61,10 +74,13 @@ Aliases are created conditionally based on available tools:
   - `tree`: Uses eza's tree view if available
 - **Editors**:
   - `n`: Opens neovim
-- **FZF Combinations**:
-  - `bf`: Use fzf+bat to select and display files
-  - `nf`: Use fzf to select a file and open in neovim
-  - `pf`: Use fzf to select a file and copy path to clipboard
+- **FZF Combinations** (fuzzy file finding with preview):
+  - `f`: Launch fzf fuzzy finder
+  - `bf`: Browse and view files - fzf with bat preview, then open in bat pager
+  - `nf`: Navigate to file in nvim - fzf with bat preview, then open in neovim
+  - `pf`: Preview and copy path - fzf with bat preview, then copy path to clipboard
+
+  All fzf commands use bat for syntax-highlighted previews with line numbers (first 500 lines)
 
 ### Path Management
 
