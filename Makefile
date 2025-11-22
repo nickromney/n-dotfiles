@@ -59,8 +59,10 @@ help: ## Show this help message
 	@echo "  make work update          Update tools for the work profile"
 	@echo ""
 	@echo "$(BLUE)Focus Examples:$(NC)"
-	@echo "  make focus-vscode         Install VSCode with extensions"
+	@echo "  make focus-vscode         Install VSCode with extensions (default action)"
+	@echo "  make focus-vscode install Same as above (explicit action keyword)"
 	@echo "  make focus-python update  Update Python development tools"
+	@echo "  make focus-vscode stow    Stow VSCode configurations"
 
 ##@ Main Configurations
 
@@ -158,6 +160,43 @@ work: ## Work profile <configure|install|stow|update>
 work-setup: ## Full work Mac setup (runs setup-work-mac.sh)
 	@./setup-work-mac.sh
 
+##@ Package Manager Updates
+
+.PHONY: brew
+brew: ## Homebrew package manager <update>
+	@if [ -z "$(filter update,$(MAKECMDGOALS))" ]; then \
+		echo "$(YELLOW)Usage: make brew update$(NC)"; \
+		exit 1; \
+	fi
+
+.PHONY: arkade
+arkade: ## Arkade package manager <update>
+	@if [ -z "$(filter update,$(MAKECMDGOALS))" ]; then \
+		echo "$(YELLOW)Usage: make arkade update$(NC)"; \
+		exit 1; \
+	fi
+
+.PHONY: cargo
+cargo: ## Cargo/Rust package manager <update>
+	@if [ -z "$(filter update,$(MAKECMDGOALS))" ]; then \
+		echo "$(YELLOW)Usage: make cargo update$(NC)"; \
+		exit 1; \
+	fi
+
+.PHONY: uv
+uv: ## UV Python package manager <update>
+	@if [ -z "$(filter update,$(MAKECMDGOALS))" ]; then \
+		echo "$(YELLOW)Usage: make uv update$(NC)"; \
+		exit 1; \
+	fi
+
+.PHONY: mas
+mas: ## Mac App Store <update>
+	@if [ -z "$(filter update,$(MAKECMDGOALS))" ]; then \
+		echo "$(YELLOW)Usage: make mas update$(NC)"; \
+		exit 1; \
+	fi
+
 ##@ Focus Configurations
 
 .PHONY: focus-ai
@@ -204,18 +243,92 @@ focus-vscode: ## VSCode and extensions <install|stow|update>
 
 .PHONY: install
 install: ## Install packages for the selected profile/focus
+ifneq ($(filter focus-%,$(MAKECMDGOALS)),)
+	@: # No-op if a focus target was specified
+else
 	@echo "$(BLUE)Installing $(SELECTED_PROFILE) profile...$(NC)"
 	@CONFIG_FILES="$(PROFILE_CONFIGS)" ./install.sh
+endif
 
 .PHONY: stow
 stow: ## Stow dotfiles for the selected profile/focus
+ifneq ($(filter focus-%,$(MAKECMDGOALS)),)
+	@: # No-op if a focus target was specified
+else
 	@echo "$(BLUE)Stowing dotfiles for $(SELECTED_PROFILE) profile...$(NC)"
 	@CONFIG_FILES="$(PROFILE_CONFIGS)" ./install.sh -s
+endif
 
 .PHONY: update
-update: ## Update packages for the selected profile/focus
+update: ## Update packages for the selected profile/focus/package-manager (only one package manager per invocation)
+ifneq ($(filter focus-%,$(MAKECMDGOALS)),)
+	@: # No-op if a focus target was specified
+else ifneq ($(filter brew,$(MAKECMDGOALS)),)
+	@if command -v brew >/dev/null 2>&1; then \
+		echo "$(BLUE)Updating Homebrew packages and casks...$(NC)"; \
+		brew update || echo "$(YELLOW)  Warning: brew update failed$(NC)"; \
+		brew upgrade || echo "$(YELLOW)  Warning: brew upgrade failed$(NC)"; \
+		brew upgrade --cask || echo "$(YELLOW)  Warning: brew upgrade --cask failed$(NC)"; \
+		brew cleanup || echo "$(YELLOW)  Warning: brew cleanup failed$(NC)"; \
+		echo "$(GREEN)✓ Homebrew updated$(NC)"; \
+	else \
+		echo "$(RED)Homebrew is not installed$(NC)"; \
+		exit 1; \
+	fi
+else ifneq ($(filter arkade,$(MAKECMDGOALS)),)
+	@if command -v arkade >/dev/null 2>&1; then \
+		echo "$(BLUE)Updating arkade CLI...$(NC)"; \
+		# Official update method from https://github.com/alexellis/arkade \
+		curl -sLS https://get.arkade.dev | sh; \
+		echo "$(GREEN)✓ arkade CLI updated$(NC)"; \
+		echo ""; \
+		echo "$(BLUE)Updating arkade-installed tools...$(NC)"; \
+		CONFIG_FILES="focus/kubernetes" ./install.sh -u; \
+		echo "$(GREEN)✓ arkade tools updated$(NC)"; \
+	else \
+		echo "$(RED)arkade is not installed$(NC)"; \
+		exit 1; \
+	fi
+else ifneq ($(filter cargo,$(MAKECMDGOALS)),)
+	@if command -v rustup >/dev/null 2>&1; then \
+		echo "$(BLUE)Updating Rust toolchain...$(NC)"; \
+		rustup update; \
+		echo "$(GREEN)✓ Rust toolchain updated$(NC)"; \
+		echo ""; \
+	else \
+		echo "$(RED)Rust/cargo is not installed$(NC)"; \
+		exit 1; \
+	fi
+	@if command -v cargo-install-update >/dev/null 2>&1; then \
+		echo "$(BLUE)Updating cargo-installed binaries...$(NC)"; \
+		cargo install-update -a; \
+		echo "$(GREEN)✓ Cargo binaries updated$(NC)"; \
+	else \
+		echo "$(YELLOW)Install cargo-update for binary updates: cargo install cargo-update$(NC)"; \
+	fi
+else ifneq ($(filter uv,$(MAKECMDGOALS)),)
+	@if command -v uv >/dev/null 2>&1; then \
+		echo "$(BLUE)Updating uv...$(NC)"; \
+		uv self update; \
+		echo "$(GREEN)✓ uv updated$(NC)"; \
+		echo "$(YELLOW)Note: Use './install.sh -u' to update individual uv tools$(NC)"; \
+	else \
+		echo "$(RED)uv is not installed$(NC)"; \
+		exit 1; \
+	fi
+else ifneq ($(filter mas,$(MAKECMDGOALS)),)
+	@if command -v mas >/dev/null 2>&1; then \
+		echo "$(BLUE)Updating Mac App Store apps...$(NC)"; \
+		mas upgrade; \
+		echo "$(GREEN)✓ Mac App Store apps updated$(NC)"; \
+	else \
+		echo "$(RED)mas is not installed$(NC)"; \
+		exit 1; \
+	fi
+else
 	@echo "$(BLUE)Updating $(SELECTED_PROFILE) profile...$(NC)"
 	@CONFIG_FILES="$(PROFILE_CONFIGS)" ./install.sh -u
+endif
 
 ##@ macOS Configuration
 

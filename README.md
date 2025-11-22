@@ -81,7 +81,14 @@ make focus-mas            # Mac App Store apps (requires App Store login)
 # VSCode for different editors
 VSCODE_CLI=cursor make focus-vscode  # Install extensions for Cursor
 
-> **Note:** Mac App Store installs require you to sign in via the App Store app and click “Get” once per app before `make focus-mas install` (or any `mas install`) can succeed.
+# Package manager updates (updates both the manager and all installed packages)
+make brew update           # Update Homebrew and all brew/cask packages
+make arkade update         # Update arkade CLI and all arkade-installed tools
+make cargo update          # Update Rust toolchain and cargo binaries
+make uv update             # Update uv package manager (use ./install.sh -u for uv tools)
+make mas update            # Update Mac App Store applications
+
+> **Note:** Mac App Store installs require you to sign in via the App Store app and click "Get" once per app before `make focus-mas install` (or any `mas install`) can succeed.
 ```
 
 ## Features
@@ -259,6 +266,34 @@ This approach:
 - **Easy rotation**: Update credentials in one place
 - **Team sharing**: Safely share vaults with team members
 - **MFA protection**: Additional security with 1Password's MFA
+
+## Shell Configuration
+
+The ZSH configuration (in `zsh/.zshrc`) uses **defensive programming** - every tool is checked before use, ensuring it works across all environments (personal Mac, work Mac, fresh installs, dev containers).
+
+### FZF + Bat File Preview Helpers
+
+Quick file finding with syntax-highlighted previews:
+
+```bash
+f          # Launch fzf fuzzy finder
+bf         # Select file, open in bat pager
+nf         # Select file, open in neovim
+pf         # Select file, copy path to clipboard
+```
+
+All commands show bat-powered syntax highlighting with line numbers in the preview pane.
+
+### Conditional Features
+
+The shell adapts based on installed tools:
+
+- **Completions**: kubectl, gh, and other CLI tools
+- **Integrations**: direnv, zoxide, starship, fnm (Fast Node Manager)
+- **Plugins**: zsh-autosuggestions, zsh-syntax-highlighting (via Homebrew)
+- **Aliases**: Conditional git, navigation, and file listing shortcuts
+
+See [zsh/README.md](zsh/README.md) for complete shell configuration documentation.
 
 ## Configuration Structure
 

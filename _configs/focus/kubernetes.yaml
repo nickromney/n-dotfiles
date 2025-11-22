@@ -80,6 +80,14 @@ tools:
     documentation_url: "https://github.com/vladimirvivien/ktop"
     category: kubernetes
 
+  lazydocker:
+    manager: brew
+    type: package
+    check_command: command -v lazydocker
+    description: "Terminal UI for Docker and Docker Compose"
+    documentation_url: "https://github.com/jesseduffield/lazydocker"
+    category: kubernetes
+
   kind:
     manager: brew
     type: package
