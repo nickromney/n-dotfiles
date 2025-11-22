@@ -350,6 +350,123 @@ EOF
   [ "$status" -eq 1 ]
 }
 
+# Tests for check_dependencies function
+@test "check_dependencies returns success when no dependencies defined" {
+  # Mock yq to return 0 (no dependencies)
+  yq() {
+    if [[ "$*" == *".dependencies | length"* ]]; then
+      echo "0"
+    fi
+  }
+  export -f yq
+
+  run check_dependencies "tool1" "test.yaml"
+  [ "$status" -eq 0 ]
+}
+
+@test "check_dependencies returns success when dependencies is null" {
+  # Mock yq to return null
+  yq() {
+    if [[ "$*" == *".dependencies | length"* ]]; then
+      echo "null"
+    fi
+  }
+  export -f yq
+
+  run check_dependencies "tool1" "test.yaml"
+  [ "$status" -eq 0 ]
+}
+
+@test "check_dependencies returns success when all dependencies are satisfied" {
+  # Mock yq to return 1 dependency
+  yq() {
+    if [[ "$*" == *".dependencies | length"* ]]; then
+      echo "1"
+    elif [[ "$*" == *".dependencies[0].name"* ]]; then
+      echo "krunkit"
+    elif [[ "$*" == *".dependencies[0].check_command"* ]]; then
+      echo "command -v krunkit"
+    fi
+  }
+  export -f yq
+
+  # Mock krunkit as available
+  mock_command "krunkit"
+
+  run check_dependencies "podman" "test.yaml"
+  [ "$status" -eq 0 ]
+}
+
+@test "check_dependencies returns failure when dependency is missing" {
+  # Mock yq to return 1 dependency
+  yq() {
+    if [[ "$*" == *".dependencies | length"* ]]; then
+      echo "1"
+    elif [[ "$*" == *".dependencies[0].name"* ]]; then
+      echo "missing-dep"
+    elif [[ "$*" == *".dependencies[0].check_command"* ]]; then
+      echo "command -v missing-dep"
+    fi
+  }
+  export -f yq
+
+  # Don't mock missing-dep - it's not available
+
+  run check_dependencies "tool1" "test.yaml"
+  [ "$status" -eq 1 ]
+  [[ "$output" =~ "⚠️ Skipping tool1 - missing dependency: missing-dep" ]]
+}
+
+@test "check_dependencies handles multiple dependencies" {
+  # Mock yq to return 2 dependencies
+  yq() {
+    if [[ "$*" == *".dependencies | length"* ]]; then
+      echo "2"
+    elif [[ "$*" == *".dependencies[0].name"* ]]; then
+      echo "dep1"
+    elif [[ "$*" == *".dependencies[0].check_command"* ]]; then
+      echo "command -v dep1"
+    elif [[ "$*" == *".dependencies[1].name"* ]]; then
+      echo "dep2"
+    elif [[ "$*" == *".dependencies[1].check_command"* ]]; then
+      echo "command -v dep2"
+    fi
+  }
+  export -f yq
+
+  # Mock both dependencies as available
+  mock_command "dep1"
+  mock_command "dep2"
+
+  run check_dependencies "tool1" "test.yaml"
+  [ "$status" -eq 0 ]
+}
+
+@test "check_dependencies fails on first missing dependency" {
+  # Mock yq to return 2 dependencies
+  yq() {
+    if [[ "$*" == *".dependencies | length"* ]]; then
+      echo "2"
+    elif [[ "$*" == *".dependencies[0].name"* ]]; then
+      echo "dep1"
+    elif [[ "$*" == *".dependencies[0].check_command"* ]]; then
+      echo "command -v dep1"
+    elif [[ "$*" == *".dependencies[1].name"* ]]; then
+      echo "dep2"
+    elif [[ "$*" == *".dependencies[1].check_command"* ]]; then
+      echo "command -v dep2"
+    fi
+  }
+  export -f yq
+
+  # Mock only first dependency - second is missing
+  mock_command "dep1"
+
+  run check_dependencies "tool1" "test.yaml"
+  [ "$status" -eq 1 ]
+  [[ "$output" =~ "⚠️ Skipping tool1 - missing dependency: dep2" ]]
+}
+
 # Tests for install_tool function - Brew
 @test "install_tool installs brew package" {
   mock_yq

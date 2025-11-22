@@ -280,6 +280,36 @@ can_install_tool() {
   [[ " ${AVAILABLE_MANAGERS[*]} " =~ \ ${manager}\  ]]
 }
 
+check_dependencies() {
+  local tool=$1
+  local yaml_file=$2
+
+  # Check if tool has dependencies field
+  local deps_count
+  deps_count=$(yq ".tools.${tool}.dependencies | length" "$yaml_file" 2>/dev/null || echo "0")
+
+  # No dependencies or null - proceed
+  if [[ "$deps_count" == "0" || "$deps_count" == "null" ]]; then
+    return 0
+  fi
+
+  # Check each dependency
+  local i
+  for ((i=0; i<deps_count; i++)); do
+    local dep_name dep_check
+    dep_name=$(yq ".tools.${tool}.dependencies[$i].name" "$yaml_file")
+    dep_check=$(yq ".tools.${tool}.dependencies[$i].check_command" "$yaml_file")
+
+    # Evaluate the check command
+    if ! eval "$dep_check" >/dev/null 2>&1; then
+      info "⚠️ Skipping $tool - missing dependency: $dep_name"
+      return 1
+    fi
+  done
+
+  return 0
+}
+
 install_tool() {
   local tool=$1
   local yaml_file=$2
@@ -803,6 +833,11 @@ main() {
               esac
             fi
           elif can_install_tool "$tool" "$CURRENT_CONFIG_FILE"; then
+            # Check dependencies before installing
+            if ! check_dependencies "$tool" "$CURRENT_CONFIG_FILE"; then
+              continue  # Skip to next tool
+            fi
+
             # Special handling for manual tools - they're only checked, not installed
             if [[ "$manager" == "manual" ]]; then
               info "Checking $tool ($manager $type)..."
