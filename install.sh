@@ -740,16 +740,12 @@ main() {
               "arkade")
                 case "$type" in
                 "get")
-                  if [[ "$FORCE" == "true" ]]; then
-                    if [[ "$DRY_RUN" == "true" ]]; then
-                      info "Would execute: arkade get $tool"
-                    else
-                      info "Force updating $tool (arkade get)..."
-                      arkade get "$tool"
-                      info "✓ Force updated $tool (arkade get)"
-                    fi
+                  if [[ "$DRY_RUN" == "true" ]]; then
+                    info "Would execute: arkade get $tool"
                   else
-                    info "✓ $tool (arkade get) - arkade always downloads latest on 'get'"
+                    info "Updating $tool (arkade get)..."
+                    arkade get "$tool"  # arkade get always downloads the latest version
+                    info "✓ Updated $tool (arkade get)"
                   fi
                   ;;
                 *)

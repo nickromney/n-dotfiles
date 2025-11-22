@@ -81,7 +81,14 @@ make focus-mas            # Mac App Store apps (requires App Store login)
 # VSCode for different editors
 VSCODE_CLI=cursor make focus-vscode  # Install extensions for Cursor
 
-> **Note:** Mac App Store installs require you to sign in via the App Store app and click “Get” once per app before `make focus-mas install` (or any `mas install`) can succeed.
+# Package manager updates (updates both the manager and all installed packages)
+make brew update           # Update Homebrew and all brew/cask packages
+make arkade update         # Update arkade CLI and all arkade-installed tools
+make cargo update          # Update Rust toolchain and cargo binaries
+make uv update             # Update uv package manager (use ./install.sh -u for uv tools)
+make mas update            # Update Mac App Store applications
+
+> **Note:** Mac App Store installs require you to sign in via the App Store app and click "Get" once per app before `make focus-mas install` (or any `mas install`) can succeed.
 ```
 
 ## Features
@@ -270,9 +277,9 @@ Quick file finding with syntax-highlighted previews:
 
 ```bash
 f          # Launch fzf fuzzy finder
-bf         # Browse files - fzf preview → open in bat pager
-nf         # Navigate to nvim - fzf preview → open in neovim
-pf         # Preview and copy - fzf preview → copy path to clipboard
+bf         # Select file, open in bat pager
+nf         # Select file, open in neovim
+pf         # Select file, copy path to clipboard
 ```
 
 All commands show bat-powered syntax highlighting with line numbers in the preview pane.

@@ -76,9 +76,9 @@ Aliases are created conditionally based on available tools:
   - `n`: Opens neovim
 - **FZF Combinations** (fuzzy file finding with preview):
   - `f`: Launch fzf fuzzy finder
-  - `bf`: Browse and view files - fzf with bat preview, then open in bat pager
-  - `nf`: Navigate to file in nvim - fzf with bat preview, then open in neovim
-  - `pf`: Preview and copy path - fzf with bat preview, then copy path to clipboard
+  - `bf`: Select file with preview, open in bat pager
+  - `nf`: Select file with preview, open in neovim
+  - `pf`: Select file with preview, copy path to clipboard
 
   All fzf commands use bat for syntax-highlighted previews with line numbers (first 500 lines)
 
