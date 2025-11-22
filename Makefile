@@ -60,7 +60,7 @@ help: ## Show this help message
 	@echo ""
 	@echo "$(BLUE)Focus Examples:$(NC)"
 	@echo "  make focus-vscode         Install VSCode with extensions (install is default)"
-	@echo "  make focus-kubernetes install  Same as above (install keyword optional)"
+	@echo "  make focus-vscode install Install VSCode with extensions"
 	@echo "  make focus-python update  Update Python development tools"
 	@echo "  make focus-vscode stow    Stow VSCode configurations"
 
