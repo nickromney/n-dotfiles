@@ -32,7 +32,8 @@
       "Bash(paste:*)",
       "Bash(/usr/bin/awk:*)",
       "Bash(/usr/bin/grep -v '^$')",
-      "Bash(/usr/bin/paste:*)"
+      "Bash(/usr/bin/paste:*)",
+      "Bash(markdownlint:*)"
     ],
     "deny": [],
     "ask": []
