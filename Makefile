@@ -189,10 +189,17 @@ uv: ## UV Python package manager <update>
 		exit 1; \
 	fi
 
+.PHONY: mas
+mas: ## Mac App Store package manager <update>
+	@if [ -z "$(filter update,$(MAKECMDGOALS))" ]; then \
+		echo "$(YELLOW)Usage: make mas update$(NC)"; \
+		exit 1; \
+	fi
+
 ##@ Focus Configurations
 
 # List of available focus areas
-FOCUS_AREAS = ai container-base containers kubernetes mas neovim python rust typescript vscode
+FOCUS_AREAS = ai app-store container-base containers kubernetes neovim python rust typescript vscode
 
 # Dynamic pattern rule for focus areas
 .PHONY: $(FOCUS_AREAS)
@@ -201,10 +208,10 @@ $(FOCUS_AREAS):
 
 # Help text for focus areas
 ai: ## AI/ML tools <install|stow|update>
+app-store: ## Mac App Store apps <install|stow|update>
 container-base: ## Podman and container tools <install|stow|update>
 containers: ## Podman container management <install|stow|update>
 kubernetes: ## Kubernetes tools <install|stow|update>
-mas: ## Mac App Store apps <install|stow|update>
 neovim: ## Neovim and plugins <install|stow|update>
 python: ## Python development tools <install|stow|update>
 rust: ## Rust toolchain <install|stow|update>

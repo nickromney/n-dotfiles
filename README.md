@@ -71,15 +71,15 @@ make work update          # Update tooling for work machines
 make stow work            # Symlink configs for the work profile
 make personal configure   # Apply macOS defaults (dock, keyboard, etc.)
 make install PROFILE=work # Alternate syntax using PROFILE env var
-make focus-mas install    # Optional Mac App Store apps (after "purchasing" once)
+make app-store install    # Optional Mac App Store apps (after "purchasing" once)
 
 # Focus targets (specific tool categories)
-make focus-vscode         # VSCode and extensions
-make focus-neovim         # Neovim and plugins
-make focus-mas            # Mac App Store apps (requires App Store login)
+make vscode               # VSCode and extensions
+make neovim               # Neovim and plugins
+make app-store            # Mac App Store apps (requires App Store login)
 
 # VSCode for different editors
-VSCODE_CLI=cursor make focus-vscode  # Install extensions for Cursor
+VSCODE_CLI=cursor make vscode  # Install extensions for Cursor
 
 # Package manager updates (updates both the manager and all installed packages)
 make brew update           # Update Homebrew and all brew/cask packages
@@ -88,7 +88,7 @@ make cargo update          # Update Rust toolchain and cargo binaries
 make uv update             # Update uv package manager (use ./install.sh -u for uv tools)
 make mas update            # Update Mac App Store applications
 
-> **Note:** Mac App Store installs require you to sign in via the App Store app and click "Get" once per app before `make focus-mas install` (or any `mas install`) can succeed.
+> **Note:** Mac App Store installs require you to sign in via the App Store app and click "Get" once per app before `make app-store install` (or any `mas install`) can succeed.
 ```
 
 ## Features
@@ -106,7 +106,7 @@ make mas update            # Update Mac App Store applications
 ```bash
 # Preferred workflow
 make personal install        # or: make work install
-make focus-mas install       # optional, run after clicking "Get" in App Store
+make app-store install       # optional, run after clicking "Get" in App Store
 make stow personal           # symlink dotfiles
 make personal configure      # apply macOS settings
 
@@ -388,16 +388,16 @@ _configs/
 | Target | Includes | Purpose |
 |--------|----------|---------|
 | **make common install** | All shared/ + host/common | Essential Mac setup |
-| **make focus-ai** | focus/ai | AI/ML development tools |
-| **make focus-container-base** | focus/container-base | Podman and container tools |
-| **make focus-containers** | focus/containers | Podman container tools |
-| **make focus-kubernetes** | focus/kubernetes | Kubernetes toolchain |
-| **make focus-neovim** | focus/neovim | Enhanced Neovim |
-| **make focus-python** | focus/python | Python development |
-| **make focus-rust** | focus/rust | Rust development |
-| **make focus-typescript** | focus/typescript | TypeScript/Node.js |
-| **make focus-vscode** | focus/vscode | VSCode + extensions |
-| **make focus-mas** | focus/mas | Optional Mac App Store apps (requires prior purchase) |
+| **make ai** | focus/ai | AI/ML development tools |
+| **make app-store** | focus/app-store | Optional Mac App Store apps (requires prior purchase) |
+| **make container-base** | focus/container-base | Podman and container tools |
+| **make containers** | focus/containers | Podman container tools |
+| **make kubernetes** | focus/kubernetes | Kubernetes toolchain |
+| **make neovim** | focus/neovim | Enhanced Neovim |
+| **make python** | focus/python | Python development |
+| **make rust** | focus/rust | Rust development |
+| **make typescript** | focus/typescript | TypeScript/Node.js |
+| **make vscode** | focus/vscode | VSCode + extensions |
 | **make personal install** | Shared + host/common + host/personal + focus/containers + focus/kubernetes + focus/vscode | Full personal Mac |
 | **make work install** | Shared + host/common + host/work + focus/containers + focus/kubernetes + focus/vscode | Work laptop tooling |
 | **make work-setup** | Runs setup-work-mac.sh | Legacy scripted work setup |
@@ -411,7 +411,7 @@ For a new personal Mac (like yours):
 make personal install
 
 # 2. Optional: install Mac App Store apps once you're signed in + clicked "Get"
-make focus-mas install
+make app-store install
 
 # 3. Create configuration symlinks
 make personal stow
