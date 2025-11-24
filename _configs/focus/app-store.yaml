@@ -1,5 +1,5 @@
 # Optional Mac App Store apps
-# Install with: make focus-mas install
+# Install with: make app-store install
 tools:
   microsoft-excel:
     manager: mas

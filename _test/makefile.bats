@@ -113,8 +113,8 @@ teardown() {
   [[ "$output" =~ "macos.sh called with: work.yaml" ]]
 }
 
-@test "make focus-vscode runs with correct configs" {
-  run make focus-vscode
+@test "make vscode runs with correct configs" {
+  run make vscode install
   [ "$status" -eq 0 ]
   [[ "$output" =~ "CONFIG_FILES: focus/vscode" ]]
 }
@@ -148,7 +148,7 @@ echo "Arguments: $@"
 EOF
   chmod +x install.sh
 
-  VSCODE_CLI=cursor run make focus-vscode
+  VSCODE_CLI=cursor run make vscode install
   [ "$status" -eq 0 ]
   [[ "$output" =~ "VSCODE_CLI: cursor" ]]
 }

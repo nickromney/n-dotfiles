@@ -11,8 +11,8 @@
 
 - `./bootstrap.sh` — prepare a fresh macOS host with Homebrew, Stow, and baseline packages.
 - `./install.sh [-d|-s|-u]` — core installer; dry-run with `-d`, stow configs via `-s`, and update installed tools with `-u`.
-- `make common|personal|work install` — run Makefile bundles; override the VS Code CLI with `VSCODE_CLI=cursor make focus-vscode`.
-- `make focus-mas install` — optional Mac App Store apps (run after signing in and clicking “Get” so `mas install` can succeed).
+- `make common|personal|work install` — run Makefile bundles; override the VS Code CLI with `VSCODE_CLI=cursor make vscode`.
+- `make app-store install` — optional Mac App Store apps (run after signing in and clicking "Get" so `mas install` can succeed).
 - `make test` or `_test/run_tests.sh` — execute the full Bats matrix.
 - `make precommit` — run all pre-commit hooks before pushing.
 

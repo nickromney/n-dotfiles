@@ -47,7 +47,7 @@ teardown() {
   export PATH="/usr/bin:/usr/local/bin:/usr/bin:/opt/homebrew/bin:/usr/local/bin"
 
   # Source bashrc and check PATH deduplication
-  result=$(bash -c "
+  result=$(/bin/bash -c "
     export PATH='$PATH'
     source $DOTFILES_DIR/bash/.bashrc 2>/dev/null
     echo \$PATH
@@ -59,7 +59,7 @@ teardown() {
 }
 
 @test "bashrc: PATH has no trailing colon" {
-  result=$(bash -c "
+  result=$(/bin/bash -c "
     export PATH='/usr/bin:/usr/local/bin'
     source $DOTFILES_DIR/bash/.bashrc 2>/dev/null
     echo \$PATH
@@ -146,7 +146,7 @@ fi' > "$MOCK_BIN_DIR/fnm"
   export PATH="/usr/bin:/usr/local/bin:/usr/bin:/opt/homebrew/bin:/usr/local/bin"
 
   # Source zshrc and check PATH deduplication
-  result=$(zsh -c "
+  result=$(/bin/zsh -c "
     export PATH='$PATH'
     source $DOTFILES_DIR/zsh/.zshrc 2>/dev/null
     echo \$PATH
@@ -158,7 +158,7 @@ fi' > "$MOCK_BIN_DIR/fnm"
 }
 
 @test "zshrc: PATH has no trailing colon" {
-  result=$(zsh -c "
+  result=$(/bin/zsh -c "
     export PATH='/usr/bin:/usr/local/bin'
     source $DOTFILES_DIR/zsh/.zshrc 2>/dev/null
     echo \$PATH

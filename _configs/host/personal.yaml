@@ -67,14 +67,6 @@ tools:
     documentation_url: "https://netnewswire.com/"
     category: productivity
 
-  ollama:
-    manager: brew
-    type: cask
-    check_command: command -v ollama
-    description: "Run large language models locally"
-    documentation_url: "https://ollama.ai/"
-    category: ai
-
   spotify:
     manager: brew
     type: cask
