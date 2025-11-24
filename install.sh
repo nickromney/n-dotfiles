@@ -33,6 +33,8 @@ STOW="${STOW:-false}"
 FORCE="${FORCE:-false}"
 UPDATE="${UPDATE:-false}"
 CONFIG_FILES_SET_VIA_CLI="${CONFIG_FILES_SET_VIA_CLI:-false}"
+# Track newly installed package managers during this run
+NEWLY_INSTALLED_MANAGERS=()
 
 command_exists() {
   type "$1" >/dev/null 2>&1
@@ -849,6 +851,12 @@ main() {
               install_result=$?
               if [[ $install_result -eq 0 ]]; then
                 info "✓ Successfully installed $tool ($manager $type)"
+                # Track if we installed a package manager
+                case "$tool" in
+                  arkade|cargo|uv)
+                    NEWLY_INSTALLED_MANAGERS+=("$tool")
+                    ;;
+                esac
               elif [[ $install_result -eq 2 ]]; then
                 info "✓ $tool ($manager $type) was already up to date"
               else
@@ -862,6 +870,16 @@ main() {
       fi
     done # End of config file loop
   fi     # End of if AVAILABLE_MANAGERS check
+
+  # Check if any package managers were installed during this run
+  if [[ ${#NEWLY_INSTALLED_MANAGERS[@]} -gt 0 ]]; then
+    info ""
+    info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    info "Note: Package managers were installed during this run: ${NEWLY_INSTALLED_MANAGERS[*]}"
+    info "Run the install script again to install tools that depend on them."
+    info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    info ""
+  fi
 
   if [[ "$STOW" == "true" ]]; then
     info "Running stow..."

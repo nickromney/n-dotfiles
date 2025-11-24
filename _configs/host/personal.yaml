@@ -59,6 +59,14 @@ tools:
     documentation_url: "https://www.microsoft.com/en-us/microsoft-teams/"
     category: communication
 
+  netnewswire:
+    manager: brew
+    type: cask
+    check_command: "[ -d /Applications/NetNewsWire.app ]"
+    description: "Free and open-source RSS reader"
+    documentation_url: "https://netnewswire.com/"
+    category: productivity
+
   ollama:
     manager: brew
     type: cask

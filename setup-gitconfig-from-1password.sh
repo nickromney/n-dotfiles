@@ -185,15 +185,31 @@ for config_mapping in "${GIT_CONFIGS[@]}"; do
   info "Downloading '$op_name'..."
 
   # Try to get the config from 1Password Secure Note
-  if op item get "$op_name" --vault="$VAULT" --fields notes 2>/dev/null >"$WORK_DIR/$local_name" && [ -s "$WORK_DIR/$local_name" ]; then
-    chmod 644 "$WORK_DIR/$local_name"
-    successful_configs+=("$local_name")
+  # Try notesPlain first (Secure Notes), then notes (older format)
+  if op item get "$op_name" --vault="$VAULT" --fields notesPlain 2>/dev/null >"$WORK_DIR/$local_name" ||
+     op item get "$op_name" --vault="$VAULT" --fields notes 2>/dev/null >"$WORK_DIR/$local_name"; then
+    # Check if file has content
+    if [ -s "$WORK_DIR/$local_name" ]; then
+      # Remove surrounding quotes and fix escaped quotes (1Password CLI adds them)
+      # First remove outer quotes from entire file, then fix doubled quotes
+      # Detect platform for sed in-place editing
+      if [[ "$(uname)" == "Darwin" ]]; then
+        sed -i '' 's/^"//; s/"$//; s/""/"/g' "$WORK_DIR/$local_name"
+      else
+        sed -i 's/^"//; s/"$//; s/""/"/g' "$WORK_DIR/$local_name"
+      fi
+      chmod 644 "$WORK_DIR/$local_name"
+      successful_configs+=("$local_name")
 
-    # Verify it's valid Git config syntax
-    if git config --file="$WORK_DIR/$local_name" --list >/dev/null 2>&1; then
-      success "Downloaded and validated $local_name"
+      # Verify it's valid Git config syntax
+      if git config --file="$WORK_DIR/$local_name" --list >/dev/null 2>&1; then
+        success "Downloaded and validated $local_name"
+      else
+        warning "$local_name downloaded but may have syntax issues"
+      fi
     else
-      warning "$local_name downloaded but may have syntax issues"
+      failed_configs+=("$op_name → $local_name")
+      rm -f "$WORK_DIR/$local_name" # Remove empty file if created
     fi
   else
     failed_configs+=("$op_name → $local_name")

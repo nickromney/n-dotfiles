@@ -198,6 +198,7 @@ declare -a paths=(
   "$HOME/.local/bin"
   "$HOME/.arkade/bin"
   "$HOME/.cargo/bin"
+  "$HOME/.lmstudio/bin"
   "$HOME/.tfenv/bin"
 )
 
@@ -248,11 +249,19 @@ if command -v git >/dev/null 2>&1; then
   # Only add lazygit alias if it's available
   if command -v lazygit >/dev/null 2>&1; then
     alias g="lazygit"
+    alias lg="lazygit"
   fi
+fi
+
+# Docker/Container aliases
+if command -v lazydocker >/dev/null 2>&1; then
+  alias d="lazydocker"
+  alias ld="lazydocker"
 fi
 
 # File listing aliases
 if command -v eza >/dev/null 2>&1; then
+  alias e="eza"
   alias l="eza --oneline"
   alias tree="eza --tree"
 else
@@ -295,3 +304,4 @@ fi
 if command -v direnv >/dev/null 2>&1; then
   eval "$(direnv hook zsh)"
 fi
+

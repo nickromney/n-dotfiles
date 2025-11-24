@@ -41,11 +41,11 @@ The setup script manages SSH configuration with security in mind:
 
 | 1Password Item                     | Safe Mode (Default)                  | Unsafe Mode                          | Purpose                          |
 | ---------------------------------- | ------------------------------------ | ------------------------------------ | -------------------------------- |
-| `SSH Config` (Secure Note)         | `~/.ssh/config`                      | `~/.ssh/config`                      | Complete SSH configuration       |
-| `github_personal_authentication`   | `~/.ssh/id_ed25519.pub`              | `~/.ssh/id_ed25519` + `.pub`         | Personal GitHub authentication   |
-| `github_personal_signing`          | `~/.ssh/github_personal_signing.pub` | `~/.ssh/github_personal_signing` + `.pub` | GitHub commit signing       |
-| `aws_work_2024_client_1`           | `~/.ssh/aws_work_2024_client_1.pem.pub` | `~/.ssh/aws_work_2024_client_1.pem` + `.pub` | AWS EC2 access        |
-| `github_work_2025_client_1`        | `~/.ssh/github_work_2025_client_1.pub` | `~/.ssh/github_work_2025_client_1` + `.pub` | Work GitHub access      |
+| `~/.ssh/config` (Secure Note)      | `~/.ssh/config`                      | `~/.ssh/config`                      | Complete SSH configuration       |
+| `personal_github_authentication`   | `~/.ssh/personal_github_authentication.pub` | `~/.ssh/personal_github_authentication` + `.pub` | Personal GitHub authentication   |
+| `personal_github_signing`          | `~/.ssh/personal_github_signing.pub` | `~/.ssh/personal_github_signing` + `.pub` | GitHub commit signing       |
+| `work_2024_client_1_aws`           | `~/.ssh/work_2024_client_1_aws.pem.pub` | `~/.ssh/work_2024_client_1_aws.pem` + `.pub` | AWS EC2 access        |
+| `work_2025_client_1_github`        | `~/.ssh/work_2025_client_1_github.pub` | `~/.ssh/work_2025_client_1_github` + `.pub` | Work GitHub access      |
 
 ### Running Setup
 
@@ -70,9 +70,9 @@ The setup script `setup-ssh-from-1password.sh` (in repository root) handles ever
 ### SSH Config (Secure Note)
 
 1. Create a **Secure Note** in 1Password
-2. Name it: `SSH Config`
+2. Name it: `~/.ssh/config`
 3. Paste your complete SSH configuration in the notes field
-4. Save to your vault (default: "Personal")
+4. Save to your vault (default: "Private")
 
 ### SSH Keys (SSH Key Items)
 

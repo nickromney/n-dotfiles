@@ -66,6 +66,7 @@ dock:
     # Productivity (P workspace)
     - "/Applications/Things3.app"
     - "/Applications/Obsidian.app"
+    - "/Applications/NetNewsWire.app"
 
     # Office (O workspace)
 

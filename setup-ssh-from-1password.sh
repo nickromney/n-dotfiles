@@ -90,14 +90,16 @@ BACKUP_DIR="$SSH_DIR/backups/$(date +%Y%m%d-%H%M%S)"
 readonly BACKUP_DIR
 
 # SSH Keys to verify in 1Password (only public keys will be downloaded)
-# Format: "1password_item_name:local_filename"
+# Format: "1password_item_name:local_filename:vault_name"
+# If vault_name is omitted, uses $VAULT (default: Private)
+# Arrow (→) in output shows: "1Password item name" → "local filename"
 # Naming convention: personal_ or work_ prefix (to avoid exposing client information in item names)
 # NOTE: Private keys stay in 1Password - only public keys are downloaded for reference
 declare -a SSH_KEYS=(
-  "personal_github_authentication:id_ed25519"
-  "personal_github_signing:github_personal_signing"
-  "work_aws_2024_client_1:aws_work_2024_client_1.pem"
-  "work_github_2025_client_1:github_work_2025_client_1"
+  "personal_github_authentication:personal_github_authentication:Private"
+  "personal_github_signing:personal_github_signing:Private"
+  "work_2024_client_1_aws:work_2024_client_1_aws.pem:Work 2024 Client 1"
+  "work_2025_client_1_github:work_2025_client_1_github:Work 2025 Client 1"
 )
 
 # Dry run mode - just check what's available
@@ -114,20 +116,22 @@ if [[ "$DRY_RUN" == "true" ]]; then
   missing_items=()
 
   # Check SSH Config
-  if op item get "SSH Config" --vault="$VAULT" >/dev/null 2>&1; then
-    available_items+=("SSH Config (Secure Note)")
+  if op item get "~/.ssh/config" --vault="$VAULT" >/dev/null 2>&1; then
+    available_items+=("~/.ssh/config (Secure Note)")
   else
-    missing_items+=("SSH Config (Secure Note)")
+    missing_items+=("~/.ssh/config (Secure Note)")
   fi
 
   # Check SSH Keys
   for key_mapping in "${SSH_KEYS[@]}"; do
-    IFS=':' read -r op_name local_name <<<"$key_mapping"
+    IFS=':' read -r op_name local_name item_vault <<<"$key_mapping"
+    # Use specified vault or fall back to default
+    item_vault="${item_vault:-$VAULT}"
 
-    if op item get "$op_name" --vault="$VAULT" >/dev/null 2>&1; then
-      available_items+=("$op_name → $local_name")
+    if op item get "$op_name" --vault="$item_vault" >/dev/null 2>&1; then
+      available_items+=("$op_name → $local_name (vault: $item_vault)")
     else
-      missing_items+=("$op_name → $local_name")
+      missing_items+=("$op_name → $local_name (vault: $item_vault)")
     fi
   done
 
@@ -146,9 +150,9 @@ if [[ "$DRY_RUN" == "true" ]]; then
     done
     echo
     echo "To add missing items:"
-    echo "  • SSH Config: Create a Secure Note named 'SSH Config'"
+    echo "  • SSH Config: Create a Secure Note named '~/.ssh/config'"
     echo "  • SSH Keys: Create SSH Key items with exact names shown above"
-    echo "  • Save all items in the '$VAULT' vault"
+    echo "  • Save each item in the vault shown in parentheses"
   fi
 
   # Check SSH agent
@@ -224,14 +228,24 @@ info "Backing up existing SSH files..."
 backup_file "$SSH_DIR/config"
 
 for key_mapping in "${SSH_KEYS[@]}"; do
-  local_name="${key_mapping#*:}"
+  IFS=':' read -r op_name local_name item_vault <<<"$key_mapping"
   backup_file "$SSH_DIR/$local_name"
   backup_file "$SSH_DIR/${local_name}.pub"
 done
 
 # Step 2: Setup SSH Config (from 1Password or example)
 info "Setting up SSH config..."
-if op item get "SSH Config" --vault="$VAULT" --fields notes 2>/dev/null >"$SSH_DIR/config"; then
+# Try notesPlain first (Secure Notes), then notes (older format)
+if op item get "~/.ssh/config" --vault="$VAULT" --fields notesPlain 2>/dev/null >"$SSH_DIR/config" ||
+   op item get "~/.ssh/config" --vault="$VAULT" --fields notes 2>/dev/null >"$SSH_DIR/config"; then
+  # Remove surrounding quotes and fix escaped quotes (1Password CLI adds them)
+  # First remove outer quotes from entire file, then fix doubled quotes
+  # Detect platform for sed in-place editing
+  if [[ "$(uname)" == "Darwin" ]]; then
+    sed -i '' 's/^"//; s/"$//; s/""/"/g' "$SSH_DIR/config"
+  else
+    sed -i 's/^"//; s/"$//; s/""/"/g' "$SSH_DIR/config"
+  fi
   chmod 600 "$SSH_DIR/config"
   success "SSH config downloaded from 1Password and permissions set"
 else
@@ -247,7 +261,7 @@ else
   else
     warning "No config.example found either"
     echo "  To add SSH config to 1Password:"
-    echo "  1. Create a Secure Note in 1Password called 'SSH Config'"
+    echo "  1. Create a Secure Note in 1Password called '~/.ssh/config'"
     echo "  2. Paste your SSH config content in the notes field"
     echo "  3. Save in the '$VAULT' vault"
   fi
@@ -264,19 +278,21 @@ failed_keys=()
 successful_keys=()
 
 for key_mapping in "${SSH_KEYS[@]}"; do
-  IFS=':' read -r op_name local_name <<<"$key_mapping"
+  IFS=':' read -r op_name local_name item_vault <<<"$key_mapping"
+  # Use specified vault or fall back to default
+  item_vault="${item_vault:-$VAULT}"
 
-  info "Processing $op_name..."
+  info "Processing $op_name (vault: $item_vault)..."
 
   # In UNSAFE mode, download private keys
   if [[ "$UNSAFE_MODE" == "true" ]]; then
     # Try as an SSH Key item type (the proper way)
-    if op item get "$op_name" --vault="$VAULT" --fields "private key" 2>/dev/null >"$SSH_DIR/$local_name" && [ -s "$SSH_DIR/$local_name" ]; then
+    if op item get "$op_name" --vault="$item_vault" --fields "private key" 2>/dev/null >"$SSH_DIR/$local_name" && [ -s "$SSH_DIR/$local_name" ]; then
       chmod 600 "$SSH_DIR/$local_name"
       successful_keys+=("$local_name (private)")
 
       # Try to get the public key
-      if op item get "$op_name" --vault="$VAULT" --fields "public key" 2>/dev/null >"$SSH_DIR/${local_name}.pub" && [ -s "$SSH_DIR/${local_name}.pub" ]; then
+      if op item get "$op_name" --vault="$item_vault" --fields "public key" 2>/dev/null >"$SSH_DIR/${local_name}.pub" && [ -s "$SSH_DIR/${local_name}.pub" ]; then
         chmod 644 "$SSH_DIR/${local_name}.pub"
         successful_keys+=("$local_name (public)")
       else
@@ -291,14 +307,14 @@ for key_mapping in "${SSH_KEYS[@]}"; do
       fi
     else
       # Alternative: Try with different field names or as JSON
-      if op item get "$op_name" --vault="$VAULT" --format json 2>/dev/null |
+      if op item get "$op_name" --vault="$item_vault" --format json 2>/dev/null |
         jq -r '.fields[] | select(.id == "private_key").value' >"$SSH_DIR/$local_name" 2>/dev/null &&
         [ -s "$SSH_DIR/$local_name" ]; then
         chmod 600 "$SSH_DIR/$local_name"
         successful_keys+=("$local_name (private)")
 
         # Get public key
-        if op item get "$op_name" --vault="$VAULT" --format json 2>/dev/null |
+        if op item get "$op_name" --vault="$item_vault" --format json 2>/dev/null |
           jq -r '.fields[] | select(.id == "public_key").value' >"$SSH_DIR/${local_name}.pub" 2>/dev/null &&
           [ -s "$SSH_DIR/${local_name}.pub" ]; then
           chmod 644 "$SSH_DIR/${local_name}.pub"
@@ -311,19 +327,19 @@ for key_mapping in "${SSH_KEYS[@]}"; do
     fi
   else
     # SAFE MODE: Only download public keys
-    if op item get "$op_name" --vault="$VAULT" --fields "public key" 2>/dev/null >"$SSH_DIR/${local_name}.pub" && [ -s "$SSH_DIR/${local_name}.pub" ]; then
+    if op item get "$op_name" --vault="$item_vault" --fields "public key" 2>/dev/null >"$SSH_DIR/${local_name}.pub" && [ -s "$SSH_DIR/${local_name}.pub" ]; then
       chmod 644 "$SSH_DIR/${local_name}.pub"
       successful_keys+=("$local_name (public only)")
     else
       # Alternative: Try with JSON format
-      if op item get "$op_name" --vault="$VAULT" --format json 2>/dev/null |
+      if op item get "$op_name" --vault="$item_vault" --format json 2>/dev/null |
         jq -r '.fields[] | select(.id == "public_key").value' >"$SSH_DIR/${local_name}.pub" 2>/dev/null &&
         [ -s "$SSH_DIR/${local_name}.pub" ]; then
         chmod 644 "$SSH_DIR/${local_name}.pub"
         successful_keys+=("$local_name (public only)")
       else
         # Try to extract from the SSH key item itself
-        if op item get "$op_name" --vault="$VAULT" --format json 2>/dev/null |
+        if op item get "$op_name" --vault="$item_vault" --format json 2>/dev/null |
           jq -r '.public_key // empty' >"$SSH_DIR/${local_name}.pub" 2>/dev/null &&
           [ -s "$SSH_DIR/${local_name}.pub" ]; then
           chmod 644 "$SSH_DIR/${local_name}.pub"
@@ -372,7 +388,7 @@ if [ ${#failed_keys[@]} -gt 0 ]; then
   echo "  2. Create new item → SSH Key"
   echo "  3. Name it exactly as shown above (before the →)"
   echo "  4. Paste your private key content"
-  echo "  5. Save in the '$VAULT' vault"
+  echo "  5. Save in the vault shown in the error message"
 fi
 
 # Step 6: Test SSH connections
