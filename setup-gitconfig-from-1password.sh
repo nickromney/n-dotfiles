@@ -192,7 +192,12 @@ for config_mapping in "${GIT_CONFIGS[@]}"; do
     if [ -s "$WORK_DIR/$local_name" ]; then
       # Remove surrounding quotes and fix escaped quotes (1Password CLI adds them)
       # First remove outer quotes from entire file, then fix doubled quotes
-      sed -i '' 's/^"//; s/"$//; s/""/"/g' "$WORK_DIR/$local_name"
+      # Detect platform for sed in-place editing
+      if [[ "$(uname)" == "Darwin" ]]; then
+        sed -i '' 's/^"//; s/"$//; s/""/"/g' "$WORK_DIR/$local_name"
+      else
+        sed -i 's/^"//; s/"$//; s/""/"/g' "$WORK_DIR/$local_name"
+      fi
       chmod 644 "$WORK_DIR/$local_name"
       successful_configs+=("$local_name")
 

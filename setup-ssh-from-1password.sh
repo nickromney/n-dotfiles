@@ -240,7 +240,12 @@ if op item get "~/.ssh/config" --vault="$VAULT" --fields notesPlain 2>/dev/null 
    op item get "~/.ssh/config" --vault="$VAULT" --fields notes 2>/dev/null >"$SSH_DIR/config"; then
   # Remove surrounding quotes and fix escaped quotes (1Password CLI adds them)
   # First remove outer quotes from entire file, then fix doubled quotes
-  sed -i '' 's/^"//; s/"$//; s/""/"/g' "$SSH_DIR/config"
+  # Detect platform for sed in-place editing
+  if [[ "$(uname)" == "Darwin" ]]; then
+    sed -i '' 's/^"//; s/"$//; s/""/"/g' "$SSH_DIR/config"
+  else
+    sed -i 's/^"//; s/"$//; s/""/"/g' "$SSH_DIR/config"
+  fi
   chmod 600 "$SSH_DIR/config"
   success "SSH config downloaded from 1Password and permissions set"
 else
