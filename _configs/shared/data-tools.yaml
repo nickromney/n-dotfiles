@@ -41,6 +41,14 @@ tools:
     documentation_url: "https://github.com/noahgorstein/homebrew-tap"
     category: data-tools
 
+  visidata:
+    manager: brew
+    type: package
+    check_command: command -v vd
+    description: "Terminal spreadsheet multitool for discovering and arranging data"
+    documentation_url: "https://www.visidata.org/"
+    category: data-tools
+
   yq:
     manager: brew
     type: package

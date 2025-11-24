@@ -267,6 +267,36 @@ This approach:
 - **Team sharing**: Safely share vaults with team members
 - **MFA protection**: Additional security with 1Password's MFA
 
+## Package Manager Setup
+
+### Installing Rust/Cargo
+
+The dotfiles manage PATH configuration for Rust/Cargo in `zsh/.zshrc` (lines 197-208). To prevent rustup from modifying your shell files during installation:
+
+```bash
+# Install Rust without modifying shell configuration
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --no-modify-path
+```
+
+The `--no-modify-path` flag prevents rustup from adding its own PATH configuration to your shell files, since the dotfiles already handle `$HOME/.cargo/bin` in the managed PATH configuration.
+
+Alternatively, you can:
+
+- Set `RUSTUP_MODIFY_PATH=false` before running the installer
+- Choose "Customize installation" (option 2) and decline PATH modification
+
+### PATH Management
+
+The ZSH configuration automatically adds tool directories to PATH if they exist:
+
+- `$HOME/.local/bin` - Local user binaries
+- `$HOME/.arkade/bin` - Arkade-installed tools
+- `$HOME/.cargo/bin` - Rust/Cargo binaries
+- `$HOME/.lmstudio/bin` - LM Studio CLI
+- `$HOME/.tfenv/bin` - Terraform version manager
+
+Each directory is only added if it exists, preventing errors on partial installations.
+
 ## Shell Configuration
 
 The ZSH configuration (in `zsh/.zshrc`) uses **defensive programming** - every tool is checked before use, ensuring it works across all environments (personal Mac, work Mac, fresh installs, dev containers).

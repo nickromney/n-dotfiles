@@ -33,7 +33,10 @@
       "Bash(/usr/bin/awk:*)",
       "Bash(/usr/bin/grep -v '^$')",
       "Bash(/usr/bin/paste:*)",
-      "Bash(markdownlint:*)"
+      "Bash(markdownlint:*)",
+      "Bash(mas search:*)",
+      "Bash(mas info:*)",
+      "Bash(brew info:*)"
     ],
     "deny": [],
     "ask": []
