@@ -32,6 +32,14 @@ tools:
     documentation_url: "https://ast-grep.github.io/"
     category: shell
 
+  bats-core:
+    manager: brew
+    type: package
+    check_command: command -v bats
+    description: "Bash Automated Testing System - shell script testing framework"
+    documentation_url: "https://bats-core.readthedocs.io/"
+    category: shell
+
   zoxide:
     manager: brew
     type: package

@@ -59,10 +59,9 @@ help: ## Show this help message
 	@echo "  make work update          Update tools for the work profile"
 	@echo ""
 	@echo "$(BLUE)Focus Examples:$(NC)"
-	@echo "  make focus-vscode         Install VSCode with extensions (default action)"
-	@echo "  make focus-vscode install Same as above (explicit action keyword)"
-	@echo "  make focus-python update  Update Python development tools"
-	@echo "  make focus-vscode stow    Stow VSCode configurations"
+	@echo "  make vscode install       Install VSCode with extensions"
+	@echo "  make kubernetes update    Update Kubernetes tools"
+	@echo "  make python stow          Stow Python configurations"
 
 ##@ Main Configurations
 
@@ -190,60 +189,33 @@ uv: ## UV Python package manager <update>
 		exit 1; \
 	fi
 
-.PHONY: mas
-mas: ## Mac App Store <update>
-	@if [ -z "$(filter update,$(MAKECMDGOALS))" ]; then \
-		echo "$(YELLOW)Usage: make mas update$(NC)"; \
-		exit 1; \
-	fi
-
 ##@ Focus Configurations
 
-.PHONY: focus-ai
-focus-ai: ## AI/ML tools <install|stow|update>
-	@CONFIG_FILES="focus/ai" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
+# List of available focus areas
+FOCUS_AREAS = ai container-base containers kubernetes mas neovim python rust typescript vscode
 
-.PHONY: focus-container-base
-focus-container-base: ## Podman and container tools <install|stow|update>
-	@CONFIG_FILES="focus/container-base" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
+# Dynamic pattern rule for focus areas
+.PHONY: $(FOCUS_AREAS)
+$(FOCUS_AREAS):
+	@CONFIG_FILES="focus/$@" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
 
-.PHONY: focus-containers
-focus-containers: ## Podman container management <install|stow|update>
-	@CONFIG_FILES="focus/containers" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
-
-.PHONY: focus-kubernetes
-focus-kubernetes: ## Kubernetes tools <install|stow|update>
-	@CONFIG_FILES="focus/kubernetes" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
-
-.PHONY: focus-mas
-focus-mas: ## Mac App Store apps <install|stow|update>
-	@CONFIG_FILES="focus/mas" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
-
-.PHONY: focus-neovim
-focus-neovim: ## Neovim and plugins <install|stow|update>
-	@CONFIG_FILES="focus/neovim" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
-
-.PHONY: focus-python
-focus-python: ## Python development tools <install|stow|update>
-	@CONFIG_FILES="focus/python" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
-
-.PHONY: focus-rust
-focus-rust: ## Rust toolchain <install|stow|update>
-	@CONFIG_FILES="focus/rust" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
-
-.PHONY: focus-typescript
-focus-typescript: ## Node.js and TypeScript <install|stow|update>
-	@CONFIG_FILES="focus/typescript" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
-
-.PHONY: focus-vscode
-focus-vscode: ## VSCode and extensions <install|stow|update>
-	@CONFIG_FILES="focus/vscode" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
+# Help text for focus areas
+ai: ## AI/ML tools <install|stow|update>
+container-base: ## Podman and container tools <install|stow|update>
+containers: ## Podman container management <install|stow|update>
+kubernetes: ## Kubernetes tools <install|stow|update>
+mas: ## Mac App Store apps <install|stow|update>
+neovim: ## Neovim and plugins <install|stow|update>
+python: ## Python development tools <install|stow|update>
+rust: ## Rust toolchain <install|stow|update>
+typescript: ## Node.js and TypeScript <install|stow|update>
+vscode: ## VSCode and extensions <install|stow|update>
 
 ##@ Actions
 
 .PHONY: install
 install: ## Install packages for the selected profile/focus
-ifneq ($(filter focus-%,$(MAKECMDGOALS)),)
+ifneq ($(filter $(FOCUS_AREAS),$(MAKECMDGOALS)),)
 	@: # No-op if a focus target was specified
 else
 	@echo "$(BLUE)Installing $(SELECTED_PROFILE) profile...$(NC)"
@@ -252,7 +224,7 @@ endif
 
 .PHONY: stow
 stow: ## Stow dotfiles for the selected profile/focus
-ifneq ($(filter focus-%,$(MAKECMDGOALS)),)
+ifneq ($(filter $(FOCUS_AREAS),$(MAKECMDGOALS)),)
 	@: # No-op if a focus target was specified
 else
 	@echo "$(BLUE)Stowing dotfiles for $(SELECTED_PROFILE) profile...$(NC)"
@@ -261,7 +233,7 @@ endif
 
 .PHONY: update
 update: ## Update packages for the selected profile/focus/package-manager (only one package manager per invocation)
-ifneq ($(filter focus-%,$(MAKECMDGOALS)),)
+ifneq ($(filter $(FOCUS_AREAS),$(MAKECMDGOALS)),)
 	@: # No-op if a focus target was specified
 else ifneq ($(filter brew,$(MAKECMDGOALS)),)
 	@if command -v brew >/dev/null 2>&1; then \
