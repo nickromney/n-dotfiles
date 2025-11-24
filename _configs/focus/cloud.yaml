@@ -1,0 +1,37 @@
+# Cloud provider CLI tools
+# Install with: make cloud install
+tools:
+  awscli:
+    manager: brew
+    type: package
+    check_command: command -v aws
+    description: "Official Amazon AWS command-line interface"
+    documentation_url: "https://aws.amazon.com/cli/"
+    category: cloud
+
+  azure-cli:
+    manager: brew
+    type: package
+    check_command: command -v az
+    description: "Command-line tools for Azure cloud services"
+    documentation_url: "https://docs.microsoft.com/en-us/cli/azure/"
+    category: cloud
+
+  azure/functions:
+    manager: brew
+    type: tap
+    check_command: "brew tap | grep -q azure/functions"
+    description: "Homebrew tap for Azure Functions Core Tools"
+    documentation_url: "https://github.com/Azure/azure-functions-core-tools"
+    category: cloud
+
+  azure-functions-core-tools@4:
+    manager: brew
+    type: package
+    check_command: command -v func
+    dependencies:
+      - fnm
+      - azure/functions
+    description: "Azure Functions Core Tools for local development"
+    documentation_url: "https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local"
+    category: cloud

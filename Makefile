@@ -199,7 +199,7 @@ mas: ## Mac App Store package manager <update>
 ##@ Focus Configurations
 
 # List of available focus areas
-FOCUS_AREAS = ai app-store container-base containers kubernetes neovim python rust typescript vscode
+FOCUS_AREAS = ai app-store cloud container-base containers infrastructure kubernetes neovim python rust typescript vscode
 
 # Dynamic pattern rule for focus areas
 .PHONY: $(FOCUS_AREAS)
@@ -209,8 +209,10 @@ $(FOCUS_AREAS):
 # Help text for focus areas
 ai: ## AI/ML tools <install|stow|update>
 app-store: ## Mac App Store apps <install|stow|update>
+cloud: ## Cloud provider CLIs (AWS, Azure) <install|stow|update>
 container-base: ## Podman and container tools <install|stow|update>
 containers: ## Podman container management <install|stow|update>
+infrastructure: ## IaC tools (Terraform, Ansible) <install|stow|update>
 kubernetes: ## Kubernetes tools <install|stow|update>
 neovim: ## Neovim and plugins <install|stow|update>
 python: ## Python development tools <install|stow|update>

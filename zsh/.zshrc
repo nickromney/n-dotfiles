@@ -28,6 +28,17 @@ export SUDO_EDITOR="$EDITOR"
 export LANG="en_GB.UTF-8"
 export WORDCHARS="" # Specify word boundaries for command line navigation
 
+#
+# Homebrew
+#
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  if [[ -d "/opt/homebrew" ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  elif [[ -d "/usr/local/Homebrew" ]]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+  fi
+fi
+
 # Word navigation
 if [[ "$OSTYPE" == "darwin"* ]]; then
   bindkey "^[^[[C" forward-word  # Option + Right
