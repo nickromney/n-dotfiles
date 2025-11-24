@@ -1,0 +1,44 @@
+# Infrastructure as Code tools
+# Install with: make infrastructure install
+tools:
+  tfenv:
+    manager: brew
+    type: package
+    check_command: command -v tfenv
+    description: "Terraform version manager"
+    documentation_url: "https://github.com/tfutils/tfenv"
+    category: infrastructure
+
+  terraform:
+    manager: manual
+    check_command: command -v terraform
+    install_command: "tfenv install latest && tfenv use latest"
+    dependencies:
+      - tfenv
+    description: "Infrastructure as code software tool (installed via tfenv)"
+    documentation_url: "https://www.terraform.io/"
+    category: infrastructure
+
+  opentofu:
+    manager: brew
+    type: package
+    check_command: command -v tofu
+    description: "Open-source Terraform fork"
+    documentation_url: "https://opentofu.org/"
+    category: infrastructure
+
+  tflint:
+    manager: brew
+    type: package
+    check_command: command -v tflint
+    description: "Terraform linter"
+    documentation_url: "https://github.com/terraform-linters/tflint"
+    category: infrastructure
+
+  ansible:
+    manager: brew
+    type: package
+    check_command: command -v ansible
+    description: "Automation platform for configuration management"
+    documentation_url: "https://www.ansible.com/"
+    category: infrastructure
