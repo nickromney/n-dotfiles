@@ -37,7 +37,7 @@ tools:
   podman-desktop:
     manager: brew
     type: cask
-    check_command: '[ -d "/Applications/Podman Desktop.app" ]'
+    check_command: "brew list --cask | grep -q podman-desktop"
     description: "GUI management tool for Podman containers"
     documentation_url: "https://podman-desktop.io/"
     category: containers
