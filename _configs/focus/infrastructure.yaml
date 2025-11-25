@@ -13,7 +13,8 @@ tools:
     manager: manual
     check_command: "tfenv list 2>/dev/null | grep -q '^\\*'"
     dependencies:
-      - tfenv
+      - name: tfenv
+        check_command: command -v tfenv
     description: "Run: tfenv install latest && tfenv use latest"
     documentation_url: "https://github.com/tfutils/tfenv"
     category: infrastructure

@@ -30,8 +30,10 @@ tools:
     type: package
     check_command: command -v func
     dependencies:
-      - fnm
-      - azure/functions
+      - name: fnm
+        check_command: command -v fnm
+      - name: azure/functions
+        check_command: "brew tap | grep -q azure/functions"
     description: "Azure Functions Core Tools for local development"
     documentation_url: "https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local"
     category: cloud
