@@ -11,7 +11,7 @@ tools:
   1password:
     manager: brew
     type: cask
-    check_command: "[ -d '/Applications/1Password 7.app' ] || [ -d '/Applications/1Password.app' ]"
+    check_command: "brew list --cask | grep -q '^1password$'"
     description: "Password manager"
     documentation_url: "https://1password.com/"
     category: security
@@ -36,7 +36,7 @@ tools:
   alfred:
     manager: brew
     type: cask
-    check_command: "[ -d '/Applications/Alfred 5.app' ]"
+    check_command: "brew list --cask | grep -q alfred"
     description: "Application launcher and productivity tool"
     documentation_url: "https://www.alfredapp.com/"
     category: productivity
@@ -69,7 +69,7 @@ tools:
   ghostty:
     manager: brew
     type: cask
-    check_command: "[ -d /Applications/Ghostty.app ]"
+    check_command: "brew list --cask | grep -q ghostty"
     description: "Fast, native terminal emulator"
     documentation_url: "https://github.com/ghostty-org/ghostty"
     category: terminal
@@ -93,7 +93,7 @@ tools:
   obsidian:
     manager: brew
     type: cask
-    check_command: "[ -d '/Applications/Obsidian.app' ]"
+    check_command: "brew list --cask | grep -q obsidian"
     description: "Knowledge base and note-taking app"
     documentation_url: "https://obsidian.md/"
     category: productivity
@@ -117,7 +117,7 @@ tools:
   visual-studio-code:
     manager: brew
     type: cask
-    check_command: "[ -d '/Applications/Visual Studio Code.app' ]"
+    check_command: "brew list --cask | grep -q visual-studio-code"
     description: "Code editor"
     documentation_url: "https://code.visualstudio.com/"
     category: ide

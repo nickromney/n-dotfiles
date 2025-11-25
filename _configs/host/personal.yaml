@@ -14,7 +14,7 @@ tools:
   brave-browser:
     manager: brew
     type: cask
-    check_command: "[ -d '/Applications/Brave Browser.app' ]"
+    check_command: "brew list --cask | grep -q brave-browser"
     description: "Privacy-focused web browser"
     documentation_url: "https://brave.com/"
     category: internet
@@ -22,7 +22,7 @@ tools:
   claude:
     manager: brew
     type: cask
-    check_command: "[ -d /Applications/Claude.app ]"
+    check_command: "brew list --cask | grep -q claude"
     description: "AI assistant desktop app"
     documentation_url: "https://claude.ai/"
     category: ai
@@ -30,7 +30,7 @@ tools:
   hey:
     manager: brew
     type: cask
-    check_command: "[ -d /Applications/HEY.app ]"
+    check_command: "brew list --cask | grep -q hey"
     description: "Modern email client with built-in workflows"
     documentation_url: "https://www.hey.com/"
     category: productivity
@@ -38,7 +38,7 @@ tools:
   lm-studio:
     manager: brew
     type: cask
-    check_command: "[ -d '/Applications/LM Studio.app' ]"
+    check_command: "brew list --cask | grep -q lm-studio"
     description: "Desktop app for running local LLMs"
     documentation_url: "https://lmstudio.ai/"
     category: ai
@@ -54,7 +54,7 @@ tools:
   microsoft-teams:
     manager: brew
     type: cask
-    check_command: "[ -d '/Applications/Microsoft Teams.app' ]"
+    check_command: "brew list --cask | grep -q microsoft-teams"
     description: "Team collaboration and communication"
     documentation_url: "https://www.microsoft.com/en-us/microsoft-teams/"
     category: communication
@@ -62,7 +62,7 @@ tools:
   netnewswire:
     manager: brew
     type: cask
-    check_command: "[ -d /Applications/NetNewsWire.app ]"
+    check_command: "brew list --cask | grep -q netnewswire"
     description: "Free and open-source RSS reader"
     documentation_url: "https://netnewswire.com/"
     category: productivity
@@ -70,7 +70,7 @@ tools:
   spotify:
     manager: brew
     type: cask
-    check_command: "[ -d /Applications/Spotify.app ]"
+    check_command: "brew list --cask | grep -q spotify"
     description: "Music streaming"
     documentation_url: "https://www.spotify.com/"
     category: media
