@@ -275,7 +275,7 @@ tools:
   visual-studio-code:
     manager: brew
     type: cask
-    check_command: "[ -d '/Applications/Visual Studio Code.app' ]"
+    check_command: "brew list --cask | grep -q visual-studio-code"
     description: "Code editor"
     documentation_url: "https://code.visualstudio.com/"
     category: ide

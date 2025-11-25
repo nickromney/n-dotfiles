@@ -4,7 +4,7 @@
 # after-login-command = []
 # after-startup-command = []
 after-startup-command = [
-'exec-and-forget /opt/homebrew/bin/borders active_color=0xfff5f543 inactive_color=0xff3b8eea width=8.0'
+'exec-and-forget sleep 2 && /opt/homebrew/bin/borders active_color=0xfff5f543 inactive_color=0xff3b8eea width=8.0'
 ]
 start-at-login = true
 

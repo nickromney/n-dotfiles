@@ -11,12 +11,12 @@ tools:
 
   terraform:
     manager: manual
-    check_command: command -v terraform
-    install_command: "tfenv install latest && tfenv use latest"
+    check_command: "tfenv list 2>/dev/null | grep -q '^\\*'"
     dependencies:
-      - tfenv
-    description: "Infrastructure as code software tool (installed via tfenv)"
-    documentation_url: "https://www.terraform.io/"
+      - name: tfenv
+        check_command: command -v tfenv
+    description: "Run: tfenv install latest && tfenv use latest"
+    documentation_url: "https://github.com/tfutils/tfenv"
     category: infrastructure
 
   opentofu:
