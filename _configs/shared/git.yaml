@@ -31,3 +31,19 @@ tools:
     description: "Simple terminal UI for git commands"
     documentation_url: "https://github.com/jesseduffield/lazygit"
     category: git
+
+  git-lfs:
+    manager: brew
+    type: package
+    check_command: command -v git-lfs
+    description: "Git extension for versioning large files"
+    documentation_url: "https://git-lfs.com/"
+    category: git
+
+  pre-commit:
+    manager: brew
+    type: package
+    check_command: command -v pre-commit
+    description: "Framework for managing git pre-commit hooks"
+    documentation_url: "https://pre-commit.com/"
+    category: git

@@ -56,3 +56,11 @@ tools:
     description: "YAML, JSON, XML, CSV and properties parser"
     documentation_url: "https://github.com/mikefarah/yq"
     category: data-tools
+
+  yamllint:
+    manager: brew
+    type: package
+    check_command: command -v yamllint
+    description: "Linter for YAML files"
+    documentation_url: "https://github.com/adrienverge/yamllint"
+    category: data-tools

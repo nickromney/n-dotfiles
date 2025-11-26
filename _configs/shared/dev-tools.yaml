@@ -1,0 +1,25 @@
+# Language-agnostic development tools
+tools:
+  go:
+    manager: brew
+    type: package
+    check_command: command -v go
+    description: "Go programming language"
+    documentation_url: "https://go.dev/"
+    category: development
+
+  tree-sitter:
+    manager: brew
+    type: package
+    check_command: command -v tree-sitter
+    description: "Parser generator and incremental parsing library"
+    documentation_url: "https://tree-sitter.github.io/"
+    category: development
+
+  pandoc:
+    manager: brew
+    type: package
+    check_command: command -v pandoc
+    description: "Universal document converter"
+    documentation_url: "https://pandoc.org/"
+    category: development

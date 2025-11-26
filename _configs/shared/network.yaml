@@ -23,3 +23,19 @@ tools:
     description: "Internet file retriever"
     documentation_url: "https://www.gnu.org/software/wget/"
     category: network
+
+  xh:
+    manager: brew
+    type: package
+    check_command: command -v xh
+    description: "Friendly and fast HTTP client (Rust-based httpie alternative)"
+    documentation_url: "https://github.com/ducaale/xh"
+    category: network
+
+  sshs:
+    manager: brew
+    type: package
+    check_command: command -v sshs
+    description: "Interactive SSH host selector using ~/.ssh/config"
+    documentation_url: "https://github.com/quantumsheep/sshs"
+    category: network
