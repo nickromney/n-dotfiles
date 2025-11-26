@@ -15,3 +15,6 @@ MD033: false
 
 # First line in file should be a top-level heading - not always applicable
 MD041: false
+
+# Table column style - disable strict spacing requirements
+MD060: false

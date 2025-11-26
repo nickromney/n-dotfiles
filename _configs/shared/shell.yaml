@@ -79,3 +79,19 @@ tools:
     description: "Command-line benchmarking tool for measuring and comparing execution times"
     documentation_url: "https://github.com/sharkdp/hyperfine"
     category: shell
+
+  markdownlint-cli:
+    manager: brew
+    type: package
+    check_command: command -v markdownlint
+    description: "Command-line interface for markdownlint"
+    documentation_url: "https://github.com/igorshubovych/markdownlint-cli"
+    category: shell
+
+  markdownlint-cli2:
+    manager: brew
+    type: package
+    check_command: command -v markdownlint-cli2
+    description: "Fast, flexible markdown linter (newer, config-based)"
+    documentation_url: "https://github.com/DavidAnson/markdownlint-cli2"
+    category: shell
