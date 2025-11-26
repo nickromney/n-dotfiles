@@ -67,7 +67,7 @@ if [[ "$1" == "item" ]] && [[ "$2" == "get" ]]; then
 
   # Simulate items that exist in 1Password
   case "$item_name" in
-    "SSH Config")
+    "~/.ssh/config")
       if [[ "$@" == *"--fields"* ]] && [[ "$@" == *"notes"* ]]; then
         cat <<'CONFIG'
 Host *
@@ -79,7 +79,7 @@ Host github-work
     IdentityFile ~/.ssh/work_key.pub
 CONFIG
       else
-        echo "SSH Config found"
+        echo "~/.ssh/config found"
       fi
       exit 0
       ;;
@@ -131,7 +131,7 @@ EOF
   [ "$status" -eq 0 ]
   [[ "$output" == *"SSH Config Dry Run"* ]]
   [[ "$output" == *"Found in 1Password:"* ]]
-  [[ "$output" == *"SSH Config (Secure Note)"* ]]
+  [[ "$output" == *"~/.ssh/config (Secure Note)"* ]]
   [[ "$output" == *"personal_github_authentication"* ]]
   [[ "$output" == *"No files were modified"* ]]
 }
@@ -282,8 +282,8 @@ fi
 if [[ "$1" == "item" ]] && [[ "$2" == "get" ]]; then
   item_name="$3"
   case "$item_name" in
-    "SSH Config")
-      echo "SSH Config found"
+    "~/.ssh/config")
+      echo "~/.ssh/config found"
       exit 0
       ;;
     *)
@@ -300,7 +300,7 @@ EOF
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"Found in 1Password:"* ]]
-  [[ "$output" == *"SSH Config"* ]]
+  [[ "$output" == *"~/.ssh/config"* ]]
   [[ "$output" == *"Not found in 1Password:"* ]]
   [[ "$output" == *"personal_github_authentication"* ]]
 }

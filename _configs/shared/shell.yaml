@@ -71,3 +71,11 @@ tools:
     description: "Fish-like syntax highlighting for zsh"
     documentation_url: "https://github.com/zsh-users/zsh-syntax-highlighting"
     category: shell
+
+  hyperfine:
+    manager: brew
+    type: package
+    check_command: command -v hyperfine
+    description: "Command-line benchmarking tool for measuring and comparing execution times"
+    documentation_url: "https://github.com/sharkdp/hyperfine"
+    category: shell

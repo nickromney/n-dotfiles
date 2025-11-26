@@ -1,7 +1,33 @@
 # shellcheck shell=zsh
+#
+# ============================================================================
+# ZSH Configuration
+# ============================================================================
+#
+# Table of Contents:
+#   1. History           - Command history settings
+#   2. Environment       - Editor, language, word chars
+#   3. Homebrew          - Package manager setup + BREW_PREFIX cache
+#   4. Init Caching      - Cache tool init scripts for faster startup
+#   5. Key Bindings      - Word/line navigation, history search
+#   6. Completions       - compinit, Azure CLI, kubectl
+#   7. Tool Init         - Starship, rbenv, zoxide, fzf, uv
+#   8. Plugins           - zsh-autosuggestions, zsh-syntax-highlighting
+#   9. FNM               - Fast Node Manager
+#  10. Local Environment - ~/.local/bin/env
+#  11. ZScaler Certs     - Corporate proxy certificates
+#  12. 1Password SSH     - SSH agent socket
+#  13. PATH Management   - Additional paths, deduplication
+#  14. Podman            - Docker compatibility socket
+#  15. Aliases           - Navigation, git, files, editors, fzf combos
+#  16. direnv            - Directory-based environment
+#
+# Performance: ~100ms startup (cached) - see README.md for benchmarks
+# Reload with cache rebuild: sz
+# ============================================================================
 
 #
-# History
+# 1. History
 #
 # set the location and filename of the history file
 export HISTFILE="$HOME/.zsh_history"
@@ -21,7 +47,7 @@ setopt HIST_IGNORE_DUPS
 setopt HIST_IGNORE_SPACE
 
 #
-# Environment
+# 2. Environment
 #
 export EDITOR="nvim"
 export SUDO_EDITOR="$EDITOR"
@@ -29,15 +55,47 @@ export LANG="en_GB.UTF-8"
 export WORDCHARS="" # Specify word boundaries for command line navigation
 
 #
-# Homebrew
+# 3. Homebrew
 #
 if [[ "$OSTYPE" == "darwin"* ]]; then
   if [[ -d "/opt/homebrew" ]]; then
     eval "$(/opt/homebrew/bin/brew shellenv)"
+    BREW_PREFIX="/opt/homebrew"
   elif [[ -d "/usr/local/Homebrew" ]]; then
     eval "$(/usr/local/bin/brew shellenv)"
+    BREW_PREFIX="/usr/local"
   fi
 fi
+
+#
+# 4. Init Script Caching
+#
+# Cache tool init scripts to avoid regenerating on every shell startup.
+# Cache is cleared and rebuilt when running `sz` (source zshrc).
+# Manual clear: rm -rf ~/.cache/zsh-init
+#
+_ZSH_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/zsh-init"
+mkdir -p "$_ZSH_CACHE_DIR"
+
+_cache_init() {
+  local name="$1"
+  local cmd="$2"
+  local cache_file="$_ZSH_CACHE_DIR/$name.zsh"
+
+  # Generate cache if it doesn't exist
+  if [[ ! -f "$cache_file" ]]; then
+    if ! eval "$cmd" > "$cache_file" 2>&1; then
+      echo "Warning: Failed to cache $name initialization" >&2
+      rm -f "$cache_file"
+      return 1
+    fi
+  fi
+  source "$cache_file"
+}
+
+#
+# 5. Key Bindings
+#
 
 # Word navigation
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -59,7 +117,7 @@ bindkey "^[[A" history-beginning-search-backward # Up arrow
 bindkey "^[[B" history-beginning-search-forward  # Down arrow
 
 #
-# Tools & Completions
+# 6. Completions
 #
 # -Uz ensures that compinit is loaded as a pure function according
 #  to zsh's standards, without interference from any aliases defined.
@@ -67,15 +125,15 @@ bindkey "^[[B" history-beginning-search-forward  # Down arrow
 autoload -Uz compinit && compinit -i
 
 # Azure CLI completion
-if command -v brew >/dev/null 2>&1 && command -v az >/dev/null 2>&1; then
+if [[ -n "$BREW_PREFIX" ]] && command -v az >/dev/null 2>&1; then
   autoload bashcompinit && bashcompinit
-  AZ_COMPLETION="$(brew --prefix)/etc/bash_completion.d/az"
+  AZ_COMPLETION="$BREW_PREFIX/etc/bash_completion.d/az"
   [ -f "$AZ_COMPLETION" ] && source "$AZ_COMPLETION"
 fi
 
 # kubectl completion and aliases
 if command -v kubectl >/dev/null 2>&1; then
-  source <(kubectl completion zsh)
+  _cache_init kubectl "kubectl completion zsh"
   # shellcheck disable=SC1091
   DOTFILES_DIR="${DOTFILES_DIR:-$HOME/Developer/personal/n-dotfiles}"
   source "$DOTFILES_DIR/scripts/kubectl-aliases.sh"
@@ -89,9 +147,13 @@ fi
 zstyle ':completion:*:*:*:*:*' menu select
 bindkey '^[[Z' reverse-menu-complete
 
+#
+# 7. Tool Init
+#
+
 # Starship prompt
 if command -v starship >/dev/null 2>&1; then
-  eval "$(starship init zsh)"
+  _cache_init starship "starship init zsh"
 fi
 
 # Rbenv
@@ -102,7 +164,7 @@ fi
 # Zoxide
 ZOXIDE_AVAILABLE=false
 if command -v zoxide >/dev/null 2>&1; then
-  eval "$(zoxide init zsh)"
+  _cache_init zoxide "zoxide init zsh"
   ZOXIDE_AVAILABLE=true
 fi
 
@@ -110,10 +172,7 @@ fi
 FZF_AVAILABLE=false
 if command -v fzf >/dev/null 2>&1; then
   FZF_AVAILABLE=true
-  # Only source fzf completion if it exists
-  if FZF_COMPLETION=$(fzf --zsh 2>/dev/null); then
-    source <(echo "$FZF_COMPLETION")
-  fi
+  _cache_init fzf "fzf --zsh"
 
   export FZF_DEFAULT_OPTS="--height 100% --layout reverse --preview-window=wrap"
   export FZF_CTRL_R_OPTS="--preview 'echo {}'"
@@ -134,33 +193,35 @@ fi
 
 # UV tools
 if command -v uv >/dev/null 2>&1; then
-  eval "$(uv generate-shell-completion zsh)"
+  _cache_init uv "uv generate-shell-completion zsh"
 fi
 
 #
-# Plugin Management
+# 8. Plugins
 #
-if command -v brew >/dev/null 2>&1; then
-  ZSH_AUTOSUGGESTIONS="$(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
-  ZSH_SYNTAX_HIGHLIGHTING="$(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+if [[ -n "$BREW_PREFIX" ]]; then
+  ZSH_AUTOSUGGESTIONS="$BREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
+  ZSH_SYNTAX_HIGHLIGHTING="$BREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
   [ -f "$ZSH_AUTOSUGGESTIONS" ] && source "$ZSH_AUTOSUGGESTIONS"
   [ -f "$ZSH_SYNTAX_HIGHLIGHTING" ] && source "$ZSH_SYNTAX_HIGHLIGHTING"
 fi
 
 #
-# FNM Setup (Fast Node Manager)
+# 9. FNM (Fast Node Manager)
 #
 if command -v fnm >/dev/null 2>&1; then
   eval "$(fnm env --use-on-cd)"
 fi
 
 #
-# Local Environment
+# 10. Local Environment
 #
 [ -f "$HOME/.local/bin/env" ] && source "$HOME/.local/bin/env"
 
-# ZScaler Certs
+#
+# 11. ZScaler Certs
+#
 ZSCALER_CERT_DIR="$HOME/.zscalerCerts"
 if [ -d "$ZSCALER_CERT_DIR" ]; then
   ZSCALER_CA_BUNDLE="$ZSCALER_CERT_DIR/zscalerCAbundle.pem"
@@ -176,7 +237,7 @@ if [ -d "$ZSCALER_CERT_DIR" ]; then
 fi
 
 #
-# 1Password SSH Agent Setup
+# 12. 1Password SSH Agent
 #
 if command -v op >/dev/null 2>&1; then
   # 1Password CLI is installed
@@ -203,7 +264,7 @@ if command -v op >/dev/null 2>&1; then
 fi
 
 #
-# PATH Management
+# 13. PATH Management
 #
 declare -a paths=(
   "$HOME/.local/bin"
@@ -223,7 +284,9 @@ done
 PATH=$(echo "$PATH" | awk -v RS=: '!a[$0]++' | grep -v '^$' | paste -sd: -)
 export PATH
 
-# Podman socket for Docker compatibility
+#
+# 14. Podman
+#
 if command -v podman >/dev/null 2>&1; then
   if PODMAN_SOCKET=$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}' 2>/dev/null) && [ -n "$PODMAN_SOCKET" ]; then
     export DOCKER_HOST="unix://$PODMAN_SOCKET"
@@ -231,9 +294,8 @@ if command -v podman >/dev/null 2>&1; then
 fi
 
 #
-# Aliases
+# 15. Aliases
 #
-# Add aliases at the end after all tools are initialized
 
 # Navigation aliases - conditionally created based on available tools
 DEVELOPER_DIR="$HOME/Developer"
@@ -303,7 +365,8 @@ if $FZF_AVAILABLE; then
 fi
 
 # Utility aliases
-alias sz="source ~/.zshrc"
+# sz clears init cache and reloads zshrc (forces tool init rebuild)
+alias sz="rm -rf \"${XDG_CACHE_HOME:-$HOME/.cache}/zsh-init\" && source ~/.zshrc"
 
 # AWS Lambda virtual environment alias - check if directory exists first
 AWS_LAMBDA_VENV="$HOME/.venvs/aws-lambda/bin/activate"
@@ -311,8 +374,9 @@ if [ -f "$AWS_LAMBDA_VENV" ]; then
   alias aws-lambda-env='source "$AWS_LAMBDA_VENV"'
 fi
 
-# direnv integration
+#
+# 16. direnv
+#
 if command -v direnv >/dev/null 2>&1; then
-  eval "$(direnv hook zsh)"
+  _cache_init direnv "direnv hook zsh"
 fi
-
