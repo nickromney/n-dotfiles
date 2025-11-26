@@ -8,7 +8,7 @@ Modern, performance-focused TypeScript toolchain.
 |------|---------|---------------|
 | **bun** | Runtime, bundler, package manager, test runner | Much faster than node/npm |
 | **typescript** | Type checking | Standard tsc |
-| **tsgo** | Type checking (Go port) | ~10x faster than tsc |
+| **tsgo** | Type checking (Go port) | Much faster than tsc |
 | **biome** | Linting + formatting | ~100x faster than ESLint |
 | **swc** | Transpilation/bundling | Much faster than tsc emit |
 
@@ -22,7 +22,7 @@ Modern, performance-focused TypeScript toolchain.
 npm install -g @typescript/native-preview
 ```
 
-## tsgo (TypeScript 7 Preview)
+## tsgo
 
 Native Go port of TypeScript compiler. Significantly faster for large codebases.
 
@@ -47,7 +47,7 @@ Add to your settings.json:
 
 ### Status
 
-As of November 2025, tsgo is in preview with most features working:
+Currently, tsgo is in preview with most features working:
 
 - ✅ Program creation and parsing
 - ✅ Type resolution and checking

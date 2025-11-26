@@ -36,7 +36,12 @@
       "Bash(markdownlint:*)",
       "Bash(mas search:*)",
       "Bash(mas info:*)",
-      "Bash(brew info:*)"
+      "Bash(brew info:*)",
+      "Bash(for i in 1 2 3 4 5)",
+      "Bash(do /usr/bin/time zsh:*)",
+      "Bash(done)",
+      "Bash(hyperfine:*)",
+      "Bash(./_test/run_tests.sh:*)"
     ],
     "deny": [],
     "ask": []

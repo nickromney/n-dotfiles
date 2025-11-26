@@ -14,7 +14,7 @@ tools:
     type: package
     check_command: command -v bun
     dependencies:
-      - oven-sh/bun
+      - name: oven-sh/bun
     description: "All-in-one JavaScript runtime, bundler, transpiler & package manager"
     documentation_url: "https://bun.sh/"
     category: javascript
