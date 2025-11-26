@@ -84,7 +84,11 @@ _cache_init() {
 
   # Generate cache if it doesn't exist
   if [[ ! -f "$cache_file" ]]; then
-    eval "$cmd" > "$cache_file" 2>/dev/null || return 1
+    if ! eval "$cmd" > "$cache_file" 2>&1; then
+      echo "Warning: Failed to cache $name initialization" >&2
+      rm -f "$cache_file"
+      return 1
+    fi
   fi
   source "$cache_file"
 }
@@ -362,7 +366,7 @@ fi
 
 # Utility aliases
 # sz clears init cache and reloads zshrc (forces tool init rebuild)
-alias sz="rm -rf \"\$_ZSH_CACHE_DIR\" && source ~/.zshrc"
+alias sz="rm -rf \"${XDG_CACHE_HOME:-$HOME/.cache}/zsh-init\" && source ~/.zshrc"
 
 # AWS Lambda virtual environment alias - check if directory exists first
 AWS_LAMBDA_VENV="$HOME/.venvs/aws-lambda/bin/activate"

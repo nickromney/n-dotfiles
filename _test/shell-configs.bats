@@ -261,14 +261,23 @@ fi' > "$MOCK_BIN_DIR/direnv"
 }
 
 @test "zshrc: startup time under 125ms" {
-  # Measure startup time using /usr/bin/time (available on all systems)
+  # Detect a suitable 'time' command with -p (POSIX) support
+  local TIME_CMD=""
+  if command -v gtime >/dev/null 2>&1 && gtime -p true 2>/dev/null; then
+    TIME_CMD="gtime -p"
+  elif /usr/bin/time -p true 2>/dev/null; then
+    TIME_CMD="/usr/bin/time -p"
+  else
+    skip "No suitable 'time' command with -p flag available"
+  fi
+
   # Run 3 times and take the average
   local total=0
   local runs=3
 
   for i in $(seq 1 $runs); do
-    # /usr/bin/time -p outputs: real X.XX
-    local time_output=$(/usr/bin/time -p zsh -i -c exit 2>&1)
+    # $TIME_CMD outputs: real X.XX
+    local time_output=$($TIME_CMD zsh -i -c exit 2>&1)
     local real_time=$(echo "$time_output" | grep '^real' | awk '{print $2}')
     # Convert to milliseconds
     local ms=$(echo "$real_time" | awk '{printf "%.0f", $1 * 1000}')
