@@ -34,8 +34,10 @@ export WORDCHARS="" # Specify word boundaries for command line navigation
 if [[ "$OSTYPE" == "darwin"* ]]; then
   if [[ -d "/opt/homebrew" ]]; then
     eval "$(/opt/homebrew/bin/brew shellenv)"
+    BREW_PREFIX="/opt/homebrew"
   elif [[ -d "/usr/local/Homebrew" ]]; then
     eval "$(/usr/local/bin/brew shellenv)"
+    BREW_PREFIX="/usr/local"
   fi
 fi
 
@@ -67,9 +69,9 @@ bindkey "^[[B" history-beginning-search-forward  # Down arrow
 autoload -Uz compinit && compinit -i
 
 # Azure CLI completion
-if command -v brew >/dev/null 2>&1 && command -v az >/dev/null 2>&1; then
+if [[ -n "$BREW_PREFIX" ]] && command -v az >/dev/null 2>&1; then
   autoload bashcompinit && bashcompinit
-  AZ_COMPLETION="$(brew --prefix)/etc/bash_completion.d/az"
+  AZ_COMPLETION="$BREW_PREFIX/etc/bash_completion.d/az"
   [ -f "$AZ_COMPLETION" ] && source "$AZ_COMPLETION"
 fi
 
@@ -140,9 +142,9 @@ fi
 #
 # Plugin Management
 #
-if command -v brew >/dev/null 2>&1; then
-  ZSH_AUTOSUGGESTIONS="$(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
-  ZSH_SYNTAX_HIGHLIGHTING="$(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+if [[ -n "$BREW_PREFIX" ]]; then
+  ZSH_AUTOSUGGESTIONS="$BREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
+  ZSH_SYNTAX_HIGHLIGHTING="$BREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
   [ -f "$ZSH_AUTOSUGGESTIONS" ] && source "$ZSH_AUTOSUGGESTIONS"
   [ -f "$ZSH_SYNTAX_HIGHLIGHTING" ] && source "$ZSH_SYNTAX_HIGHLIGHTING"

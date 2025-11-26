@@ -23,6 +23,7 @@ hyperfine --warmup 3 --runs 10 'zsh -i -c exit'
 | Date | Mean | Range | Notes |
 |------|------|-------|-------|
 | 2025-11-26 | 150.9ms ± 1.0ms | 149-153ms | Baseline before optimisation |
+| 2025-11-26 | 108.9ms ± 0.9ms | 108-111ms | Cache BREW_PREFIX (was called 3x) |
 
 ## Files
 
