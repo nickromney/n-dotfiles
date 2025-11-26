@@ -99,7 +99,7 @@ fi
 
 # kubectl completion and aliases
 if command -v kubectl >/dev/null 2>&1; then
-  source <(kubectl completion zsh)
+  _cache_init kubectl "kubectl completion zsh"
   # shellcheck disable=SC1091
   DOTFILES_DIR="${DOTFILES_DIR:-$HOME/Developer/personal/n-dotfiles}"
   source "$DOTFILES_DIR/scripts/kubectl-aliases.sh"
