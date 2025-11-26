@@ -82,8 +82,15 @@ fi
 #
 # 1Password SSH Agent
 #
-if [ -S "$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock" ]; then
-  export SSH_AUTH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  # macOS
+  OP_SOCKET="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+else
+  # Linux
+  OP_SOCKET="$HOME/.1password/agent.sock"
+fi
+if [ -S "$OP_SOCKET" ]; then
+  export SSH_AUTH_SOCK="$OP_SOCKET"
 fi
 
 #
