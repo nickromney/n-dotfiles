@@ -41,6 +41,28 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   fi
 fi
 
+#
+# Init Script Caching
+#
+# Cache tool init scripts to avoid regenerating on every shell startup.
+# Cache is cleared and rebuilt when running `sz` (source zshrc).
+# Manual clear: rm -rf ~/.cache/zsh-init
+#
+_ZSH_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/zsh-init"
+mkdir -p "$_ZSH_CACHE_DIR"
+
+_cache_init() {
+  local name="$1"
+  local cmd="$2"
+  local cache_file="$_ZSH_CACHE_DIR/$name.zsh"
+
+  # Generate cache if it doesn't exist
+  if [[ ! -f "$cache_file" ]]; then
+    eval "$cmd" > "$cache_file" 2>/dev/null || return 1
+  fi
+  source "$cache_file"
+}
+
 # Word navigation
 if [[ "$OSTYPE" == "darwin"* ]]; then
   bindkey "^[^[[C" forward-word  # Option + Right
@@ -93,7 +115,7 @@ bindkey '^[[Z' reverse-menu-complete
 
 # Starship prompt
 if command -v starship >/dev/null 2>&1; then
-  eval "$(starship init zsh)"
+  _cache_init starship "starship init zsh"
 fi
 
 # Rbenv
@@ -104,7 +126,7 @@ fi
 # Zoxide
 ZOXIDE_AVAILABLE=false
 if command -v zoxide >/dev/null 2>&1; then
-  eval "$(zoxide init zsh)"
+  _cache_init zoxide "zoxide init zsh"
   ZOXIDE_AVAILABLE=true
 fi
 
@@ -112,10 +134,7 @@ fi
 FZF_AVAILABLE=false
 if command -v fzf >/dev/null 2>&1; then
   FZF_AVAILABLE=true
-  # Only source fzf completion if it exists
-  if FZF_COMPLETION=$(fzf --zsh 2>/dev/null); then
-    source <(echo "$FZF_COMPLETION")
-  fi
+  _cache_init fzf "fzf --zsh"
 
   export FZF_DEFAULT_OPTS="--height 100% --layout reverse --preview-window=wrap"
   export FZF_CTRL_R_OPTS="--preview 'echo {}'"
@@ -136,7 +155,7 @@ fi
 
 # UV tools
 if command -v uv >/dev/null 2>&1; then
-  eval "$(uv generate-shell-completion zsh)"
+  _cache_init uv "uv generate-shell-completion zsh"
 fi
 
 #
@@ -305,7 +324,8 @@ if $FZF_AVAILABLE; then
 fi
 
 # Utility aliases
-alias sz="source ~/.zshrc"
+# sz clears init cache and reloads zshrc (forces tool init rebuild)
+alias sz="rm -rf \"\$_ZSH_CACHE_DIR\" && source ~/.zshrc"
 
 # AWS Lambda virtual environment alias - check if directory exists first
 AWS_LAMBDA_VENV="$HOME/.venvs/aws-lambda/bin/activate"
@@ -315,5 +335,5 @@ fi
 
 # direnv integration
 if command -v direnv >/dev/null 2>&1; then
-  eval "$(direnv hook zsh)"
+  _cache_init direnv "direnv hook zsh"
 fi
