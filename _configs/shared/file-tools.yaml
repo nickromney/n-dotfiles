@@ -23,3 +23,19 @@ tools:
     description: "Console file manager with VI key bindings"
     documentation_url: "https://github.com/ranger/ranger"
     category: file-tools
+
+  ncdu:
+    manager: brew
+    type: package
+    check_command: command -v ncdu
+    description: "NCurses disk usage analyzer"
+    documentation_url: "https://dev.yorhel.nl/ncdu"
+    category: file-tools
+
+  bpytop:
+    manager: brew
+    type: package
+    check_command: command -v bpytop
+    description: "Resource monitor with graphs and stats"
+    documentation_url: "https://github.com/aristocratos/bpytop"
+    category: file-tools

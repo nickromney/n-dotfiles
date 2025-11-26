@@ -85,6 +85,36 @@ check_yaml() {
   fi
 }
 
+@test "configs: focus/typescript.yaml contains modern toolchain" {
+  run grep -q "bun:" "$CONFIG_DIR/focus/typescript.yaml"
+  [ "$status" -eq 0 ]
+  run grep -q "biome:" "$CONFIG_DIR/focus/typescript.yaml"
+  [ "$status" -eq 0 ]
+  run grep -q "swc:" "$CONFIG_DIR/focus/typescript.yaml"
+  [ "$status" -eq 0 ]
+  run grep -q "typescript:" "$CONFIG_DIR/focus/typescript.yaml"
+  [ "$status" -eq 0 ]
+}
+
+@test "configs: focus/typescript.yaml bun has tap dependency" {
+  # Check that oven-sh/bun tap exists
+  run grep -q "oven-sh/bun:" "$CONFIG_DIR/focus/typescript.yaml"
+  [ "$status" -eq 0 ]
+
+  # Check that bun depends on the tap
+  run grep -A5 "^  bun:" "$CONFIG_DIR/focus/typescript.yaml"
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "dependencies" ]]
+  [[ "$output" =~ "oven-sh/bun" ]]
+}
+
+@test "configs: shared/shell.yaml contains markdownlint tools" {
+  run grep -q "markdownlint-cli:" "$CONFIG_DIR/shared/shell.yaml"
+  [ "$status" -eq 0 ]
+  run grep -q "markdownlint-cli2:" "$CONFIG_DIR/shared/shell.yaml"
+  [ "$status" -eq 0 ]
+}
+
 @test "configs: all tools have required fields" {
   local failed=0
   local yaml_files

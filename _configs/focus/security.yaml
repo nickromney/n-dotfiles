@@ -1,0 +1,25 @@
+# Security and encryption tools
+tools:
+  gnupg:
+    manager: brew
+    type: package
+    check_command: command -v gpg
+    description: "GNU Privacy Guard - encryption and signing"
+    documentation_url: "https://gnupg.org/"
+    category: security
+
+  ykman:
+    manager: brew
+    type: package
+    check_command: command -v ykman
+    description: "YubiKey Manager CLI for configuring YubiKeys"
+    documentation_url: "https://developers.yubico.com/yubikey-manager/"
+    category: security
+
+  trivy:
+    manager: brew
+    type: package
+    check_command: command -v trivy
+    description: "Vulnerability scanner for containers and other artifacts"
+    documentation_url: "https://trivy.dev/"
+    category: security
