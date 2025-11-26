@@ -1,7 +1,33 @@
 # shellcheck shell=zsh
+#
+# ============================================================================
+# ZSH Configuration
+# ============================================================================
+#
+# Table of Contents:
+#   1. History           - Command history settings
+#   2. Environment       - Editor, language, word chars
+#   3. Homebrew          - Package manager setup + BREW_PREFIX cache
+#   4. Init Caching      - Cache tool init scripts for faster startup
+#   5. Key Bindings      - Word/line navigation, history search
+#   6. Completions       - compinit, Azure CLI, kubectl
+#   7. Tool Init         - Starship, rbenv, zoxide, fzf, uv
+#   8. Plugins           - zsh-autosuggestions, zsh-syntax-highlighting
+#   9. FNM               - Fast Node Manager
+#  10. Local Environment - ~/.local/bin/env
+#  11. ZScaler Certs     - Corporate proxy certificates
+#  12. 1Password SSH     - SSH agent socket
+#  13. PATH Management   - Additional paths, deduplication
+#  14. Podman            - Docker compatibility socket
+#  15. Aliases           - Navigation, git, files, editors, fzf combos
+#  16. direnv            - Directory-based environment
+#
+# Performance: ~100ms startup (cached) - see README.md for benchmarks
+# Reload with cache rebuild: sz
+# ============================================================================
 
 #
-# History
+# 1. History
 #
 # set the location and filename of the history file
 export HISTFILE="$HOME/.zsh_history"
@@ -21,7 +47,7 @@ setopt HIST_IGNORE_DUPS
 setopt HIST_IGNORE_SPACE
 
 #
-# Environment
+# 2. Environment
 #
 export EDITOR="nvim"
 export SUDO_EDITOR="$EDITOR"
@@ -29,7 +55,7 @@ export LANG="en_GB.UTF-8"
 export WORDCHARS="" # Specify word boundaries for command line navigation
 
 #
-# Homebrew
+# 3. Homebrew
 #
 if [[ "$OSTYPE" == "darwin"* ]]; then
   if [[ -d "/opt/homebrew" ]]; then
@@ -42,7 +68,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 fi
 
 #
-# Init Script Caching
+# 4. Init Script Caching
 #
 # Cache tool init scripts to avoid regenerating on every shell startup.
 # Cache is cleared and rebuilt when running `sz` (source zshrc).
@@ -62,6 +88,10 @@ _cache_init() {
   fi
   source "$cache_file"
 }
+
+#
+# 5. Key Bindings
+#
 
 # Word navigation
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -83,7 +113,7 @@ bindkey "^[[A" history-beginning-search-backward # Up arrow
 bindkey "^[[B" history-beginning-search-forward  # Down arrow
 
 #
-# Tools & Completions
+# 6. Completions
 #
 # -Uz ensures that compinit is loaded as a pure function according
 #  to zsh's standards, without interference from any aliases defined.
@@ -112,6 +142,10 @@ fi
 # Completion menu
 zstyle ':completion:*:*:*:*:*' menu select
 bindkey '^[[Z' reverse-menu-complete
+
+#
+# 7. Tool Init
+#
 
 # Starship prompt
 if command -v starship >/dev/null 2>&1; then
@@ -159,7 +193,7 @@ if command -v uv >/dev/null 2>&1; then
 fi
 
 #
-# Plugin Management
+# 8. Plugins
 #
 if [[ -n "$BREW_PREFIX" ]]; then
   ZSH_AUTOSUGGESTIONS="$BREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
@@ -170,18 +204,20 @@ if [[ -n "$BREW_PREFIX" ]]; then
 fi
 
 #
-# FNM Setup (Fast Node Manager)
+# 9. FNM (Fast Node Manager)
 #
 if command -v fnm >/dev/null 2>&1; then
   eval "$(fnm env --use-on-cd)"
 fi
 
 #
-# Local Environment
+# 10. Local Environment
 #
 [ -f "$HOME/.local/bin/env" ] && source "$HOME/.local/bin/env"
 
-# ZScaler Certs
+#
+# 11. ZScaler Certs
+#
 ZSCALER_CERT_DIR="$HOME/.zscalerCerts"
 if [ -d "$ZSCALER_CERT_DIR" ]; then
   ZSCALER_CA_BUNDLE="$ZSCALER_CERT_DIR/zscalerCAbundle.pem"
@@ -197,7 +233,7 @@ if [ -d "$ZSCALER_CERT_DIR" ]; then
 fi
 
 #
-# 1Password SSH Agent Setup
+# 12. 1Password SSH Agent
 #
 if command -v op >/dev/null 2>&1; then
   # 1Password CLI is installed
@@ -224,7 +260,7 @@ if command -v op >/dev/null 2>&1; then
 fi
 
 #
-# PATH Management
+# 13. PATH Management
 #
 declare -a paths=(
   "$HOME/.local/bin"
@@ -244,7 +280,9 @@ done
 PATH=$(echo "$PATH" | awk -v RS=: '!a[$0]++' | grep -v '^$' | paste -sd: -)
 export PATH
 
-# Podman socket for Docker compatibility
+#
+# 14. Podman
+#
 if command -v podman >/dev/null 2>&1; then
   if PODMAN_SOCKET=$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}' 2>/dev/null) && [ -n "$PODMAN_SOCKET" ]; then
     export DOCKER_HOST="unix://$PODMAN_SOCKET"
@@ -252,9 +290,8 @@ if command -v podman >/dev/null 2>&1; then
 fi
 
 #
-# Aliases
+# 15. Aliases
 #
-# Add aliases at the end after all tools are initialized
 
 # Navigation aliases - conditionally created based on available tools
 DEVELOPER_DIR="$HOME/Developer"
@@ -333,7 +370,9 @@ if [ -f "$AWS_LAMBDA_VENV" ]; then
   alias aws-lambda-env='source "$AWS_LAMBDA_VENV"'
 fi
 
-# direnv integration
+#
+# 16. direnv
+#
 if command -v direnv >/dev/null 2>&1; then
   _cache_init direnv "direnv hook zsh"
 fi
