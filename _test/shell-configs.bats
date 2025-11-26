@@ -233,6 +233,56 @@ fi' > "$MOCK_BIN_DIR/direnv"
 }
 
 # ============================================================================
+# Performance Regression Tests
+# ============================================================================
+
+@test "zshrc: does not call brew --prefix directly (uses cached BREW_PREFIX)" {
+  # grep for $(brew --prefix) patterns - should not exist in zshrc
+  # BREW_PREFIX should be set once in the Homebrew section and reused
+  run grep -c '\$(brew --prefix)' "$DOTFILES_DIR/zsh/.zshrc"
+
+  # Should find 0 occurrences
+  [ "$output" = "0" ] || [ "$status" -eq 1 ]  # grep returns 1 when no matches
+}
+
+@test "zshrc: uses _cache_init for tool initialization" {
+  # Verify key tools use the caching mechanism
+  run grep -c '_cache_init starship' "$DOTFILES_DIR/zsh/.zshrc"
+  [ "$output" = "1" ]
+
+  run grep -c '_cache_init zoxide' "$DOTFILES_DIR/zsh/.zshrc"
+  [ "$output" = "1" ]
+
+  run grep -c '_cache_init kubectl' "$DOTFILES_DIR/zsh/.zshrc"
+  [ "$output" = "1" ]
+
+  run grep -c '_cache_init fzf' "$DOTFILES_DIR/zsh/.zshrc"
+  [ "$output" = "1" ]
+}
+
+@test "zshrc: startup time under 125ms" {
+  # Measure startup time using /usr/bin/time (available on all systems)
+  # Run 3 times and take the average
+  local total=0
+  local runs=3
+
+  for i in $(seq 1 $runs); do
+    # /usr/bin/time -p outputs: real X.XX
+    local time_output=$(/usr/bin/time -p zsh -i -c exit 2>&1)
+    local real_time=$(echo "$time_output" | grep '^real' | awk '{print $2}')
+    # Convert to milliseconds
+    local ms=$(echo "$real_time" | awk '{printf "%.0f", $1 * 1000}')
+    total=$((total + ms))
+  done
+
+  local avg_ms=$((total / runs))
+  echo "Average startup time: ${avg_ms}ms over $runs runs (threshold: 125ms)"
+
+  # Assert under 125ms
+  [ "$avg_ms" -lt 125 ]
+}
+
+# ============================================================================
 # Common Tests (both bash and zsh)
 # ============================================================================
 
