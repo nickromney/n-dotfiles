@@ -1,12 +1,21 @@
-# TypeScript/Node development tools
+# TypeScript/JavaScript development tools
 # NOTE: Node.js should be installed via fnm (from shared/shell.yaml)
 #       Run: fnm install --lts
 tools:
+  # Tap for bun
+  oven-sh/bun:
+    manager: brew
+    type: tap
+    check_command: brew tap | grep -q oven-sh/bun
+    description: "Homebrew tap for Bun"
+
   bun:
     manager: brew
     type: package
     check_command: command -v bun
-    description: "All-in-one JavaScript runtime & toolkit"
+    dependencies:
+      - oven-sh/bun
+    description: "All-in-one JavaScript runtime, bundler, transpiler & package manager"
     documentation_url: "https://bun.sh/"
     category: javascript
 
@@ -14,14 +23,27 @@ tools:
     manager: brew
     type: package
     check_command: command -v tsc
-    description: "TypeScript language"
+    description: "TypeScript language compiler"
     documentation_url: "https://www.typescriptlang.org/"
     category: javascript
 
-  "@biomejs/biome":
+  biome:
     manager: brew
     type: package
     check_command: command -v biome
-    description: "Extremely fast JS/TS linter and formatter (Rust-based, 15x faster than ESLint)"
+    description: "Fast linter & formatter for JS/TS (Rust-based, replaces ESLint+Prettier)"
     documentation_url: "https://biomejs.dev/"
     category: javascript
+
+  swc:
+    manager: brew
+    type: package
+    check_command: command -v swc
+    description: "Super-fast Rust-based JavaScript/TypeScript compiler"
+    documentation_url: "https://swc.rs/"
+    category: javascript
+
+  # TypeScript native compiler (Go port) - install via npm when needed:
+  #   npm install -g @typescript/native-preview
+  #   npx tsgo --version
+  # VS Code: set "typescript.experimental.useTsgo": true
