@@ -264,16 +264,13 @@ def aws-lambda-env [] {
 # source ~/.local/bin/env.nu
 
 # Source external tools (generated in env.nu)
+# env.nu creates stub files for missing tools, so these sources won't fail
 source ($nu.data-dir | path join "vendor/autoload/starship.nu")
 source ~/.zoxide.nu
+source ($nu.data-dir | path join "vendor/autoload/uv-completions.nu")
 
-# Zoxide alias (must be defined after zoxide is loaded)
+# Zoxide alias (z is defined by zoxide init or stub in env.nu)
 alias o = z
-
-# Source UV completions if they exist
-if (($nu.data-dir | path join "vendor/autoload/uv-completions.nu") | path exists) {
-    source ($nu.data-dir | path join "vendor/autoload/uv-completions.nu")
-}
 
 $env.config.hooks.env_change.PWD = [
   { || if (which direnv | is-empty) { return }; direnv export json | from json | default {} | load-env }

@@ -115,19 +115,38 @@ if ((which podman | length) > 0) {
 }
 
 # Initialize external tools
+# Cache init scripts to avoid regenerating on every shell startup.
+# Delete ~/.cache/nushell-init or individual files to force regeneration.
+# Stub files are created for missing tools to prevent source errors in config.nu.
 mkdir ($nu.data-dir | path join "vendor/autoload")
 
 # Starship
-if ((which starship | length) > 0) {
-    starship init nu | save -f ($nu.data-dir | path join "vendor/autoload/starship.nu")
+let starship_file = ($nu.data-dir | path join "vendor/autoload/starship.nu")
+if not ($starship_file | path exists) {
+    if ((which starship | length) > 0) {
+        starship init nu | save -f $starship_file
+    } else {
+        "# starship not installed\n" | save -f $starship_file
+    }
 }
 
 # Zoxide
-if ((which zoxide | length) > 0) {
-    zoxide init nushell | save -f ~/.zoxide.nu
+let zoxide_file = "~/.zoxide.nu" | path expand
+if not ($zoxide_file | path exists) {
+    if ((which zoxide | length) > 0) {
+        zoxide init nushell | save -f $zoxide_file
+    } else {
+        # Define stub z command so aliases don't fail
+        "def --env z [...args] { print 'zoxide not installed - run: brew install zoxide' }\n" | save -f $zoxide_file
+    }
 }
 
 # UV completions
-if ((which uv | length) > 0) {
-    uv generate-shell-completion nushell | save -f ($nu.data-dir | path join "vendor/autoload/uv-completions.nu")
+let uv_file = ($nu.data-dir | path join "vendor/autoload/uv-completions.nu")
+if not ($uv_file | path exists) {
+    if ((which uv | length) > 0) {
+        uv generate-shell-completion nushell | save -f $uv_file
+    } else {
+        "# uv not installed\n" | save -f $uv_file
+    }
 }
