@@ -35,14 +35,6 @@ tools:
     documentation_url: "https://www.hey.com/"
     category: productivity
 
-  lm-studio:
-    manager: brew
-    type: cask
-    check_command: "brew list --cask | grep -q lm-studio"
-    description: "Desktop app for running local LLMs"
-    documentation_url: "https://lmstudio.ai/"
-    category: ai
-
   mas:
     manager: brew
     type: package
@@ -74,5 +66,13 @@ tools:
     description: "Music streaming"
     documentation_url: "https://www.spotify.com/"
     category: media
+
+  pearcleaner:
+    manager: brew
+    type: cask
+    check_command: "brew list --cask | grep -q pearcleaner"
+    description: "Open-source app cleaner for macOS"
+    documentation_url: "https://github.com/alienator88/Pearcleaner"
+    category: system
 
   # Mac App Store apps (installed via mas)
