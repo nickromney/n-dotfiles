@@ -15,3 +15,11 @@ tools:
     description: "Docker Desktop for Mac"
     documentation_url: "https://www.docker.com/products/docker-desktop/"
     category: containers
+
+  lazydocker:
+    manager: brew
+    type: package
+    check_command: command -v lazydocker
+    description: "Terminal UI for Docker and Docker Compose"
+    documentation_url: "https://github.com/jesseduffield/lazydocker"
+    category: containers
