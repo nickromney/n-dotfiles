@@ -8,24 +8,11 @@ $env.LANG = "en_GB.UTF-8"
 # History configuration
 $env.HISTFILE = $"($env.HOME)/.zsh_history"  # Keep compatibility with zsh history location
 
-# rbenv
-$env.RBENV_ROOT = ($env.HOME | path join ".rbenv")
-
-if ($env.RBENV_ROOT | path exists) {
-    $env.PATH = ($env.PATH
-        | split row (char esep)
-        | prepend $"($env.RBENV_ROOT)/shims"
-        | prepend $"($env.RBENV_ROOT)/bin"
-        | uniq
-        | str join (char esep))
-}
-
 # PATH Management
 let additional_paths = [
     "/opt/homebrew/bin"  # Add homebrew first for macOS
     "/opt/homebrew/opt/python@3.11/bin"  # Python 3.11
     $"($env.HOME)/.local/bin"
-    $"($env.HOME)/.arkade/bin"
     $"($env.HOME)/.cargo/bin"
     $"($env.HOME)/.tfenv/bin"
     "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"  # VSCode CLI
@@ -105,15 +92,6 @@ if ((which fnm | length) > 0) {
     )
 }
 
-# Podman socket for Docker compatibility
-if ((which podman | length) > 0) {
-    # Try to get podman socket path
-    let podman_result = (do { podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}' } | complete)
-    if $podman_result.exit_code == 0 and ($podman_result.stdout | str trim) != "" {
-        $env.DOCKER_HOST = $"unix://($podman_result.stdout | str trim)"
-    }
-}
-
 # Initialize external tools
 # Cache init scripts to avoid regenerating on every shell startup.
 # Delete ~/.cache/nushell-init or individual files to force regeneration.
@@ -148,5 +126,15 @@ if not ($uv_file | path exists) {
         uv generate-shell-completion nushell | save -f $uv_file
     } else {
         "# uv not installed\n" | save -f $uv_file
+    }
+}
+
+# Mise (polyglot runtime manager)
+let mise_file = ($nu.data-dir | path join "vendor/autoload/mise.nu")
+if not ($mise_file | path exists) {
+    if ((which mise | length) > 0) {
+        mise activate nu | save -f $mise_file
+    } else {
+        "# mise not installed\n" | save -f $mise_file
     }
 }

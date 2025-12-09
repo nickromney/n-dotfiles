@@ -41,7 +41,8 @@
       "Bash(do /usr/bin/time zsh:*)",
       "Bash(done)",
       "Bash(hyperfine:*)",
-      "Bash(./_test/run_tests.sh:*)"
+      "Bash(./_test/run_tests.sh:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []
