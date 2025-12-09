@@ -11,7 +11,7 @@ tools:
   docker-desktop:
     manager: brew
     type: cask
-    check_command: "brew list --cask | grep -q docker"
+    check_command: "brew list --cask | grep -q '^docker$'"
     description: "Docker Desktop for Mac"
     documentation_url: "https://www.docker.com/products/docker-desktop/"
     category: containers
