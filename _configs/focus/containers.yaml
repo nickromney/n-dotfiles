@@ -1,43 +1,25 @@
+# Container tools
 tools:
-  slp/krunkit:
-    manager: brew
-    type: tap
-    check_command: brew tap | grep -q "slp/krunkit"
-    description: "Homebrew tap for krunkit"
-    documentation_url: "https://github.com/slp/krunkit"
-    category: containers
-
-  krunkit:
+  docker:
     manager: brew
     type: package
-    check_command: command -v krunkit
-    description: "Tool to launch configurable virtual machines using the libkrun platform (required by podman)"
-    documentation_url: "https://github.com/slp/krunkit"
+    check_command: command -v docker
+    description: "Docker CLI client"
+    documentation_url: "https://www.docker.com/"
     category: containers
 
-  podman:
-    manager: brew
-    type: package
-    check_command: podman --version
-    description: "Daemonless container engine compatible with Docker"
-    documentation_url: "https://podman.io/"
-    category: containers
-    dependencies:
-      - name: krunkit
-        check_command: command -v krunkit
-
-  podman-compose:
-    manager: brew
-    type: package
-    check_command: podman-compose --version
-    description: "docker-compose compatible wrapper for Podman"
-    documentation_url: "https://github.com/containers/podman-compose"
-    category: containers
-
-  podman-desktop:
+  docker-desktop:
     manager: brew
     type: cask
-    check_command: "brew list --cask | grep -q podman-desktop"
-    description: "GUI management tool for Podman containers"
-    documentation_url: "https://podman-desktop.io/"
+    check_command: "brew list --cask | grep -q '^docker$'"
+    description: "Docker Desktop for Mac"
+    documentation_url: "https://www.docker.com/products/docker-desktop/"
+    category: containers
+
+  lazydocker:
+    manager: brew
+    type: package
+    check_command: command -v lazydocker
+    description: "Terminal UI for Docker and Docker Compose"
+    documentation_url: "https://github.com/jesseduffield/lazydocker"
     category: containers
