@@ -268,6 +268,7 @@ def aws-lambda-env [] {
 source ($nu.data-dir | path join "vendor/autoload/starship.nu")
 source ~/.zoxide.nu
 source ($nu.data-dir | path join "vendor/autoload/uv-completions.nu")
+source ($nu.data-dir | path join "vendor/autoload/mise.nu")
 
 # Zoxide alias (z is defined by zoxide init or stub in env.nu)
 alias o = z

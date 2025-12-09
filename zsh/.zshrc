@@ -380,3 +380,10 @@ if command -v direnv >/dev/null 2>&1; then
   _cache_init direnv "direnv hook zsh"
 fi
 
+#
+# 17. mise (polyglot runtime manager)
+#
+if command -v mise >/dev/null 2>&1; then
+  _cache_init mise "mise activate zsh"
+fi
+

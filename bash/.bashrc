@@ -80,6 +80,13 @@ if command -v kubectl >/dev/null 2>&1; then
 fi
 
 #
+# mise (polyglot runtime manager)
+#
+if command -v mise >/dev/null 2>&1; then
+  eval "$(mise activate bash)"
+fi
+
+#
 # 1Password SSH Agent
 #
 if [[ "$OSTYPE" == "darwin"* ]]; then

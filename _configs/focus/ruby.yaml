@@ -1,17 +1,4 @@
 # Ruby development tools
-tools:
-  rbenv:
-    manager: brew
-    type: package
-    check_command: command -v rbenv
-    description: "Ruby version manager"
-    documentation_url: "https://github.com/rbenv/rbenv"
-    category: ruby
-
-  ruby-build:
-    manager: brew
-    type: package
-    check_command: command -v ruby-build
-    description: "Install Ruby versions (rbenv plugin)"
-    documentation_url: "https://github.com/rbenv/ruby-build"
-    category: ruby
+# Note: Ruby versions are managed by mise (see shared/shell.yaml)
+# Use: mise use ruby@3.3
+tools: {}
