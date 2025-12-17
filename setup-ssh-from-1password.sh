@@ -128,13 +128,42 @@ declare -a ALL_SSH_KEYS=(
   "work_2025_client_2_ado:work_2025_client_2_ado:Work 2025 Client 2"
 )
 
-# Machine profiles define which SSH keys each machine type should have
+# Get keys for a given machine profile (bash 3.x compatible)
 # This ensures least-privilege access and prevents credential leakage between clients
-declare -A MACHINE_PROFILE_KEYS
-MACHINE_PROFILE_KEYS["personal"]="personal_github_authentication personal_github_signing"
-MACHINE_PROFILE_KEYS["work-2024-client-1"]="work_2024_client_1_aws"
-MACHINE_PROFILE_KEYS["work-2025-client-1"]="work_2025_client_1_github"
-MACHINE_PROFILE_KEYS["work-2025-client-2"]="work_2025_client_2_github work_2025_client_2_ado"
+get_profile_keys() {
+  local profile="$1"
+  case "$profile" in
+    personal)
+      echo "personal_github_authentication personal_github_signing"
+      ;;
+    work-2024-client-1)
+      echo "work_2024_client_1_aws"
+      ;;
+    work-2025-client-1)
+      echo "work_2025_client_1_github"
+      ;;
+    work-2025-client-2)
+      echo "work_2025_client_2_github work_2025_client_2_ado"
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+  return 0
+}
+
+# Validate profile exists
+is_valid_profile() {
+  local profile="$1"
+  case "$profile" in
+    personal | work-2024-client-1 | work-2025-client-1 | work-2025-client-2)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
 
 # Prompt for machine profile if not specified
 if [[ -z "$MACHINE_PROFILE" ]]; then
@@ -164,15 +193,15 @@ if [[ -z "$MACHINE_PROFILE" ]]; then
 fi
 
 # Validate machine profile
-if [[ ! -v MACHINE_PROFILE_KEYS["$MACHINE_PROFILE"] ]]; then
+if ! is_valid_profile "$MACHINE_PROFILE"; then
   error "Invalid machine profile: $MACHINE_PROFILE"
-  echo "Valid profiles: ${!MACHINE_PROFILE_KEYS[*]}"
+  echo "Valid profiles: personal, work-2024-client-1, work-2025-client-1, work-2025-client-2"
   exit 1
 fi
 
 # Filter SSH keys based on selected machine profile
 declare -a SSH_KEYS=()
-profile_key_names="${MACHINE_PROFILE_KEYS[$MACHINE_PROFILE]}"
+profile_key_names="$(get_profile_keys "$MACHINE_PROFILE")"
 
 for key_mapping in "${ALL_SSH_KEYS[@]}"; do
   IFS=':' read -r op_name local_name item_vault <<<"$key_mapping"
