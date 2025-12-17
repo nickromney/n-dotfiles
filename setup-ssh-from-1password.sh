@@ -3,13 +3,15 @@
 # Setup SSH config and keys from 1Password
 # This script retrieves SSH configuration from 1Password
 # By default, only public keys are downloaded (private keys stay in 1Password)
-# Usage: ./setup-ssh-from-1password.sh [-d|--dry-run] [-u|--unsafe]
+# Usage: ./setup-ssh-from-1password.sh [-d|--dry-run] [-u|--unsafe] [-p|--profile PROFILE]
 
 set -euo pipefail
 
 # Default values
 DRY_RUN="${DRY_RUN:-false}"
 UNSAFE_MODE="${UNSAFE_MODE:-false}"
+MACHINE_PROFILE="${MACHINE_PROFILE:-}"
+FORCE_OVERWRITE="${FORCE_OVERWRITE:-false}"
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -25,19 +27,37 @@ success() { echo -e "${GREEN}✓${NC} $1"; }
 usage() {
   echo "Usage: $0 [OPTIONS]"
   echo "Options:"
-  echo "  -d, --dry-run    Check 1Password items without downloading"
-  echo "  -u, --unsafe     Download private keys (DANGEROUS - breaks 1Password SSH Agent model)"
-  echo "  -h, --help       Show this help message"
+  echo "  -p, --profile PROFILE   Machine profile (personal, work-2024-client-1, work-2025-client-1, work-2025-client-2)"
+  echo "  -d, --dry-run           Check 1Password items without downloading"
+  echo "  -f, --force             Overwrite existing keys (default: skip existing)"
+  echo "  -u, --unsafe            Download private keys (DANGEROUS - breaks 1Password SSH Agent model)"
+  echo "  -h, --help              Show this help message"
+  echo ""
+  echo "Machine Profiles:"
+  echo "  personal            - Personal GitHub keys (authentication + signing)"
+  echo "  work-2024-client-1  - Work 2024 Client 1 AWS key"
+  echo "  work-2025-client-1  - Work 2025 Client 1 GitHub key"
+  echo "  work-2025-client-2  - Work 2025 Client 2 GitHub + Azure DevOps keys"
   echo ""
   echo "Default behavior:"
   echo "  - Downloads SSH config from 1Password"
   echo "  - Downloads public keys only (private keys stay in 1Password)"
   echo "  - Uses 1Password SSH Agent for authentication"
+  echo "  - Prompts for machine profile if not specified"
+  echo "  - Skips existing keys (use --force to overwrite)"
   echo ""
   echo "Examples:"
-  echo "  $0                # Safe mode: config + public keys only"
-  echo "  $0 --dry-run      # Check what would be downloaded"
-  echo "  $0 --unsafe       # Download private keys (requires confirmation)"
+  echo "  $0 --profile work-2025-client-2           # Download only Client 2 keys"
+  echo "  $0 -p personal --dry-run                  # Check personal keys"
+  echo "  $0 -p work-2025-client-1                  # Add Client 1 keys (keeps existing)"
+  echo "  $0 -p personal --force                    # Refresh personal keys"
+  echo "  $0 --profile work-2025-client-2 --unsafe  # Download private keys (requires confirmation)"
+  echo ""
+  echo "Multi-profile workflow (consulting laptop):"
+  echo "  $0 -p personal                            # Add personal keys"
+  echo "  $0 -p work-2025-client-1                  # Add Client 1 keys"
+  echo "  $0 -p work-2025-client-2                  # Add Client 2 keys"
+  echo "  # Result: All three sets of keys on one machine"
   echo ""
   echo "WARNING: The --unsafe option defeats the purpose of 1Password SSH Agent!"
   echo "         Private keys should remain in 1Password for security."
@@ -47,8 +67,16 @@ usage() {
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
   case $1 in
+    -p | --profile)
+      MACHINE_PROFILE="$2"
+      shift 2
+      ;;
     -d | --dry-run)
       DRY_RUN=true
+      shift
+      ;;
+    -f | --force)
+      FORCE_OVERWRITE=true
       shift
       ;;
     -u | --unsafe)
@@ -89,13 +117,9 @@ declare BACKUP_DIR
 BACKUP_DIR="$SSH_DIR/backups/$(date +%Y%m%d-%H%M%S)"
 readonly BACKUP_DIR
 
-# SSH Keys to verify in 1Password (only public keys will be downloaded)
+# All available SSH keys in 1Password
 # Format: "1password_item_name:local_filename:vault_name"
-# If vault_name is omitted, uses $VAULT (default: Private)
-# Arrow (→) in output shows: "1Password item name" → "local filename"
-# Naming convention: personal_ or work_ prefix (to avoid exposing client information in item names)
-# NOTE: Private keys stay in 1Password - only public keys are downloaded for reference
-declare -a SSH_KEYS=(
+declare -a ALL_SSH_KEYS=(
   "personal_github_authentication:personal_github_authentication:Private"
   "personal_github_signing:personal_github_signing:Private"
   "work_2024_client_1_aws:work_2024_client_1_aws.pem:Work 2024 Client 1"
@@ -103,6 +127,65 @@ declare -a SSH_KEYS=(
   "work_2025_client_2_github:work_2025_client_2_github:Work 2025 Client 2"
   "work_2025_client_2_ado:work_2025_client_2_ado:Work 2025 Client 2"
 )
+
+# Machine profiles define which SSH keys each machine type should have
+# This ensures least-privilege access and prevents credential leakage between clients
+declare -A MACHINE_PROFILE_KEYS
+MACHINE_PROFILE_KEYS["personal"]="personal_github_authentication personal_github_signing"
+MACHINE_PROFILE_KEYS["work-2024-client-1"]="work_2024_client_1_aws"
+MACHINE_PROFILE_KEYS["work-2025-client-1"]="work_2025_client_1_github"
+MACHINE_PROFILE_KEYS["work-2025-client-2"]="work_2025_client_2_github work_2025_client_2_ado"
+
+# Prompt for machine profile if not specified
+if [[ -z "$MACHINE_PROFILE" ]]; then
+  echo
+  warning "No machine profile specified. Please select your machine type:"
+  echo
+  echo "  1) personal            - Personal GitHub keys"
+  echo "  2) work-2024-client-1  - Work 2024 Client 1 AWS key"
+  echo "  3) work-2025-client-1  - Work 2025 Client 1 GitHub key"
+  echo "  4) work-2025-client-2  - Work 2025 Client 2 GitHub + Azure DevOps keys"
+  echo
+  read -r -p "Enter selection (1-4): " selection
+
+  case $selection in
+    1) MACHINE_PROFILE="personal" ;;
+    2) MACHINE_PROFILE="work-2024-client-1" ;;
+    3) MACHINE_PROFILE="work-2025-client-1" ;;
+    4) MACHINE_PROFILE="work-2025-client-2" ;;
+    *)
+      error "Invalid selection: $selection"
+      exit 1
+      ;;
+  esac
+
+  info "Selected profile: $MACHINE_PROFILE"
+  echo
+fi
+
+# Validate machine profile
+if [[ ! -v MACHINE_PROFILE_KEYS["$MACHINE_PROFILE"] ]]; then
+  error "Invalid machine profile: $MACHINE_PROFILE"
+  echo "Valid profiles: ${!MACHINE_PROFILE_KEYS[*]}"
+  exit 1
+fi
+
+# Filter SSH keys based on selected machine profile
+declare -a SSH_KEYS=()
+profile_key_names="${MACHINE_PROFILE_KEYS[$MACHINE_PROFILE]}"
+
+for key_mapping in "${ALL_SSH_KEYS[@]}"; do
+  IFS=':' read -r op_name local_name item_vault <<<"$key_mapping"
+
+  # Check if this key is in the profile's allowed list
+  if [[ " $profile_key_names " =~ " $op_name " ]]; then
+    SSH_KEYS+=("$key_mapping")
+  fi
+done
+
+info "Machine profile: $MACHINE_PROFILE"
+info "Will download ${#SSH_KEYS[@]} SSH key(s) for this profile"
+echo
 
 # Dry run mode - just check what's available
 if [[ "$DRY_RUN" == "true" ]]; then
@@ -276,8 +359,14 @@ else
   info "Retrieving SSH public keys from 1Password (safe mode)..."
 fi
 
+if [[ "$FORCE_OVERWRITE" == "false" ]]; then
+  info "Skipping existing keys (use --force to overwrite)"
+fi
+echo
+
 failed_keys=()
 successful_keys=()
+skipped_keys=()
 
 for key_mapping in "${SSH_KEYS[@]}"; do
   IFS=':' read -r op_name local_name item_vault <<<"$key_mapping"
@@ -285,6 +374,25 @@ for key_mapping in "${SSH_KEYS[@]}"; do
   item_vault="${item_vault:-$VAULT}"
 
   info "Processing $op_name (vault: $item_vault)..."
+
+  # Check if key already exists and skip if --force not set
+  if [[ "$FORCE_OVERWRITE" == "false" ]]; then
+    if [[ "$UNSAFE_MODE" == "true" ]]; then
+      # In unsafe mode, check for private key
+      if [[ -f "$SSH_DIR/$local_name" ]]; then
+        info "  Skipping $local_name (already exists)"
+        skipped_keys+=("$local_name (use --force to overwrite)")
+        continue
+      fi
+    else
+      # In safe mode, check for public key
+      if [[ -f "$SSH_DIR/${local_name}.pub" ]]; then
+        info "  Skipping ${local_name}.pub (already exists)"
+        skipped_keys+=("${local_name}.pub (use --force to overwrite)")
+        continue
+      fi
+    fi
+  fi
 
   # In UNSAFE mode, download private keys
   if [[ "$UNSAFE_MODE" == "true" ]]; then
@@ -375,6 +483,14 @@ if [ ${#successful_keys[@]} -gt 0 ]; then
   success "Successfully downloaded keys:"
   for key in "${successful_keys[@]}"; do
     echo "  • $key"
+  done
+fi
+
+if [ ${#skipped_keys[@]} -gt 0 ]; then
+  echo
+  info "Skipped existing keys:"
+  for key in "${skipped_keys[@]}"; do
+    echo "  ↷ $key"
   done
 fi
 
