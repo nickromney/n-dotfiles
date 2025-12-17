@@ -95,3 +95,11 @@ tools:
     description: "Fast, flexible markdown linter (newer, config-based)"
     documentation_url: "https://github.com/DavidAnson/markdownlint-cli2"
     category: shell
+
+  mise:
+    manager: brew
+    type: package
+    check_command: command -v mise
+    description: "Polyglot runtime manager (manages Ruby, Node, Python versions per-project)"
+    documentation_url: "https://mise.jdx.dev/"
+    category: shell
