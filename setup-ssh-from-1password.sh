@@ -100,6 +100,8 @@ declare -a SSH_KEYS=(
   "personal_github_signing:personal_github_signing:Private"
   "work_2024_client_1_aws:work_2024_client_1_aws.pem:Work 2024 Client 1"
   "work_2025_client_1_github:work_2025_client_1_github:Work 2025 Client 1"
+  "work_2025_client_2_github:work_2025_client_2_github:Work 2025 Client 2"
+  "work_2025_client_2_ado:work_2025_client_2_ado:Work 2025 Client 2"
 )
 
 # Dry run mode - just check what's available
