@@ -380,3 +380,9 @@ test-install: ## Run install.sh tests only
 test-macos: ## Run macOS configuration tests only
 	@echo "$(YELLOW)Running macOS tests...$(NC)"
 	@./_test/run_macos_tests.sh
+
+##@ Tools
+
+.PHONY: browser-tools
+browser-tools: ## Build browser-tools binary (requires bun)
+	@./scripts/build-browser-tools.sh

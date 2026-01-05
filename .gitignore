@@ -20,6 +20,14 @@ Thumbs.db
 *.bak
 *.cache
 
+# Local reference repos
+_reference/
+
+# Local compiled tools
+bin/browser-tools
+scripts/node_modules/
+scripts/bun.lockb
+
 # Nushell
 nushell/Library/Application Support/nushell/history.sqlite3
 nushell/Library/Application Support/nushell/history.sqlite3-shm

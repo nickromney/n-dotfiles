@@ -5,6 +5,7 @@ Configuration for [Claude Code](https://claude.com/claude-code), Anthropic's off
 ## Files
 
 - `settings.json` - Claude Code settings including status line configuration
+- `skills/` - symlink to shared skills (see `skills/`)
 
 ## Installation
 

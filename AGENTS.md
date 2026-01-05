@@ -1,42 +1,67 @@
-# Repository Guidelines
+# Codex Agent Guide (n-dotfiles)
 
-## Project Structure & Module Organization
+**Purpose**: Operate safely in this repo, follow house style, and keep changes minimal,
+reviewable, and idempotent.
 
-- `_configs/` holds YAML bundles (shared, host, focus) that feed `install.sh` and Makefile profiles.
-- `_macos/` contains `macos.sh` plus per-profile YAML; update settings here rather than editing macOS manually.
-- `_test/` stores Bats suites, helpers, and meta-runners (`run_tests.sh`, `shellcheck.sh`).
-- Tool directories (`nvim/`, `kitty/`, `aws/`, `tmux/`, `zsh/`, etc.) mirror their target paths for GNU Stow; add new folders to `STOW_DIRS`.
+## Quick Rules
 
-## Build, Test, and Development Commands
+- Read this file before major decisions; re-skim if requirements change.
+- Keep commands short-lived; if something runs >5 minutes, stop and ask.
+- Git is read-only unless the user explicitly asks for commits, pushes, or branches.
+- No destructive operations unless the user explicitly approves.
+- Fix root causes, avoid bandaids. Remove dead code instead of leaving breadcrumbs.
+- Use `trash` for deletes when available.
 
-- `./bootstrap.sh` — prepare a fresh macOS host with Homebrew, Stow, and baseline packages.
-- `./install.sh [-d|-s|-u]` — core installer; dry-run with `-d`, stow configs via `-s`, and update installed tools with `-u`.
-- `make common|personal|work install` — run Makefile bundles; override the VS Code CLI with `VSCODE_CLI=cursor make vscode`.
-- `make app-store install` — optional Mac App Store apps (run after signing in and clicking "Get" so `mas install` can succeed).
-- `make test` or `_test/run_tests.sh` — execute the full Bats matrix.
-- `make precommit` — run all pre-commit hooks before pushing.
+## Repo Map
 
-## Coding Style & Naming Conventions
+- `_configs/`: YAML bundles (shared, host, focus) used by `install.sh` and Makefile profiles.
+- `_macos/`: macOS defaults scripts + per-profile YAML; change settings here, not manually.
+- `_test/`: Bats suites, helpers, and runners (`run_tests.sh`, `shellcheck.sh`).
+- Tool dirs (`nvim/`, `kitty/`, `tmux/`, `zsh/`, etc.) mirror final paths for GNU Stow.
 
-- All scripts are Bash with `set -euo pipefail`, two-space indenting, snake_case functions, and `[[ … ]]` tests.
-- Keep logic idempotent and guard every external dependency (see `REQUIRED_COMMANDS` and `get_available_managers` in `install.sh`).
-- Run `_test/shellcheck.sh` after touching shell code; prefer fixing lint findings over shellcheck disables.
-- Stow payloads must mimic the final filesystem layout (e.g., `nvim/.config/nvim/init.lua`).
+## Common Commands
 
-## Testing Guidelines
+- `./bootstrap.sh`: prepare a fresh macOS host (Homebrew, Stow, baseline packages).
+- `./install.sh [-d|-s|-u]`: core installer (dry-run, stow, update tools).
+- `make common|personal|work install`: run Makefile bundles.
+- `make app-store install`: optional App Store apps (after signing in).
+- `make test` or `_test/run_tests.sh`: full Bats matrix.
+- `make precommit`: run all pre-commit hooks.
 
-- Tests live in `_test/*.bats` and should mock host commands through `_test/helpers` rather than altering the real OS.
-- Use targeted runners when iterating: `_test/run_install_tests.sh` for installer logic, `_test/run_macos_tests.sh` for system defaults.
-- Call out any manual verification (for example `./_macos/macos.sh -d personal.yaml`) in your PR description when automation cannot cover it.
+## Coding Style
 
-## Commit & Pull Request Guidelines
+- Bash scripts: `set -euo pipefail`, two-space indent, snake_case functions, `[[ ... ]]`.
+- Keep logic idempotent; guard external dependencies (see `REQUIRED_COMMANDS`).
+- Prefer `rg` for search; use `ast-grep` for AST-safe edits when it helps.
+- Keep files reasonable in size; split large files rather than expanding past ~500 LOC.
 
-- Follow the Conventional Commit pattern already in git history (`feat:`, `chore:`, `docs:`) and keep summaries under ~70 characters.
-- Describe which config bundles are affected, list the commands you ran (`make test`, `./install.sh -d -s`), and mention host prerequisites (Homebrew, 1Password vaults, tokens).
-- Reference issues and link screenshots if UI-facing dotfiles (Ghostty, Kitty, VS Code) change behavior.
-- Avoid bundling unrelated changes; small, reviewable diffs make it easier to test across macOS and dev containers.
+## Testing
 
-## Security & Configuration Tips
+- Tests live in `_test/*.bats`; mock via `_test/helpers` rather than touching the host OS.
+- Run `_test/shellcheck.sh` after shell edits; fix issues rather than silencing.
+- Prefer targeted runners while iterating (`_test/run_install_tests.sh`, `_test/run_macos_tests.sh`).
 
-- Secrets never belong in dotfiles; use the 1Password-backed helpers (`setup-ssh-from-1password.sh`, `setup-gitconfig-from-1password.sh`) and document any new items they require.
-- When introducing new package managers or credentials, update `REQUIRED_COMMANDS`, dry-run handling, and docs so contributors without sudo can still run `./install.sh -d` safely.
+## Workflow & Safety
+
+- Use repo task runners: prefer `just` if present, otherwise the `Makefile`.
+- If a new dependency is needed, research maintained options and confirm with the user.
+- Secrets never belong in dotfiles; use the 1Password-backed setup scripts.
+- When adding package managers or credentials, update `REQUIRED_COMMANDS`, dry-run handling,
+  and docs so `./install.sh -d` stays safe without sudo.
+
+## Git & PR Guidance
+
+- Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`) under ~70 chars.
+- Use `gh` for PR/CI info; avoid opening URLs.
+- Keep changes small and focused; avoid repo-wide search/replace scripts.
+
+## Communication
+
+- Be terse; noun-phrases are fine. Avoid filler.
+- Prefer dry, low-key humor only if it will land.
+- If you are unsure, ask with short options rather than guessing.
+
+## Tooling Notes
+
+- Web search early when blocked; prefer official docs and current sources.
+- MCP via `mcporter` is allowed; if it is not installed, use `npx mcporter <server>`.
