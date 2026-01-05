@@ -1,5 +1,31 @@
 # AI/ML development tools
 tools:
+  steipete/tap:
+    manager: brew
+    type: tap
+    check_command: "brew tap | grep -q '^steipete/tap$'"
+    description: "Homebrew tap for Steipete casks"
+    documentation_url: "https://github.com/steipete/homebrew-tap"
+    category: ai
+
+  repobar:
+    manager: brew
+    type: cask
+    check_command: "brew list --cask | grep -q '^repobar$'"
+    install_args: ["steipete/tap/repobar"]
+    description: "Menu bar repo status app"
+    documentation_url: "https://github.com/steipete/repobar"
+    category: ai
+
+  codexbar:
+    manager: brew
+    type: cask
+    check_command: "brew list --cask | grep -q '^codexbar$'"
+    install_args: ["steipete/tap/codexbar"]
+    description: "Menu bar companion for Codex"
+    documentation_url: "https://github.com/steipete/codexbar"
+    category: ai
+
   llm:
     manager: brew
     type: package
@@ -15,4 +41,3 @@ tools:
     description: "Generate prompts from codebases for LLMs"
     documentation_url: "https://github.com/raphaelmansuy/code2prompt"
     category: ai
-

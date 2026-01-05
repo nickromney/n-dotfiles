@@ -96,3 +96,9 @@
 #   [url "github-work-org:org/"]
 #     insteadOf = git@github.com:org/
 #     insteadOf = https://github.com/org/
+[credential "https://github.com"]
+	helper = 
+	helper = !/opt/homebrew/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper = 
+	helper = !/opt/homebrew/bin/gh auth git-credential
