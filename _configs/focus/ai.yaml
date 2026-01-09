@@ -26,6 +26,31 @@ tools:
     documentation_url: "https://github.com/steipete/codexbar"
     category: ai
 
+  steveyegge/beads:
+    manager: brew
+    type: tap
+    check_command: "brew tap | grep -q '^steveyegge/beads$'"
+    description: "Homebrew tap for beads"
+    documentation_url: "https://github.com/steveyegge/beads"
+    category: ai
+
+  bd:
+    manager: brew
+    type: package
+    check_command: command -v bd
+    install_args: ["steveyegge/beads/bd"]
+    description: "Directory navigation helper for jumping to parent paths"
+    documentation_url: "https://github.com/steveyegge/beads"
+    category: ai
+
+  beads-viewer:
+    manager: manual
+    type: check
+    check_command: command -v bv
+    description: 'Beads viewer CLI (install: curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/beads_viewer/main/install.sh?$(date +%s)" | bash)'
+    documentation_url: "https://github.com/Dicklesworthstone/beads_viewer"
+    category: ai
+
   llm:
     manager: brew
     type: package
