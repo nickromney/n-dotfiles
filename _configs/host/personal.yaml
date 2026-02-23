@@ -67,4 +67,20 @@ tools:
     documentation_url: "https://github.com/alienator88/Pearcleaner"
     category: system
 
+  hey-desktop:
+    manager: brew
+    type: cask
+    check_command: "brew list --cask | grep -q '^hey-desktop$'"
+    description: "HEY desktop email application"
+    documentation_url: "https://hey.com/"
+    category: productivity
+
+  microsoft-auto-update:
+    manager: brew
+    type: cask
+    check_command: "brew list --cask | grep -q '^microsoft-auto-update$'"
+    description: "Auto-updater service for Microsoft desktop apps"
+    documentation_url: "https://docs.microsoft.com/officeupdates/release-history-microsoft-autoupdate"
+    category: system
+
   # Mac App Store apps (installed via mas)

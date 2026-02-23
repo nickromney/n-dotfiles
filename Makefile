@@ -431,6 +431,14 @@ test-macos: ## Run macOS configuration tests only
 	@echo "$(YELLOW)Running macOS tests...$(NC)"
 	@./_test/run_macos_tests.sh
 
+.PHONY: audit-installed
+audit-installed: ## Audit installed brew/npm packages vs YAML-managed entries
+	@./scripts/audit-installed.sh
+
+.PHONY: audit
+audit: ## Alias for audit-installed
+	@./scripts/audit.sh
+
 ##@ Linux/Lima Validation
 
 .PHONY: test-lima-up

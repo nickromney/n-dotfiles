@@ -9,14 +9,6 @@ tools:
     documentation_url: "https://www.displaylink.com/"
     category: hardware
 
-  hey:
-    manager: brew
-    type: cask
-    check_command: "brew list --cask | grep -q hey"
-    description: "Modern email client with built-in workflows"
-    documentation_url: "https://www.hey.com/"
-    category: productivity
-
   logi-tune:
     manager: manual
     type: check
@@ -57,7 +49,7 @@ tools:
     documentation_url: "https://daisydiskapp.com/"
     category: utilities
 
-  gitkraken:
+  gitkraken-cli:
     manager: manual
     type: check
     check_command: "[ -d '/Applications/GitKraken.app' ]"

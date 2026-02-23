@@ -18,6 +18,14 @@ tools:
     documentation_url: "https://www.techsmith.com/video-editor.html"
     category: utilities
 
+  cleanshot-x:
+    manager: manual
+    type: check
+    check_command: "[ -d '/Applications/CleanShot X.app' ]"
+    description: "Screen capture and recording tool for macOS"
+    documentation_url: "https://cleanshot.com/"
+    category: utilities
+
   # File comparison
   beyond-compare:
     manager: manual

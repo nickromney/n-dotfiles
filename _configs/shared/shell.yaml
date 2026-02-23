@@ -111,3 +111,19 @@ tools:
     description: "Polyglot runtime manager (manages Ruby, Node, Python versions per-project)"
     documentation_url: "https://mise.jdx.dev/"
     category: shell
+
+  yazi:
+    manager: brew
+    type: package
+    check_command: command -v yazi
+    description: "Blazing fast terminal file manager"
+    documentation_url: "https://github.com/sxyazi/yazi"
+    category: shell
+
+  font-symbols-only-nerd-font:
+    manager: brew
+    type: cask
+    check_command: "brew list --cask | grep -q '^font-symbols-only-nerd-font$'"
+    description: "Symbols Nerd Font (symbols-only) for terminal icon glyphs"
+    documentation_url: "https://github.com/ryanoasis/nerd-fonts"
+    category: shell
