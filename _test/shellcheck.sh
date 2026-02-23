@@ -80,7 +80,7 @@ echo -e "${YELLOW}Checking BATS test files...${NC}"
 for bats_file in _test/*.bats; do
     if [[ -f "$bats_file" ]]; then
         # Bats executes @test functions in a managed way that triggers noisy false positives.
-        check_file "$bats_file" "$bats_file" -e SC2030,SC2031,SC2329
+        check_file "$bats_file" "$bats_file" -e SC2030,SC2031,SC2317,SC2329
     fi
 done
 

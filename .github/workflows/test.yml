@@ -20,8 +20,7 @@ jobs:
 
       - name: Run ShellCheck
         run: |
-          shellcheck install.sh || true
-          find _test -name "*.bash" -o -name "*.bats" | xargs shellcheck || true
+          ./_test/shellcheck.sh
 
   test:
     needs: shellcheck
