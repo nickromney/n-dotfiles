@@ -292,8 +292,8 @@ uv run scripts/fix-step-headings.py <file-or-directory>
 **Installation:**
 
 ```bash
-# markdownlint-cli2 (installed via npm, managed by fnm Node version)
-npm install -g markdownlint-cli2
+# markdownlint-cli2
+brew install markdownlint-cli2
 
 # uv (if not already installed)
 brew install uv

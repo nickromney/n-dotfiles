@@ -17,18 +17,19 @@ HOST_WORK = host/work
 # Common is an alias for host/common + shared configs
 COMMON_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON)
 
-# Configuration combinations (shared first for dependencies like fnm)
-PERSONAL_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON) $(HOST_PERSONAL) host/manual-check focus/containers focus/kubernetes focus/vscode
-WORK_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON) $(HOST_WORK) host/manual-check focus/containers focus/kubernetes focus/vscode
+# Configuration combinations (shared first for runtime managers like mise)
+PERSONAL_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON) $(HOST_PERSONAL) focus/containers focus/kubernetes focus/vscode
+WORK_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON) $(HOST_WORK) focus/containers focus/kubernetes focus/vscode
+ALL_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON) $(HOST_PERSONAL) $(HOST_WORK) focus/containers focus/kubernetes focus/vscode focus/hardware-home host/manual-check
 
-PROFILES = personal work common
-ACTIONS = install update stow configure
-DEFAULT_PROFILE := personal
+PROFILES = common personal work all
+ACTIONS = install install-dry-run install-system install-preferred install-legacy update stow configure
+DEFAULT_PROFILE := common
 REQUESTED_PROFILE := $(firstword $(filter $(PROFILES),$(MAKECMDGOALS)))
 SELECTED_PROFILE := $(strip $(if $(PROFILE),$(PROFILE),$(if $(REQUESTED_PROFILE),$(REQUESTED_PROFILE),$(DEFAULT_PROFILE))))
 
 define profile-configs
-$(if $(filter personal,$1),$(PERSONAL_CONFIGS),$(if $(filter work,$1),$(WORK_CONFIGS),$(COMMON_CONFIGS)))
+$(if $(filter personal,$1),$(PERSONAL_CONFIGS),$(if $(filter work,$1),$(WORK_CONFIGS),$(if $(filter all,$1),$(ALL_CONFIGS),$(COMMON_CONFIGS))))
 endef
 
 define macos-profile
@@ -37,6 +38,19 @@ endef
 
 PROFILE_CONFIGS := $(call profile-configs,$(SELECTED_PROFILE))
 SELECTED_MACOS_PROFILE := $(call macos-profile,$(SELECTED_PROFILE))
+HOST_OS := $(shell uname -s)
+
+BREWFILE_PERSONAL := Brewfile
+BREWFILE_WORK := Brewfile.work
+BREWFILE_COMMON := Brewfile.common
+BREWFILE_ALL := Brewfile.all
+BREWFILE_POSIX := Brewfile.posix
+
+define profile-brewfile
+$(if $(filter work,$1),$(BREWFILE_WORK),$(if $(filter common,$1),$(BREWFILE_COMMON),$(if $(filter all,$1),$(BREWFILE_ALL),$(BREWFILE_PERSONAL))))
+endef
+
+SELECTED_BREWFILE := $(if $(filter Darwin,$(HOST_OS)),$(call profile-brewfile,$(SELECTED_PROFILE)),$(BREWFILE_POSIX))
 
 # Default target
 .DEFAULT_GOAL := help
@@ -53,8 +67,12 @@ help: ## Show this help message
 	@echo "  VSCODE_CLI                VSCode binary to use (default: code)"
 	@echo ""
 	@echo "$(BLUE)Profile Examples:$(NC)"
+	@echo "  make install             Safe base install (common profile by default)"
+	@echo "  make install personal    Personal profile install"
+	@echo "  make install work        Work profile install"
+	@echo "  make install all         All profile bundles"
 	@echo "  make personal configure   Apply macOS settings for personal profile"
-	@echo "  make work install         Install tools for the work profile"
+	@echo "  make work install         Config-driven install (brew -> apt fallback -> mise)"
 	@echo "  make work stow            Symlink configs for the work profile"
 	@echo "  make work update          Update tools for the work profile"
 	@echo ""
@@ -66,15 +84,21 @@ help: ## Show this help message
 ##@ Main Configurations
 
 .PHONY: personal
-personal: ## Personal profile (default) <configure|install|stow|update>
+personal: ## Personal profile <configure|install|stow|update>
 	@if [ -z "$(filter $(ACTIONS),$(MAKECMDGOALS))" ]; then \
 		$(MAKE) PROFILE=personal install; \
 	fi
 
 .PHONY: common
-common: ## Shared profile <configure|install|stow|update>
+common: ## Shared/safe base profile (default) <configure|install|stow|update>
 	@if [ -z "$(filter $(ACTIONS),$(MAKECMDGOALS))" ]; then \
 		$(MAKE) PROFILE=common install; \
+	fi
+
+.PHONY: all
+all: ## All profile bundles <configure|install|stow|update>
+	@if [ -z "$(filter $(ACTIONS),$(MAKECMDGOALS))" ]; then \
+		$(MAKE) PROFILE=all install; \
 	fi
 
 .PHONY: personal-setup
@@ -82,7 +106,7 @@ personal-setup: ## Full personal Mac setup (packages + macOS settings)
 	@./setup-personal-mac.sh
 
 .PHONY: update-all
-update-all: ## Update all installed tools (brew, apt, cargo, uv, mas)
+update-all: ## Update all installed tools (brew, apt, cargo, uv, mas, mise)
 	@echo "$(YELLOW)Updating all package managers and tools...$(NC)"
 	@echo ""
 	@if command -v brew >/dev/null 2>&1; then \
@@ -122,24 +146,10 @@ update-all: ## Update all installed tools (brew, apt, cargo, uv, mas)
 		echo "$(GREEN)✓ Mac App Store apps updated$(NC)"; \
 		echo ""; \
 	fi
-	@if command -v arkade >/dev/null 2>&1; then \
-		echo "$(BLUE)Checking arkade version...$(NC)"; \
-		CURRENT=$$(arkade version 2>&1 | grep -o 'Version: [0-9.]*' | cut -d' ' -f2); \
-		if [ -n "$${GITHUB_TOKEN:-}" ]; then \
-			LATEST=$$(curl -sL -H "Authorization: token $$GITHUB_TOKEN" https://api.github.com/repos/alexellis/arkade/releases/latest | grep '"tag_name"' | cut -d'"' -f4); \
-		else \
-			LATEST=$$(curl -sL https://api.github.com/repos/alexellis/arkade/releases/latest | grep '"tag_name"' | cut -d'"' -f4); \
-		fi; \
-		if [ -z "$$LATEST" ]; then \
-			echo "$(YELLOW)  Could not check latest version (GitHub rate limit)$(NC)"; \
-			echo "$(GREEN)✓ arkade skipped (set GITHUB_TOKEN to check updates)$(NC)"; \
-		elif [ "$$CURRENT" != "$$LATEST" ]; then \
-			echo "$(YELLOW)Updating arkade from $$CURRENT to $$LATEST...$(NC)"; \
-			curl -sLS https://get.arkade.dev | sh; \
-			echo "$(GREEN)✓ arkade updated$(NC)"; \
-		else \
-			echo "$(GREEN)✓ arkade already up-to-date ($$CURRENT)$(NC)"; \
-		fi; \
+	@if command -v mise >/dev/null 2>&1; then \
+		echo "$(BLUE)Updating mise runtimes...$(NC)"; \
+		mise upgrade || echo "$(YELLOW)  Warning: mise upgrade failed$(NC)"; \
+		echo "$(GREEN)✓ mise upgrade attempted$(NC)"; \
 		echo ""; \
 	fi
 	@echo "$(GREEN)✓ All package managers and tools updated$(NC)"
@@ -168,13 +178,6 @@ brew: ## Homebrew package manager <update>
 		exit 1; \
 	fi
 
-.PHONY: arkade
-arkade: ## Arkade package manager <update>
-	@if [ -z "$(filter update,$(MAKECMDGOALS))" ]; then \
-		echo "$(YELLOW)Usage: make arkade update$(NC)"; \
-		exit 1; \
-	fi
-
 .PHONY: cargo
 cargo: ## Cargo/Rust package manager <update>
 	@if [ -z "$(filter update,$(MAKECMDGOALS))" ]; then \
@@ -199,12 +202,12 @@ mas: ## Mac App Store package manager <update>
 ##@ Focus Configurations
 
 # List of available focus areas
-FOCUS_AREAS = ai app-store cloud container-base containers infrastructure kubernetes neovim python rust typescript vscode
+FOCUS_AREAS = ai app-store cloud container-base containers hardware-home infrastructure kubernetes neovim python rust typescript vscode
 
 # Dynamic pattern rule for focus areas
 .PHONY: $(FOCUS_AREAS)
 $(FOCUS_AREAS):
-	@CONFIG_FILES="focus/$@" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s)
+	@CONFIG_FILES="focus/$@" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s) $(if $(filter install-dry-run,$(MAKECMDGOALS)),-d)
 
 # Help text for focus areas
 ai: ## AI/ML tools <install|stow|update>
@@ -212,6 +215,7 @@ app-store: ## Mac App Store apps <install|stow|update>
 cloud: ## Cloud provider CLIs (AWS, Azure) <install|stow|update>
 container-base: ## Podman and container tools <install|stow|update>
 containers: ## Podman container management <install|stow|update>
+hardware-home: ## Home hardware + chargeable apps (optional) <install|stow|update>
 infrastructure: ## IaC tools (Terraform, Ansible) <install|stow|update>
 kubernetes: ## Kubernetes tools <install|stow|update>
 neovim: ## Neovim and plugins <install|stow|update>
@@ -222,14 +226,74 @@ vscode: ## VSCode and extensions <install|stow|update>
 
 ##@ Actions
 
+.PHONY: brewfile-generate
+brewfile-generate: ## Generate Brewfile variants from _configs
+	@echo "$(BLUE)Generating Brewfiles from config bundles...$(NC)"
+	@./scripts/generate-brewfile.sh "$(BREWFILE_COMMON)" $(COMMON_CONFIGS)
+	@./scripts/generate-brewfile.sh "$(BREWFILE_PERSONAL)" $(PERSONAL_CONFIGS)
+	@./scripts/generate-brewfile.sh "$(BREWFILE_WORK)" $(WORK_CONFIGS)
+	@./scripts/generate-brewfile.sh "$(BREWFILE_ALL)" $(ALL_CONFIGS)
+	@POSIX_CONFIGS="$$(sed -e 's/#.*$$//' -e '/^[[:space:]]*$$/d' _configs/host/personal-posix.list | paste -sd' ' -)"; \
+	./scripts/generate-brewfile.sh "$(BREWFILE_POSIX)" $$POSIX_CONFIGS
+	@echo "$(GREEN)✓ Brewfiles generated$(NC)"
+
+.PHONY: brewfile-install
+brewfile-install: ## Install from the selected profile Brewfile (preferred)
+	@if ! command -v brew >/dev/null 2>&1; then \
+		echo "$(RED)Homebrew is required for brewfile-install$(NC)"; \
+		exit 1; \
+	fi
+	@if [ ! -f "$(SELECTED_BREWFILE)" ]; then \
+		echo "$(YELLOW)$(SELECTED_BREWFILE) not found; generating Brewfiles first...$(NC)"; \
+		$(MAKE) brewfile-generate; \
+	fi
+	@echo "$(BLUE)Installing via brew bundle: $(SELECTED_BREWFILE)$(NC)"
+	@brew bundle --file="$(SELECTED_BREWFILE)" --no-lock
+
+.PHONY: runtime-install
+runtime-install: ## Install runtimes declared in local mise.toml (project-level)
+	@if [ ! -f "mise.toml" ]; then \
+		echo "$(YELLOW)mise.toml not found; skipping runtime installation$(NC)"; \
+	elif command -v mise >/dev/null 2>&1; then \
+		if [ "$(DRY_RUN)" = "true" ]; then \
+			echo "$(BLUE)[DRY RUN] Previewing runtimes via mise...$(NC)"; \
+			mise install --dry-run; \
+			echo "$(GREEN)[DRY RUN] ✓ mise runtime preview complete (no changes made)$(NC)"; \
+		else \
+			echo "$(BLUE)Installing runtimes via mise...$(NC)"; \
+			mise install; \
+			echo "$(GREEN)✓ mise runtimes installed$(NC)"; \
+		fi; \
+	else \
+		echo "$(YELLOW)mise not found; skipping runtime installation$(NC)"; \
+	fi
+
+.PHONY: install-system
+install-system: ## Install system dependencies from config (brew preferred, apt fallback via install.sh)
+	@echo "$(BLUE)Installing system dependencies from $(SELECTED_PROFILE) profile config...$(NC)"
+	@CONFIG_FILES="$(PROFILE_CONFIGS)" ./install.sh
+
+.PHONY: install-preferred
+install-preferred: ## Backward-compatible alias for install
+	@$(MAKE) PROFILE=$(SELECTED_PROFILE) install
+
 .PHONY: install
-install: ## Install packages for the selected profile/focus
+install: ## Install selected profile/focus (system deps first, then project runtimes)
 ifneq ($(filter $(FOCUS_AREAS),$(MAKECMDGOALS)),)
 	@: # No-op if a focus target was specified
 else
-	@echo "$(BLUE)Installing $(SELECTED_PROFILE) profile...$(NC)"
-	@CONFIG_FILES="$(PROFILE_CONFIGS)" ./install.sh
+	@$(MAKE) PROFILE=$(SELECTED_PROFILE) install-system
+	@$(MAKE) runtime-install
 endif
+
+.PHONY: install-dry-run
+install-dry-run: ## Preview install for selected profile (no system changes)
+	@$(MAKE) PROFILE=$(SELECTED_PROFILE) DRY_RUN=true install
+
+.PHONY: install-legacy
+install-legacy: ## Legacy installer path (install.sh directly)
+	@echo "$(YELLOW)install.sh is deprecated as the primary path; prefer 'make install'.$(NC)"
+	@CONFIG_FILES="$(PROFILE_CONFIGS)" ./install.sh
 
 .PHONY: stow
 stow: ## Stow dotfiles for the selected profile/focus
@@ -254,20 +318,6 @@ else ifneq ($(filter brew,$(MAKECMDGOALS)),)
 		echo "$(GREEN)✓ Homebrew updated$(NC)"; \
 	else \
 		echo "$(RED)Homebrew is not installed$(NC)"; \
-		exit 1; \
-	fi
-else ifneq ($(filter arkade,$(MAKECMDGOALS)),)
-	@if command -v arkade >/dev/null 2>&1; then \
-		echo "$(BLUE)Updating arkade CLI...$(NC)"; \
-		# Official update method from https://github.com/alexellis/arkade \
-		curl -sLS https://get.arkade.dev | sh; \
-		echo "$(GREEN)✓ arkade CLI updated$(NC)"; \
-		echo ""; \
-		echo "$(BLUE)Updating arkade-installed tools...$(NC)"; \
-		CONFIG_FILES="focus/kubernetes" ./install.sh -u; \
-		echo "$(GREEN)✓ arkade tools updated$(NC)"; \
-	else \
-		echo "$(RED)arkade is not installed$(NC)"; \
 		exit 1; \
 	fi
 else ifneq ($(filter cargo,$(MAKECMDGOALS)),)

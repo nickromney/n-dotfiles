@@ -114,8 +114,9 @@ EOF
   run get_available_managers "test.yaml"
   [ "$status" -eq 0 ]
 
-  # Function now outputs manager names to stdout, unavailable to stderr
-  if command_exists brew; then
+  # Function now outputs manager names to stdout, unavailable to stderr.
+  # brew manager is available when brew exists OR apt fallback is usable.
+  if command_exists brew || can_use_apt; then
     [[ "$output" =~ "brew" ]]
   else
     [[ "$output" =~ brew:\ please\ install\ from\ https://brew.sh ]]
@@ -475,6 +476,28 @@ EOF
   run install_tool "jq" "test.yaml"
   [ "$status" -eq 0 ]
   assert_mock_called "brew" "install jq"
+}
+
+@test "install_tool falls back to apt for brew package when brew is unavailable" {
+  mock_yq
+  mock_apt_get
+  mock_id 0
+
+  # Force brew unavailable while keeping apt-get available
+  command_exists() {
+    case "$1" in
+      apt-get|yq|which) return 0 ;;
+      brew) return 1 ;;
+      *) return 1 ;;
+    esac
+  }
+  export -f command_exists
+
+  run install_tool "jq" "test.yaml"
+  [ "$status" -eq 0 ]
+  assert_mock_called "apt-get" "update -qq"
+  assert_mock_called "apt-get" "install -y jq"
+  assert_mock_not_called "brew"
 }
 
 @test "install_tool installs brew cask" {
@@ -942,6 +965,58 @@ EOF
   [ "$status" -eq 0 ]
   [[ "$output" =~ "unknown package manager: foo" ]]
   [[ "$output" =~ "Skipping footool: foo not available" ]]
+}
+
+@test "main function handles install_tool return code 2 without exiting" {
+  # Mock one brew-managed tool that is reported as not installed.
+  mock_command_with_script "yq" '
+case "$*" in
+  *".tools[].manager"*)
+    echo "brew"
+    exit 0
+    ;;
+  *".tools | keys | .[]"*|*".tools | select(. != null) | keys | .[]"*)
+    echo "tool1"
+    exit 0
+    ;;
+  *".tools.tool1.manager"*)
+    echo "brew"
+    exit 0
+    ;;
+  *".tools.tool1.type"*)
+    echo "package"
+    exit 0
+    ;;
+  *".tools.tool1.check_command"*)
+    echo "command -v definitely-missing-tool"
+    exit 0
+    ;;
+  *".tools.tool1.install_args[]"*)
+    exit 0
+    ;;
+  *)
+    echo "null"
+    exit 0
+    ;;
+esac
+'
+  mock_command "which"
+  mock_command "brew"
+
+  # Force install_tool to signal "already up to date"
+  install_tool() {
+    return 2
+  }
+  export -f install_tool
+
+  mkdir -p "$BATS_TEST_TMPDIR/_configs"
+  touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
+  export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
+  export CONFIG_FILES=("test")
+
+  run main
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "was already up to date" ]]
 }
 # Tests for get_vscode_cli function
 @test "get_vscode_cli returns code by default" {

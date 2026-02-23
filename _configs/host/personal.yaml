@@ -27,14 +27,6 @@ tools:
     documentation_url: "https://claude.ai/"
     category: ai
 
-  hey:
-    manager: brew
-    type: cask
-    check_command: "brew list --cask | grep -q hey"
-    description: "Modern email client with built-in workflows"
-    documentation_url: "https://www.hey.com/"
-    category: productivity
-
   mas:
     manager: brew
     type: package

@@ -70,28 +70,6 @@ if ((which op | length) > 0) {
     }
 }
 
-# FNM (Fast Node Manager) - supports .node-version files
-if ((which fnm | length) > 0) {
-    # Load FNM environment variables
-    load-env (fnm env --shell bash
-        | lines
-        | str replace 'export ' ''
-        | str replace -a '"' ''
-        | split column "="
-        | rename name value
-        | where name != "FNM_ARCH" and name != "PATH"
-        | reduce -f {} {|it, acc| $acc | upsert $it.name $it.value }
-    )
-
-    # Add FNM_MULTISHELL_PATH to PATH
-    $env.PATH = ($env.PATH
-        | split row (char esep)
-        | prepend $"($env.FNM_MULTISHELL_PATH)/bin"
-        | uniq
-        | str join (char esep)
-    )
-}
-
 # Initialize external tools
 # Cache init scripts to avoid regenerating on every shell startup.
 # Delete ~/.cache/nushell-init or individual files to force regeneration.

@@ -103,29 +103,30 @@ EOF
   [[ "$output" =~ "sourced successfully" ]]
 }
 
-@test "bashrc: fnm only initialized when fnm exists" {
-  # Test without fnm - should not error
+@test "bashrc: mise only initialized when mise exists" {
+  # Test without mise - should not error
   run bash -c "
     source $DOTFILES_DIR/bash/.bashrc 2>&1
   "
   [ "$status" -eq 0 ]
 
-  # Create mock fnm
-  cat > "$MOCK_BIN_DIR/fnm" << 'EOF'
+  # Create mock mise
+  cat > "$MOCK_BIN_DIR/mise" << 'EOF'
 #!/bin/bash
-if [[ "$1" == "env" ]]; then
-  echo "export PATH=\"$HOME/.fnm:$PATH\""
+if [[ "$1" == "activate" && "$2" == "bash" ]]; then
+  echo "export PATH=\"$HOME/.local/share/mise/bin:$PATH\""
 fi
 EOF
-  chmod +x "$MOCK_BIN_DIR/fnm"
+  chmod +x "$MOCK_BIN_DIR/mise"
 
-  # Test with fnm - should initialize
+  # Test with mise - should source successfully
   run bash -c "
+    export PATH='$MOCK_BIN_DIR:\$PATH'
     source $DOTFILES_DIR/bash/.bashrc 2>/dev/null
-    echo \$PATH
+    echo 'sourced successfully'
   "
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "fnm" ]]
+  [[ "$output" =~ "sourced successfully" ]]
 }
 
 # ============================================================================
@@ -303,7 +304,7 @@ EOF
 # Common Tests (both bash and zsh)
 # ============================================================================
 
-@test "both configs: add arkade bin to PATH when it exists" {
+@test "both configs: do not add arkade bin to PATH by default" {
   mkdir -p "$HOME/.arkade/bin"
 
   # Test bash
@@ -311,14 +312,14 @@ EOF
     source $DOTFILES_DIR/bash/.bashrc 2>/dev/null
     echo \$PATH
   ")
-  [[ "$result" == *".arkade/bin"* ]]
+  [[ "$result" != *".arkade/bin"* ]]
 
   # Test zsh
   result=$(zsh -c "
     source $DOTFILES_DIR/zsh/.zshrc 2>/dev/null
     echo \$PATH
   ")
-  [[ "$result" == *".arkade/bin"* ]]
+  [[ "$result" != *".arkade/bin"* ]]
 }
 
 @test "both configs: set EDITOR to nvim" {

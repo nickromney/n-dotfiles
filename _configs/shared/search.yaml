@@ -31,3 +31,11 @@ tools:
     description: "Code searching tool similar to ack"
     documentation_url: "https://github.com/ggreer/the_silver_searcher"
     category: search
+
+  sk:
+    manager: brew
+    type: package
+    check_command: command -v sk
+    description: "Fuzzy finder in Rust (skim)"
+    documentation_url: "https://github.com/lotabout/skim"
+    category: search

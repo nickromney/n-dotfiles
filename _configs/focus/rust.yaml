@@ -1,5 +1,13 @@
 # Rust development tools
 tools:
+  rust:
+    manager: brew
+    type: package
+    check_command: command -v rustc
+    description: "Rust compiler and standard toolchain"
+    documentation_url: "https://www.rust-lang.org/"
+    category: rust
+
   rustup:
     manager: brew
     type: package

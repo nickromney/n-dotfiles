@@ -208,19 +208,12 @@ if [[ -n "$BREW_PREFIX" ]]; then
 fi
 
 #
-# 9. FNM (Fast Node Manager)
-#
-if command -v fnm >/dev/null 2>&1; then
-  eval "$(fnm env --use-on-cd)"
-fi
-
-#
-# 10. Local Environment
+# 9. Local Environment
 #
 [ -f "$HOME/.local/bin/env" ] && source "$HOME/.local/bin/env"
 
 #
-# 11. ZScaler Certs
+# 10. ZScaler Certs
 #
 ZSCALER_CERT_DIR="$HOME/.zscalerCerts"
 if [ -d "$ZSCALER_CERT_DIR" ]; then
@@ -264,11 +257,10 @@ if command -v op >/dev/null 2>&1; then
 fi
 
 #
-# 13. PATH Management
+# 12. PATH Management
 #
 declare -a paths=(
   "$HOME/.local/bin"
-  "$HOME/.arkade/bin"
   "$HOME/.cargo/bin"
   "$HOME/.tfenv/bin"
 )
@@ -284,7 +276,7 @@ PATH=$(echo "$PATH" | awk -v RS=: '!a[$0]++' | grep -v '^$' | paste -sd: -)
 export PATH
 
 #
-# 14. Podman
+# 13. Podman
 #
 if command -v podman >/dev/null 2>&1; then
   if PODMAN_SOCKET=$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}' 2>/dev/null) && [ -n "$PODMAN_SOCKET" ]; then
@@ -293,7 +285,7 @@ if command -v podman >/dev/null 2>&1; then
 fi
 
 #
-# 15. Aliases
+# 14. Aliases
 #
 
 # Navigation aliases - conditionally created based on available tools
@@ -374,16 +366,15 @@ if [ -f "$AWS_LAMBDA_VENV" ]; then
 fi
 
 #
-# 16. direnv
+# 15. direnv
 #
 if command -v direnv >/dev/null 2>&1; then
   _cache_init direnv "direnv hook zsh"
 fi
 
 #
-# 17. mise (polyglot runtime manager)
+# 16. mise (polyglot runtime manager)
 #
 if command -v mise >/dev/null 2>&1; then
   _cache_init mise "mise activate zsh"
 fi
-

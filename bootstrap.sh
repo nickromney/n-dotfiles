@@ -31,28 +31,19 @@ else
     echo "✓ Homebrew already installed"
 fi
 
-# Install essential tools needed by install.sh
+# Install essential tools needed by install.sh and preferred workflow
 echo "🔧 Installing essential tools..."
-brew install yq      # Required by install.sh
+brew install yq      # Required by install.sh and Brewfile generation
 brew install stow    # Required for symlink management
+brew install mise    # Preferred runtime manager
 
-# Install nvm and node
-echo "📦 Installing nvm and Node.js..."
-brew install nvm
+if [[ -f "./Brewfile" ]]; then
+    echo "📦 Installing Brewfile packages (preferred path)..."
+    brew bundle --file ./Brewfile --no-lock
+fi
 
-# Create nvm directory
-mkdir -p "$HOME/.nvm"
-
-# Source nvm for this session
-export NVM_DIR="$HOME/.nvm"
-[ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"
-[ -s "/usr/local/opt/nvm/nvm.sh" ] && \. "/usr/local/opt/nvm/nvm.sh"
-
-# Install latest LTS Node
-echo "🟢 Installing Node.js LTS..."
-nvm install --lts
-nvm use --lts
-nvm alias default node
+echo "🟢 Installing runtimes via mise..."
+mise install
 
 # Install 1Password early if needed for SSH
 if [[ -n "${NON_INTERACTIVE:-}" ]]; then
@@ -70,16 +61,12 @@ fi
 echo "✅ Bootstrap complete!"
 echo ""
 echo "Next steps:"
-echo "1. Run: ./install.sh -d        # Dry run to see what will be installed"
-echo "2. Run: ./install.sh           # Install base tools"
-echo "3. Run: ./install.sh -s        # Stow configurations"
+echo "1. Run: make install           # Preferred install (Brewfile + mise + legacy bridge)"
+echo "2. Run: make personal stow     # Stow configurations"
+echo "3. Run: make personal configure # Apply macOS settings"
 echo "4. Run: make focus-vscode      # If using VSCode"
 echo "5. Run: make focus-neovim      # If using Neovim"
 echo ""
-echo "Additional configurations available:"
-echo "  ./install.sh -c shared/data-tools.yaml"
-echo "  ./install.sh -c shared/file-tools.yaml"
-echo "  ./install.sh -c shared/git.yaml"
-echo "  ./install.sh -c shared/shell.yaml"
-echo "  ./install.sh -c focus/python.yaml"
-echo "  ./install.sh -c legacy/fonts.yaml"
+echo "Legacy fallback (deprecated):"
+echo "  ./install.sh -d"
+echo "  ./install.sh"

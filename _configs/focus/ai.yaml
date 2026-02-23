@@ -1,5 +1,53 @@
 # AI/ML development tools
 tools:
+  claude-code:
+    manager: brew
+    type: cask
+    check_command: "brew list --cask | grep -q '^claude-code$'"
+    description: "Claude AI coding assistant CLI"
+    documentation_url: "https://claude.ai/code"
+    category: ai
+
+  codex:
+    manager: brew
+    type: cask
+    check_command: command -v codex
+    description: "OpenAI coding agent for the terminal"
+    documentation_url: "https://github.com/openai/codex"
+    category: ai
+
+  codex-app:
+    manager: brew
+    type: cask
+    check_command: "[ -d '/Applications/Codex.app' ]"
+    description: "OpenAI Codex desktop application"
+    documentation_url: "https://openai.com/codex"
+    category: ai
+
+  opencode:
+    manager: brew
+    type: package
+    check_command: command -v opencode
+    description: "AI coding agent built for the terminal"
+    documentation_url: "https://opencode.ai"
+    category: ai
+
+  droid:
+    manager: brew
+    type: cask
+    check_command: command -v droid
+    description: "Factory Droid AI software engineering agent"
+    documentation_url: "https://docs.factory.ai/cli/getting-started/overview"
+    category: ai
+
+  gemini-cli:
+    manager: brew
+    type: package
+    check_command: command -v gemini
+    description: "Google Gemini command-line interface"
+    documentation_url: "https://github.com/google-gemini/gemini-cli"
+    category: ai
+
   steipete/tap:
     manager: brew
     type: tap

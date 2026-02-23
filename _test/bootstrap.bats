@@ -50,7 +50,7 @@ EOF
   # Mock all required commands
   create_mock "brew" 0
   create_mock "curl" 0
-  create_mock "nvm" 0
+  create_mock "mise" 0
 
   run "$BATS_TEST_TMPDIR/bootstrap.sh"
   [ "$status" -eq 0 ]
@@ -84,7 +84,7 @@ EOF
 
   create_mock "curl" 0 "install script"
   create_mock "brew" 0
-  create_mock "nvm" 0
+  create_mock "mise" 0
 
   run "$BATS_TEST_TMPDIR/bootstrap.sh"
   [ "$status" -eq 0 ]
@@ -98,7 +98,7 @@ EOF
 
   create_mock "command" 0
   create_mock "brew" 0
-  create_mock "nvm" 0
+  create_mock "mise" 0
 
   run "$BATS_TEST_TMPDIR/bootstrap.sh"
   [ "$status" -eq 0 ]
@@ -120,7 +120,7 @@ exit 0
 EOF
   chmod +x "$BATS_TEST_TMPDIR/mocks/brew"
 
-  create_mock "nvm" 0
+  create_mock "mise" 0
 
   run "$BATS_TEST_TMPDIR/bootstrap.sh"
   [ "$status" -eq 0 ]
@@ -131,7 +131,7 @@ EOF
   grep -q "install nvm" "$BATS_TEST_TMPDIR/brew_calls.txt"
 }
 
-@test "bootstrap: installs Node.js via nvm" {
+@test "bootstrap: installs runtimes via mise" {
   skip "Complex integration test - requires full environment"
   export OSTYPE="darwin"
   mkdir -p "$BATS_TEST_TMPDIR/mocks"
@@ -139,24 +139,22 @@ EOF
   create_mock "command" 0
   create_mock "brew" 0
 
-  # Track nvm calls
-  cat > "$BATS_TEST_TMPDIR/mocks/nvm" << 'EOF'
+  # Track mise calls
+  cat > "$BATS_TEST_TMPDIR/mocks/mise" << 'EOF'
 #!/usr/bin/env bash
-echo "$@" >> "$BATS_TEST_TMPDIR/nvm_calls.txt"
+echo "$@" >> "$BATS_TEST_TMPDIR/mise_calls.txt"
 exit 0
 EOF
-  chmod +x "$BATS_TEST_TMPDIR/mocks/nvm"
+  chmod +x "$BATS_TEST_TMPDIR/mocks/mise"
 
   run "$BATS_TEST_TMPDIR/bootstrap.sh"
   [ "$status" -eq 0 ]
 
-  # Check nvm commands
-  grep -q "install --lts" "$BATS_TEST_TMPDIR/nvm_calls.txt"
-  grep -q "use --lts" "$BATS_TEST_TMPDIR/nvm_calls.txt"
-  grep -q "alias default node" "$BATS_TEST_TMPDIR/nvm_calls.txt"
+  # Check mise commands
+  grep -q "install" "$BATS_TEST_TMPDIR/mise_calls.txt"
 }
 
-@test "bootstrap: creates .nvm directory" {
+@test "bootstrap: configures runtime manager files" {
   skip "Complex integration test - requires full environment"
   export OSTYPE="darwin"
   export HOME="$BATS_TEST_TMPDIR/home"
@@ -164,11 +162,11 @@ EOF
 
   create_mock "command" 0
   create_mock "brew" 0
-  create_mock "nvm" 0
+  create_mock "mise" 0
 
   run "$BATS_TEST_TMPDIR/bootstrap.sh"
   [ "$status" -eq 0 ]
-  [ -d "$HOME/.nvm" ]
+  [ -d "$HOME/Developer/personal" ]
 }
 
 @test "bootstrap: skips 1Password in non-interactive mode" {
@@ -179,7 +177,7 @@ EOF
 
   create_mock "command" 0
   create_mock "brew" 0
-  create_mock "nvm" 0
+  create_mock "mise" 0
 
   run "$BATS_TEST_TMPDIR/bootstrap.sh"
   [ "$status" -eq 0 ]
@@ -194,7 +192,7 @@ EOF
 
   create_mock "command" 0
   create_mock "brew" 0
-  create_mock "nvm" 0
+  create_mock "mise" 0
 
   run "$BATS_TEST_TMPDIR/bootstrap.sh"
   [ "$status" -eq 0 ]

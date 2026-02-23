@@ -42,18 +42,10 @@ if command -v starship >/dev/null 2>&1; then
 fi
 
 #
-# FNM Setup (Fast Node Manager)
-#
-if command -v fnm >/dev/null 2>&1; then
-  eval "$(fnm env --use-on-cd)"
-fi
-
-#
 # PATH Management
 #
 paths=(
   "$HOME/.local/bin"
-  "$HOME/.arkade/bin"
   "$HOME/.cargo/bin"
   "$HOME/.tfenv/bin"
 )

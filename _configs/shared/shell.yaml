@@ -8,14 +8,6 @@ tools:
     documentation_url: "https://www.nushell.sh/"
     category: shell
 
-  fnm:
-    manager: brew
-    type: package
-    check_command: command -v fnm
-    description: "Fast Node Manager - manage Node.js versions (Rust-based, faster than nvm)"
-    documentation_url: "https://github.com/Schniz/fnm"
-    category: shell
-
   starship:
     manager: brew
     type: package
@@ -94,6 +86,22 @@ tools:
     check_command: command -v markdownlint-cli2
     description: "Fast, flexible markdown linter (newer, config-based)"
     documentation_url: "https://github.com/DavidAnson/markdownlint-cli2"
+    category: shell
+
+  shellcheck:
+    manager: brew
+    type: package
+    check_command: command -v shellcheck
+    description: "Static analysis tool for shell scripts"
+    documentation_url: "https://www.shellcheck.net/"
+    category: shell
+
+  brew-cask-completion:
+    manager: brew
+    type: package
+    check_command: "brew list brew-cask-completion >/dev/null 2>&1"
+    description: "Bash completion for Homebrew cask commands"
+    documentation_url: "https://github.com/xyb/homebrew-cask-completion"
     category: shell
 
   mise:
