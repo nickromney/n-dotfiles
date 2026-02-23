@@ -44,6 +44,29 @@ is_root() {
   [ "$(id -u 2>/dev/null || echo 1000)" -eq 0 ]
 }
 
+can_use_apt() {
+  if ! command_exists "apt-get"; then
+    return 1
+  fi
+  if is_root || [[ "$DRY_RUN" == "true" ]]; then
+    return 0
+  fi
+  return 1
+}
+
+resolve_apt_package_name() {
+  local tool=$1
+  local yaml_file=$2
+  local apt_package
+  apt_package=$(yq ".tools.${tool}.apt_package" "$yaml_file" 2>/dev/null || echo "null")
+
+  if [[ -z "$apt_package" || "$apt_package" == "null" ]]; then
+    echo "$tool"
+  else
+    echo "$apt_package"
+  fi
+}
+
 get_vscode_cli() {
   # Default to 'code' if not set
   local cli="${VSCODE_CLI:-code}"
@@ -90,10 +113,15 @@ get_available_managers() {
         fi
         ;;
       "brew")
-        if ! command_exists "brew"; then
-          unavailable+=("brew: please install from https://brew.sh")
-        else
+        if command_exists "brew"; then
           available+=("brew")
+        elif can_use_apt; then
+          # Allow brew-managed package tools to fall back to apt on Linux systems
+          available+=("brew")
+        elif command_exists "apt-get" && ! is_root && [[ "$DRY_RUN" == "false" ]]; then
+          unavailable+=("brew: brew unavailable; apt fallback requires root privileges - please run with sudo")
+        else
+          unavailable+=("brew: please install from https://brew.sh")
         fi
         ;;
       "cargo")
@@ -115,6 +143,13 @@ get_available_managers() {
           unavailable+=("mas: please install with 'brew install mas'")
         else
           available+=("mas")
+        fi
+        ;;
+      "mise")
+        if ! command_exists "mise"; then
+          unavailable+=("mise: install via brew install mise")
+        else
+          available+=("mise")
         fi
         ;;
       "manual")
@@ -360,21 +395,50 @@ install_tool() {
     esac
     ;;
   "brew")
-    case "$type" in
-    "cask")
-      install_cmd="brew install --cask $install_args $tool"
-      ;;
-    "package")
-      install_cmd="brew install $install_args $tool"
-      ;;
-    "tap")
-      install_cmd="brew tap $install_args $tool"
-      ;;
-    *)
-      info "Skipping $tool: unknown brew type: $type"
-      return 0
-      ;;
-    esac
+    if command_exists "brew"; then
+      case "$type" in
+      "cask")
+        install_cmd="brew install --cask $install_args $tool"
+        ;;
+      "package")
+        install_cmd="brew install $install_args $tool"
+        ;;
+      "tap")
+        install_cmd="brew tap $install_args $tool"
+        ;;
+      *)
+        info "Skipping $tool: unknown brew type: $type"
+        return 0
+        ;;
+      esac
+    else
+      case "$type" in
+      "package")
+        if can_use_apt; then
+          local apt_package
+          apt_package=$(resolve_apt_package_name "$tool" "$yaml_file")
+          if [[ "$DRY_RUN" == "false" ]]; then
+            apt-get update -qq || {
+              error "Failed to update apt cache"
+              return 1
+            }
+          fi
+          info "brew unavailable, using apt fallback for $tool"
+          install_cmd="apt-get install -y $install_args $apt_package"
+        elif command_exists "apt-get"; then
+          info "Skipping $tool: brew unavailable and apt fallback requires root privileges"
+          return 0
+        else
+          info "Skipping $tool: brew unavailable and apt-get not found"
+          return 0
+        fi
+        ;;
+      *)
+        info "Skipping $tool: brew unavailable; apt fallback supports package type only"
+        return 0
+        ;;
+      esac
+    fi
     ;;
   "cargo")
     case "$type" in
@@ -397,6 +461,17 @@ install_tool() {
       ;;
     *)
       info "Skipping $tool: unknown uv type: $type"
+      return 0
+      ;;
+    esac
+    ;;
+  "mise")
+    case "$type" in
+    "runtime" | "tool")
+      install_cmd="mise install $install_args $tool"
+      ;;
+    *)
+      info "Skipping $tool: unknown mise type: $type"
       return 0
       ;;
     esac
@@ -608,6 +683,13 @@ main() {
       else
         brew update
       fi
+    elif can_use_apt; then
+      info "brew unavailable, updating apt package database for fallback..."
+      if [[ "$DRY_RUN" == "true" ]]; then
+        info "Would execute: apt-get update -qq"
+      else
+        apt-get update -qq
+      fi
     fi
   fi
 
@@ -661,37 +743,53 @@ main() {
 
               case "$manager" in
               "brew")
-                case "$type" in
-                "package")
-                  if [[ "$DRY_RUN" == "true" ]]; then
-                    info "Would check: brew outdated $tool"
-                  else
-                    if brew outdated --quiet | grep -q "^$tool$"; then
-                      info "Updating $tool (brew package)..."
-                      brew upgrade "$tool"
-                      info "✓ Updated $tool (brew package)"
+                if command_exists "brew"; then
+                  case "$type" in
+                  "package")
+                    if [[ "$DRY_RUN" == "true" ]]; then
+                      info "Would check: brew outdated $tool"
                     else
-                      info "✓ $tool (brew package) is already up to date"
+                      if brew outdated --quiet | grep -q "^$tool$"; then
+                        info "Updating $tool (brew package)..."
+                        brew upgrade "$tool"
+                        info "✓ Updated $tool (brew package)"
+                      else
+                        info "✓ $tool (brew package) is already up to date"
+                      fi
                     fi
-                  fi
-                  ;;
-                "cask")
-                  if [[ "$DRY_RUN" == "true" ]]; then
-                    info "Would check: brew outdated --cask $tool"
-                  else
-                    if brew outdated --cask --quiet | grep -q "^$tool$"; then
-                      info "Updating $tool (brew cask)..."
-                      brew upgrade --cask "$tool"
-                      info "✓ Updated $tool (brew cask)"
+                    ;;
+                  "cask")
+                    if [[ "$DRY_RUN" == "true" ]]; then
+                      info "Would check: brew outdated --cask $tool"
                     else
-                      info "✓ $tool (brew cask) is already up to date"
+                      if brew outdated --cask --quiet | grep -q "^$tool$"; then
+                        info "Updating $tool (brew cask)..."
+                        brew upgrade --cask "$tool"
+                        info "✓ Updated $tool (brew cask)"
+                      else
+                        info "✓ $tool (brew cask) is already up to date"
+                      fi
                     fi
+                    ;;
+                  *)
+                    info "✓ $tool (brew $type) is already installed"
+                    ;;
+                  esac
+                elif [[ "$type" == "package" ]] && can_use_apt; then
+                  local apt_package
+                  apt_package=$(resolve_apt_package_name "$tool" "$CURRENT_CONFIG_FILE")
+                  if [[ "$DRY_RUN" == "true" ]]; then
+                    info "Would execute: apt-get install --only-upgrade -y $apt_package"
+                  else
+                    info "brew unavailable, using apt fallback to update $tool ($apt_package)..."
+                    apt-get install --only-upgrade -y "$apt_package"
+                    info "✓ Updated $tool via apt fallback"
                   fi
-                  ;;
-                *)
+                elif [[ "$type" == "package" ]] && command_exists "apt-get"; then
+                  info "Skipping update for $tool: apt fallback requires root privileges"
+                else
                   info "✓ $tool (brew $type) is already installed"
-                  ;;
-                esac
+                fi
                 ;;
               "cargo")
                 if [[ "$FORCE" == "true" ]]; then
@@ -750,6 +848,23 @@ main() {
                   fi
                 fi
                 ;;
+              "apt")
+                if [[ "$type" == "package" ]] && can_use_apt; then
+                  local apt_package
+                  apt_package=$(resolve_apt_package_name "$tool" "$CURRENT_CONFIG_FILE")
+                  if [[ "$DRY_RUN" == "true" ]]; then
+                    info "Would execute: apt-get install --only-upgrade -y $apt_package"
+                  else
+                    info "Updating $tool (apt package)..."
+                    apt-get install --only-upgrade -y "$apt_package"
+                    info "✓ Updated $tool (apt package)"
+                  fi
+                elif [[ "$type" == "package" ]] && command_exists "apt-get"; then
+                  info "Skipping update for $tool: apt requires root privileges"
+                else
+                  info "✓ $tool (apt $type) is already installed"
+                fi
+                ;;
               "mas")
                 if [[ "$DRY_RUN" == "true" ]]; then
                   info "Would check: mas outdated"
@@ -768,6 +883,15 @@ main() {
               "manual")
                 # Manual tools don't update through the script
                 info "✓ $tool (manual) - check vendor site for updates"
+                ;;
+              "mise")
+                if [[ "$DRY_RUN" == "true" ]]; then
+                  info "Would execute: mise upgrade $tool"
+                else
+                  info "Updating $tool (mise runtime)..."
+                  mise upgrade "$tool"
+                  info "✓ Updated $tool (mise runtime)"
+                fi
                 ;;
               "arkade")
                 case "$type" in
@@ -820,8 +944,14 @@ main() {
               "uv")
                 info "✓ $tool (uv $type) is already installed"
                 ;;
+              "apt")
+                info "✓ $tool (apt $type) is already installed"
+                ;;
               "mas")
                 info "✓ $tool (mas $type) is already installed"
+                ;;
+              "mise")
+                info "✓ $tool (mise $type) is already installed"
                 ;;
               "manual")
                 info "✓ $tool (manual) is already installed"
@@ -847,13 +977,17 @@ main() {
               # Manual tools always return 0 after reporting, no success message needed
             else
               info "Installing $tool ($manager $type)..."
-              install_tool "$tool" "$CURRENT_CONFIG_FILE"
-              install_result=$?
+              # Avoid errexit on non-zero statuses used as control flow (e.g. 2 = already up to date).
+              if install_tool "$tool" "$CURRENT_CONFIG_FILE"; then
+                install_result=0
+              else
+                install_result=$?
+              fi
               if [[ $install_result -eq 0 ]]; then
                 info "✓ Successfully installed $tool ($manager $type)"
                 # Track if we installed a package manager
                 case "$tool" in
-                  arkade|cargo|uv)
+                  arkade|cargo|uv|mise)
                     NEWLY_INSTALLED_MANAGERS+=("$tool")
                     ;;
                 esac
@@ -889,6 +1023,8 @@ main() {
 
 usage() {
   echo "Usage: $0 [options]"
+  echo "Note: install.sh is supported as a standalone entrypoint."
+  echo "      Optional wrapper: make install (config-driven: brew, apt fallback, then mise)."
   echo "Options:"
   echo "  -c, --config <name>     Add configuration file to install (can be used multiple times)"
   echo "  -C, --config-dir <dir>  Specify configuration directory (default: _configs)"
@@ -896,7 +1032,7 @@ usage() {
   echo "  -f, --force             Force stow to adopt existing files"
   echo "  -h, --help              Show this help message"
   echo "  -s, --stow              Run stow after installation"
-  echo "  -u, --update            Update already installed packages (brew only)"
+  echo "  -u, --update            Update already installed packages (brew/apt/cargo/uv/mas/mise where supported)"
   echo "  -v, --verbose           Show detailed information and status messages"
   echo ""
   echo "Configuration files:"
@@ -987,5 +1123,8 @@ if [[ "$SOURCE_ONLY" != "true" ]]; then
   # Set up error handling for non-test environments
   set -e
   trap 'exit 1' ERR
+  if [[ "${INSTALL_SH_SHOW_MAKE_HINT:-false}" == "true" ]]; then
+    info "Tip: 'make install' is an optional wrapper around install.sh."
+  fi
   main "$@"
 fi

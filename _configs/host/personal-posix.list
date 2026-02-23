@@ -1,0 +1,24 @@
+# Personal superset for non-mac environments (Linux, WSL)
+# Keeps tool definitions in existing config flavors and composes them here.
+# Intentionally excludes macOS-only areas (casks, mas, GUI app configs, VSCode extension batch).
+
+shared/shell
+shared/git
+shared/search
+shared/file-tools
+shared/data-tools
+shared/network
+shared/dev-tools
+shared/neovim
+
+focus/cloud
+focus/container-base
+focus/infrastructure
+focus/kubernetes
+focus/neovim
+focus/python
+focus/rust
+focus/security
+focus/typescript
+
+host/manual-check

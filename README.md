@@ -30,10 +30,10 @@ cd n-dotfiles
 # Run bootstrap to install essential tools
 ./bootstrap.sh
 
-# Then continue with regular installation
-./install.sh -d        # Dry run to preview
-./install.sh           # Install base tools
-./install.sh -s        # Stow configurations
+# Preferred installation flow
+make install           # Config-driven: brew, apt fallback, then mise runtimes
+make personal stow     # Stow configurations
+make personal configure # Apply macOS settings
 ```
 
 ### Existing System
@@ -45,8 +45,11 @@ If you already have Homebrew and basic tools:
 git clone https://github.com/nickromney/n-dotfiles.git ~/n-dotfiles
 cd ~/n-dotfiles
 
-# Install the default (personal) toolchain
-make personal install
+# Install the default safe/base toolchain (common profile)
+make install
+
+# Install personal additions
+make install personal
 
 # Provision a work Mac
 make work install
@@ -62,14 +65,16 @@ make focus-vscode
 
 The Makefile provides convenient targets for different configurations:
 
-Combine a profile (`personal`, `work`, or `common`) with an action (`install`, `update`, `stow`, `configure`). Order does not matter, so `make work install` equals `make install work`.
+Combine a profile (`common`, `personal`, `work`, or `all`) with an action (`install`, `update`, `stow`, `configure`). Order does not matter, so `make work install` equals `make install work`.
 
 ```bash
 # Profile + action examples
-make personal install     # Install personal apps and CLIs
+make install              # Safe base install (common profile default)
+make install personal     # Install personal apps and CLIs
 make work update          # Update tooling for work machines
 make stow work            # Symlink configs for the work profile
 make personal configure   # Apply macOS defaults (dock, keyboard, etc.)
+make install all          # Install all profile bundles
 make install PROFILE=work # Alternate syntax using PROFILE env var
 make app-store install    # Optional Mac App Store apps (after "purchasing" once)
 
@@ -83,7 +88,6 @@ VSCODE_CLI=cursor make vscode  # Install extensions for Cursor
 
 # Package manager updates (updates both the manager and all installed packages)
 make brew update           # Update Homebrew and all brew/cask packages
-make arkade update         # Update arkade CLI and all arkade-installed tools
 make cargo update          # Update Rust toolchain and cargo binaries
 make uv update             # Update uv package manager (use ./install.sh -u for uv tools)
 make mas update            # Update Mac App Store applications
@@ -105,17 +109,37 @@ make mas update            # Update Mac App Store applications
 
 ```bash
 # Preferred workflow
-make personal install        # or: make work install
+make install                 # safe base/common profile
+make install personal        # personal additions (or: make install work)
 make app-store install       # optional, run after clicking "Get" in App Store
 make stow personal           # symlink dotfiles
 make personal configure      # apply macOS settings
 
-# Direct install.sh usage (advanced/CI)
+# Direct install.sh usage (legacy/CI)
 ./install.sh              # Install packages only
 ./install.sh -s           # Install packages and stow configurations
 ./install.sh -d -s        # Preview changes
 ./install.sh -s -f        # Force stow
 ./install.sh -u           # Update installed packages
+```
+
+### Preferred Installer Stack
+
+`make install` follows this order:
+
+1. Read selected `_configs/*.yaml` bundle(s)
+2. Install system-wide dependencies with `brew` where available
+3. Fall back to `apt` for `brew` package tools when `brew` is unavailable
+4. Install project runtimes via `mise install` from local `mise.toml`
+
+```bash
+# One-shot preferred install path
+make install
+
+# Optional helpers
+make install-system    # system deps only (config-driven install.sh)
+make runtime-install   # project runtimes only (mise.toml)
+make install-dry-run   # preview system + runtime changes
 ```
 
 ### macOS System Configuration
@@ -290,7 +314,6 @@ Alternatively, you can:
 The ZSH configuration automatically adds tool directories to PATH if they exist:
 
 - `$HOME/.local/bin` - Local user binaries
-- `$HOME/.arkade/bin` - Arkade-installed tools
 - `$HOME/.cargo/bin` - Rust/Cargo binaries
 - `$HOME/.lmstudio/bin` - LM Studio CLI
 - `$HOME/.tfenv/bin` - Terraform version manager
@@ -319,7 +342,7 @@ All commands show bat-powered syntax highlighting with line numbers in the previ
 The shell adapts based on installed tools:
 
 - **Completions**: kubectl, gh, and other CLI tools
-- **Integrations**: direnv, zoxide, starship, fnm (Fast Node Manager)
+- **Integrations**: direnv, zoxide, starship, mise
 - **Plugins**: zsh-autosuggestions, zsh-syntax-highlighting (via Homebrew)
 - **Aliases**: Conditional git, navigation, and file listing shortcuts
 
@@ -387,19 +410,23 @@ _configs/
 
 | Target | Includes | Purpose |
 |--------|----------|---------|
+| **make install** | All shared/ + host/common | Safe base install (default profile) |
 | **make common install** | All shared/ + host/common | Essential Mac setup |
 | **make ai** | focus/ai | AI/ML development tools |
 | **make app-store** | focus/app-store | Optional Mac App Store apps (requires prior purchase) |
 | **make container-base** | focus/container-base | Podman and container tools |
 | **make containers** | focus/containers | Podman container tools |
+| **make hardware-home** | focus/hardware-home | Optional home hardware + chargeable apps |
 | **make kubernetes** | focus/kubernetes | Kubernetes toolchain |
 | **make neovim** | focus/neovim | Enhanced Neovim |
 | **make python** | focus/python | Python development |
 | **make rust** | focus/rust | Rust development |
 | **make typescript** | focus/typescript | TypeScript/Node.js |
 | **make vscode** | focus/vscode | VSCode + extensions |
-| **make personal install** | Shared + host/common + host/personal + focus/containers + focus/kubernetes + focus/vscode | Full personal Mac |
+| **make personal install** | Shared + host/common + host/personal + focus/containers + focus/kubernetes + focus/vscode | Base personal Mac (no hardware/chargeable extras) |
 | **make work install** | Shared + host/common + host/work + focus/containers + focus/kubernetes + focus/vscode | Work laptop tooling |
+| **make all install** | Shared + host/common + host/personal + host/work + focus/containers + focus/kubernetes + focus/vscode + focus/hardware-home + host/manual-check | Full superset |
+| **make install hardware-home** | focus/hardware-home | Optional home hardware and chargeable apps |
 | **make work-setup** | Runs setup-work-mac.sh | Legacy scripted work setup |
 
 ### Quick Setup Guide
@@ -455,16 +482,6 @@ bat:
   install_args: []
 ```
 
-### Install a tool via arkade
-
-```yaml
-atuin:
-  manager: arkade
-  type: get
-  check_command: "test -f $HOME/.arkade/bin/atuin"
-  install_args: []
-```
-
 ### Install a Python tool via uv
 
 ```yaml
@@ -491,7 +508,7 @@ prettier-vscode:
 Each tool entry requires:
 
 ```yaml
-manager: Package manager to use (brew/arkade/uv/cargo/apt/code)
+manager: Package manager to use (brew/uv/cargo/apt/code/manual/mas)
 type: Installation method specific to the manager
 check_command: Command to verify installation
 install_args: Additional installation arguments (optional)
@@ -517,7 +534,9 @@ VSCODE_CLI=vscodium make focus-vscode
 
 ```shell
 .
-├── install.sh      # Main installation script
+├── Brewfile        # Preferred personal bundle (generated from _configs)
+├── Brewfile.*      # Profile/OS variants (work, common, posix)
+├── install.sh      # Legacy installer/bridge script
 ├── Makefile        # Convenient targets for common operations
 ├── _configs/       # Modular configuration files
 │   ├── shared/     # Cross-platform tools
@@ -555,6 +574,37 @@ sudo apt-get install bats  # Ubuntu/Debian
 
 # Run tests with specific filter
 cd _test && bats install.bats --filter "install_tool"
+```
+
+### Ubuntu 24.04 Lima smoke test (non-mac/POSIX path)
+
+This repository now includes a Lima-based Ubuntu 24.04 smoke test for non-mac flows.
+It validates Linux Homebrew setup and runs the POSIX install/test path without applying
+macOS settings.
+
+By default it uses the composed non-mac personal superset bundle at:
+`_configs/host/personal-posix.list`
+
+```bash
+# Start/create test VM
+make test-lima-up
+
+# Run POSIX/non-mac smoke tests in the VM
+make test-lima-run
+
+# One-shot: start VM (if needed) + run smoke tests
+make test-lima
+
+# Optional lifecycle helpers
+make test-lima-status
+make test-lima-down
+make test-lima-destroy
+
+# Optional: make shellcheck failures blocking for this VM run
+STRICT_SHELLCHECK=true make test-lima-run
+
+# Optional: override the config set for a run
+POSIX_CONFIG_FILES="shared/shell shared/git focus/kubernetes" make test-lima-run
 ```
 
 The test suite includes:

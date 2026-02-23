@@ -103,27 +103,30 @@ EOF
   [[ "$output" =~ "sourced successfully" ]]
 }
 
-@test "bashrc: fnm only initialized when fnm exists" {
-  # Test without fnm - should not error
+@test "bashrc: mise only initialized when mise exists" {
+  # Test without mise - should not error
   run bash -c "
     source $DOTFILES_DIR/bash/.bashrc 2>&1
   "
   [ "$status" -eq 0 ]
 
-  # Create mock fnm
-  echo '#!/bin/bash
-if [[ "$1" == "env" ]]; then
-  echo "export PATH=\"$HOME/.fnm:$PATH\""
-fi' > "$MOCK_BIN_DIR/fnm"
-  chmod +x "$MOCK_BIN_DIR/fnm"
+  # Create mock mise
+  cat > "$MOCK_BIN_DIR/mise" << 'EOF'
+#!/bin/bash
+if [[ "$1" == "activate" && "$2" == "bash" ]]; then
+  echo "export PATH=\"$HOME/.local/share/mise/bin:$PATH\""
+fi
+EOF
+  chmod +x "$MOCK_BIN_DIR/mise"
 
-  # Test with fnm - should initialize
+  # Test with mise - should source successfully
   run bash -c "
+    export PATH='$MOCK_BIN_DIR:\$PATH'
     source $DOTFILES_DIR/bash/.bashrc 2>/dev/null
-    echo \$PATH
+    echo 'sourced successfully'
   "
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "fnm" ]]
+  [[ "$output" =~ "sourced successfully" ]]
 }
 
 # ============================================================================
@@ -186,10 +189,12 @@ fi' > "$MOCK_BIN_DIR/fnm"
   [ "$status" -eq 0 ]
 
   # Create mock direnv
-  echo '#!/bin/bash
+  cat > "$MOCK_BIN_DIR/direnv" << 'EOF'
+#!/bin/bash
 if [[ "$1" == "hook" ]]; then
   echo "# direnv hook mock"
-fi' > "$MOCK_BIN_DIR/direnv"
+fi
+EOF
   chmod +x "$MOCK_BIN_DIR/direnv"
 
   # Test with direnv - should source without error
@@ -239,7 +244,7 @@ fi' > "$MOCK_BIN_DIR/direnv"
 @test "zshrc: does not call brew --prefix directly (uses cached BREW_PREFIX)" {
   # grep for $(brew --prefix) patterns - should not exist in zshrc
   # BREW_PREFIX should be set once in the Homebrew section and reused
-  run grep -c '\$(brew --prefix)' "$DOTFILES_DIR/zsh/.zshrc"
+  run grep -F -c "\$(brew --prefix)" "$DOTFILES_DIR/zsh/.zshrc"
 
   # Should find 0 occurrences
   [ "$output" = "0" ] || [ "$status" -eq 1 ]  # grep returns 1 when no matches
@@ -275,12 +280,16 @@ fi' > "$MOCK_BIN_DIR/direnv"
   local total=0
   local runs=3
 
-  for i in $(seq 1 $runs); do
+  local run_idx
+  for ((run_idx = 1; run_idx <= runs; run_idx++)); do
     # $TIME_CMD outputs: real X.XX
-    local time_output=$($TIME_CMD zsh -i -c exit 2>&1)
-    local real_time=$(echo "$time_output" | grep '^real' | awk '{print $2}')
+    local time_output
+    time_output=$($TIME_CMD zsh -i -c exit 2>&1)
+    local real_time
+    real_time=$(echo "$time_output" | grep '^real' | awk '{print $2}')
     # Convert to milliseconds
-    local ms=$(echo "$real_time" | awk '{printf "%.0f", $1 * 1000}')
+    local ms
+    ms=$(echo "$real_time" | awk '{printf "%.0f", $1 * 1000}')
     total=$((total + ms))
   done
 
@@ -295,7 +304,7 @@ fi' > "$MOCK_BIN_DIR/direnv"
 # Common Tests (both bash and zsh)
 # ============================================================================
 
-@test "both configs: add arkade bin to PATH when it exists" {
+@test "both configs: do not add arkade bin to PATH by default" {
   mkdir -p "$HOME/.arkade/bin"
 
   # Test bash
@@ -303,14 +312,14 @@ fi' > "$MOCK_BIN_DIR/direnv"
     source $DOTFILES_DIR/bash/.bashrc 2>/dev/null
     echo \$PATH
   ")
-  [[ "$result" =~ ".arkade/bin" ]]
+  [[ "$result" != *".arkade/bin"* ]]
 
   # Test zsh
   result=$(zsh -c "
     source $DOTFILES_DIR/zsh/.zshrc 2>/dev/null
     echo \$PATH
   ")
-  [[ "$result" =~ ".arkade/bin" ]]
+  [[ "$result" != *".arkade/bin"* ]]
 }
 
 @test "both configs: set EDITOR to nvim" {

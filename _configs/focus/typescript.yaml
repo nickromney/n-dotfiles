@@ -1,6 +1,6 @@
 # TypeScript/JavaScript development tools
-# NOTE: Node.js should be installed via fnm (from shared/shell.yaml)
-#       Run: fnm install --lts
+# NOTE: Node.js runtime is managed by mise (see mise.toml)
+#       Run: mise install
 tools:
   # Tap for bun
   oven-sh/bun:

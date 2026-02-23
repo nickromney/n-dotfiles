@@ -4,7 +4,8 @@ load helpers/mocks
 
 setup() {
   # Create a temporary directory for testing
-  export TEST_DIR="$(mktemp -d)"
+  TEST_DIR="$(mktemp -d)"
+  export TEST_DIR
   export HOME="$TEST_DIR/home"
   export MOCK_BIN_DIR="$TEST_DIR/bin"
   export PATH="$MOCK_BIN_DIR:$PATH"
@@ -176,7 +177,8 @@ EOF
 
   # Check that only public keys were requested
   grep -q "public key" "$TEST_DIR/op-calls.log"
-  ! grep -q "private key" "$TEST_DIR/op-calls.log"
+  run ! grep -q "private key" "$TEST_DIR/op-calls.log"
+  [ "$status" -eq 0 ]
 }
 
 @test "SSH setup: unsafe mode requires confirmation" {

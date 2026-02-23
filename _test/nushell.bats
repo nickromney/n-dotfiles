@@ -21,7 +21,7 @@ setup() {
     NUSHELL_CONFIG_DIR="$BATS_TEST_DIRNAME/../nushell/Library/Application Support/nushell"
 
     # Change to the repo root directory
-    cd "$BATS_TEST_DIRNAME/.."
+    cd "$BATS_TEST_DIRNAME/.." || return 1
 }
 
 teardown() {
@@ -84,7 +84,7 @@ teardown() {
 }
 
 @test "nushell: config sets show_banner to false" {
-    run grep '$env.config.show_banner = false' "$NUSHELL_CONFIG_DIR/config.nu"
+    run grep "\$env.config.show_banner = false" "$NUSHELL_CONFIG_DIR/config.nu"
     [[ "$status" -eq 0 ]]
 }
 
@@ -98,7 +98,7 @@ teardown() {
 }
 
 @test "nushell: env.nu sets up PATH correctly" {
-    run grep '$env.PATH' "$NUSHELL_CONFIG_DIR/env.nu"
+    run grep "\$env.PATH" "$NUSHELL_CONFIG_DIR/env.nu"
     [[ "$status" -eq 0 ]]
 
     # Check for important paths

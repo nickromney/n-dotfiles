@@ -1,15 +1,6 @@
 # Manual installation check - apps that require manual installation
 # These are tracked for completeness but never auto-installed
 tools:
-  # AI Tools
-  claude-code:
-    manager: manual
-    type: check
-    check_command: "[ -f '$HOME/.local/bin/claude' ]"
-    description: "Claude AI coding assistant CLI"
-    documentation_url: "https://claude.ai/code"
-    category: development
-
   # Screen recording and capture
   snagit:
     manager: manual
@@ -25,6 +16,14 @@ tools:
     check_command: "ls -d '/Applications/Camtasia'*.app 2>/dev/null | grep -qE '(Camtasia\\.app|Camtasia [0-9]{4}\\.app)'"
     description: "Screen recording and video editing software by TechSmith"
     documentation_url: "https://www.techsmith.com/video-editor.html"
+    category: utilities
+
+  cleanshot-x:
+    manager: manual
+    type: check
+    check_command: "[ -d '/Applications/CleanShot X.app' ]"
+    description: "Screen capture and recording tool for macOS"
+    documentation_url: "https://cleanshot.com/"
     category: utilities
 
   # File comparison
@@ -61,3 +60,11 @@ tools:
     description: "GPG key management (part of GPG Suite)"
     documentation_url: "https://gpgtools.org/"
     category: security
+
+  docker-desktop:
+    manager: manual
+    type: check
+    check_command: "[ -d '/Applications/Docker.app' ]"
+    description: "Docker Desktop for macOS"
+    documentation_url: "https://www.docker.com/products/docker-desktop/"
+    category: containers

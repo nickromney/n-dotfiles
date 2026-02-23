@@ -1,3 +1,10 @@
+---
+name: setup-security-scanning
+description: >
+  Automated security scanning for code, dependencies, infrastructure-as-code, and
+  secrets using industry-standard tools in CI/CD pipelines.
+---
+
 # Setup Security Scanning
 
 Automated security scanning for code, dependencies, infrastructure-as-code, and secrets using industry-standard tools in CI/CD pipelines.

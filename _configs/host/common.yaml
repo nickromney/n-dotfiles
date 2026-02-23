@@ -3,15 +3,15 @@ tools:
   node-lts:
     manager: manual
     type: check
-    check_command: 'command -v node >/dev/null && command -v fnm >/dev/null && [ -n "${FNM_MULTISHELL_PATH:-}" ]'
-    description: "Node.js LTS via fnm (run: ./scripts/install-node-via-fnm.sh or fnm install --lts)"
+    check_command: 'command -v node >/dev/null && command -v mise >/dev/null'
+    description: "Node.js runtime managed by mise (run: mise install)"
     documentation_url: "https://nodejs.org/"
     category: development
 
   1password:
     manager: brew
     type: cask
-    check_command: "brew list --cask | grep -q '^1password$'"
+    check_command: "brew list --cask 1password >/dev/null 2>&1"
     description: "Password manager"
     documentation_url: "https://1password.com/"
     category: security
@@ -50,7 +50,7 @@ tools:
     documentation_url: "https://github.com/FelixKratz/JankyBorders"
     category: window-manager
 
-  FelixKratz/formulae/borders:
+  FelixKratz/formulae:
     manager: brew
     type: tap
     check_command: "brew tap | grep -q '^felixkratz/formulae$'"

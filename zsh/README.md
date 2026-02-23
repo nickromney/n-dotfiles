@@ -78,7 +78,7 @@ The configuration dynamically adapts based on which tools are installed:
 - **Zoxide** (smart cd command) is used if available
 - **FZF** (fuzzy finder) with optimizations if available
 - **Starship** prompt if available
-- **fnm** (Fast Node Manager) if installed via Homebrew
+- **mise** runtime activation if installed
 - **kubectl** completions and aliases if available
 - **direnv** integration if available
 - Plugins like **zsh-autosuggestions** and **zsh-syntax-highlighting** if available via Homebrew

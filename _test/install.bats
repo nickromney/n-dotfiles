@@ -114,9 +114,13 @@ EOF
   run get_available_managers "test.yaml"
   [ "$status" -eq 0 ]
 
-  # Function now outputs manager names to stdout, unavailable to stderr
-  if command_exists brew; then
+  # Function now outputs manager names to stdout, unavailable to stderr.
+  # brew manager is available when brew exists OR apt fallback is usable.
+  # On Linux non-root (non-dry-run), apt exists but fallback requires sudo.
+  if command_exists brew || can_use_apt; then
     [[ "$output" =~ "brew" ]]
+  elif command_exists "apt-get" && ! is_root && [[ "$DRY_RUN" == "false" ]]; then
+    [[ "$output" =~ "brew: brew unavailable; apt fallback requires root privileges - please run with sudo" ]]
   else
     [[ "$output" =~ brew:\ please\ install\ from\ https://brew.sh ]]
   fi
@@ -475,6 +479,28 @@ EOF
   run install_tool "jq" "test.yaml"
   [ "$status" -eq 0 ]
   assert_mock_called "brew" "install jq"
+}
+
+@test "install_tool falls back to apt for brew package when brew is unavailable" {
+  mock_yq
+  mock_apt_get
+  mock_id 0
+
+  # Force brew unavailable while keeping apt-get available
+  command_exists() {
+    case "$1" in
+      apt-get|yq|which) return 0 ;;
+      brew) return 1 ;;
+      *) return 1 ;;
+    esac
+  }
+  export -f command_exists
+
+  run install_tool "jq" "test.yaml"
+  [ "$status" -eq 0 ]
+  assert_mock_called "apt-get" "update -qq"
+  assert_mock_called "apt-get" "install -y jq"
+  assert_mock_not_called "brew"
 }
 
 @test "install_tool installs brew cask" {
@@ -943,6 +969,58 @@ EOF
   [[ "$output" =~ "unknown package manager: foo" ]]
   [[ "$output" =~ "Skipping footool: foo not available" ]]
 }
+
+@test "main function handles install_tool return code 2 without exiting" {
+  # Mock one brew-managed tool that is reported as not installed.
+  mock_command_with_script "yq" '
+case "$*" in
+  *".tools[].manager"*)
+    echo "brew"
+    exit 0
+    ;;
+  *".tools | keys | .[]"*|*".tools | select(. != null) | keys | .[]"*)
+    echo "tool1"
+    exit 0
+    ;;
+  *".tools.tool1.manager"*)
+    echo "brew"
+    exit 0
+    ;;
+  *".tools.tool1.type"*)
+    echo "package"
+    exit 0
+    ;;
+  *".tools.tool1.check_command"*)
+    echo "command -v definitely-missing-tool"
+    exit 0
+    ;;
+  *".tools.tool1.install_args[]"*)
+    exit 0
+    ;;
+  *)
+    echo "null"
+    exit 0
+    ;;
+esac
+'
+  mock_command "which"
+  mock_command "brew"
+
+  # Force install_tool to signal "already up to date"
+  install_tool() {
+    return 2
+  }
+  export -f install_tool
+
+  mkdir -p "$BATS_TEST_TMPDIR/_configs"
+  touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
+  export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
+  export CONFIG_FILES=("test")
+
+  run main
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "was already up to date" ]]
+}
 # Tests for get_vscode_cli function
 @test "get_vscode_cli returns code by default" {
   # Mock code command
@@ -1025,7 +1103,7 @@ echo "Installing extension: $*"' > "$MOCK_BIN_DIR/code"
 
   run install_tool "tool1" "test.yaml"
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "Installing extension: --install-extension esbenp.prettier-vscode" ]]
+  [[ "$output" == *"Installing extension: --install-extension esbenp.prettier-vscode"* ]]
 }
 
 @test "install_tool skips code extension without extension_id" {
@@ -1049,11 +1127,13 @@ echo "Installing extension: $*"' > "$MOCK_BIN_DIR/code"
 
 @test "is_tool_installed checks mas app installation" {
   # Mock mas command
-  echo '#!/usr/bin/env bash
+  cat > "$MOCK_BIN_DIR/mas" << 'EOF'
+#!/usr/bin/env bash
 if [[ "$1" == "list" ]]; then
   echo "904280696   Things                 (3.21.14)"
   echo "967805235    Paste                  (5.0.9)"
-fi' > "$MOCK_BIN_DIR/mas"
+fi
+EOF
   chmod +x "$MOCK_BIN_DIR/mas"
 
   # Mock yq
@@ -1072,10 +1152,12 @@ fi' > "$MOCK_BIN_DIR/mas"
 
 @test "is_tool_installed detects missing mas app" {
   # Mock mas command without the app
-  echo '#!/usr/bin/env bash
+  cat > "$MOCK_BIN_DIR/mas" << 'EOF'
+#!/usr/bin/env bash
 if [[ "$1" == "list" ]]; then
   echo "967805235    Paste                  (5.0.9)"
-fi' > "$MOCK_BIN_DIR/mas"
+fi
+EOF
   chmod +x "$MOCK_BIN_DIR/mas"
 
   # Mock yq
@@ -1094,12 +1176,17 @@ fi' > "$MOCK_BIN_DIR/mas"
 
 @test "is_tool_installed substitutes VSCode CLI for code extensions" {
   export VSCODE_CLI="cursor"
+  local test_home="$BATS_TEST_TMPDIR/home-cursor"
+  export HOME="$test_home"
+  mkdir -p "$HOME"
 
   # Mock cursor command
-  echo '#!/usr/bin/env bash
+  cat > "$MOCK_BIN_DIR/cursor" << 'EOF'
+#!/usr/bin/env bash
 if [[ "$1" == "--list-extensions" ]]; then
   echo "esbenp.prettier-vscode"
-fi' > "$MOCK_BIN_DIR/cursor"
+fi
+EOF
   chmod +x "$MOCK_BIN_DIR/cursor"
 
   # Mock yq
@@ -1160,7 +1247,7 @@ esac
 
   run main
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "Processing: $BATS_TEST_TMPDIR/_configs/empty.yaml" ]]
+  [[ "$output" == *"Processing: $BATS_TEST_TMPDIR/_configs/empty.yaml"* ]]
   # Should not error on missing tools key
   [[ ! "$output" =~ "error" ]]
 }

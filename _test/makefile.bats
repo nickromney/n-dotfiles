@@ -5,11 +5,16 @@
 setup() {
   # Save current directory
   export ORIGINAL_DIR="$PWD"
-  export REPO_ROOT="$(cd "$BATS_TEST_DIRNAME/.." && pwd)"
-  export TEST_DIR="$(mktemp -d)"
+  local repo_root
+  repo_root="$(cd "$BATS_TEST_DIRNAME/.." && pwd)"
+  export REPO_ROOT="$repo_root"
+  TEST_DIR="$(mktemp -d)"
+  export TEST_DIR
 
   # Create a minimal test environment
-  cd "$TEST_DIR"
+  cd "$TEST_DIR" || return 1
+  mkdir -p "$TEST_DIR/mocks"
+  export PATH="$TEST_DIR/mocks:$PATH"
 
   # Create mock install.sh that just prints its arguments
   cat > install.sh << 'EOF'
@@ -18,6 +23,27 @@ echo "CONFIG_FILES: $CONFIG_FILES"
 echo "Arguments: $@"
 EOF
   chmod +x install.sh
+
+  cat > "$TEST_DIR/mocks/brew" <<'EOF'
+#!/usr/bin/env bash
+if [[ "$1" == "bundle" ]]; then
+  echo "brew bundle called"
+  exit 0
+fi
+echo "brew $*"
+exit 0
+EOF
+  chmod +x "$TEST_DIR/mocks/brew"
+
+  cat > "$TEST_DIR/mocks/mise" <<'EOF'
+#!/usr/bin/env bash
+echo "mise $*"
+exit 0
+EOF
+  chmod +x "$TEST_DIR/mocks/mise"
+
+  touch Brewfile Brewfile.work Brewfile.common Brewfile.all Brewfile.posix
+  touch mise.toml
 
   mkdir -p _macos
   cat > _macos/macos.sh <<'EOF'
@@ -32,7 +58,7 @@ EOF
 }
 
 teardown() {
-  cd "$ORIGINAL_DIR"
+  cd "$ORIGINAL_DIR" || return 1
   rm -rf "$TEST_DIR"
 }
 
@@ -50,13 +76,23 @@ teardown() {
   [[ "$output" =~ "Examples" ]]
 }
 
-@test "make install defaults to personal profile" {
+@test "make install defaults to common profile" {
   run make install
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "host/personal" ]]
-  [[ "$output" =~ "focus/containers" ]]
+  [[ "$output" =~ "host/common" ]]
+  [[ ! "$output" =~ "focus/ai" ]]
+  [[ ! "$output" =~ "host/personal" ]]
+  [[ ! "$output" =~ "host/work" ]]
+  [[ "$output" =~ "mise install" ]]
+  [[ ! "$output" =~ "brew bundle called" ]]
   [[ ! "$output" =~ "-u" ]]
   [[ ! "$output" =~ "-s" ]]
+}
+
+@test "make install-dry-run uses mise dry-run" {
+  run make install-dry-run
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "mise install --dry-run" ]]
 }
 
 @test "make personal without action triggers install" {
@@ -71,6 +107,16 @@ teardown() {
   [ "$status" -eq 0 ]
   [[ "$output" =~ "host/work" ]]
   [[ ! "$output" =~ "host/personal" ]]
+}
+
+@test "make install all uses all profile bundles" {
+  run make install all
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "host/common" ]]
+  [[ "$output" =~ "host/personal" ]]
+  [[ "$output" =~ "host/work" ]]
+  [[ "$output" =~ "focus/hardware-home" ]]
+  [[ ! "$output" =~ "focus/ai" ]]
 }
 
 @test "make work install uses work profile" {
@@ -93,10 +139,11 @@ teardown() {
   [[ "$output" =~ "-u" ]]
 }
 
-@test "make update defaults to personal profile" {
+@test "make update defaults to common profile" {
   run make update
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "host/personal" ]]
+  [[ "$output" =~ "host/common" ]]
+  [[ ! "$output" =~ "host/personal" ]]
   [[ "$output" =~ "-u" ]]
 }
 
@@ -109,8 +156,8 @@ teardown() {
 @test "make configure work calls macos.sh with work yaml" {
   run make configure work
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "Applying macOS settings from _macos/work.yaml" ]]
-  [[ "$output" =~ "macos.sh called with: work.yaml" ]]
+  [[ "$output" == *"Applying macOS settings from _macos/work.yaml"* ]]
+  [[ "$output" == *"macos.sh called with: work.yaml"* ]]
 }
 
 @test "make vscode runs with correct configs" {

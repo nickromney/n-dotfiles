@@ -1,0 +1,51 @@
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-arm64.img"
+    arch: "aarch64"
+  - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img"
+    arch: "x86_64"
+
+vmType: "vz"
+rosetta:
+  enabled: true
+
+cpus: 2
+memory: "4GiB"
+disk: "24GiB"
+
+mounts:
+  - location: "~"
+    writable: false
+
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -euxo pipefail
+      export DEBIAN_FRONTEND=noninteractive
+      apt-get update
+      apt-get install -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        curl \
+        file \
+        git \
+        jq \
+        make \
+        procps \
+        xz-utils
+  - mode: user
+    script: |
+      #!/bin/bash
+      set -euxo pipefail
+
+      if ! command -v brew >/dev/null 2>&1; then
+        NONINTERACTIVE=1 bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+      fi
+
+      if [ -x "$HOME/.linuxbrew/bin/brew" ]; then
+        eval "$("$HOME/.linuxbrew/bin/brew" shellenv)"
+      elif [ -x "/home/linuxbrew/.linuxbrew/bin/brew" ]; then
+        eval "$("/home/linuxbrew/.linuxbrew/bin/brew" shellenv)"
+      fi
+
+      brew --version
