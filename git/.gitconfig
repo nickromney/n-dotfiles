@@ -1,6 +1,6 @@
 [user]
-  email = 26225537+nickromney@users.noreply.github.com
-  name = Nick Romney
+	email = 26225537+nickromney@users.noreply.github.com
+	name = Nick Romney
   signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN2fbfayqsGb5sCmf9NANOseF4qBLA1auXkayWEtvYvM
   # Verified that this is the public key - discoverable at https://api.github.com/users/nickromney/keys
 

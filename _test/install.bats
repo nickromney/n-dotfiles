@@ -1025,7 +1025,7 @@ echo "Installing extension: $*"' > "$MOCK_BIN_DIR/code"
 
   run install_tool "tool1" "test.yaml"
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "Installing extension: --install-extension esbenp.prettier-vscode" ]]
+  [[ "$output" == *"Installing extension: --install-extension esbenp.prettier-vscode"* ]]
 }
 
 @test "install_tool skips code extension without extension_id" {
@@ -1049,11 +1049,13 @@ echo "Installing extension: $*"' > "$MOCK_BIN_DIR/code"
 
 @test "is_tool_installed checks mas app installation" {
   # Mock mas command
-  echo '#!/usr/bin/env bash
+  cat > "$MOCK_BIN_DIR/mas" << 'EOF'
+#!/usr/bin/env bash
 if [[ "$1" == "list" ]]; then
   echo "904280696   Things                 (3.21.14)"
   echo "967805235    Paste                  (5.0.9)"
-fi' > "$MOCK_BIN_DIR/mas"
+fi
+EOF
   chmod +x "$MOCK_BIN_DIR/mas"
 
   # Mock yq
@@ -1072,10 +1074,12 @@ fi' > "$MOCK_BIN_DIR/mas"
 
 @test "is_tool_installed detects missing mas app" {
   # Mock mas command without the app
-  echo '#!/usr/bin/env bash
+  cat > "$MOCK_BIN_DIR/mas" << 'EOF'
+#!/usr/bin/env bash
 if [[ "$1" == "list" ]]; then
   echo "967805235    Paste                  (5.0.9)"
-fi' > "$MOCK_BIN_DIR/mas"
+fi
+EOF
   chmod +x "$MOCK_BIN_DIR/mas"
 
   # Mock yq
@@ -1094,12 +1098,17 @@ fi' > "$MOCK_BIN_DIR/mas"
 
 @test "is_tool_installed substitutes VSCode CLI for code extensions" {
   export VSCODE_CLI="cursor"
+  local test_home="$BATS_TEST_TMPDIR/home-cursor"
+  export HOME="$test_home"
+  mkdir -p "$HOME"
 
   # Mock cursor command
-  echo '#!/usr/bin/env bash
+  cat > "$MOCK_BIN_DIR/cursor" << 'EOF'
+#!/usr/bin/env bash
 if [[ "$1" == "--list-extensions" ]]; then
   echo "esbenp.prettier-vscode"
-fi' > "$MOCK_BIN_DIR/cursor"
+fi
+EOF
   chmod +x "$MOCK_BIN_DIR/cursor"
 
   # Mock yq
@@ -1160,7 +1169,7 @@ esac
 
   run main
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "Processing: $BATS_TEST_TMPDIR/_configs/empty.yaml" ]]
+  [[ "$output" == *"Processing: $BATS_TEST_TMPDIR/_configs/empty.yaml"* ]]
   # Should not error on missing tools key
   [[ ! "$output" =~ "error" ]]
 }

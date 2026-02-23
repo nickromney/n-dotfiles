@@ -1,3 +1,10 @@
+---
+name: setup-semantic-release
+description: >
+  Automated version management and package publishing using semantic-release. Determines
+  the next version, generates a changelog, and publishes based on commit messages.
+---
+
 # Setup Semantic Release
 
 Automated version management and package publishing using semantic-release. Automatically determines the next version number, generates a changelog, and publishes the package based on commit messages.

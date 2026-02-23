@@ -199,7 +199,7 @@ EOF
   run "$BATS_TEST_TMPDIR/bootstrap.sh"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "Next steps:" ]]
-  [[ "$output" =~ "./install.sh -d" ]]
+  [[ "$output" == *"./install.sh -d"* ]]
   [[ "$output" =~ "make focus-vscode" ]]
   [[ "$output" =~ "make focus-neovim" ]]
 }

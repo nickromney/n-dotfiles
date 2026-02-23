@@ -29,9 +29,11 @@ any_failed=false
 check_file() {
     local file="$1"
     local name="$2"
+    shift 2
+    local shellcheck_args=("$@")
 
     echo -e "${YELLOW}Checking $name...${NC}"
-    if shellcheck "$file" 2>&1 | tee /tmp/shellcheck_output.txt; then
+    if shellcheck "${shellcheck_args[@]}" "$file" 2>&1 | tee /tmp/shellcheck_output.txt; then
         echo -e "  ${GREEN}✓ No issues found${NC}"
     else
         local error_count
@@ -77,7 +79,8 @@ done
 echo -e "${YELLOW}Checking BATS test files...${NC}"
 for bats_file in _test/*.bats; do
     if [[ -f "$bats_file" ]]; then
-        check_file "$bats_file" "$bats_file"
+        # Bats executes @test functions in a managed way that triggers noisy false positives.
+        check_file "$bats_file" "$bats_file" -e SC2030,SC2031,SC2329
     fi
 done
 

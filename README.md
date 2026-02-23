@@ -557,6 +557,37 @@ sudo apt-get install bats  # Ubuntu/Debian
 cd _test && bats install.bats --filter "install_tool"
 ```
 
+### Ubuntu 24.04 Lima smoke test (non-mac/POSIX path)
+
+This repository now includes a Lima-based Ubuntu 24.04 smoke test for non-mac flows.
+It validates Linux Homebrew setup and runs the POSIX install/test path without applying
+macOS settings.
+
+By default it uses the composed non-mac personal superset bundle at:
+`_configs/host/personal-posix.list`
+
+```bash
+# Start/create test VM
+make test-lima-up
+
+# Run POSIX/non-mac smoke tests in the VM
+make test-lima-run
+
+# One-shot: start VM (if needed) + run smoke tests
+make test-lima
+
+# Optional lifecycle helpers
+make test-lima-status
+make test-lima-down
+make test-lima-destroy
+
+# Optional: make shellcheck failures blocking for this VM run
+STRICT_SHELLCHECK=true make test-lima-run
+
+# Optional: override the config set for a run
+POSIX_CONFIG_FILES="shared/shell shared/git focus/kubernetes" make test-lima-run
+```
+
 The test suite includes:
 
 - Unit tests for all utility functions

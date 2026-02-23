@@ -126,13 +126,15 @@ EOF
 # Test mas app installation check
 @test "mas: detects installed app" {
   # Mock mas with Things installed
-  echo '#!/usr/bin/env bash
+  cat > "$MOCK_BIN_DIR/mas" << 'EOF'
+#!/usr/bin/env bash
 case "$1" in
   list)
     echo "904280696   Things                 (3.21.14)"
     echo "967805235    Paste                  (5.0.9)"
     ;;
-esac' > "$MOCK_BIN_DIR/mas"
+esac
+EOF
   chmod +x "$MOCK_BIN_DIR/mas"
 
   # Mock yq
@@ -151,12 +153,14 @@ esac' > "$MOCK_BIN_DIR/mas"
 
 @test "mas: detects missing app" {
   # Mock mas without Things
-  echo '#!/usr/bin/env bash
+  cat > "$MOCK_BIN_DIR/mas" << 'EOF'
+#!/usr/bin/env bash
 case "$1" in
   list)
     echo "967805235    Paste                  (5.0.9)"
     ;;
-esac' > "$MOCK_BIN_DIR/mas"
+esac
+EOF
   chmod +x "$MOCK_BIN_DIR/mas"
 
   # Mock yq
@@ -179,7 +183,8 @@ esac' > "$MOCK_BIN_DIR/mas"
   export CURRENT_CONFIG_FILE="test.yaml"
 
   # Mock mas with outdated app
-  echo '#!/usr/bin/env bash
+  cat > "$MOCK_BIN_DIR/mas" << 'EOF'
+#!/usr/bin/env bash
 case "$*" in
   outdated)
     echo "904280696   Things         (3.21.13 -> 3.21.14)"
@@ -188,7 +193,8 @@ case "$*" in
     echo "==> Upgrading Things..."
     echo "✓ Successfully upgraded Things"
     ;;
-esac' > "$MOCK_BIN_DIR/mas"
+esac
+EOF
   chmod +x "$MOCK_BIN_DIR/mas"
 
   # Mock yq
@@ -217,7 +223,8 @@ esac' > "$MOCK_BIN_DIR/mas"
   export CURRENT_CONFIG_FILE="test.yaml"
 
   # Mock mas with no outdated apps
-  echo '#!/usr/bin/env bash
+  cat > "$MOCK_BIN_DIR/mas" << 'EOF'
+#!/usr/bin/env bash
 case "$*" in
   outdated)
     # Return empty - nothing outdated
@@ -226,7 +233,8 @@ case "$*" in
     echo "ERROR: Should not be called"
     exit 1
     ;;
-esac' > "$MOCK_BIN_DIR/mas"
+esac
+EOF
   chmod +x "$MOCK_BIN_DIR/mas"
 
   # Mock yq

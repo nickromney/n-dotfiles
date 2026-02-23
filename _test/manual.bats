@@ -71,7 +71,7 @@ EOF
   [ "$status" -eq 0 ]
   [[ "$output" =~ "snagit requires manual installation" ]]
   [[ "$output" =~ "Screen capture software" ]]
-  [[ "$output" =~ "https://www.techsmith.com/screen-capture.html" ]]
+  [[ "$output" == *"https://www.techsmith.com/screen-capture.html"* ]]
 }
 
 # Test manual tool in dry run mode
@@ -92,8 +92,8 @@ EOF
 
   run install_tool "homerow" "test.yaml"
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "Would report: homerow requires manual installation" ]]
-  [[ "$output" =~ "Download from: https://www.homerow.app/" ]]
+  [[ "$output" == *"Would report: homerow requires manual installation"* ]]
+  [[ "$output" == *"Download from: https://www.homerow.app/"* ]]
 }
 
 # Test manual tool installation check
@@ -137,19 +137,8 @@ EOF
   export UPDATE="true"
   export CURRENT_CONFIG_FILE="test.yaml"
 
-  # Mock yq
-  yq() {
-    case "$*" in
-      *".tools.camtasia.manager"*) echo "manual" ;;
-      *".tools.camtasia.type"*) echo "check" ;;
-      *) echo "null" ;;
-    esac
-  }
-  export -f yq
-
   # Simulate the update check (this would be in main loop)
-  manager=$(yq ".tools.camtasia.manager" "$CURRENT_CONFIG_FILE")
-  type=$(yq ".tools.camtasia.type" "$CURRENT_CONFIG_FILE")
+  manager="manual"
 
   if [[ "$manager" == "manual" ]]; then
     echo "✓ camtasia (manual) - check vendor site for updates"
@@ -164,7 +153,6 @@ EOF
 @test "manual: shows correct already installed message" {
   # Create a simple test that simulates the main loop behavior
   manager="manual"
-  type="check"
   tool="beyond-compare"
 
   # Simulate the already installed message
@@ -176,7 +164,7 @@ EOF
 
   run echo "$output"
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "✓ beyond-compare (manual) is already installed" ]]
+  [[ "$output" == *"✓ beyond-compare (manual) is already installed"* ]]
 }
 
 # Test can_install_tool with manual manager
@@ -190,6 +178,7 @@ EOF
   }
   export -f yq
 
+  # shellcheck disable=SC2034 # consumed by can_install_tool in sourced install.sh
   AVAILABLE_MANAGERS=("manual" "brew")
 
   run can_install_tool "gpg-keychain" "test.yaml"

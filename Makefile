@@ -381,6 +381,32 @@ test-macos: ## Run macOS configuration tests only
 	@echo "$(YELLOW)Running macOS tests...$(NC)"
 	@./_test/run_macos_tests.sh
 
+##@ Linux/Lima Validation
+
+.PHONY: test-lima-up
+test-lima-up: ## Start Ubuntu 24.04 Lima VM used for POSIX/non-mac smoke tests
+	@./_test/lima/lima-posix.sh up
+
+.PHONY: test-lima-run
+test-lima-run: ## Run POSIX/non-mac smoke tests inside the Lima VM
+	@./_test/lima/lima-posix.sh run
+
+.PHONY: test-lima
+test-lima: ## Start Lima VM (if needed) and run POSIX/non-mac smoke tests
+	@./_test/lima/lima-posix.sh test
+
+.PHONY: test-lima-status
+test-lima-status: ## Show Lima VM status for the POSIX/non-mac test instance
+	@./_test/lima/lima-posix.sh status
+
+.PHONY: test-lima-down
+test-lima-down: ## Stop the Lima POSIX/non-mac test VM (preserves state)
+	@./_test/lima/lima-posix.sh down
+
+.PHONY: test-lima-destroy
+test-lima-destroy: ## Delete the Lima POSIX/non-mac test VM
+	@./_test/lima/lima-posix.sh destroy
+
 ##@ Tools
 
 .PHONY: browser-tools

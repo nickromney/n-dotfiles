@@ -21,11 +21,11 @@ setup() {
   export PATH="$BATS_TEST_TMPDIR/mocks:$PATH"
 
   # Change to test directory - this is where script will run
-  cd "$BATS_TEST_TMPDIR"
+  cd "$BATS_TEST_TMPDIR" || return 1
 }
 
 teardown() {
-  cd "$ORIG_DIR"
+  cd "$ORIG_DIR" || return 1
   rm -rf "$BATS_TEST_TMPDIR"
 }
 
@@ -159,7 +159,7 @@ EOF
 
   run ./setup-work-mac.sh
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "macos.sh called with: work.yaml" ]]
+  [[ "$output" == *"macos.sh called with: work.yaml"* ]]
 }
 
 @test "setup-work-mac: runs stow" {

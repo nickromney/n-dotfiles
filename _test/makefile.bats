@@ -5,11 +5,14 @@
 setup() {
   # Save current directory
   export ORIGINAL_DIR="$PWD"
-  export REPO_ROOT="$(cd "$BATS_TEST_DIRNAME/.." && pwd)"
-  export TEST_DIR="$(mktemp -d)"
+  local repo_root
+  repo_root="$(cd "$BATS_TEST_DIRNAME/.." && pwd)"
+  export REPO_ROOT="$repo_root"
+  TEST_DIR="$(mktemp -d)"
+  export TEST_DIR
 
   # Create a minimal test environment
-  cd "$TEST_DIR"
+  cd "$TEST_DIR" || return 1
 
   # Create mock install.sh that just prints its arguments
   cat > install.sh << 'EOF'
@@ -32,7 +35,7 @@ EOF
 }
 
 teardown() {
-  cd "$ORIGINAL_DIR"
+  cd "$ORIGINAL_DIR" || return 1
   rm -rf "$TEST_DIR"
 }
 
@@ -109,8 +112,8 @@ teardown() {
 @test "make configure work calls macos.sh with work yaml" {
   run make configure work
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "Applying macOS settings from _macos/work.yaml" ]]
-  [[ "$output" =~ "macos.sh called with: work.yaml" ]]
+  [[ "$output" == *"Applying macOS settings from _macos/work.yaml"* ]]
+  [[ "$output" == *"macos.sh called with: work.yaml"* ]]
 }
 
 @test "make vscode runs with correct configs" {

@@ -12,6 +12,8 @@ DRY_RUN="${DRY_RUN:-false}"
 UNSAFE_MODE="${UNSAFE_MODE:-false}"
 MACHINE_PROFILE="${MACHINE_PROFILE:-}"
 FORCE_OVERWRITE="${FORCE_OVERWRITE:-false}"
+LITERAL_TILDE='~'
+SSH_CONFIG_ITEM_NAME="${LITERAL_TILDE}/.ssh/config"
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -207,7 +209,7 @@ for key_mapping in "${ALL_SSH_KEYS[@]}"; do
   IFS=':' read -r op_name local_name item_vault <<<"$key_mapping"
 
   # Check if this key is in the profile's allowed list
-  if [[ " $profile_key_names " =~ " $op_name " ]]; then
+  if [[ " $profile_key_names " == *" $op_name "* ]]; then
     SSH_KEYS+=("$key_mapping")
   fi
 done
@@ -230,10 +232,10 @@ if [[ "$DRY_RUN" == "true" ]]; then
   missing_items=()
 
   # Check SSH Config
-  if op item get "~/.ssh/config" --vault="$VAULT" >/dev/null 2>&1; then
-    available_items+=("~/.ssh/config (Secure Note)")
+  if op item get "$SSH_CONFIG_ITEM_NAME" --vault="$VAULT" >/dev/null 2>&1; then
+    available_items+=("$SSH_CONFIG_ITEM_NAME (Secure Note)")
   else
-    missing_items+=("~/.ssh/config (Secure Note)")
+    missing_items+=("$SSH_CONFIG_ITEM_NAME (Secure Note)")
   fi
 
   # Check SSH Keys
@@ -350,8 +352,8 @@ done
 # Step 2: Setup SSH Config (from 1Password or example)
 info "Setting up SSH config..."
 # Try notesPlain first (Secure Notes), then notes (older format)
-if op item get "~/.ssh/config" --vault="$VAULT" --fields notesPlain 2>/dev/null >"$SSH_DIR/config" ||
-   op item get "~/.ssh/config" --vault="$VAULT" --fields notes 2>/dev/null >"$SSH_DIR/config"; then
+if op item get "$SSH_CONFIG_ITEM_NAME" --vault="$VAULT" --fields notesPlain 2>/dev/null >"$SSH_DIR/config" ||
+   op item get "$SSH_CONFIG_ITEM_NAME" --vault="$VAULT" --fields notes 2>/dev/null >"$SSH_DIR/config"; then
   # Remove surrounding quotes and fix escaped quotes (1Password CLI adds them)
   # First remove outer quotes from entire file, then fix doubled quotes
   # Detect platform for sed in-place editing
