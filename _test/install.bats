@@ -116,8 +116,11 @@ EOF
 
   # Function now outputs manager names to stdout, unavailable to stderr.
   # brew manager is available when brew exists OR apt fallback is usable.
+  # On Linux non-root (non-dry-run), apt exists but fallback requires sudo.
   if command_exists brew || can_use_apt; then
     [[ "$output" =~ "brew" ]]
+  elif command_exists "apt-get" && ! is_root && [[ "$DRY_RUN" == "false" ]]; then
+    [[ "$output" =~ "brew: brew unavailable; apt fallback requires root privileges - please run with sudo" ]]
   else
     [[ "$output" =~ brew:\ please\ install\ from\ https://brew.sh ]]
   fi
