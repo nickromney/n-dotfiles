@@ -24,7 +24,7 @@ else
   CONFIG_FILES=("host/common")
 fi
 REQUIRED_COMMANDS=("yq" "which")
-STOW_DIRS=(aerospace aws bash bat claude codex factory gh ghostty git kitty nushell nvim prettier starship tmux vscode zsh)
+STOW_DIRS=(aerospace aws bash bat claude codex factory gh ghostty git kitty nushell nvim prettier starship tmux vscode yazi zsh)
 
 # Default values and argument parsing
 DRY_RUN="${DRY_RUN:-false}"
@@ -332,7 +332,7 @@ check_dependencies() {
 
   # Check each dependency
   local i
-  for ((i=0; i<deps_count; i++)); do
+  for ((i = 0; i < deps_count; i++)); do
     local dep_name dep_check
     dep_name=$(yq ".tools.${tool}.dependencies[$i].name" "$yaml_file")
     dep_check=$(yq ".tools.${tool}.dependencies[$i].check_command" "$yaml_file")
@@ -507,7 +507,7 @@ install_tool() {
       [[ "$description" != "null" ]] && info "    $description"
       [[ "$doc_url" != "null" ]] && info "    Download from: $doc_url"
     fi
-    return 0  # Always return success for manual tools
+    return 0 # Always return success for manual tools
     ;;
   "code")
     case "$type" in
@@ -548,7 +548,7 @@ install_tool() {
         info "    - Not signed in: Open App Store app and sign in first"
         info "    - App already purchased on different account"
         info "    Then re-run: ./install.sh -c host/personal"
-        return 0  # Don't fail the whole script
+        return 0 # Don't fail the whole script
       fi
     # Special handling for brew to detect already installed packages
     elif [[ "$manager" == "brew" ]]; then
@@ -557,7 +557,7 @@ install_tool() {
       echo "$output"
       # Check if it was already installed (brew shows "Not upgrading" warning)
       if echo "$output" | grep -E -q "Warning: Not upgrading.*already installed|Warning: .* is already installed"; then
-        return 2  # Special return code for already installed
+        return 2 # Special return code for already installed
       fi
       return $exit_code
     # Special handling for code extensions to prevent VSCode crashes from failing the whole script
@@ -610,15 +610,15 @@ is_tool_installed() {
     if [[ -n "$extension_id" ]]; then
       # Determine extensions directory based on VSCode CLI
       case "$vscode_cli" in
-        *cursor*)
-          extensions_dir="$HOME/.cursor/extensions"
-          ;;
-        *vscodium*)
-          extensions_dir="$HOME/.vscode-oss/extensions"
-          ;;
-        *)
-          extensions_dir="$HOME/.vscode/extensions"
-          ;;
+      *cursor*)
+        extensions_dir="$HOME/.cursor/extensions"
+        ;;
+      *vscodium*)
+        extensions_dir="$HOME/.vscode-oss/extensions"
+        ;;
+      *)
+        extensions_dir="$HOME/.vscode/extensions"
+        ;;
       esac
 
       # Check if extension directory exists (format: publisher.extension-version)
@@ -900,7 +900,7 @@ main() {
                     info "Would execute: arkade get $tool"
                   else
                     info "Updating $tool (arkade get)..."
-                    arkade get "$tool"  # arkade get always downloads the latest version
+                    arkade get "$tool" # arkade get always downloads the latest version
                     info "✓ Updated $tool (arkade get)"
                   fi
                   ;;
@@ -967,7 +967,7 @@ main() {
           elif can_install_tool "$tool" "$CURRENT_CONFIG_FILE"; then
             # Check dependencies before installing
             if ! check_dependencies "$tool" "$CURRENT_CONFIG_FILE"; then
-              continue  # Skip to next tool
+              continue # Skip to next tool
             fi
 
             # Special handling for manual tools - they're only checked, not installed
@@ -987,9 +987,9 @@ main() {
                 info "✓ Successfully installed $tool ($manager $type)"
                 # Track if we installed a package manager
                 case "$tool" in
-                  arkade|cargo|uv|mise)
-                    NEWLY_INSTALLED_MANAGERS+=("$tool")
-                    ;;
+                arkade | cargo | uv | mise)
+                  NEWLY_INSTALLED_MANAGERS+=("$tool")
+                  ;;
                 esac
               elif [[ $install_result -eq 2 ]]; then
                 info "✓ $tool ($manager $type) was already up to date"

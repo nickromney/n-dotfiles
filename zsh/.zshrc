@@ -84,7 +84,7 @@ _cache_init() {
 
   # Generate cache if it doesn't exist
   if [[ ! -f "$cache_file" ]]; then
-    if ! eval "$cmd" > "$cache_file" 2>&1; then
+    if ! eval "$cmd" >"$cache_file" 2>&1; then
       echo "Warning: Failed to cache $name initialization" >&2
       rm -f "$cache_file"
       return 1
@@ -304,6 +304,15 @@ else
     alias cdd='cd "$HOME/Developer"'
   fi
 fi
+
+# File browser
+function y() {
+  local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+  command yazi "$@" --cwd-file="$tmp"
+  IFS= read -r -d '' cwd <"$tmp"
+  [ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd"
+  rm -f -- "$tmp"
+}
 
 # Git aliases
 if command -v git >/dev/null 2>&1; then

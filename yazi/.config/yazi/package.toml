@@ -1,0 +1,32 @@
+[plugin]
+deps = []
+
+[[flavor.deps]]
+use = "ZimCodes/yazi-flavors:obsidian-soft-glow"
+rev = "20480a1"
+hash = "ffbdc2e8847dfe609f7dad5db97704f5"
+
+[[flavor.deps]]
+use = "hankertrix/bluloco-yazi:bluloco-dark"
+rev = "c2092a9"
+hash = "8410a97919a8df93d2d9700a30c44c69"
+
+[[flavor.deps]]
+use = "tomer-ben-david/neon"
+rev = "50f2e60"
+hash = "d23c566ce5c46db6dd854bf75df426e6"
+
+[[flavor.deps]]
+use = "BennyOe/tokyo-night"
+rev = "8e6296f"
+hash = "d9da921c3bd37ba32ee27a8a7a40461f"
+
+[[flavor.deps]]
+use = "6ruby1/eldritch"
+rev = "7b5bf34"
+hash = "d73a2192b13f0267461d5424a7f10cd1"
+
+[[flavor.deps]]
+use = "malick-tammal/monokai"
+rev = "7e709d4"
+hash = "f929d5c5c7fdf1c0aa231c1f49dae88"
