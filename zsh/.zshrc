@@ -20,7 +20,8 @@
 #  13. PATH Management   - Additional paths, deduplication
 #  14. Podman            - Docker compatibility socket
 #  15. Aliases           - Navigation, git, files, editors, fzf combos
-#  16. direnv            - Directory-based environment
+#  16. SlicerVM          - sup/slicer-up, sdn/slicer-down, slicer-status, SLICER_URL
+#  17. direnv            - Directory-based environment
 #
 # Performance: ~100ms startup (cached) - see README.md for benchmarks
 # Reload with cache rebuild: sz
@@ -375,14 +376,52 @@ if [ -f "$AWS_LAMBDA_VENV" ]; then
 fi
 
 #
-# 15. direnv
+# 15. SlicerVM
+#
+if [[ -x "$HOME/slicer-mac/slicer-mac" ]]; then
+  export SLICER_URL="$HOME/slicer-mac/slicer.sock"
+  sup() {
+    echo "Starting SlicerVM... (log: ~/slicer-mac/daemon.log)"
+    (cd "$HOME/slicer-mac" && ./slicer-mac up "$@" > daemon.log 2>&1) & disown
+    # Wait for socket to exist before launching tray (avoids race condition)
+    (
+      local i=0
+      while [[ ! -S "$HOME/slicer-mac/slicer.sock" ]] && (( i < 30 )); do
+        sleep 0.5
+        (( i++ )) || true
+      done
+      "$HOME/slicer-mac/slicer-tray" -terminal Ghostty
+    ) & disown
+  }
+  alias slicer-up=sup
+  sdn() {
+    if pkill -f "slicer-mac up"; then
+      pkill -f "slicer-tray" 2>/dev/null || true
+      echo "SlicerVM stopped."
+    else
+      echo "SlicerVM is not running."
+    fi
+  }
+  alias slicer-down=sdn
+  slicer-status() {
+    if pgrep -f "slicer-mac up" > /dev/null 2>&1; then
+      echo "SlicerVM is running (pid $(pgrep -f 'slicer-mac up'))."
+      slicer vm list
+    else
+      echo "SlicerVM is not running."
+    fi
+  }
+fi
+
+#
+# 16. direnv
 #
 if command -v direnv >/dev/null 2>&1; then
   _cache_init direnv "direnv hook zsh"
 fi
 
 #
-# 16. mise (polyglot runtime manager)
+# 17. mise (polyglot runtime manager)
 #
 if command -v mise >/dev/null 2>&1; then
   _cache_init mise "mise activate zsh"

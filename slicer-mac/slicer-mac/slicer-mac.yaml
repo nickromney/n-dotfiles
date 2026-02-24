@@ -1,0 +1,34 @@
+# slicer-mac configuration
+power_events: true
+
+config:
+  host_groups:
+    - name: slicer
+      count: 1
+      vcpu: 4
+      ram_gb: 8
+      storage_size: 15G
+      share_home: "" # Set to "" to disable sharing
+      rosetta: true
+      # Allowed values: none (or empty), shutdown, prevent, suspend
+      sleep_action: suspend
+      network:
+        mode: nat
+        gateway: 192.168.64.1/24
+    - name: sbox
+      count: 0
+      vcpu: 2
+      ram_gb: 4
+      storage_size: 15G
+      rosetta: false
+      # Allowed values: none (or empty), shutdown, prevent, suspend
+      sleep_action: prevent
+      network:
+        mode: nat
+        gateway: 192.168.64.1/24
+
+  image: "ghcr.io/openfaasltd/slicer-systemd-2404-arm64-avz:6.12.70-aarch64-avz-latest"
+  hypervisor: apple
+
+  api:
+    socket: "./slicer.sock"
