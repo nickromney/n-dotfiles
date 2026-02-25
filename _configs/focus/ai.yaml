@@ -64,15 +64,6 @@ tools:
     documentation_url: "https://github.com/steipete/homebrew-tap"
     category: ai
 
-  repobar:
-    manager: brew
-    type: cask
-    check_command: "brew list --cask | grep -q '^repobar$'"
-    install_args: ["steipete/tap/repobar"]
-    description: "Menu bar repo status app"
-    documentation_url: "https://github.com/steipete/repobar"
-    category: ai
-
   codexbar:
     manager: brew
     type: cask
@@ -80,22 +71,6 @@ tools:
     install_args: ["steipete/tap/codexbar"]
     description: "Menu bar companion for Codex"
     documentation_url: "https://github.com/steipete/codexbar"
-    category: ai
-
-  steveyegge/beads:
-    manager: brew
-    type: tap
-    check_command: "brew tap | grep -q '^steveyegge/beads$'"
-    description: "Homebrew tap for beads"
-    documentation_url: "https://github.com/steveyegge/beads"
-    category: ai
-
-  beads-viewer:
-    manager: manual
-    type: check
-    check_command: command -v bv
-    description: 'Beads viewer CLI (install: curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/beads_viewer/main/install.sh?$(date +%s)" | bash)'
-    documentation_url: "https://github.com/Dicklesworthstone/beads_viewer"
     category: ai
 
   llm:
