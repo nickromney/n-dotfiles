@@ -264,6 +264,7 @@ declare -a paths=(
   "$HOME/.local/bin"
   "$HOME/.cargo/bin"
   "$HOME/.tfenv/bin"
+  "$HOME/slicer-mac"
 )
 
 for path_entry in "${paths[@]}"; do
@@ -378,33 +379,36 @@ fi
 #
 # 15. SlicerVM
 #
+
 if [[ -x "$HOME/slicer-mac/slicer-mac" ]]; then
   export SLICER_URL="$HOME/slicer-mac/slicer.sock"
-  sup() {
-    echo "Starting SlicerVM... (log: ~/slicer-mac/daemon.log)"
-    (cd "$HOME/slicer-mac" && ./slicer-mac up "$@" > daemon.log 2>&1) & disown
-    # Wait for socket to exist before launching tray (avoids race condition)
-    (
-      local i=0
-      while [[ ! -S "$HOME/slicer-mac/slicer.sock" ]] && (( i < 30 )); do
-        sleep 0.5
-        (( i++ )) || true
-      done
-      "$HOME/slicer-mac/slicer-tray" -terminal Ghostty
-    ) & disown
+  slicer-tray-ghostty() {
+    echo "Starting SlicerVM Tray with Ghostty terminal"
+    (slicer-tray --url "$HOME/slicer-mac/slicer.sock" --terminal "ghostty" >/dev/null 2>&1) &
+    disown
   }
-  alias slicer-up=sup
-  sdn() {
+  slicer-up() {
+    echo "Starting SlicerVM... (log: ~/slicer-mac/daemon.log)"
+    (cd "$HOME/slicer-mac" && ./slicer-mac up "$@" >daemon.log 2>&1) &
+    disown
+  }
+  alias sup=slicer-up
+  slicer-down() {
     if pkill -f "slicer-mac up"; then
-      pkill -f "slicer-tray" 2>/dev/null || true
       echo "SlicerVM stopped."
     else
       echo "SlicerVM is not running."
     fi
   }
-  alias slicer-down=sdn
+  alias sdn=slicer-down
+  slicer-logs() {
+    slicer vm logs "${1:-slicer-1}" --lines "${2:-50}"
+  }
+  slicer-shell() {
+    slicer vm shell "${1:-slicer-1}" --uid 1000
+  }
   slicer-status() {
-    if pgrep -f "slicer-mac up" > /dev/null 2>&1; then
+    if pgrep -f "slicer-mac up" >/dev/null 2>&1; then
       echo "SlicerVM is running (pid $(pgrep -f 'slicer-mac up'))."
       slicer vm list
     else

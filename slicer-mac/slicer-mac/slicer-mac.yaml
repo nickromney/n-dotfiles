@@ -1,5 +1,4 @@
 # slicer-mac configuration
-power_events: true
 
 config:
   host_groups:
@@ -8,10 +7,11 @@ config:
       vcpu: 4
       ram_gb: 8
       storage_size: 15G
-      share_home: "" # Set to "" to disable sharing
-      rosetta: true
+      share_home: "~/"
+      rosetta: false
       # Allowed values: none (or empty), shutdown, prevent, suspend
-      sleep_action: suspend
+      sleep_action: prevent
+      userdata_file: ""
       network:
         mode: nat
         gateway: 192.168.64.1/24
@@ -23,6 +23,8 @@ config:
       rosetta: false
       # Allowed values: none (or empty), shutdown, prevent, suspend
       sleep_action: prevent
+      share_home: ""
+      userdata: ""
       network:
         mode: nat
         gateway: 192.168.64.1/24
@@ -32,3 +34,7 @@ config:
 
   api:
     socket: "./slicer.sock"
+
+  #github_user: "your_github_username"
+  #ssh_keys:
+  #  - "ssh-ed25519 AAAAC3... user@host"
