@@ -35,6 +35,9 @@ UPDATE="${UPDATE:-false}"
 CONFIG_FILES_SET_VIA_CLI="${CONFIG_FILES_SET_VIA_CLI:-false}"
 # Track newly installed package managers during this run
 NEWLY_INSTALLED_MANAGERS=()
+# VSCode extensions queued for a single batched install (avoids repeated Electron startup)
+PENDING_VSCODE_EXTENSIONS=()
+PENDING_VSCODE_EXTENSION_NAMES=()
 
 command_exists() {
   type "$1" >/dev/null 2>&1
@@ -583,6 +586,56 @@ install_tool() {
   return 0
 }
 
+run_batch_vscode_installs() {
+  if [[ ${#PENDING_VSCODE_EXTENSIONS[@]} -eq 0 ]]; then
+    return 0
+  fi
+
+  local vscode_cli
+  vscode_cli=$(get_vscode_cli) || return 1
+
+  local count=${#PENDING_VSCODE_EXTENSIONS[@]}
+  info ""
+  info "Installing $count VSCode extension(s) as a single batch..."
+
+  local install_cmd="$vscode_cli"
+  local ext
+  for ext in "${PENDING_VSCODE_EXTENSIONS[@]}"; do
+    install_cmd+=" --install-extension $ext"
+  done
+
+  if [[ "$DRY_RUN" == "true" ]]; then
+    info "Would execute: $install_cmd"
+    return 0
+  fi
+
+  # VSCode CLI buffers all output until every extension is done.
+  # Run a heartbeat in the background so the user knows it's still working.
+  local ticker_pid
+  (
+    local elapsed=0
+    while true; do
+      sleep 5
+      ((elapsed += 5)) || true
+      echo "  ... still installing (${elapsed}s elapsed)"
+    done
+  ) &
+  ticker_pid=$!
+
+  local exit_code=0
+  eval "$install_cmd" || exit_code=$?
+
+  kill "$ticker_pid" 2>/dev/null
+  wait "$ticker_pid" 2>/dev/null || true
+
+  if [[ $exit_code -ne 0 ]]; then
+    info "Warning: Some VSCode extensions may have failed (exit code $exit_code)"
+    info "Try manually: $install_cmd"
+  else
+    info "✓ Batch install complete ($count extension(s))"
+  fi
+}
+
 is_tool_installed() {
   local tool=$1
   local yaml_file=$2
@@ -975,6 +1028,17 @@ main() {
               info "Checking $tool ($manager $type)..."
               install_tool "$tool" "$CURRENT_CONFIG_FILE"
               # Manual tools always return 0 after reporting, no success message needed
+            elif [[ "$manager" == "code" && "$type" == "extension" ]]; then
+              # Defer VSCode extensions for a single batched install at the end
+              local extension_id
+              extension_id=$(yq ".tools.${tool}.extension_id" "$CURRENT_CONFIG_FILE")
+              if [[ "$extension_id" == "null" || -z "$extension_id" ]]; then
+                info "Skipping $tool: no extension_id specified"
+              else
+                PENDING_VSCODE_EXTENSIONS+=("$extension_id")
+                PENDING_VSCODE_EXTENSION_NAMES+=("$tool")
+                info "Queued $tool ($manager $type) for batch install"
+              fi
             else
               info "Installing $tool ($manager $type)..."
               # Avoid errexit on non-zero statuses used as control flow (e.g. 2 = already up to date).
@@ -1004,6 +1068,9 @@ main() {
       fi
     done # End of config file loop
   fi     # End of if AVAILABLE_MANAGERS check
+
+  # Install all queued VSCode extensions in a single Electron invocation
+  run_batch_vscode_installs
 
   # Check if any package managers were installed during this run
   if [[ ${#NEWLY_INSTALLED_MANAGERS[@]} -gt 0 ]]; then
