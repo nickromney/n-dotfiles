@@ -382,9 +382,14 @@ fi
 
 if [[ -x "$HOME/slicer-mac/slicer-mac" ]]; then
   export SLICER_URL="$HOME/slicer-mac/slicer.sock"
-  slicer-tray-ghostty() {
-    echo "Starting SlicerVM Tray with Ghostty terminal"
-    (slicer-tray --url "$HOME/slicer-mac/slicer.sock" --terminal "ghostty" >/dev/null 2>&1) &
+  # slicer-tray-ghostty() {
+  #   echo "Starting SlicerVM Tray with Ghostty terminal"
+  #   (slicer-tray --url "$HOME/slicer-mac/slicer.sock" --terminal "ghostty" >/dev/null 2>&1) &
+  #   disown
+  # }
+  slicer-tray-kitty() {
+    echo "Starting SlicerVM Tray with Kitty terminal"
+    (slicer-tray --url "$HOME/slicer-mac/slicer.sock" --terminal "kitty" >/dev/null 2>&1) &
     disown
   }
   slicer-up() {
