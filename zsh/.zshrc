@@ -20,7 +20,8 @@
 #  13. PATH Management   - Additional paths, deduplication
 #  14. Podman            - Docker compatibility socket
 #  15. Aliases           - Navigation, git, files, editors, fzf combos
-#  16. direnv            - Directory-based environment
+#  16. SlicerVM          - sup/slicer-up, sdn/slicer-down, slicer-status, SLICER_URL
+#  17. direnv            - Directory-based environment
 #
 # Performance: ~100ms startup (cached) - see README.md for benchmarks
 # Reload with cache rebuild: sz
@@ -263,6 +264,7 @@ declare -a paths=(
   "$HOME/.local/bin"
   "$HOME/.cargo/bin"
   "$HOME/.tfenv/bin"
+  "$HOME/slicer-mac"
 )
 
 for path_entry in "${paths[@]}"; do
@@ -375,14 +377,60 @@ if [ -f "$AWS_LAMBDA_VENV" ]; then
 fi
 
 #
-# 15. direnv
+# 15. SlicerVM
+#
+
+if [[ -x "$HOME/slicer-mac/slicer-mac" ]]; then
+  export SLICER_URL="$HOME/slicer-mac/slicer.sock"
+  # slicer-tray-ghostty() {
+  #   echo "Starting SlicerVM Tray with Ghostty terminal"
+  #   (slicer-tray --url "$HOME/slicer-mac/slicer.sock" --terminal "ghostty" >/dev/null 2>&1) &
+  #   disown
+  # }
+  slicer-tray-kitty() {
+    echo "Starting SlicerVM Tray with Kitty terminal"
+    (slicer-tray --url "$HOME/slicer-mac/slicer.sock" --terminal "kitty" >/dev/null 2>&1) &
+    disown
+  }
+  slicer-up() {
+    echo "Starting SlicerVM... (log: ~/slicer-mac/daemon.log)"
+    (cd "$HOME/slicer-mac" && ./slicer-mac up "$@" >daemon.log 2>&1) &
+    disown
+  }
+  alias sup=slicer-up
+  slicer-down() {
+    if pkill -f "slicer-mac up"; then
+      echo "SlicerVM stopped."
+    else
+      echo "SlicerVM is not running."
+    fi
+  }
+  alias sdn=slicer-down
+  slicer-logs() {
+    slicer vm logs "${1:-slicer-1}" --lines "${2:-50}"
+  }
+  slicer-shell() {
+    slicer vm shell "${1:-slicer-1}" --uid 1000
+  }
+  slicer-status() {
+    if pgrep -f "slicer-mac up" >/dev/null 2>&1; then
+      echo "SlicerVM is running (pid $(pgrep -f 'slicer-mac up'))."
+      slicer vm list
+    else
+      echo "SlicerVM is not running."
+    fi
+  }
+fi
+
+#
+# 16. direnv
 #
 if command -v direnv >/dev/null 2>&1; then
   _cache_init direnv "direnv hook zsh"
 fi
 
 #
-# 16. mise (polyglot runtime manager)
+# 17. mise (polyglot runtime manager)
 #
 if command -v mise >/dev/null 2>&1; then
   _cache_init mise "mise activate zsh"

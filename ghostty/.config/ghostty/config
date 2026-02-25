@@ -1,6 +1,8 @@
 # Ghostty Configuration
 # A modern, GPU-accelerated terminal emulator
 
+auto-update-channel = tip
+
 # Font configuration
 # Match VSCode font preferences: JetBrainsMono Nerd Font → Fira Code → Consolas
 font-family = "JetBrainsMono Nerd Font"

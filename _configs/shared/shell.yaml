@@ -96,14 +96,6 @@ tools:
     documentation_url: "https://www.shellcheck.net/"
     category: shell
 
-  brew-cask-completion:
-    manager: brew
-    type: package
-    check_command: "brew list brew-cask-completion >/dev/null 2>&1"
-    description: "Bash completion for Homebrew cask commands"
-    documentation_url: "https://github.com/xyb/homebrew-cask-completion"
-    category: shell
-
   mise:
     manager: brew
     type: package
