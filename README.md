@@ -512,6 +512,7 @@ manager: Package manager to use (brew/uv/cargo/apt/code/manual/mas)
 type: Installation method specific to the manager
 check_command: Command to verify installation
 install_args: Additional installation arguments (optional)
+skip_update: Set to true to opt the tool out of `install.sh -u` updates (optional)
 extension_id: Required for VSCode extensions (manager: code)
 ```
 

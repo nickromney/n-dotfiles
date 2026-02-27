@@ -17,8 +17,8 @@ tools:
     category: security
 
   trivy:
-    manager: brew
-    type: package
+    manager: arkade
+    type: get
     check_command: command -v trivy
     description: "Vulnerability scanner for containers and other artifacts"
     documentation_url: "https://trivy.dev/"

@@ -526,9 +526,87 @@ EOF
   mock_yq
   mock_arkade
 
-  run install_tool "kubectl" "test.yaml"
-  [ "$status" -eq 0 ]
-  assert_mock_called "arkade" "get kubectl"
+  if install_tool "kubectl" "test.yaml"; then
+    rc=0
+  else
+    rc=$?
+  fi
+  [ "$rc" -eq 0 ]
+  assert_mock_not_called "arkade"
+  [[ " ${PENDING_ARKADE_TOOL_NAMES[*]:-} " == *" kubectl "* ]]
+}
+
+@test "queue_arkade_get_tool deduplicates repeated entries" {
+  if queue_arkade_get_tool "kubectl"; then
+    rc=0
+  else
+    rc=$?
+  fi
+  [ "$rc" -eq 0 ]
+
+  if queue_arkade_get_tool "kubectl"; then
+    rc=0
+  else
+    rc=$?
+  fi
+  [ "$rc" -eq 1 ]
+
+  [ "${#PENDING_ARKADE_TOOLS[@]}" -eq 1 ]
+  [ "${#PENDING_ARKADE_TOOL_NAMES[@]}" -eq 1 ]
+}
+
+@test "queue_brew_package deduplicates repeated entries" {
+  if queue_brew_package "jq"; then
+    rc=0
+  else
+    rc=$?
+  fi
+  [ "$rc" -eq 0 ]
+
+  if queue_brew_package "jq"; then
+    rc=0
+  else
+    rc=$?
+  fi
+  [ "$rc" -eq 1 ]
+
+  [ "${#PENDING_BREW_PACKAGES[@]}" -eq 1 ]
+}
+
+@test "queue_apt_package deduplicates repeated entries" {
+  if queue_apt_package "ripgrep"; then
+    rc=0
+  else
+    rc=$?
+  fi
+  [ "$rc" -eq 0 ]
+
+  if queue_apt_package "ripgrep"; then
+    rc=0
+  else
+    rc=$?
+  fi
+  [ "$rc" -eq 1 ]
+
+  [ "${#PENDING_APT_PACKAGES[@]}" -eq 1 ]
+}
+
+@test "queue_cargo_tool deduplicates repeated entries" {
+  if queue_cargo_tool "ripgrep"; then
+    rc=0
+  else
+    rc=$?
+  fi
+  [ "$rc" -eq 0 ]
+
+  if queue_cargo_tool "ripgrep"; then
+    rc=0
+  else
+    rc=$?
+  fi
+  [ "$rc" -eq 1 ]
+
+  [ "${#PENDING_CARGO_TOOLS[@]}" -eq 1 ]
 }
 
 @test "install_tool installs arkade system tool" {
@@ -1020,6 +1098,61 @@ esac
   run main
   [ "$status" -eq 0 ]
   [[ "$output" =~ "was already up to date" ]]
+}
+
+@test "main function update mode respects skip_update flag" {
+  export UPDATE="true"
+  export DRY_RUN="true"
+
+  mock_command_with_script "yq" '
+case "$*" in
+  *".tools[].manager"*)
+    echo "brew"
+    exit 0
+    ;;
+  *".tools | keys | .[]"*|*".tools | select(. != null) | keys | .[]"*)
+    echo "tool1"
+    exit 0
+    ;;
+  *".tools.tool1.manager"*)
+    echo "brew"
+    exit 0
+    ;;
+  *".tools.tool1.type"*)
+    echo "package"
+    exit 0
+    ;;
+  *".tools.tool1.check_command"*)
+    echo "tool1 --version"
+    exit 0
+    ;;
+  *".tools.tool1.skip_update"*)
+    echo "true"
+    exit 0
+    ;;
+  *".tools.tool1.install_args[]"*)
+    exit 0
+    ;;
+  *)
+    echo "null"
+    exit 0
+    ;;
+esac
+'
+  mock_command "which"
+  mock_brew
+  mock_command "tool1"
+
+  mkdir -p "$BATS_TEST_TMPDIR/_configs"
+  touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
+  export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
+  export CONFIG_FILES=("test")
+
+  run main
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "tool1 update skipped by configuration" ]]
+  [[ ! "$output" =~ "Queued tool1 (brew package) for batch update" ]]
+  [[ ! "$output" =~ "Would execute: brew upgrade tool1" ]]
 }
 # Tests for get_vscode_cli function
 @test "get_vscode_cli returns code by default" {

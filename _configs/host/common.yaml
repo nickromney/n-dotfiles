@@ -70,6 +70,7 @@ tools:
     manager: brew
     type: cask
     check_command: "brew list --cask | grep -q ghostty"
+    skip_update: true
     description: "Fast, native terminal emulator"
     documentation_url: "https://github.com/ghostty-org/ghostty"
     category: terminal

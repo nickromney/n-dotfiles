@@ -1,8 +1,8 @@
 # Version control tools - available in both host and containers
 tools:
   gh:
-    manager: brew
-    type: package
+    manager: arkade
+    type: get
     check_command: command -v gh
     description: "GitHub's official command line tool"
     documentation_url: "https://cli.github.com/"
@@ -25,8 +25,8 @@ tools:
     category: git
 
   lazygit:
-    manager: brew
-    type: package
+    manager: arkade
+    type: get
     check_command: command -v lazygit
     description: "Simple terminal UI for git commands"
     documentation_url: "https://github.com/jesseduffield/lazygit"

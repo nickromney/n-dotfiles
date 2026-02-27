@@ -4,8 +4,8 @@
 #       If mas install fails, manually get the app in App Store first.
 tools:
   atuin:
-    manager: brew
-    type: package
+    manager: arkade
+    type: get
     check_command: command -v atuin
     description: "Shell history sync/search"
     documentation_url: "https://github.com/atuinsh/atuin"

@@ -1,5 +1,13 @@
 # Shell environment tools - available in both host and containers
 tools:
+  arkade:
+    manager: brew
+    type: package
+    check_command: command -v arkade
+    description: "Portable marketplace for downloading your favourite DevOps CLIs"
+    documentation_url: "https://github.com/alexellis/arkade"
+    category: shell
+
   nushell:
     manager: brew
     type: package
@@ -9,8 +17,8 @@ tools:
     category: shell
 
   starship:
-    manager: brew
-    type: package
+    manager: arkade
+    type: get
     check_command: command -v starship
     description: "Cross-shell prompt for astronauts"
     documentation_url: "https://starship.rs/"

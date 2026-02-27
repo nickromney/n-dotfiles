@@ -17,8 +17,8 @@ tools:
     category: data-tools
 
   jq:
-    manager: brew
-    type: package
+    manager: arkade
+    type: get
     check_command: command -v jq
     description: "Command-line JSON processor"
     documentation_url: "https://stedolan.github.io/jq/"
@@ -50,8 +50,8 @@ tools:
     category: data-tools
 
   yq:
-    manager: brew
-    type: package
+    manager: arkade
+    type: get
     check_command: command -v yq
     description: "YAML, JSON, XML, CSV and properties parser"
     documentation_url: "https://github.com/mikefarah/yq"

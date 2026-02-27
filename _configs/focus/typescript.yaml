@@ -2,19 +2,10 @@
 # NOTE: Node.js runtime is managed by mise (see mise.toml)
 #       Run: mise install
 tools:
-  # Tap for bun
-  oven-sh/bun:
-    manager: brew
-    type: tap
-    check_command: brew tap | grep -q oven-sh/bun
-    description: "Homebrew tap for Bun"
-
   bun:
-    manager: brew
-    type: package
+    manager: arkade
+    type: get
     check_command: command -v bun
-    dependencies:
-      - name: oven-sh/bun
     description: "All-in-one JavaScript runtime, bundler, transpiler & package manager"
     documentation_url: "https://bun.sh/"
     category: javascript
