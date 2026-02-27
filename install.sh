@@ -127,7 +127,7 @@ tool_update_is_skipped() {
   skip_update=$(yq ".tools.${tool}.skip_update" "$yaml_file" 2>/dev/null || echo "null")
 
   case "$skip_update" in
-  true | yes | 1 | "true" | "yes")
+  true | yes | 1 | '"true"' | '"yes"' | '"1"')
     return 0
     ;;
   *)

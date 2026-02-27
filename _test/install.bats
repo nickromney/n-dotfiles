@@ -1151,7 +1151,7 @@ esac
   run main
   [ "$status" -eq 0 ]
   [[ "$output" =~ "tool1 update skipped by configuration" ]]
-  [[ ! "$output" =~ "Queued tool1 (brew package) for batch update" ]]
+  [[ "$output" != *"Queued tool1 (brew package) for batch update"* ]]
   [[ ! "$output" =~ "Would execute: brew upgrade tool1" ]]
 }
 # Tests for get_vscode_cli function
