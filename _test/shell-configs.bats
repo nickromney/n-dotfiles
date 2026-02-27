@@ -304,22 +304,34 @@ EOF
 # Common Tests (both bash and zsh)
 # ============================================================================
 
-@test "both configs: do not add arkade bin to PATH by default" {
+@test "both configs: add arkade bin to PATH before Homebrew path" {
   mkdir -p "$HOME/.arkade/bin"
 
   # Test bash
   result=$(bash -c "
+    export PATH='/opt/homebrew/bin:/usr/bin:/bin'
     source $DOTFILES_DIR/bash/.bashrc 2>/dev/null
     echo \$PATH
   ")
-  [[ "$result" != *".arkade/bin"* ]]
+  [[ "$result" == *".arkade/bin"* ]]
+  bash_arkade_index=$(echo "$result" | tr ':' '\n' | nl -ba | awk '$2 ~ /\.arkade\/bin$/ {print $1; exit}')
+  bash_brew_index=$(echo "$result" | tr ':' '\n' | nl -ba | awk '$2 == "/opt/homebrew/bin" {print $1; exit}')
+  [ -n "$bash_arkade_index" ]
+  [ -n "$bash_brew_index" ]
+  [ "$bash_arkade_index" -lt "$bash_brew_index" ]
 
   # Test zsh
   result=$(zsh -c "
+    export PATH='/opt/homebrew/bin:/usr/bin:/bin'
     source $DOTFILES_DIR/zsh/.zshrc 2>/dev/null
     echo \$PATH
   ")
-  [[ "$result" != *".arkade/bin"* ]]
+  [[ "$result" == *".arkade/bin"* ]]
+  zsh_arkade_index=$(echo "$result" | tr ':' '\n' | nl -ba | awk '$2 ~ /\.arkade\/bin$/ {print $1; exit}')
+  zsh_brew_index=$(echo "$result" | tr ':' '\n' | nl -ba | awk '$2 == "/opt/homebrew/bin" {print $1; exit}')
+  [ -n "$zsh_arkade_index" ]
+  [ -n "$zsh_brew_index" ]
+  [ "$zsh_arkade_index" -lt "$zsh_brew_index" ]
 }
 
 @test "both configs: set EDITOR to nvim" {

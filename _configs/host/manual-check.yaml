@@ -65,6 +65,7 @@ tools:
     manager: manual
     type: check
     check_command: "[ -d '/Applications/Docker.app' ]"
+    skip_update: true
     description: "Docker Desktop for macOS"
     documentation_url: "https://www.docker.com/products/docker-desktop/"
     category: containers

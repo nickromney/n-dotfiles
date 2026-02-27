@@ -38,6 +38,103 @@ NEWLY_INSTALLED_MANAGERS=()
 # VSCode extensions queued for a single batched install (avoids repeated Electron startup)
 PENDING_VSCODE_EXTENSIONS=()
 PENDING_VSCODE_EXTENSION_NAMES=()
+# Homebrew tools queued for batch update
+PENDING_BREW_PACKAGES=()
+PENDING_BREW_CASKS=()
+# Apt packages queued for batch update
+PENDING_APT_PACKAGES=()
+# Cargo tools queued for batch update
+PENDING_CARGO_TOOLS=()
+# Arkade tools queued for a single batched install (in parallel)
+PENDING_ARKADE_TOOLS=()
+PENDING_ARKADE_TOOL_NAMES=()
+# Track whether apt metadata has been refreshed during this run
+APT_CACHE_UPDATED=false
+
+queue_brew_package() {
+  local tool=$1
+  local queued_tool
+  for queued_tool in "${PENDING_BREW_PACKAGES[@]:-}"; do
+    if [[ "$queued_tool" == "$tool" ]]; then
+      return 1
+    fi
+  done
+  PENDING_BREW_PACKAGES+=("$tool")
+  return 0
+}
+
+queue_brew_cask() {
+  local tool=$1
+  local queued_tool
+  for queued_tool in "${PENDING_BREW_CASKS[@]:-}"; do
+    if [[ "$queued_tool" == "$tool" ]]; then
+      return 1
+    fi
+  done
+  PENDING_BREW_CASKS+=("$tool")
+  return 0
+}
+
+queue_apt_package() {
+  local package=$1
+  local queued_package
+  for queued_package in "${PENDING_APT_PACKAGES[@]:-}"; do
+    if [[ "$queued_package" == "$package" ]]; then
+      return 1
+    fi
+  done
+  PENDING_APT_PACKAGES+=("$package")
+  return 0
+}
+
+queue_cargo_tool() {
+  local tool=$1
+  local queued_tool
+  for queued_tool in "${PENDING_CARGO_TOOLS[@]:-}"; do
+    if [[ "$queued_tool" == "$tool" ]]; then
+      return 1
+    fi
+  done
+  PENDING_CARGO_TOOLS+=("$tool")
+  return 0
+}
+
+queue_arkade_get_tool() {
+  local tool=$1
+  local install_args=${2:-}
+  local queued_tool
+
+  for queued_tool in "${PENDING_ARKADE_TOOL_NAMES[@]:-}"; do
+    if [[ "$queued_tool" == "$tool" ]]; then
+      return 1
+    fi
+  done
+
+  if [[ -n "$install_args" ]]; then
+    PENDING_ARKADE_TOOLS+=("$tool $install_args")
+  else
+    PENDING_ARKADE_TOOLS+=("$tool")
+  fi
+  PENDING_ARKADE_TOOL_NAMES+=("$tool")
+  return 0
+}
+
+tool_update_is_skipped() {
+  local tool=$1
+  local yaml_file=$2
+  local skip_update
+
+  skip_update=$(yq ".tools.${tool}.skip_update" "$yaml_file" 2>/dev/null || echo "null")
+
+  case "$skip_update" in
+  true | yes | 1 | '"true"' | '"yes"' | '"1"')
+    return 0
+    ;;
+  *)
+    return 1
+    ;;
+  esac
+}
 
 command_exists() {
   type "$1" >/dev/null 2>&1
@@ -383,7 +480,9 @@ install_tool() {
   "arkade")
     case "$type" in
     "get")
-      install_cmd="arkade get $tool $install_args"
+      # Defer arkade 'get' tools for a single batched parallel install
+      queue_arkade_get_tool "$tool" "$install_args" || true
+      return 0 # Indicate success for queuing
       ;;
     "system")
       install_cmd="arkade system install $tool $install_args"
@@ -586,6 +685,195 @@ install_tool() {
   return 0
 }
 
+run_batch_arkade_installs() {
+  if [[ ${#PENDING_ARKADE_TOOLS[@]} -eq 0 ]]; then
+    return 0
+  fi
+
+  local count=${#PENDING_ARKADE_TOOLS[@]}
+  local action="Installing"
+  local action_result="install"
+  if [[ "$UPDATE" == "true" ]]; then
+    action="Updating"
+    action_result="update"
+  fi
+  info ""
+  info "$action $count arkade tool(s) in parallel (batch)..."
+
+  # Build the arkade get command
+  local install_cmd="arkade get"
+  local tool_entry
+  for tool_entry in "${PENDING_ARKADE_TOOLS[@]}"; do
+    install_cmd+=" $tool_entry"
+  done
+  install_cmd+=" --parallel 10"
+
+  if [[ "$DRY_RUN" == "true" ]]; then
+    info "Would execute: $install_cmd"
+    return 0
+  fi
+
+  local exit_code=0
+  eval "$install_cmd" || exit_code=$?
+
+  if [[ $exit_code -ne 0 ]]; then
+    info "Warning: Some arkade tools may have failed (exit code $exit_code)"
+    info "Try manually: $install_cmd"
+  else
+    info "✓ Parallel batch $action_result complete ($count tool(s))"
+  fi
+}
+
+run_batch_brew_updates() {
+  if [[ ${#PENDING_BREW_PACKAGES[@]} -eq 0 && ${#PENDING_BREW_CASKS[@]} -eq 0 ]]; then
+    return 0
+  fi
+
+  if ! command_exists "brew"; then
+    return 0
+  fi
+
+  info ""
+  info "Running Homebrew updates in batch..."
+
+  if [[ "$DRY_RUN" == "true" ]]; then
+    if [[ ${#PENDING_BREW_PACKAGES[@]} -gt 0 ]]; then
+      info "Would execute: brew upgrade ${PENDING_BREW_PACKAGES[*]}"
+    fi
+    if [[ ${#PENDING_BREW_CASKS[@]} -gt 0 ]]; then
+      info "Would execute: brew upgrade --cask ${PENDING_BREW_CASKS[*]}"
+    fi
+    return 0
+  fi
+
+  local installed_formulas installed_casks tool
+  local -a brew_packages_to_update=()
+  local -a brew_casks_to_update=()
+
+  installed_formulas=$(brew list --formula 2>/dev/null || true)
+  installed_casks=$(brew list --cask 2>/dev/null || true)
+
+  for tool in "${PENDING_BREW_PACKAGES[@]}"; do
+    if echo "$installed_formulas" | grep -qx "$tool"; then
+      brew_packages_to_update+=("$tool")
+    else
+      info "✓ Skipping $tool (brew package): not installed via brew"
+    fi
+  done
+
+  for tool in "${PENDING_BREW_CASKS[@]}"; do
+    if echo "$installed_casks" | grep -qx "$tool"; then
+      brew_casks_to_update+=("$tool")
+    else
+      info "✓ Skipping $tool (brew cask): not installed via brew"
+    fi
+  done
+
+  if [[ ${#brew_packages_to_update[@]} -gt 0 ]]; then
+    info "Updating ${#brew_packages_to_update[@]} brew package(s)..."
+    brew upgrade "${brew_packages_to_update[@]}"
+  fi
+  if [[ ${#brew_casks_to_update[@]} -gt 0 ]]; then
+    info "Updating ${#brew_casks_to_update[@]} brew cask(s)..."
+    brew upgrade --cask "${brew_casks_to_update[@]}"
+  fi
+
+  info "✓ Homebrew batch update complete"
+}
+
+run_batch_apt_updates() {
+  if [[ ${#PENDING_APT_PACKAGES[@]} -eq 0 ]]; then
+    return 0
+  fi
+
+  if ! command_exists "apt-get"; then
+    return 0
+  fi
+
+  if ! can_use_apt; then
+    return 0
+  fi
+
+  info ""
+  info "Running apt updates in batch..."
+
+  if [[ "$DRY_RUN" == "true" ]]; then
+    if [[ "$APT_CACHE_UPDATED" != "true" ]]; then
+      info "Would execute: apt-get update -qq"
+    fi
+    info "Would execute: apt-get install --only-upgrade -y ${PENDING_APT_PACKAGES[*]}"
+    return 0
+  fi
+
+  if [[ "$APT_CACHE_UPDATED" != "true" ]]; then
+    apt-get update -qq
+    APT_CACHE_UPDATED=true
+  fi
+
+  apt-get install --only-upgrade -y "${PENDING_APT_PACKAGES[@]}"
+  info "✓ Apt batch update complete (${#PENDING_APT_PACKAGES[@]} package(s))"
+}
+
+run_batch_cargo_updates() {
+  if [[ ${#PENDING_CARGO_TOOLS[@]} -eq 0 ]]; then
+    return 0
+  fi
+
+  if ! command_exists "cargo"; then
+    return 0
+  fi
+
+  info ""
+  info "Running cargo updates in batch..."
+
+  local installed_cargo_tools tool
+  local -a cargo_tools_to_update=()
+
+  installed_cargo_tools=$(cargo install --list 2>/dev/null | sed -nE 's/^([A-Za-z0-9_.+-]+) v[^:]*:$/\1/p' || true)
+
+  for tool in "${PENDING_CARGO_TOOLS[@]}"; do
+    if echo "$installed_cargo_tools" | grep -qx "$tool"; then
+      cargo_tools_to_update+=("$tool")
+    else
+      info "✓ Skipping $tool (cargo binary): not installed via cargo"
+    fi
+  done
+
+  if [[ ${#cargo_tools_to_update[@]} -eq 0 ]]; then
+    return 0
+  fi
+
+  if [[ "$DRY_RUN" == "true" ]]; then
+    if [[ "$FORCE" == "true" ]]; then
+      info "Would execute: cargo install-update --force ${cargo_tools_to_update[*]}"
+    else
+      info "Would execute: cargo install-update ${cargo_tools_to_update[*]}"
+    fi
+    return 0
+  fi
+
+  if cargo install-update --version &>/dev/null; then
+    if [[ "$FORCE" == "true" ]]; then
+      cargo install-update --force "${cargo_tools_to_update[@]}"
+    else
+      cargo install-update "${cargo_tools_to_update[@]}"
+    fi
+    info "✓ Cargo batch update complete (${#cargo_tools_to_update[@]} tool(s))"
+    return 0
+  fi
+
+  if [[ "$FORCE" == "true" ]]; then
+    for tool in "${cargo_tools_to_update[@]}"; do
+      info "Force updating $tool (cargo binary)..."
+      cargo install --force "$tool"
+    done
+    info "✓ Cargo force update complete (${#cargo_tools_to_update[@]} tool(s))"
+  else
+    info "✓ Cargo tools are installed - install 'cargo-update' to check/apply updates in batch"
+    info "  Run: cargo install cargo-update"
+  fi
+}
+
 run_batch_vscode_installs() {
   if [[ ${#PENDING_VSCODE_EXTENSIONS[@]} -eq 0 ]]; then
     return 0
@@ -742,6 +1030,7 @@ main() {
         info "Would execute: apt-get update -qq"
       else
         apt-get update -qq
+        APT_CACHE_UPDATED=true
       fi
     fi
   fi
@@ -791,37 +1080,29 @@ main() {
             continue
           fi
 
-          if is_tool_installed "$tool" "$CURRENT_CONFIG_FILE"; then
-            if [[ "$UPDATE" == "true" ]]; then
+	          if is_tool_installed "$tool" "$CURRENT_CONFIG_FILE"; then
+	            if [[ "$UPDATE" == "true" ]]; then
+	              if tool_update_is_skipped "$tool" "$CURRENT_CONFIG_FILE"; then
+	                info "✓ $tool update skipped by configuration (skip_update: true)"
+	                continue
+	              fi
 
-              case "$manager" in
+	              case "$manager" in
               "brew")
                 if command_exists "brew"; then
                   case "$type" in
                   "package")
-                    if [[ "$DRY_RUN" == "true" ]]; then
-                      info "Would check: brew outdated $tool"
+                    if queue_brew_package "$tool"; then
+                      info "Queued $tool (brew package) for batch update"
                     else
-                      if brew outdated --quiet | grep -q "^$tool$"; then
-                        info "Updating $tool (brew package)..."
-                        brew upgrade "$tool"
-                        info "✓ Updated $tool (brew package)"
-                      else
-                        info "✓ $tool (brew package) is already up to date"
-                      fi
+                      info "✓ $tool (brew package) already queued for batch update"
                     fi
                     ;;
                   "cask")
-                    if [[ "$DRY_RUN" == "true" ]]; then
-                      info "Would check: brew outdated --cask $tool"
+                    if queue_brew_cask "$tool"; then
+                      info "Queued $tool (brew cask) for batch update"
                     else
-                      if brew outdated --cask --quiet | grep -q "^$tool$"; then
-                        info "Updating $tool (brew cask)..."
-                        brew upgrade --cask "$tool"
-                        info "✓ Updated $tool (brew cask)"
-                      else
-                        info "✓ $tool (brew cask) is already up to date"
-                      fi
+                      info "✓ $tool (brew cask) already queued for batch update"
                     fi
                     ;;
                   *)
@@ -831,12 +1112,10 @@ main() {
                 elif [[ "$type" == "package" ]] && can_use_apt; then
                   local apt_package
                   apt_package=$(resolve_apt_package_name "$tool" "$CURRENT_CONFIG_FILE")
-                  if [[ "$DRY_RUN" == "true" ]]; then
-                    info "Would execute: apt-get install --only-upgrade -y $apt_package"
+                  if queue_apt_package "$apt_package"; then
+                    info "Queued $tool via apt fallback ($apt_package) for batch update"
                   else
-                    info "brew unavailable, using apt fallback to update $tool ($apt_package)..."
-                    apt-get install --only-upgrade -y "$apt_package"
-                    info "✓ Updated $tool via apt fallback"
+                    info "✓ $tool via apt fallback ($apt_package) already queued for batch update"
                   fi
                 elif [[ "$type" == "package" ]] && command_exists "apt-get"; then
                   info "Skipping update for $tool: apt fallback requires root privileges"
@@ -845,32 +1124,10 @@ main() {
                 fi
                 ;;
               "cargo")
-                if [[ "$FORCE" == "true" ]]; then
-                  if [[ "$DRY_RUN" == "true" ]]; then
-                    info "Would execute: cargo install --force $tool"
-                  else
-                    info "Force updating $tool (cargo binary)..."
-                    cargo install --force "$tool"
-                    info "✓ Force updated $tool (cargo binary)"
-                  fi
+                if queue_cargo_tool "$tool"; then
+                  info "Queued $tool (cargo binary) for batch update"
                 else
-                  if [[ "$DRY_RUN" == "true" ]]; then
-                    info "Would check: cargo install-update -l | grep $tool"
-                  else
-                    # Check if cargo-update is installed
-                    if cargo install-update --version &>/dev/null; then
-                      if cargo install-update -l | grep -q "^$tool.*Yes$"; then
-                        info "Updating $tool (cargo binary)..."
-                        cargo install-update "$tool"
-                        info "✓ Updated $tool (cargo binary)"
-                      else
-                        info "✓ $tool (cargo binary) is already up to date"
-                      fi
-                    else
-                      info "✓ $tool (cargo binary) is installed - install 'cargo-update' to check for updates"
-                      info "  Run: cargo install cargo-update"
-                    fi
-                  fi
+                  info "✓ $tool (cargo binary) already queued for batch update"
                 fi
                 ;;
               "uv")
@@ -905,12 +1162,10 @@ main() {
                 if [[ "$type" == "package" ]] && can_use_apt; then
                   local apt_package
                   apt_package=$(resolve_apt_package_name "$tool" "$CURRENT_CONFIG_FILE")
-                  if [[ "$DRY_RUN" == "true" ]]; then
-                    info "Would execute: apt-get install --only-upgrade -y $apt_package"
+                  if queue_apt_package "$apt_package"; then
+                    info "Queued $tool (apt package: $apt_package) for batch update"
                   else
-                    info "Updating $tool (apt package)..."
-                    apt-get install --only-upgrade -y "$apt_package"
-                    info "✓ Updated $tool (apt package)"
+                    info "✓ $tool (apt package: $apt_package) already queued for batch update"
                   fi
                 elif [[ "$type" == "package" ]] && command_exists "apt-get"; then
                   info "Skipping update for $tool: apt requires root privileges"
@@ -949,12 +1204,24 @@ main() {
               "arkade")
                 case "$type" in
                 "get")
+                  local arkade_install_args
+                  arkade_install_args=$(yq ".tools.${tool}.install_args[]" "$CURRENT_CONFIG_FILE" | tr '\n' ' ')
                   if [[ "$DRY_RUN" == "true" ]]; then
-                    info "Would execute: arkade get $tool"
+                    if [[ "$FORCE" == "true" ]]; then
+                      info "Would queue force update: arkade get $tool $arkade_install_args"
+                    else
+                      info "Would skip $tool (arkade get): use --force to re-download via arkade"
+                    fi
                   else
-                    info "Updating $tool (arkade get)..."
-                    arkade get "$tool" # arkade get always downloads the latest version
-                    info "✓ Updated $tool (arkade get)"
+                    if [[ "$FORCE" == "true" ]]; then
+                      if queue_arkade_get_tool "$tool" "$arkade_install_args"; then
+                        info "Queued $tool (arkade get) for forced batch update"
+                      else
+                        info "✓ $tool (arkade get) already queued for batch update"
+                      fi
+                    else
+                      info "✓ $tool (arkade get) is installed - skipping auto-update (use --force to re-download)"
+                    fi
                   fi
                   ;;
                 *)
@@ -1069,6 +1336,18 @@ main() {
     done # End of config file loop
   fi     # End of if AVAILABLE_MANAGERS check
 
+  # Update queued Homebrew tools in batch
+  run_batch_brew_updates
+
+  # Update queued apt tools in batch
+  run_batch_apt_updates
+
+  # Update queued cargo tools in batch
+  run_batch_cargo_updates
+
+  # Install all queued arkade tools in parallel
+  run_batch_arkade_installs
+
   # Install all queued VSCode extensions in a single Electron invocation
   run_batch_vscode_installs
 
@@ -1091,15 +1370,15 @@ main() {
 usage() {
   echo "Usage: $0 [options]"
   echo "Note: install.sh is supported as a standalone entrypoint."
-  echo "      Optional wrapper: make install (config-driven: brew, apt fallback, then mise)."
+  echo "      Optional wrapper: make install (config-driven: arkade preferred, then brew/apt fallback, then mise)."
   echo "Options:"
   echo "  -c, --config <name>     Add configuration file to install (can be used multiple times)"
   echo "  -C, --config-dir <dir>  Specify configuration directory (default: _configs)"
   echo "  -d, --dry-run           Show what would be installed without making changes"
-  echo "  -f, --force             Force stow to adopt existing files"
+  echo "  -f, --force             Force actions (stow adopts existing files; update re-downloads where supported)"
   echo "  -h, --help              Show this help message"
   echo "  -s, --stow              Run stow after installation"
-  echo "  -u, --update            Update already installed packages (brew/apt/cargo/uv/mas/mise where supported)"
+  echo "  -u, --update            Update already installed packages (arkade/brew/apt/cargo/uv/mas/mise where supported)"
   echo "  -v, --verbose           Show detailed information and status messages"
   echo ""
   echo "Configuration files:"

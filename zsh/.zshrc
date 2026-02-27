@@ -20,7 +20,7 @@
 #  13. PATH Management   - Additional paths, deduplication
 #  14. Podman            - Docker compatibility socket
 #  15. Aliases           - Navigation, git, files, editors, fzf combos
-#  16. SlicerVM          - sup/slicer-up, sdn/slicer-down, slicer-status, SLICER_URL
+#  16. SlicerVM          - sup/slicer-up, sdn/slicer-down, slicer-stop, slicer-status, SLICER_URL
 #  17. direnv            - Directory-based environment
 #
 # Performance: ~100ms startup (cached) - see README.md for benchmarks
@@ -149,6 +149,25 @@ zstyle ':completion:*:*:*:*:*' menu select
 bindkey '^[[Z' reverse-menu-complete
 
 #
+# Early PATH bootstrap for tool initialization
+#
+# Some tools (e.g., starship via arkade) may live outside the default PATH.
+# Add common user-managed bins before tool init checks run.
+declare -a early_paths=(
+  "$HOME/.local/bin"
+  "$HOME/.cargo/bin"
+  "$HOME/.tfenv/bin"
+  "$HOME/slicer-mac"
+  "$HOME/.arkade/bin"
+)
+
+for path_entry in "${early_paths[@]}"; do
+  if [ -d "$path_entry" ] && ! echo "$PATH" | grep -q "$path_entry"; then
+    export PATH="$path_entry:$PATH"
+  fi
+done
+
+#
 # 7. Tool Init
 #
 
@@ -265,6 +284,7 @@ declare -a paths=(
   "$HOME/.cargo/bin"
   "$HOME/.tfenv/bin"
   "$HOME/slicer-mac"
+  "$HOME/.arkade/bin"
 )
 
 for path_entry in "${paths[@]}"; do
@@ -383,13 +403,32 @@ fi
 if [[ -x "$HOME/slicer-mac/slicer-mac" ]]; then
   export SLICER_URL="$HOME/slicer-mac/slicer.sock"
   slicer-down() {
-    if pkill -f "slicer-mac up"; then
-      echo "SlicerVM stopped."
+    if [[ -n "$1" ]]; then
+      if slicer vm shutdown "$1"; then
+        echo "SlicerVM $1 stopped."
+      else
+        echo "Failed to stop SlicerVM $1."
+      fi
     else
-      echo "SlicerVM is not running."
+      if pkill -f "slicer-mac up"; then
+        echo "SlicerVM stopped."
+      else
+        echo "SlicerVM is not running."
+      fi
     fi
   }
   alias sdn=slicer-down
+  slicer-stop() {
+    if [[ -z "$1" ]]; then
+      echo "Usage: slicer-stop <vm-name>" >&2
+      return 1
+    fi
+    if slicer vm shutdown "$1"; then
+      echo "SlicerVM $1 stopped."
+    else
+      echo "Failed to stop SlicerVM $1."
+    fi
+  }
   slicer-logs() {
     slicer vm logs "${1:-slicer-1}" --lines "${2:-50}"
   }

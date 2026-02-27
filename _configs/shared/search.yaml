@@ -1,8 +1,8 @@
 # Search and find tools - available in both host and containers
 tools:
   fd:
-    manager: brew
-    type: package
+    manager: arkade
+    type: get
     check_command: command -v fd
     description: "Simple, fast and user-friendly alternative to find"
     documentation_url: "https://github.com/sharkdp/fd"
@@ -16,9 +16,9 @@ tools:
     documentation_url: "https://github.com/junegunn/fzf"
     category: search
 
-  ripgrep:
-    manager: brew
-    type: package
+  rg:
+    manager: arkade
+    type: get
     check_command: command -v rg
     description: "Recursively search directories for regex patterns"
     documentation_url: "https://github.com/BurntSushi/ripgrep"

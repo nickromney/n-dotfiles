@@ -72,7 +72,7 @@ help: ## Show this help message
 	@echo "  make install work        Work profile install"
 	@echo "  make install all         All profile bundles"
 	@echo "  make personal configure   Apply macOS settings for personal profile"
-	@echo "  make work install         Config-driven install (brew -> apt fallback -> mise)"
+	@echo "  make work install         Config-driven install (arkade preferred -> brew/apt fallback -> mise)"
 	@echo "  make work stow            Symlink configs for the work profile"
 	@echo "  make work update          Update tools for the work profile"
 	@echo ""
@@ -269,7 +269,7 @@ runtime-install: ## Install runtimes declared in local mise.toml (project-level)
 	fi
 
 .PHONY: install-system
-install-system: ## Install system dependencies from config (brew preferred, apt fallback via install.sh)
+install-system: ## Install system dependencies from config (arkade preferred, then brew/apt fallback via install.sh)
 	@echo "$(BLUE)Installing system dependencies from $(SELECTED_PROFILE) profile config...$(NC)"
 	@CONFIG_FILES="$(PROFILE_CONFIGS)" ./install.sh
 

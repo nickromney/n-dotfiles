@@ -1,17 +1,17 @@
 # AI/ML development tools
 tools:
-  claude-code:
-    manager: brew
-    type: cask
-    check_command: "brew list --cask | grep -q '^claude-code$'"
+  claude:
+    manager: arkade
+    type: get
+    check_command: command -v claude
     description: "Claude AI coding assistant CLI"
     documentation_url: "https://claude.ai/code"
     category: ai
 
   codex:
-    manager: brew
-    type: cask
-    check_command: "brew list --cask | grep -q '^codex$'"
+    manager: arkade
+    type: get
+    check_command: command -v codex
     description: "OpenAI coding agent for the terminal"
     documentation_url: "https://github.com/openai/codex"
     category: ai
@@ -25,17 +25,25 @@ tools:
     category: ai
 
   opencode:
-    manager: brew
-    type: package
+    manager: arkade
+    type: get
     check_command: command -v opencode
     description: "AI coding agent built for the terminal"
     documentation_url: "https://opencode.ai"
     category: ai
 
-  copilot-cli:
-    manager: brew
-    type: cask
-    check_command: "brew list --cask | grep -q '^copilot-cli$'"
+  gptscript:
+    manager: arkade
+    type: get
+    check_command: command -v gptscript
+    description: "Natural language programming language for LLMs"
+    documentation_url: "https://github.com/gptscript-ai/gptscript"
+    category: ai
+
+  copilot:
+    manager: arkade
+    type: get
+    check_command: command -v copilot
     description: "GitHub Copilot coding agent for the terminal"
     documentation_url: "https://docs.github.com/en/copilot/concepts/agents/about-copilot-cli"
     category: ai

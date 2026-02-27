@@ -48,6 +48,7 @@ paths=(
   "$HOME/.local/bin"
   "$HOME/.cargo/bin"
   "$HOME/.tfenv/bin"
+  "$HOME/.arkade/bin"
 )
 
 for path_entry in "${paths[@]}"; do
