@@ -96,3 +96,22 @@ tools:
     description: "Generate prompts from codebases for LLMs"
     documentation_url: "https://github.com/raphaelmansuy/code2prompt"
     category: ai
+
+  steveyegge/beads:
+    manager: brew
+    type: tap
+    check_command: "brew tap | grep -q 'steveyegge/beads'"
+    description: "Homebrew tap for beads/bd directory navigation tool"
+    documentation_url: "https://github.com/steveyegge/beads"
+    category: ai
+
+  bd:
+    manager: brew
+    type: package
+    check_command: command -v bd
+    dependencies:
+      - name: steveyegge/beads
+        check_command: "brew tap | grep -q 'steveyegge/beads'"
+    description: "Jump to parent directory by name (bd = beads)"
+    documentation_url: "https://github.com/steveyegge/beads"
+    category: ai
