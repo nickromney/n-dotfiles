@@ -402,66 +402,66 @@ fi
 # 15. SlicerVM
 #
 
-if [[ -x "$HOME/slicer-mac/slicer-mac" ]]; then
-  export SLICER_URL="$HOME/slicer-mac/slicer.sock"
-  slicer-down() {
-    if [[ -n "$1" ]]; then
-      if slicer vm shutdown "$1"; then
-        echo "SlicerVM $1 stopped."
-      else
-        echo "Failed to stop SlicerVM $1."
-      fi
-    else
-      if pkill -f "slicer-mac up"; then
-        echo "SlicerVM stopped."
-      else
-        echo "SlicerVM is not running."
-      fi
-    fi
-  }
-  alias sdn=slicer-down
-  slicer-stop() {
-    if [[ -z "$1" ]]; then
-      echo "Usage: slicer-stop <vm-name>" >&2
-      return 1
-    fi
-    if slicer vm shutdown "$1"; then
-      echo "SlicerVM $1 stopped."
-    else
-      echo "Failed to stop SlicerVM $1."
-    fi
-  }
-  slicer-logs() {
-    slicer vm logs "${1:-slicer-1}" --lines "${2:-50}"
-  }
-  slicer-shell() {
-    slicer vm shell "${1:-slicer-1}" --uid 1000
-  }
-  slicer-status() {
-    if pgrep -f "slicer-mac up" >/dev/null 2>&1; then
-      echo "SlicerVM is running (pid $(pgrep -f 'slicer-mac up'))."
-      slicer vm list
-    else
-      echo "SlicerVM is not running."
-    fi
-  }
-  slicer-tray-ghostty() {
-    echo "Starting SlicerVM Tray with Ghostty terminal"
-    (slicer-tray --url "$HOME/slicer-mac/slicer.sock" --terminal "ghostty" >/dev/null 2>&1) &
-    disown
-  }  
-  slicer-tray-kitty() {
-    echo "Starting SlicerVM Tray with Kitty terminal"
-    (slicer-tray --url "$HOME/slicer-mac/slicer.sock" --terminal "kitty" >/dev/null 2>&1) &
-    disown
-  }  
-  slicer-up() {
-    echo "Starting SlicerVM... (log: ~/slicer-mac/daemon.log)"
-    (cd "$HOME/slicer-mac" && ./slicer-mac up "$@" >daemon.log 2>&1) &
-    disown
-  }
-  alias sup=slicer-up
-fi
+# if [[ -x "$HOME/slicer-mac/slicer-mac" ]]; then
+#   export SLICER_URL="$HOME/slicer-mac/slicer.sock"
+#   slicer-down() {
+#     if [[ -n "$1" ]]; then
+#       if slicer vm shutdown "$1"; then
+#         echo "SlicerVM $1 stopped."
+#       else
+#         echo "Failed to stop SlicerVM $1."
+#       fi
+#     else
+#       if pkill -f "slicer-mac up"; then
+#         echo "SlicerVM stopped."
+#       else
+#         echo "SlicerVM is not running."
+#       fi
+#     fi
+#   }
+#   alias sdn=slicer-down
+#   slicer-stop() {
+#     if [[ -z "$1" ]]; then
+#       echo "Usage: slicer-stop <vm-name>" >&2
+#       return 1
+#     fi
+#     if slicer vm shutdown "$1"; then
+#       echo "SlicerVM $1 stopped."
+#     else
+#       echo "Failed to stop SlicerVM $1."
+#     fi
+#   }
+#   slicer-logs() {
+#     slicer vm logs "${1:-slicer-1}" --lines "${2:-50}"
+#   }
+#   slicer-shell() {
+#     slicer vm shell "${1:-slicer-1}" --uid 1000
+#   }
+#   slicer-status() {
+#     if pgrep -f "slicer-mac up" >/dev/null 2>&1; then
+#       echo "SlicerVM is running (pid $(pgrep -f 'slicer-mac up'))."
+#       slicer vm list
+#     else
+#       echo "SlicerVM is not running."
+#     fi
+#   }
+#   slicer-tray-ghostty() {
+#     echo "Starting SlicerVM Tray with Ghostty terminal"
+#     (slicer-tray --url "$HOME/slicer-mac/slicer.sock" --terminal "ghostty" >/dev/null 2>&1) &
+#     disown
+#   }  
+#   slicer-tray-kitty() {
+#     echo "Starting SlicerVM Tray with Kitty terminal"
+#     (slicer-tray --url "$HOME/slicer-mac/slicer.sock" --terminal "kitty" >/dev/null 2>&1) &
+#     disown
+#   }  
+#   slicer-up() {
+#     echo "Starting SlicerVM... (log: ~/slicer-mac/daemon.log)"
+#     (cd "$HOME/slicer-mac" && ./slicer-mac up "$@" >daemon.log 2>&1) &
+#     disown
+#   }
+#   alias sup=slicer-up
+# fi
 
 #
 # 16. direnv
