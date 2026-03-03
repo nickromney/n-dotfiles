@@ -93,6 +93,12 @@ make uv update             # Update uv package manager (use ./install.sh -u for 
 make mas update            # Update Mac App Store applications
 
 > **Note:** Mac App Store installs require you to sign in via the App Store app and click "Get" once per app before `make app-store install` (or any `mas install`) can succeed.
+
+> **Note:** Some tools (`arkade`, `slicer`) install their binaries to `/usr/local/bin` which is
+> root-owned on Apple Silicon Macs. Self-update commands for these tools (`arkade update`,
+> `slicer update`) require `sudo` as a result. This is expected — the install scripts for both
+> tools write to `/usr/local/bin` by default, and the root ownership is not a Homebrew concern
+> on Apple Silicon (Homebrew uses `/opt/homebrew` instead).
 ```
 
 ## Features
@@ -423,7 +429,7 @@ _configs/
 | **make rust** | focus/rust | Rust development |
 | **make typescript** | focus/typescript | TypeScript/Node.js |
 | **make vscode** | focus/vscode | VSCode + extensions |
-| **make personal install** | Shared + host/common + host/personal + focus/containers + focus/kubernetes + focus/vscode | Base personal Mac (no hardware/chargeable extras) |
+| **make personal install** | Shared + host/common + host/personal + focus/containers + focus/kubernetes + focus/vscode + focus/cloud + focus/ai + focus/typescript | Base personal Mac (no hardware/chargeable extras) |
 | **make work install** | Shared + host/common + host/work + focus/containers + focus/kubernetes + focus/vscode | Work laptop tooling |
 | **make all install** | Shared + host/common + host/personal + host/work + focus/containers + focus/kubernetes + focus/vscode + focus/hardware-home + host/manual-check | Full superset |
 | **make install hardware-home** | focus/hardware-home | Optional home hardware and chargeable apps |
