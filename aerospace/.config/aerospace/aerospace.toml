@@ -50,13 +50,13 @@ alt-shift-minus = 'resize smart -100'
 alt-shift-equal = 'resize smart +100'
 
 # A huge stretch for mnemonics, but works with CapsLock as Hyper, plus right hand Qwerty.
-# W = Work (if using browser profiles)
-# T = Terminal (Ghostty, Kitty, Tmux)
-# Y = YDE (VSCode, Webstorm, Rider, Cursor, Local)
-# U = Utilities (Finder, Preview, Snagit, Podman Desktop, balenaEtcher, iMazing)
-# I = Internet (browsers - Brave, Chrome, Safari, Firefox)
+# W = Work (Chrome)
+# T = Terminal (Ghostty, Kitty)
+# Y = YDE (VSCode, Cursor, Codex)
+# U = Utilities (Finder, Preview, Snagit, Docker Desktop, balenaEtcher, iMazing, Bloom)
+# I = Internet (browsers - Brave, Safari, Firefox)
 # O = Office (Excel, Word, PowerPoint, OneNote)
-# P = Productivity (Obsidian, Notes, Things, Spotify) & AI (Claude, Ollama)
+# P = Productivity (Obsidian, Notes, Things, Spotify) & AI (Claude)
 # [ = Email (HEY, Outlook)
 # ] = Instant Messaging (Messages, Teams, WhatsApp, Slack, Zoom)
 
@@ -114,20 +114,20 @@ if.app-id = 'com.microsoft.VSCode'
 run = 'move-node-to-workspace Y'
 
 [[on-window-detected]]
-if.app-id = 'com.jetbrains.WebStorm'
-run = 'move-node-to-workspace Y'
-
-[[on-window-detected]]
-if.app-id = 'com.jetbrains.rider'
-run = 'move-node-to-workspace Y'
-
-[[on-window-detected]]
 if.app-id = 'com.todesktop.230313mzl4w4u92'
 run = 'move-node-to-workspace Y'
 
 [[on-window-detected]]
-if.app-id = 'com.getflywheel.lightning.local'
+if.app-id = 'com.openai.codex'
 run = 'move-node-to-workspace Y'
+
+[[on-window-detected]]
+if.app-id = 'com.axosoft.gitkraken'
+run = 'move-node-to-workspace Y'
+
+[[on-window-detected]]
+if.app-id = 'com.asiafu.Bloom'
+run = 'move-node-to-workspace U'
 
 [[on-window-detected]]
 if.app-id = 'com.apple.finder'
@@ -138,7 +138,7 @@ if.app-id = 'com.apple.Preview'
 run = 'move-node-to-workspace U'
 
 [[on-window-detected]]
-if.app-id = 'io.podmandesktop.PodmanDesktop'
+if.app-id = 'com.docker.docker'
 run = 'move-node-to-workspace U'
 
 [[on-window-detected]]
@@ -159,17 +159,11 @@ run = 'move-node-to-workspace U'
 
 [[on-window-detected]]
 if.app-id = 'com.brave.Browser'
-if.window-title-regex-substring = 'Brave – Work'
-run = "move-node-to-workspace W"
-
-[[on-window-detected]]
-if.app-id = 'com.brave.Browser'
-if.window-title-regex-substring = 'Brave – Personal'
 run = "move-node-to-workspace I"
 
 [[on-window-detected]]
 if.app-id = 'com.google.Chrome'
-run = "move-node-to-workspace I"
+run = "move-node-to-workspace W"
 
 [[on-window-detected]]
 if.app-id = 'com.apple.Safari'
@@ -205,10 +199,6 @@ run = "move-node-to-workspace P"
 
 [[on-window-detected]]
 if.app-id = 'com.anthropic.claudefordesktop'
-run = "move-node-to-workspace P"
-
-[[on-window-detected]]
-if.app-id = 'com.electron.ollama'
 run = "move-node-to-workspace P"
 
 [[on-window-detected]]

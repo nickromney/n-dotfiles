@@ -22,6 +22,7 @@
 #  15. Aliases           - Navigation, git, files, editors, fzf combos
 #  16. SlicerVM          - sup/slicer-up, sdn/slicer-down, slicer-stop, slicer-status, SLICER_URL
 #  17. direnv            - Directory-based environment
+#  18. AeroSpace         - Orphan detection, workspace snap, config reload
 #
 # Performance: ~100ms startup (cached) - see README.md for benchmarks
 # Reload with cache rebuild: sz
@@ -329,10 +330,11 @@ fi
 
 # File browser
 function y() {
-  local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+  local tmp cwd
+  tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
   command yazi "$@" --cwd-file="$tmp"
   IFS= read -r -d '' cwd <"$tmp"
-  [ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd"
+  [ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd" || true
   rm -f -- "$tmp"
 }
 
@@ -388,7 +390,7 @@ fi
 
 # Utility aliases
 # sz clears init cache and reloads zshrc (forces tool init rebuild)
-alias sz="rm -rf \"${XDG_CACHE_HOME:-$HOME/.cache}/zsh-init\" && source ~/.zshrc"
+alias sz='rm -rf "${XDG_CACHE_HOME:-$HOME/.cache}/zsh-init" && source ~/.zshrc'
 
 # AWS Lambda virtual environment alias - check if directory exists first
 AWS_LAMBDA_VENV="$HOME/.venvs/aws-lambda/bin/activate"
@@ -473,4 +475,121 @@ fi
 #
 if command -v mise >/dev/null 2>&1; then
   _cache_init mise "mise activate zsh"
+fi
+
+#
+# 18. AeroSpace
+#
+if command -v aerospace >/dev/null 2>&1; then
+  # Map app bundle IDs to their expected AeroSpace workspace.
+  # Mirrors the on-window-detected rules in aerospace.toml.
+  typeset -gA _AERO_WS_MAP
+  _AERO_WS_MAP=(
+    com.mitchellh.ghostty            T
+    net.kovidgoyal.kitty             T
+    com.microsoft.VSCode             Y
+    com.todesktop.230313mzl4w4u92    Y
+    com.openai.codex                 Y
+    com.axosoft.gitkraken            Y
+    com.apple.finder                 U
+    com.apple.Preview                U
+    com.docker.docker                U
+    com.jamfsoftware.selfservice.mac U
+    com.TechSmith.Snagit             U
+    io.balena.etcher                 U
+    com.DigiDNA.iMazing3Mac          U
+    com.asiafu.Bloom                 U
+    com.google.Chrome                W
+    com.brave.Browser                I
+    com.apple.Safari                 I
+    org.mozilla.firefox              I
+    com.microsoft.Excel              O
+    com.microsoft.Word               O
+    com.apple.Notes                  P
+    md.obsidian                      P
+    com.spotify.client               P
+    com.culturedcode.ThingsMac       P
+    com.anthropic.claudefordesktop   P
+    com.hey.app.desktop              '['
+    com.microsoft.Outlook            '['
+    com.apple.MobileSMS              ']'
+    com.microsoft.teams2             ']'
+    net.whatsapp.WhatsApp            ']'
+    com.tinyspeck.slackmacgap        ']'
+    us.zoom.xos                      ']'
+  )
+
+  # aerospace-report: show all open windows and their current workspace
+  aerospace-report() {
+    aerospace list-windows --all --format '%{workspace} %{app-name}' 2>/dev/null \
+      | sort \
+      | awk '{ws=$1; $1=""; printf "  %-4s %s\n", ws, substr($0,2)}'
+  }
+  alias ar='aerospace-report'
+
+  # aerospace-orphans: report windows not in their expected workspace
+  aerospace-orphans() {
+    local found=false
+    while IFS=' ' read -r win_id ws rest; do
+      local bundle_id="${rest##* }"
+      local app_name="${rest% *}"
+      local expected="${_AERO_WS_MAP[$bundle_id]}"
+      if [[ -n "$expected" && "$ws" != "$expected" ]]; then
+        printf '  %-36s  current: %-4s expected: %s\n' "$app_name" "$ws" "$expected"
+        found=true
+      fi
+    done < <(aerospace list-windows --all --format '%{window-id} %{workspace} %{app-name} %{app-bundle-id}' 2>/dev/null)
+    if ! $found; then
+      echo "All mapped apps are in their expected workspaces."
+    fi
+  }
+
+  # aerospace-snap: move all misplaced windows to their correct workspace
+  # Analogous to 'sz' for .zshrc — snaps everything into place
+  # 'as' shadows /usr/bin/as (assembler) which is never used interactively
+  aerospace-snap() {
+    local -a ws_order=(W T Y U I O P '[' ']')
+    local -A ws_label
+    ws_label=(W Work T Terminal Y YDE U Utilities I Internet O Office P Productivity '[' Email ']' Messaging)
+    local snapped=0
+    local -A seen ws_lines
+
+    while IFS=' ' read -r win_id ws rest; do
+      local bundle_id="${rest##* }"
+      local app_name="${rest% *}"
+      local expected="${_AERO_WS_MAP[$bundle_id]}"
+      [[ -z "$expected" ]] && continue
+      if [[ "$ws" != "$expected" ]]; then
+        aerospace move-node-to-workspace --window-id "$win_id" "$expected" 2>/dev/null
+        ((snapped++)) || true
+        ws="$expected"
+      fi
+      local key="${ws}:${app_name}"
+      [[ -n "${seen[$key]}" ]] && continue
+      seen[$key]=1
+      ws_lines[$ws]+="$(printf '  %-2s  %-12s  %s' "$ws" "${ws_label[$ws]}" "$app_name")"$'\n'
+    done < <(aerospace list-windows --all \
+      --format '%{window-id} %{workspace} %{app-name} %{app-bundle-id}' 2>/dev/null)
+
+    for ws in "${ws_order[@]}"; do
+      [[ -n "${ws_lines[$ws]}" ]] && printf '%s' "${ws_lines[$ws]}"
+    done
+    echo
+    if (( snapped > 0 )); then
+      echo "  Snapped $snapped window(s)."
+    else
+      echo "  All apps in expected workspaces."
+    fi
+  }
+  alias as='aerospace-snap'
+
+  # aerospace-reload: reload AeroSpace config (like 'sz' reloads .zshrc)
+  aerospace-reload() {
+    aerospace reload-config && echo "AeroSpace config reloaded."
+  }
+
+  # Auto-snap on login shell (i.e. when Ghostty/Kitty opens, not every tab/pane)
+  if [[ -o login ]]; then
+    aerospace-snap &>/dev/null &!
+  fi
 fi
