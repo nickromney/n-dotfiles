@@ -590,7 +590,6 @@ if command -v aerospace >/dev/null 2>&1; then
 
   # Auto-snap on login shell (i.e. when Ghostty/Kitty opens, not every tab/pane)
   if [[ -o login ]]; then
-    aerospace-snap &>/dev/null &
-    disown
+    aerospace-snap &>/dev/null &!
   fi
 fi
