@@ -5,6 +5,11 @@
 
 set -euo pipefail
 
+if [[ $EUID -eq 0 ]]; then
+  echo "Error: do not run as root. This script uses 'sudo' internally where needed." >&2
+  exit 1
+fi
+
 DRY_RUN=true
 FORCE=false
 NO_TRAY=false

@@ -32,14 +32,6 @@ tools:
     documentation_url: "https://opencode.ai"
     category: ai
 
-  gptscript:
-    manager: arkade
-    type: get
-    check_command: command -v gptscript
-    description: "Natural language programming language for LLMs"
-    documentation_url: "https://github.com/gptscript-ai/gptscript"
-    category: ai
-
   copilot:
     manager: arkade
     type: get

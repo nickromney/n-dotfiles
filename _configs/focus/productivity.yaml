@@ -1,0 +1,32 @@
+tools:
+  bloom:
+    manager: manual
+    type: check
+    check_command: "[ -d '/Applications/Bloom.app' ]"
+    description: "Bloom desktop application"
+    documentation_url: "https://bloomapp.club/"
+    category: productivity
+
+  daisy-disk:
+    manager: manual
+    type: check
+    check_command: "[ -d '/Applications/DaisyDisk.app' ]"
+    description: "Disk space analyzer for macOS"
+    documentation_url: "https://daisydiskapp.com/"
+    category: utilities
+
+  proxyman:
+    manager: manual
+    type: check
+    check_command: "[ -d '/Applications/Proxyman.app' ]"
+    description: "HTTP(S) traffic capture and debugging proxy"
+    documentation_url: "https://proxyman.com/"
+    category: development
+
+  spokenly:
+    manager: manual
+    type: check
+    check_command: "[ -d '/Applications/Spokenly.app' ]"
+    description: "Spokenly desktop application"
+    documentation_url: "https://spokenly.app/"
+    category: productivity

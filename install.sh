@@ -1295,6 +1295,15 @@ main() {
               info "Checking $tool ($manager $type)..."
               install_tool "$tool" "$CURRENT_CONFIG_FILE"
               # Manual tools always return 0 after reporting, no success message needed
+            elif [[ "$manager" == "arkade" && "$type" == "get" ]]; then
+              # Defer arkade tools for a single batched parallel install at the end
+              local arkade_install_args
+              arkade_install_args=$(yq ".tools.${tool}.install_args[]" "$CURRENT_CONFIG_FILE" 2>/dev/null | tr '\n' ' ')
+              if queue_arkade_get_tool "$tool" "$arkade_install_args"; then
+                info "Queued $tool ($manager $type) for batch install"
+              else
+                info "✓ $tool ($manager $type) already queued for batch install"
+              fi
             elif [[ "$manager" == "code" && "$type" == "extension" ]]; then
               # Defer VSCode extensions for a single batched install at the end
               local extension_id
@@ -1359,6 +1368,14 @@ main() {
     info "Run the install script again to install tools that depend on them."
     info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     info ""
+  fi
+
+  if [[ "$UPDATE" == "true" && "$DRY_RUN" == "false" ]]; then
+    local zsh_cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/zsh-init"
+    if [[ -d "$zsh_cache_dir" ]]; then
+      rm -rf "$zsh_cache_dir"
+      info "✓ Cleared zsh init cache (will rebuild on next shell startup)"
+    fi
   fi
 
   if [[ "$STOW" == "true" ]]; then

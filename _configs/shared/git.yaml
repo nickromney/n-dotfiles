@@ -40,6 +40,22 @@ tools:
     documentation_url: "https://git-lfs.com/"
     category: git
 
+  gitkraken:
+    manager: manual
+    type: check
+    check_command: "[ -d '/Applications/GitKraken.app' ]"
+    description: "Git GUI client"
+    documentation_url: "https://www.gitkraken.com/"
+    category: development
+
+  gitkraken-cli:
+    manager: brew
+    type: package
+    check_command: command -v gk
+    description: "GitKraken CLI"
+    documentation_url: "https://www.gitkraken.com/cli"
+    category: git
+
   pre-commit:
     manager: brew
     type: package

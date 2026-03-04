@@ -18,9 +18,9 @@ HOST_WORK = host/work
 COMMON_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON)
 
 # Configuration combinations (shared first for runtime managers like mise)
-PERSONAL_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON) $(HOST_PERSONAL) focus/containers focus/kubernetes focus/vscode focus/cloud focus/ai focus/typescript
-WORK_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON) $(HOST_WORK) focus/containers focus/kubernetes focus/vscode
-ALL_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON) $(HOST_PERSONAL) $(HOST_WORK) focus/containers focus/kubernetes focus/vscode focus/hardware-home host/manual-check
+PERSONAL_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON) $(HOST_PERSONAL) focus/containers focus/kubernetes focus/vscode focus/cloud focus/ai focus/typescript focus/productivity
+WORK_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON) $(HOST_WORK) focus/containers focus/kubernetes focus/vscode focus/productivity
+ALL_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON) $(HOST_PERSONAL) $(HOST_WORK) focus/containers focus/kubernetes focus/vscode focus/hardware-home host/manual-check focus/productivity
 
 PROFILES = common personal work all
 ACTIONS = install install-dry-run install-system install-preferred install-legacy update stow configure
@@ -202,7 +202,7 @@ mas: ## Mac App Store package manager <update>
 ##@ Focus Configurations
 
 # List of available focus areas
-FOCUS_AREAS = ai app-store cloud container-base containers hardware-home infrastructure kubernetes neovim python rust typescript vscode
+FOCUS_AREAS = ai app-store cloud container-base containers hardware-home infrastructure kubernetes neovim productivity python rust typescript vscode
 
 # Dynamic pattern rule for focus areas
 .PHONY: $(FOCUS_AREAS)
@@ -219,6 +219,7 @@ hardware-home: ## Home hardware + chargeable apps (optional) <install|stow|updat
 infrastructure: ## IaC tools (Terraform, Ansible) <install|stow|update>
 kubernetes: ## Kubernetes tools <install|stow|update>
 neovim: ## Neovim and plugins <install|stow|update>
+productivity: ## Productivity apps <install|stow|update>
 python: ## Python development tools <install|stow|update>
 rust: ## Rust toolchain <install|stow|update>
 typescript: ## Node.js and TypeScript <install|stow|update>
@@ -381,6 +382,7 @@ clean: ## Clean cached files and build artifacts
 	@find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	@find . -name "*.pyc" -delete 2>/dev/null || true
 	@find . -name ".DS_Store" -delete 2>/dev/null || true
+	@rm -rf "$${XDG_CACHE_HOME:-$$HOME/.cache}/zsh-init" && echo "  Cleared zsh init cache" || true
 	@echo "$(GREEN)✓ Cleaned$(NC)"
 
 .PHONY: fmt
