@@ -1384,3 +1384,144 @@ esac
   # Should not error on missing tools key
   [[ ! "$output" =~ "error" ]]
 }
+
+# Tests for zsh init cache invalidation on update
+@test "main clears zsh init cache when UPDATE=true and cache exists" {
+  export UPDATE="true"
+  export DRY_RUN="false"
+  export XDG_CACHE_HOME="$BATS_TEST_TMPDIR/cache"
+  local zsh_cache_dir="$BATS_TEST_TMPDIR/cache/zsh-init"
+  mkdir -p "$zsh_cache_dir"
+  touch "$zsh_cache_dir/kubectl.zsh"
+  touch "$zsh_cache_dir/gk.zsh"
+
+  mock_command_with_script "yq" '
+case "$*" in
+  *".tools | keys | .[]"*|*".tools | select(. != null) | keys | .[]"*)
+    exit 0
+    ;;
+  *".tools[].manager"*)
+    exit 0
+    ;;
+  *)
+    echo "null"
+    exit 0
+    ;;
+esac
+'
+  mock_command "which"
+  mock_brew
+
+  mkdir -p "$BATS_TEST_TMPDIR/_configs"
+  touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
+  export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
+  export CONFIG_FILES=("test")
+
+  run main
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "Cleared zsh init cache" ]]
+  [ ! -d "$zsh_cache_dir" ]
+}
+
+@test "main does not clear zsh init cache when UPDATE=true but DRY_RUN=true" {
+  export UPDATE="true"
+  export DRY_RUN="true"
+  export XDG_CACHE_HOME="$BATS_TEST_TMPDIR/cache"
+  local zsh_cache_dir="$BATS_TEST_TMPDIR/cache/zsh-init"
+  mkdir -p "$zsh_cache_dir"
+  touch "$zsh_cache_dir/kubectl.zsh"
+
+  mock_command_with_script "yq" '
+case "$*" in
+  *".tools | keys | .[]"*|*".tools | select(. != null) | keys | .[]"*)
+    exit 0
+    ;;
+  *".tools[].manager"*)
+    exit 0
+    ;;
+  *)
+    echo "null"
+    exit 0
+    ;;
+esac
+'
+  mock_command "which"
+  mock_brew
+
+  mkdir -p "$BATS_TEST_TMPDIR/_configs"
+  touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
+  export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
+  export CONFIG_FILES=("test")
+
+  run main
+  [ "$status" -eq 0 ]
+  [ -d "$zsh_cache_dir" ]
+}
+
+@test "main does not clear zsh init cache when UPDATE=false" {
+  export UPDATE="false"
+  export DRY_RUN="false"
+  export XDG_CACHE_HOME="$BATS_TEST_TMPDIR/cache"
+  local zsh_cache_dir="$BATS_TEST_TMPDIR/cache/zsh-init"
+  mkdir -p "$zsh_cache_dir"
+  touch "$zsh_cache_dir/kubectl.zsh"
+
+  mock_command_with_script "yq" '
+case "$*" in
+  *".tools | keys | .[]"*|*".tools | select(. != null) | keys | .[]"*)
+    exit 0
+    ;;
+  *".tools[].manager"*)
+    exit 0
+    ;;
+  *)
+    echo "null"
+    exit 0
+    ;;
+esac
+'
+  mock_command "which"
+  mock_brew
+
+  mkdir -p "$BATS_TEST_TMPDIR/_configs"
+  touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
+  export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
+  export CONFIG_FILES=("test")
+
+  run main
+  [ "$status" -eq 0 ]
+  [ -d "$zsh_cache_dir" ]
+}
+
+@test "main does not error when UPDATE=true but zsh init cache does not exist" {
+  export UPDATE="true"
+  export DRY_RUN="false"
+  export XDG_CACHE_HOME="$BATS_TEST_TMPDIR/cache"
+  # Deliberately do not create the cache dir
+
+  mock_command_with_script "yq" '
+case "$*" in
+  *".tools | keys | .[]"*|*".tools | select(. != null) | keys | .[]"*)
+    exit 0
+    ;;
+  *".tools[].manager"*)
+    exit 0
+    ;;
+  *)
+    echo "null"
+    exit 0
+    ;;
+esac
+'
+  mock_command "which"
+  mock_brew
+
+  mkdir -p "$BATS_TEST_TMPDIR/_configs"
+  touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
+  export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
+  export CONFIG_FILES=("test")
+
+  run main
+  [ "$status" -eq 0 ]
+  [[ ! "$output" =~ "Cleared zsh init cache" ]]
+}

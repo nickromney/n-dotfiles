@@ -8,18 +8,18 @@ tools:
     documentation_url: "https://gnupg.org/"
     category: security
 
-  ykman:
-    manager: brew
-    type: package
-    check_command: command -v ykman
-    description: "YubiKey Manager CLI for configuring YubiKeys"
-    documentation_url: "https://developers.yubico.com/yubikey-manager/"
-    category: security
-
   trivy:
     manager: arkade
     type: get
     check_command: command -v trivy
     description: "Vulnerability scanner for containers and other artifacts"
     documentation_url: "https://trivy.dev/"
+    category: security
+
+  ykman:
+    manager: brew
+    type: package
+    check_command: command -v ykman
+    description: "YubiKey Manager CLI for configuring YubiKeys"
+    documentation_url: "https://developers.yubico.com/yubikey-manager/"
     category: security
