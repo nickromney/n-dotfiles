@@ -134,9 +134,10 @@ make personal configure      # apply macOS settings
 `make install` follows this order:
 
 1. Read selected `_configs/*.yaml` bundle(s)
-2. Install system-wide dependencies with `brew` where available
-3. Fall back to `apt` for `brew` package tools when `brew` is unavailable
-4. Install project runtimes via `mise install` from local `mise.toml`
+2. Generate plain-text manifests (`Brewfile`, `arkade.tsv`, `metadata.json`)
+3. Apply system-wide dependencies with native tools (`brew bundle`, `arkade`, manager-specific runners)
+4. Fall back to `apt` for `brew` package tools when `brew` is unavailable
+5. Install project runtimes via `mise install` from local `mise.toml`
 
 ```bash
 # One-shot preferred install path
@@ -146,6 +147,7 @@ make install
 make install-system    # system deps only (config-driven install.sh)
 make runtime-install   # project runtimes only (mise.toml)
 make install-dry-run   # preview system + runtime changes
+make manifests-generate # inspect generated install manifests for the selected profile
 ```
 
 ### macOS System Configuration
@@ -543,7 +545,7 @@ VSCODE_CLI=vscodium make focus-vscode
 .
 ├── Brewfile        # Preferred personal bundle (generated from _configs)
 ├── Brewfile.*      # Profile/OS variants (work, common, posix)
-├── install.sh      # Legacy installer/bridge script
+├── install.sh      # Thin entrypoint for the manifest-driven installer
 ├── Makefile        # Convenient targets for common operations
 ├── _configs/       # Modular configuration files
 │   ├── shared/     # Cross-platform tools

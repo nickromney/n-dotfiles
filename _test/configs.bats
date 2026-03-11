@@ -96,16 +96,14 @@ check_yaml() {
   [ "$status" -eq 0 ]
 }
 
-@test "configs: focus/typescript.yaml bun has tap dependency" {
-  # Check that oven-sh/bun tap exists
-  run grep -q "oven-sh/bun:" "$CONFIG_DIR/focus/typescript.yaml"
+@test "configs: focus/typescript.yaml bun is arkade-managed" {
+  run yq eval '.tools.bun.manager' "$CONFIG_DIR/focus/typescript.yaml"
   [ "$status" -eq 0 ]
+  [ "$output" = "arkade" ]
 
-  # Check that bun depends on the tap
-  run grep -A5 "^  bun:" "$CONFIG_DIR/focus/typescript.yaml"
+  run yq eval '.tools.bun.type' "$CONFIG_DIR/focus/typescript.yaml"
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "dependencies" ]]
-  [[ "$output" =~ "oven-sh/bun" ]]
+  [ "$output" = "get" ]
 }
 
 @test "configs: shared/shell.yaml contains markdownlint tools" {

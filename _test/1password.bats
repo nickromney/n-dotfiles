@@ -127,7 +127,7 @@ EOF
   cd "$TEST_DIR"
   cp "${BATS_TEST_DIRNAME}/../setup-ssh-from-1password.sh" .
 
-  run ./setup-ssh-from-1password.sh --dry-run
+  run ./setup-ssh-from-1password.sh --profile personal --dry-run
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"SSH Config Dry Run"* ]]
@@ -173,12 +173,12 @@ EOF
   chmod +x "$MOCK_BIN_DIR/op"
 
   # Run in safe mode (default)
-  run ./setup-ssh-from-1password.sh
+  run ./setup-ssh-from-1password.sh --profile personal
 
   # Check that only public keys were requested
   grep -q "public key" "$TEST_DIR/op-calls.log"
-  run ! grep -q "private key" "$TEST_DIR/op-calls.log"
-  [ "$status" -eq 0 ]
+  run grep -q "private key" "$TEST_DIR/op-calls.log"
+  [ "$status" -ne 0 ]
 }
 
 @test "SSH setup: unsafe mode requires confirmation" {
@@ -187,7 +187,7 @@ EOF
   cp "${BATS_TEST_DIRNAME}/../setup-ssh-from-1password.sh" .
 
   # Simulate user declining
-  run bash -c 'echo "no" | ./setup-ssh-from-1password.sh --unsafe'
+  run bash -c 'echo "no" | ./setup-ssh-from-1password.sh --profile personal --unsafe'
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"PRIVATE KEY DOWNLOAD MODE"* ]]
@@ -234,7 +234,7 @@ EOF
   chmod +x "$MOCK_BIN_DIR/op"
 
   # Simulate user confirming
-  echo "yes" | run ./setup-ssh-from-1password.sh --unsafe
+  echo "yes" | run ./setup-ssh-from-1password.sh --profile personal --unsafe
 
   # Check that private keys were requested
   grep -q "private key" "$TEST_DIR/op-calls.log"
@@ -262,7 +262,7 @@ EOF
   # Remove op from PATH completely
   export PATH="/usr/bin:/bin"
 
-  run ./setup-ssh-from-1password.sh --dry-run
+  run ./setup-ssh-from-1password.sh --profile personal --dry-run
 
   [ "$status" -eq 1 ]
   [[ "$output" == *"1Password CLI (op) is not installed"* ]]
@@ -298,7 +298,7 @@ exit 1
 EOF
   chmod +x "$MOCK_BIN_DIR/op"
 
-  run ./setup-ssh-from-1password.sh --dry-run
+  run ./setup-ssh-from-1password.sh --profile personal --dry-run
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"Found in 1Password:"* ]]
@@ -323,7 +323,7 @@ EOF
   # Ensure socket doesn't exist
   rm -rf "$HOME/.1password"
 
-  run ./setup-ssh-from-1password.sh --dry-run
+  run ./setup-ssh-from-1password.sh --profile personal --dry-run
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"1Password SSH agent socket not found"* ]]

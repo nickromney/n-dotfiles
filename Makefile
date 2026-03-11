@@ -227,6 +227,14 @@ vscode: ## VSCode and extensions <install|stow|update>
 
 ##@ Actions
 
+.PHONY: manifests-generate
+manifests-generate: ## Generate install manifests for the selected profile
+	@OUT_DIR=".generated/manifests/$(SELECTED_PROFILE)"; \
+	mkdir -p "$$OUT_DIR"; \
+	echo "$(BLUE)Generating install manifests in $$OUT_DIR...$(NC)"; \
+	./scripts/generate-install-manifests.sh "$$OUT_DIR" $(PROFILE_CONFIGS); \
+	echo "$(GREEN)✓ Install manifests generated$(NC)"
+
 .PHONY: brewfile-generate
 brewfile-generate: ## Generate Brewfile variants from _configs
 	@echo "$(BLUE)Generating Brewfiles from config bundles...$(NC)"
@@ -249,7 +257,7 @@ brewfile-install: ## Install from the selected profile Brewfile (preferred)
 		$(MAKE) brewfile-generate; \
 	fi
 	@echo "$(BLUE)Installing via brew bundle: $(SELECTED_BREWFILE)$(NC)"
-	@brew bundle --file="$(SELECTED_BREWFILE)" --no-lock
+	@brew bundle --file="$(SELECTED_BREWFILE)"
 
 .PHONY: runtime-install
 runtime-install: ## Install runtimes declared in local mise.toml (project-level)

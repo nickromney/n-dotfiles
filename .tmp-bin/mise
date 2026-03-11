@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+if [[ "$1" == "outdated" && "$2" == "--json" && "$3" == "--local" ]]; then
+  echo "{}"
+  exit 0
+fi
+if [[ "$1" == "upgrade" ]]; then
+  echo unexpected
+  exit 1
+fi
+exit 1
