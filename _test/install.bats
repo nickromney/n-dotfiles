@@ -180,6 +180,7 @@ brew "jq"
 EOF
   METADATA_LINES=("jq"$'\t'"brew"$'\t'"package"$'\t'"jq --version"$'\t'"false"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"test"$'\t'"")
 
+  # shellcheck disable=SC2016  # mock script is intentionally single-quoted
   mock_command_with_script "brew" '
 case "$1" in
   bundle)
@@ -214,6 +215,7 @@ brew "openssh"
 EOF
   METADATA_LINES=("openssh"$'\t'"brew"$'\t'"package"$'\t'"command -v sh"$'\t'"false"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"network"$'\t'"")
 
+  # shellcheck disable=SC2016  # mock script is intentionally single-quoted
   mock_command_with_script "brew" '
 case "$1" in
   bundle)
@@ -241,6 +243,7 @@ brew "jq"
 EOF
   METADATA_LINES=("jq"$'\t'"brew"$'\t'"package"$'\t'"jq --version"$'\t'"false"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"test"$'\t'"")
 
+  # shellcheck disable=SC2016  # mock script is intentionally single-quoted
   mock_command_with_script "brew" '
 case "$1" in
   bundle)
@@ -265,6 +268,7 @@ esac
     "ghostty"$'\t'"brew"$'\t'"cask"$'\t'"ghostty --version"$'\t'"true"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"test"$'\t'""
   )
 
+  # shellcheck disable=SC2016  # mock script is intentionally single-quoted
   mock_command_with_script "brew" '
 case "$1 $2" in
   "list --formula")
@@ -331,12 +335,15 @@ esac
 
 @test "run_arkade_batch reports refreshes as info during updates" {
   export UPDATE="true"
+  # shellcheck disable=SC2034  # consumed by the sourced installer
   METADATA_LINES=(
     "tool-alpha"$'\t'"arkade"$'\t'"get"$'\t'"tool-alpha version"$'\t'"false"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"test"$'\t'""
   )
+  # shellcheck disable=SC2034  # consumed by the sourced installer
   ARKADE_LINES=(
     "tool-alpha"$'\t'""
   )
+  # shellcheck disable=SC2016  # mock script is intentionally single-quoted
   mock_command_with_script "arkade" '
 if [[ "$1" == "get" ]]; then
   echo "arkade refresh"
@@ -415,6 +422,7 @@ EOF
 echo "code2prompt 1.0.0"
 EOF
   chmod +x "$MOCK_BIN_DIR/code2prompt"
+  # shellcheck disable=SC2016  # mock script is intentionally single-quoted
   mock_command_with_script "cargo" '
 if [[ "$1" == "install-update" && "$2" == "--version" ]]; then
   echo "cargo-install-update 0.1"
@@ -440,6 +448,7 @@ exit 1
 
 @test "run_direct_metadata_tools skips cargo updates when all selected tools are current" {
   export UPDATE="true"
+  # shellcheck disable=SC2034  # consumed by the sourced installer
   METADATA_LINES=(
     "code2prompt"$'\t'"cargo"$'\t'"binary"$'\t'"code2prompt --version"$'\t'"false"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"test"$'\t'""
   )
@@ -448,6 +457,7 @@ exit 1
 echo "code2prompt 1.0.0"
 EOF
   chmod +x "$MOCK_BIN_DIR/code2prompt"
+  # shellcheck disable=SC2016  # mock script is intentionally single-quoted
   mock_command_with_script "cargo" '
 if [[ "$1" == "install-update" && "$2" == "--version" ]]; then
   echo "cargo-install-update 0.1"
@@ -471,9 +481,11 @@ exit 1
 }
 
 @test "run_mas_update ignores malformed manifest entries" {
+  # shellcheck disable=SC2034  # consumed by the sourced installer
   MAS_UPDATE_LINES=(
     $'\tmas\tapp\tcheck\tfalse\tnull\tnull\tnull\tnull\tnull\ttest\t'
   )
+  # shellcheck disable=SC2016  # mock script is intentionally single-quoted
   mock_command_with_script "mas" '
 if [[ "$1" == "outdated" ]]; then
   exit 0
@@ -489,6 +501,7 @@ exit 1
 @test "run_mise_update skips when local runtimes are already current" {
   export UPDATE="true"
   touch "$REPO_ROOT/mise.toml"
+  # shellcheck disable=SC2016  # mock script is intentionally single-quoted
   mock_command_with_script "mise" '
 if [[ "$1" == "outdated" ]]; then
   echo "{}"
@@ -530,6 +543,7 @@ $'kubectl\t' \
   export XDG_CACHE_HOME="$BATS_TEST_TMPDIR/cache"
 
   mock_command "which"
+  # shellcheck disable=SC2016  # mock script is intentionally single-quoted
   mock_command_with_script "brew" '
 case "$1 $2" in
   "list --formula")
@@ -549,6 +563,7 @@ case "$1" in
     ;;
 esac
 '
+  # shellcheck disable=SC2016  # mock script is intentionally single-quoted
   mock_command_with_script "mise" '
 if [[ "$1" == "outdated" ]]; then
   echo "{}"

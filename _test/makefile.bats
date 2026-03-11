@@ -233,7 +233,7 @@ EOF
 @test "make manifests-generate creates the selected profile manifest directory" {
   run make manifests-generate work
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "Generating install manifests in .generated/manifests/work" ]]
-  [[ "$output" =~ "generate-install-manifests called for .generated/manifests/work with: shared/shell" ]]
+  [[ "$output" == *"Generating install manifests in .generated/manifests/work"* ]]
+  [[ "$output" == *"generate-install-manifests called for .generated/manifests/work with: shared/shell"* ]]
   [ -f ".generated/manifests/work/result.txt" ]
 }
