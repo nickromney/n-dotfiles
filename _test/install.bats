@@ -327,6 +327,7 @@ esac
     "tool-beta"$'\t'""
   )
   export DRY_RUN="true"
+  mock_command "arkade"
 
   run run_arkade_batch
   [ "$status" -eq 0 ]
@@ -343,6 +344,7 @@ esac
   ARKADE_LINES=(
     "tool-alpha"$'\t'""
   )
+  mock_command "tool-alpha"
   # shellcheck disable=SC2016  # mock script is intentionally single-quoted
   mock_command_with_script "arkade" '
 if [[ "$1" == "get" ]]; then
