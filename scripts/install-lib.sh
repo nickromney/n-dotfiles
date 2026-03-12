@@ -103,6 +103,45 @@ debug() {
   fi
 }
 
+timestamp_now() {
+  date +%s
+}
+
+format_duration() {
+  local total_seconds=$1
+  local hours=0
+  local minutes=0
+  local seconds=0
+
+  if [[ "$total_seconds" -lt 0 ]]; then
+    total_seconds=0
+  fi
+
+  hours=$((total_seconds / 3600))
+  minutes=$(((total_seconds % 3600) / 60))
+  seconds=$((total_seconds % 60))
+
+  if [[ "$hours" -gt 0 ]]; then
+    printf '%sh %sm %ss\n' "$hours" "$minutes" "$seconds"
+    return 0
+  fi
+
+  if [[ "$minutes" -gt 0 ]]; then
+    printf '%sm %ss\n' "$minutes" "$seconds"
+    return 0
+  fi
+
+  printf '%ss\n' "$seconds"
+}
+
+duration_since() {
+  local started_at=$1
+  local finished_at
+
+  finished_at=$(timestamp_now)
+  format_duration $((finished_at - started_at))
+}
+
 print_captured_output() {
   local output=$1
   local exit_code=$2
@@ -948,6 +987,19 @@ join_by_space() {
   echo "$*"
 }
 
+counted_noun() {
+  local count=$1
+  local singular=$2
+  local plural=${3:-${singular}s}
+
+  if [[ "$count" -eq 1 ]]; then
+    printf '%s %s\n' "$count" "$singular"
+    return 0
+  fi
+
+  printf '%s %s\n' "$count" "$plural"
+}
+
 format_compact_list() {
   local limit=$1
   shift
@@ -1199,14 +1251,14 @@ queue_brew_updates() {
   done
 
   if [[ ${#up_to_date_formulas[@]} -gt 0 ]]; then
-    skip "${#up_to_date_formulas[@]} Homebrew formula(e) already up to date"
+    skip "$(counted_noun "${#up_to_date_formulas[@]}" "Homebrew formula" "Homebrew formulae") already up to date"
     if is_verbose; then
       info "Up-to-date Homebrew formulae: $(format_compact_list 20 "${up_to_date_formulas[@]}")"
     fi
   fi
 
   if [[ ${#up_to_date_casks[@]} -gt 0 ]]; then
-    skip "${#up_to_date_casks[@]} Homebrew cask(s) already up to date"
+    skip "$(counted_noun "${#up_to_date_casks[@]}" "Homebrew cask") already up to date"
     if is_verbose; then
       info "Up-to-date Homebrew casks: $(format_compact_list 20 "${up_to_date_casks[@]}")"
     fi
@@ -1238,6 +1290,9 @@ run_brew_update() {
     return 0
   fi
 
+  local started_at
+  local elapsed
+
   queue_brew_updates
 
   if [[ ${#BREW_UPDATE_FORMULAS[@]} -eq 0 && ${#BREW_UPDATE_CASKS[@]} -eq 0 ]]; then
@@ -1248,38 +1303,45 @@ run_brew_update() {
   if is_dry_run; then
     info "Would execute: brew update"
   else
+    started_at=$(timestamp_now)
     run_and_capture brew update
     if [[ $CAPTURE_EXIT_CODE -ne 0 ]]; then
       error "brew update failed"
       return "$CAPTURE_EXIT_CODE"
     fi
+    elapsed=$(duration_since "$started_at")
+    info "Refreshed Homebrew metadata in $elapsed"
   fi
 
   if [[ ${#BREW_UPDATE_FORMULAS[@]} -gt 0 ]]; then
-    info "Updating ${#BREW_UPDATE_FORMULAS[@]} Homebrew formula(e)..."
+    info "Updating $(counted_noun "${#BREW_UPDATE_FORMULAS[@]}" "Homebrew formula" "Homebrew formulae")..."
     if is_dry_run; then
       info "Would execute: brew upgrade $(join_by_space "${BREW_UPDATE_FORMULAS[@]}")"
     else
+      started_at=$(timestamp_now)
       run_and_capture brew upgrade "${BREW_UPDATE_FORMULAS[@]}"
       if [[ $CAPTURE_EXIT_CODE -ne 0 ]]; then
         error "brew formula upgrade failed"
         return "$CAPTURE_EXIT_CODE"
       fi
-      change "Updated ${#BREW_UPDATE_FORMULAS[@]} Homebrew formula(e)"
+      elapsed=$(duration_since "$started_at")
+      change "Updated $(counted_noun "${#BREW_UPDATE_FORMULAS[@]}" "Homebrew formula" "Homebrew formulae"): $(format_compact_list 10 "${BREW_UPDATE_FORMULAS[@]}") in $elapsed"
     fi
   fi
 
   if [[ ${#BREW_UPDATE_CASKS[@]} -gt 0 ]]; then
-    info "Updating ${#BREW_UPDATE_CASKS[@]} Homebrew cask(s)..."
+    info "Updating $(counted_noun "${#BREW_UPDATE_CASKS[@]}" "Homebrew cask")..."
     if is_dry_run; then
       info "Would execute: brew upgrade --cask $(join_by_space "${BREW_UPDATE_CASKS[@]}")"
     else
+      started_at=$(timestamp_now)
       run_and_capture brew upgrade --cask "${BREW_UPDATE_CASKS[@]}"
       if [[ $CAPTURE_EXIT_CODE -ne 0 ]]; then
         error "brew cask upgrade failed"
         return "$CAPTURE_EXIT_CODE"
       fi
-      change "Updated ${#BREW_UPDATE_CASKS[@]} Homebrew cask(s)"
+      elapsed=$(duration_since "$started_at")
+      change "Updated $(counted_noun "${#BREW_UPDATE_CASKS[@]}" "Homebrew cask"): $(format_compact_list 10 "${BREW_UPDATE_CASKS[@]}") in $elapsed"
     fi
   fi
 }
@@ -1642,7 +1704,7 @@ run_manual_messages() {
 
     if is_tool_installed_from_fields "$tool" "$manager" "$type" "$check_command" ""; then
       if [[ "$UPDATE" == "true" ]]; then
-        skip "$tool (manual) check vendor site for updates"
+        skip "$tool (manual) update managed outside install.sh"
       else
         skip "$tool (manual) already present"
       fi
@@ -1964,7 +2026,11 @@ run_mise_update() {
   local outdated_count
   local outdated_output_file
   local outdated_exit_code
+  local started_at
+  local elapsed
 
+  info "Checking runtimes declared in mise.toml for updates..."
+  started_at=$(timestamp_now)
   outdated_output_file=$(mktemp)
   set +e
   mise outdated --json --local >"$outdated_output_file" 2>&1
@@ -1972,6 +2038,7 @@ run_mise_update() {
   set -e
   outdated_json=$(cat "$outdated_output_file")
   rm -f "$outdated_output_file"
+  elapsed=$(duration_since "$started_at")
 
   print_captured_output "$outdated_json" "$outdated_exit_code"
   if [[ $outdated_exit_code -ne 0 ]]; then
@@ -1981,7 +2048,7 @@ run_mise_update() {
 
   outdated_json=${outdated_json:-{}}
   if ! printf '%s' "$outdated_json" | grep -q '"[^"]\+"' ; then
-    skip "Runtimes declared in mise.toml already up to date"
+    skip "Runtimes declared in mise.toml already up to date (checked in $elapsed)"
     return 0
   fi
 
@@ -1995,13 +2062,16 @@ run_mise_update() {
     return 0
   fi
 
+  info "Updating $(counted_noun "$outdated_count" "runtime") declared in mise.toml..."
+  started_at=$(timestamp_now)
   run_and_capture mise upgrade --local
   if [[ $CAPTURE_EXIT_CODE -ne 0 ]]; then
     error "mise upgrade failed"
     return "$CAPTURE_EXIT_CODE"
   fi
+  elapsed=$(duration_since "$started_at")
 
-  change "Updated ${outdated_count} runtime(s) declared in mise.toml"
+  change "Updated $(counted_noun "$outdated_count" "runtime") declared in mise.toml in $elapsed"
 }
 
 refresh_available_managers() {

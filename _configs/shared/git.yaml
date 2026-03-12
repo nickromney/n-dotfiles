@@ -50,8 +50,8 @@ tools:
 
   gitkraken-cli:
     manager: brew
-    type: package
-    check_command: command -v gk
+    type: cask
+    check_command: "brew list --cask gitkraken-cli >/dev/null 2>&1"
     description: "GitKraken CLI"
     documentation_url: "https://www.gitkraken.com/cli"
     category: git

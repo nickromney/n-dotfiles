@@ -24,7 +24,7 @@ ALL_CONFIGS = $(SHARED_CONFIGS) $(HOST_COMMON) $(HOST_PERSONAL) $(HOST_WORK) foc
 
 PROFILES = common personal work all
 ACTIONS = install install-dry-run install-system install-preferred install-legacy update stow configure
-DEFAULT_PROFILE := common
+DEFAULT_PROFILE := $(if $(filter update,$(MAKECMDGOALS)),personal,common)
 REQUESTED_PROFILE := $(firstword $(filter $(PROFILES),$(MAKECMDGOALS)))
 SELECTED_PROFILE := $(strip $(if $(PROFILE),$(PROFILE),$(if $(REQUESTED_PROFILE),$(REQUESTED_PROFILE),$(DEFAULT_PROFILE))))
 
@@ -68,6 +68,7 @@ help: ## Show this help message
 	@echo ""
 	@echo "$(BLUE)Profile Examples:$(NC)"
 	@echo "  make install             Safe base install (common profile by default)"
+	@echo "  make update              Update installed tools (personal profile by default)"
 	@echo "  make install personal    Personal profile install"
 	@echo "  make install work        Work profile install"
 	@echo "  make install all         All profile bundles"
