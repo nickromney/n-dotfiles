@@ -31,9 +31,16 @@ check_file() {
     local name="$2"
     shift 2
     local shellcheck_args=("$@")
+    local shellcheck_status=0
 
     echo -e "${YELLOW}Checking $name...${NC}"
-    if shellcheck "${shellcheck_args[@]}" "$file" 2>&1 | tee /tmp/shellcheck_output.txt; then
+    if [[ ${#shellcheck_args[@]} -gt 0 ]]; then
+        shellcheck "${shellcheck_args[@]}" "$file" 2>&1 | tee /tmp/shellcheck_output.txt || shellcheck_status=$?
+    else
+        shellcheck "$file" 2>&1 | tee /tmp/shellcheck_output.txt || shellcheck_status=$?
+    fi
+
+    if [[ $shellcheck_status -eq 0 ]]; then
         echo -e "  ${GREEN}✓ No issues found${NC}"
     else
         local error_count

@@ -97,8 +97,8 @@
 #     insteadOf = git@github.com:org/
 #     insteadOf = https://github.com/org/
 [credential "https://github.com"]
-	helper =
-	helper = !gh auth git-credential
+	helper = 
+	helper = !/Users/nickromney/.arkade/bin/gh auth git-credential
 [credential "https://gist.github.com"]
-	helper =
-	helper = !gh auth git-credential
+	helper = 
+	helper = !/Users/nickromney/.arkade/bin/gh auth git-credential

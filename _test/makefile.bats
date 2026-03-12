@@ -27,6 +27,12 @@ EOF
   cat > "$TEST_DIR/mocks/brew" <<'EOF'
 #!/usr/bin/env bash
 if [[ "$1" == "bundle" ]]; then
+  shift
+  printf "%s\n" "$@" > "${TEST_DIR}/brew-bundle-args.txt"
+  if printf "%s\n" "$@" | grep -qx -- "--no-lock"; then
+    echo "invalid option: --no-lock" >&2
+    exit 1
+  fi
   echo "brew bundle called"
   exit 0
 fi
@@ -52,6 +58,17 @@ echo "macos.sh called with: $@"
 EOF
   chmod +x _macos/macos.sh
   touch _macos/personal.yaml _macos/work.yaml
+
+  mkdir -p scripts
+  cat > scripts/generate-install-manifests.sh <<'EOF'
+#!/usr/bin/env bash
+out_dir="$1"
+shift
+mkdir -p "$out_dir"
+echo "generated manifests for: $*" > "$out_dir/result.txt"
+echo "generate-install-manifests called for $out_dir with: $*"
+EOF
+  chmod +x scripts/generate-install-manifests.sh
 
   # Copy the Makefile
   cp "$REPO_ROOT/Makefile" .
@@ -93,6 +110,14 @@ teardown() {
   run make install-dry-run
   [ "$status" -eq 0 ]
   [[ "$output" =~ "mise install --dry-run" ]]
+}
+
+@test "make brewfile-install uses supported brew bundle flags" {
+  run make brewfile-install
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "brew bundle called" ]]
+  run grep -qx -- '--file=Brewfile.common' "$TEST_DIR/brew-bundle-args.txt"
+  [ "$status" -eq 0 ]
 }
 
 @test "make personal without action triggers install" {
@@ -203,4 +228,12 @@ EOF
 @test "make with invalid target fails" {
   run make invalid_target
   [ "$status" -ne 0 ]
+}
+
+@test "make manifests-generate creates the selected profile manifest directory" {
+  run make manifests-generate work
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Generating install manifests in .generated/manifests/work"* ]]
+  [[ "$output" == *"generate-install-manifests called for .generated/manifests/work with: shared/shell"* ]]
+  [ -f ".generated/manifests/work/result.txt" ]
 }

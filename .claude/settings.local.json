@@ -42,7 +42,8 @@
       "Bash(done)",
       "Bash(hyperfine:*)",
       "Bash(./_test/run_tests.sh:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(chmod +x:*)"
     ],
     "deny": [],
     "ask": []

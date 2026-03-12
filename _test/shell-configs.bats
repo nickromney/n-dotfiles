@@ -267,14 +267,27 @@ EOF
 
 @test "zshrc: startup time under 125ms" {
   # Detect a suitable 'time' command with -p (POSIX) support
-  local TIME_CMD=""
+  local -a time_cmd=()
   if command -v gtime >/dev/null 2>&1 && gtime -p true 2>/dev/null; then
-    TIME_CMD="gtime -p"
+    time_cmd=(gtime -p)
   elif /usr/bin/time -p true 2>/dev/null; then
-    TIME_CMD="/usr/bin/time -p"
+    time_cmd=(/usr/bin/time -p)
   else
     skip "No suitable 'time' command with -p flag available"
   fi
+
+  local -a zsh_cmd=(
+    env
+    HOME="$HOME"
+    DOTFILES_DIR="$DOTFILES_DIR"
+    ZDOTDIR="$DOTFILES_DIR/zsh"
+    TERM="xterm-256color"
+    zsh -i -c exit
+  )
+
+  # Warm caches first so we measure the steady-state startup path.
+  run "${zsh_cmd[@]}"
+  [ "$status" -eq 0 ]
 
   # Run 3 times and take the average
   local total=0
@@ -284,7 +297,7 @@ EOF
   for ((run_idx = 1; run_idx <= runs; run_idx++)); do
     # $TIME_CMD outputs: real X.XX
     local time_output
-    time_output=$($TIME_CMD zsh -i -c exit 2>&1)
+    time_output=$("${time_cmd[@]}" "${zsh_cmd[@]}" 2>&1 >/dev/null)
     local real_time
     real_time=$(echo "$time_output" | grep '^real' | awk '{print $2}')
     # Convert to milliseconds

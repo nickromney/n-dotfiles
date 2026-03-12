@@ -2,11 +2,12 @@
 
 load helpers/mocks
 
-# Setup and teardown
 setup() {
   setup_mocks
 
-  # Set up test environment
+  export REPO_ROOT
+  REPO_ROOT="$(cd "$BATS_TEST_DIRNAME/.." && pwd)"
+  export INSTALL_REPO_ROOT="$REPO_ROOT"
   export CONFIG_DIR="_configs"
   export CONFIG_FILES=("test")
   export DRY_RUN="false"
@@ -16,477 +17,388 @@ setup() {
   export UPDATE="false"
   export CONFIG_FILES_SET_VIA_CLI="false"
 
-  # Change to the script directory to ensure relative paths work
-  cd "$BATS_TEST_DIRNAME/.."
+  cd "$REPO_ROOT" || return 1
 
-  # Save the original type builtin
-  # Note: We can't actually save builtins, but we can override them
-
-  # Source the install script functions only (not main)
-  set +e  # Temporarily disable errexit
+  set +e
   # shellcheck source=/dev/null
   source ./install.sh --source-only
-  set -e  # Re-enable errexit
+  set -e
 }
 
 teardown() {
   teardown_mocks
 }
 
-# Tests for command_exists function
-@test "command_exists returns success for existing command" {
-  mock_command "test-cmd"
+write_manifest_bundle() {
+  local target_dir=$1
+  local brewfile_content=$2
+  local arkade_content=$3
+  local metadata_content=$4
 
-  run command_exists "test-cmd"
-  [ "$status" -eq 0 ]
+  mkdir -p "$target_dir"
+  printf '%s\n' "$brewfile_content" > "$target_dir/Brewfile"
+  printf '%s\n' "$arkade_content" > "$target_dir/arkade.tsv"
+  printf '%s\n' "$metadata_content" > "$target_dir/metadata.json"
 }
 
-@test "command_exists returns failure for non-existing command" {
-  run command_exists "non-existent-cmd"
-  [ "$status" -eq 1 ]
+create_manifest_generator() {
+  local source_dir=$1
+  export MOCK_MANIFEST_SOURCE="$source_dir"
+  export MANIFEST_GENERATOR="$BATS_TEST_TMPDIR/mock-generate-install-manifests.sh"
+
+  cat > "$MANIFEST_GENERATOR" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+output_dir=$1
+shift
+
+mkdir -p "$output_dir"
+cp "$MOCK_MANIFEST_SOURCE/Brewfile" "$output_dir/Brewfile"
+cp "$MOCK_MANIFEST_SOURCE/arkade.tsv" "$output_dir/arkade.tsv"
+cp "$MOCK_MANIFEST_SOURCE/metadata.json" "$output_dir/metadata.json"
+EOF
+  chmod +x "$MANIFEST_GENERATOR"
 }
 
-# Tests for check_requirements function
-@test "check_requirements succeeds when all required commands exist" {
-  mock_command "yq"
-  mock_command "which"
+@test "command_exists returns success for an available command" {
+  mock_command "demo-cmd"
 
-  run check_requirements
+  run command_exists "demo-cmd"
   [ "$status" -eq 0 ]
 }
 
 @test "check_requirements fails when yq is missing" {
-  # Override command_exists to simulate yq missing
-  # shellcheck disable=SC2317  # Function is used when exported
   command_exists() {
-    [[ "$1" == "which" ]] && return 0
-    return 1
+    [[ "$1" == "which" ]]
   }
   export -f command_exists
 
   run check_requirements
   [ "$status" -eq 1 ]
-  [[ "$output" =~ "Missing required commands: yq" ]]
+  [[ "$output" == *"Missing required commands: yq"* ]]
 }
 
-@test "check_requirements fails when which is missing" {
-  # Override command_exists to simulate which missing
-  # shellcheck disable=SC2317  # Function is used when exported
-  command_exists() {
-    [[ "$1" == "yq" ]] && return 0
-    return 1
-  }
-  export -f command_exists
+@test "prepare_config_files resolves repo-relative configs" {
+  mkdir -p "$BATS_TEST_TMPDIR/_configs"
+  touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
+  export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
+  export CONFIG_FILES=("test")
 
-  run check_requirements
-  [ "$status" -eq 1 ]
-  [[ "$output" =~ "Missing required commands: which" ]]
+  prepare_config_files
+  [ "${RESOLVED_CONFIG_FILES[0]}" = "$BATS_TEST_TMPDIR/_configs/test.yaml" ]
 }
 
-@test "check_requirements fails when both commands are missing" {
-  # Override command_exists to simulate both missing
-  command_exists() {
-    return 1
-  }
-  export -f command_exists
+@test "generate_manifests calls wrapper and sets manifest paths" {
+  local manifest_source="$BATS_TEST_TMPDIR/manifests"
+  write_manifest_bundle "$manifest_source" \
+'tap "example/tap"' \
+$'kubectl\t--version 1.31.0' \
+'[]'
+  create_manifest_generator "$manifest_source"
+  RESOLVED_CONFIG_FILES=("dummy.yaml")
 
-  run check_requirements
-  [ "$status" -eq 1 ]
-  [[ "$output" =~ "Missing required commands: yq which" ]]
+  generate_manifests
+  [ -f "$MANIFEST_BREWFILE" ]
+  [ -f "$MANIFEST_ARKADE" ]
+  [ -f "$MANIFEST_METADATA" ]
 }
 
-# Tests for get_available_managers function
-@test "get_available_managers detects brew when available" {
-  # Mock yq to return brew as a manager
-  cat > "$MOCK_BIN_DIR/yq" << 'EOF'
-#!/usr/bin/env bash
-case "$*" in
-  *".tools[].manager"*)
-    echo "brew"
-    ;;
-  *)
-    echo "null"
-    ;;
-esac
+@test "get_available_managers reads generated metadata manifests" {
+  local metadata_file="$BATS_TEST_TMPDIR/metadata.json"
+  cat > "$metadata_file" <<'EOF'
+[
+  {"tool":"jq","manager":"brew","type":"package","check_command":"jq --version","install_args":[],"skip_update":false,"apt_package":null,"dependencies":[],"extension_id":null,"app_id":null,"description":null,"documentation_url":null,"category":"data"},
+  {"tool":"manual-tool","manager":"manual","type":"check","check_command":"manual-tool --version","install_args":[],"skip_update":false,"apt_package":null,"dependencies":[],"extension_id":null,"app_id":null,"description":null,"documentation_url":null,"category":"manual"}
+]
 EOF
-  chmod +x "$MOCK_BIN_DIR/yq"
-
-  run get_available_managers "test.yaml"
-  [ "$status" -eq 0 ]
-
-  # Function now outputs manager names to stdout, unavailable to stderr.
-  # brew manager is available when brew exists OR apt fallback is usable.
-  # On Linux non-root (non-dry-run), apt exists but fallback requires sudo.
-  if command_exists brew || can_use_apt; then
-    [[ "$output" =~ "brew" ]]
-  elif command_exists "apt-get" && ! is_root && [[ "$DRY_RUN" == "false" ]]; then
-    [[ "$output" =~ "brew: brew unavailable; apt fallback requires root privileges - please run with sudo" ]]
-  else
-    [[ "$output" =~ brew:\ please\ install\ from\ https://brew.sh ]]
-  fi
-}
-
-@test "get_available_managers detects mas when available" {
-  # Mock yq to return mas as a manager
-  cat > "$MOCK_BIN_DIR/yq" << 'EOF'
-#!/usr/bin/env bash
-case "$*" in
-  *".tools[].manager"*)
-    echo "mas"
-    ;;
-  *)
-    echo "null"
-    ;;
-esac
-EOF
-  chmod +x "$MOCK_BIN_DIR/yq"
-
-  # Mock mas command
-  if ! command -v mas >/dev/null 2>&1; then
-    echo '#!/usr/bin/env bash
-echo "mas version 1.8.6"' > "$MOCK_BIN_DIR/mas"
-    chmod +x "$MOCK_BIN_DIR/mas"
-  fi
-
-  run get_available_managers "test.yaml"
-  [ "$status" -eq 0 ]
-
-  # Check if mas is available (function now outputs manager names to stdout, unavailable to stderr)
-  if command_exists mas; then
-    [[ "$output" =~ "mas" ]]
-  else
-    # Unavailable managers go to stderr, which is captured in $output by bats
-    [[ "$output" =~ "mas: please install with 'brew install mas'" ]]
-  fi
-}
-
-@test "get_available_managers detects multiple managers" {
-  # Mock yq to return common managers
-  cat > "$MOCK_BIN_DIR/yq" << 'EOF'
-#!/usr/bin/env bash
-case "$*" in
-  *".tools[].manager"*)
-    echo "brew"
-    echo "cargo"
-    echo "uv"
-    ;;
-  *)
-    echo "null"
-    ;;
-esac
-EOF
-  chmod +x "$MOCK_BIN_DIR/yq"
-
-  run get_available_managers "test.yaml"
-  [ "$status" -eq 0 ]
-
-  # Should output manager names or unavailable messages (function outputs to stdout/stderr)
-  [ -n "$output" ]  # Just check that there's some output
-}
-
-@test "get_available_managers reports unavailable managers" {
-  # Mock yq to return managers that might not be installed
-  cat > "$MOCK_BIN_DIR/yq" << 'EOF'
-#!/usr/bin/env bash
-case "$*" in
-  *".tools[].manager"*)
-    # List some managers that are likely not installed everywhere
-    echo "apt"      # Not on macOS
-    echo "arkade"   # Often not installed
-    echo "fakemgr"  # Doesn't exist
-    ;;
-  *)
-    echo "null"
-    ;;
-esac
-EOF
-  chmod +x "$MOCK_BIN_DIR/yq"
-
-  # Make sure required commands exist for check_requirements
-  mock_command "which"
-  mock_id 1000  # Mock id to return non-root
-
-  # Override command_exists to ensure consistent behavior
-  command_exists() {
-    case "$1" in
-      yq|which) return 0 ;;
-      apt-get|arkade) return 1 ;;  # These should be unavailable
-      *) return 1 ;;
-    esac
-  }
-  export -f command_exists
-
-  run get_available_managers "test.yaml"
-  [ "$status" -eq 0 ]
-
-  # Should report at least one unavailable manager
-  [[ "$output" =~ "Unavailable package managers:" ]]
-
-  # Check for specific messages based on platform
-  if [[ "$(uname)" == "Darwin" ]]; then
-    # On macOS, apt should be unavailable
-    [[ "$output" =~ "apt: apt-get is not available on this system" ]]
-  fi
-
-  # fakemgr should always be reported as unknown
-  [[ "$output" =~ "unknown package manager: fakemgr" ]]
-}
-
-@test "get_available_managers handles unknown package manager" {
-  # Create a custom mock that includes a fake 'foo' manager
-  cat > "$MOCK_BIN_DIR/yq" << 'EOF'
-#!/usr/bin/env bash
-case "$*" in
-  *".tools[].manager"*)
-    echo "brew"
-    echo "foo"
-    echo "arkade"
-    ;;
-  *".tools.\"*\".manager"*)
-    echo "foo"
-    ;;
-  *)
-    echo "null"
-    ;;
-esac
-EOF
-  chmod +x "$MOCK_BIN_DIR/yq"
-
-  # Mock brew as available
   mock_command "brew"
 
-  run get_available_managers "test.yaml"
+  run get_available_managers "$metadata_file"
   [ "$status" -eq 0 ]
-  # Check that brew is listed as available (might be with other managers)
-  [[ "$output" =~ "Available package managers:" ]] && [[ "$output" =~ "brew" ]]
-  [[ "$output" =~ "unknown package manager: foo" ]]
+  [[ "$output" == *"brew"* ]]
+  [[ "$output" == *"manual"* ]]
 }
 
-@test "get_available_managers handles apt on non-root user" {
-  # Skip this test on non-Linux systems
-  if [[ "$(uname)" != "Linux" ]]; then
-    skip "apt test only relevant on Linux"
-  fi
+@test "load_metadata_manifest and is_tool_installed use generated metadata" {
+  MANIFEST_METADATA="$BATS_TEST_TMPDIR/metadata.json"
+  cat > "$MANIFEST_METADATA" <<'EOF'
+[
+  {"tool":"tool1","manager":"brew","type":"package","check_command":"tool1 --version","install_args":[],"skip_update":false,"apt_package":null,"dependencies":[],"extension_id":null,"app_id":null,"description":null,"documentation_url":null,"category":"test"}
+]
+EOF
+  mock_command "tool1"
 
-  # Mock yq to include apt as a manager
-  cat > "$MOCK_BIN_DIR/yq" << 'EOF'
-#!/usr/bin/env bash
-case "$*" in
-  *".tools[].manager"*)
-    echo "apt"
+  run is_tool_installed "tool1" "$MANIFEST_METADATA"
+  [ "$status" -eq 0 ]
+}
+
+@test "check_dependencies uses dependency records from metadata" {
+  MANIFEST_METADATA="$BATS_TEST_TMPDIR/metadata.json"
+  cat > "$MANIFEST_METADATA" <<'EOF'
+[
+  {
+    "tool":"podman",
+    "manager":"brew",
+    "type":"package",
+    "check_command":"podman --version",
+    "install_args":[],
+    "skip_update":false,
+    "apt_package":null,
+    "dependencies":[{"name":"krunkit","check_command":"command -v krunkit"}],
+    "extension_id":null,
+    "app_id":null,
+    "description":null,
+    "documentation_url":null,
+    "category":"containers"
+  }
+]
+EOF
+  load_metadata_manifest
+
+  set +e
+  output=$(check_dependencies "podman" 2>&1)
+  status=$?
+  set -e
+
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"missing dependency: krunkit"* ]]
+
+  mock_command "krunkit"
+  set +e
+  output=$(check_dependencies "podman" 2>&1)
+  status=$?
+  set -e
+
+  [ "$status" -eq 0 ]
+}
+
+@test "run_brew_install hides raw brew bundle output by default" {
+  MANIFEST_BREWFILE="$BATS_TEST_TMPDIR/Brewfile"
+  cat > "$MANIFEST_BREWFILE" <<'EOF'
+brew "jq"
+EOF
+  METADATA_LINES=("jq"$'\t'"brew"$'\t'"package"$'\t'"jq --version"$'\t'"false"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"test"$'\t'"")
+
+  # shellcheck disable=SC2016  # mock script is intentionally single-quoted
+  mock_command_with_script "brew" '
+case "$1" in
+  bundle)
+    shift
+    printf "%s\n" "$@" > "'"$BATS_TEST_TMPDIR"'/brew-bundle-args.txt"
+    if printf "%s\n" "$@" | grep -qx -- "--no-lock"; then
+      echo "Error: invalid option: --no-lock" >&2
+      exit 1
+    fi
+    echo "Warning: Not upgrading jq, the latest version is already installed"
+    exit 0
     ;;
   *)
-    echo "null"
+    exit 1
     ;;
 esac
+'
+
+  run run_brew_install
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Info: Applying Homebrew bundle"* ]]
+  [[ "$output" == *"Change: Homebrew bundle applied"* ]]
+  [[ "$output" != *"Warning: Not upgrading"* ]]
+  run grep -qx -- "--file=$MANIFEST_BREWFILE" "$BATS_TEST_TMPDIR/brew-bundle-args.txt"
+  [ "$status" -eq 0 ]
+}
+
+@test "run_brew_install skips formulae already satisfied by install checks" {
+  MANIFEST_BREWFILE="$BATS_TEST_TMPDIR/Brewfile"
+  cat > "$MANIFEST_BREWFILE" <<'EOF'
+brew "openssh"
 EOF
-  chmod +x "$MOCK_BIN_DIR/yq"
+  METADATA_LINES=("openssh"$'\t'"brew"$'\t'"package"$'\t'"command -v sh"$'\t'"false"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"network"$'\t'"")
 
-  # Mock id to return non-root
-  mock_id 1000
+  # shellcheck disable=SC2016  # mock script is intentionally single-quoted
+  mock_command_with_script "brew" '
+case "$1" in
+  bundle)
+    printf "%s\n" "$HOMEBREW_BUNDLE_BREW_SKIP" > "'"$BATS_TEST_TMPDIR"'/brew-bundle-skip.txt"
+    exit 0
+    ;;
+  *)
+    exit 1
+    ;;
+esac
+'
 
-  run get_available_managers "test.yaml"
+  run run_brew_install
   [ "$status" -eq 0 ]
-
-  # On Linux with apt-get available but not root, should show permission message
-  if command_exists apt-get; then
-    [[ "$output" =~ "apt: requires root privileges - please run with sudo" ]]
-  else
-    [[ "$output" =~ "apt: apt-get is not available on this system" ]]
-  fi
-}
-
-@test "get_available_managers handles apt on root user" {
-  # Skip this test on non-Linux systems
-  if [[ "$(uname)" != "Linux" ]]; then
-    skip "apt test only relevant on Linux"
-  fi
-
-  mock_yq
-  mock_command "apt-get"
-  mock_id 0
-
-  run get_available_managers "test.yaml"
-  [ "$status" -eq 0 ]
-  # Function now outputs manager names to stdout (one per line)
-  [[ "$output" =~ "apt" ]]
-}
-
-# Tests for is_tool_installed function
-@test "is_tool_installed returns success when tool is installed" {
-  mock_yq
-  mock_command "tool1" 0
-
-  run is_tool_installed "tool1" "test.yaml"
+  [[ "$output" == *"Skip: Homebrew bundle omitting 1 already satisfied entry"* ]]
+  run grep -qx -- "openssh" "$BATS_TEST_TMPDIR/brew-bundle-skip.txt"
   [ "$status" -eq 0 ]
 }
 
-@test "is_tool_installed returns failure when tool is not installed" {
-  mock_yq
+@test "run_brew_install shows raw brew output in verbose mode" {
+  export VERBOSE="true"
+  MANIFEST_BREWFILE="$BATS_TEST_TMPDIR/Brewfile"
+  cat > "$MANIFEST_BREWFILE" <<'EOF'
+brew "jq"
+EOF
+  METADATA_LINES=("jq"$'\t'"brew"$'\t'"package"$'\t'"jq --version"$'\t'"false"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"test"$'\t'"")
 
-  run is_tool_installed "tool2" "test.yaml"
-  [ "$status" -eq 1 ]
-}
+  # shellcheck disable=SC2016  # mock script is intentionally single-quoted
+  mock_command_with_script "brew" '
+case "$1" in
+  bundle)
+    echo "bundle output"
+    exit 0
+    ;;
+  *)
+    exit 1
+    ;;
+esac
+'
 
-@test "is_tool_installed handles tools with no check command" {
-  mock_yq
-
-  run is_tool_installed "special-tool" "test.yaml"
-  [ "$status" -eq 1 ]
-  [[ "$output" =~ "no check command specified" ]]
-}
-
-# Tests for can_install_tool function
-@test "can_install_tool returns success when manager is available" {
-  mock_yq
-  AVAILABLE_MANAGERS=("brew" "arkade")
-
-  run can_install_tool "tool1" "test.yaml"
+  run run_brew_install
   [ "$status" -eq 0 ]
+  [[ "$output" == *"bundle output"* ]]
 }
 
-@test "can_install_tool returns failure when manager is not available" {
-  mock_yq
-  # shellcheck disable=SC2034  # Used by can_install_tool function
-  AVAILABLE_MANAGERS=("arkade")
+@test "run_brew_update upgrades only outdated selected tools and classifies taps as managed" {
+  METADATA_LINES=(
+    "felixkratz/formulae"$'\t'"brew"$'\t'"tap"$'\t'"brew tap | grep -q felixkratz/formulae"$'\t'"false"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"test"$'\t'""
+    "jq"$'\t'"brew"$'\t'"package"$'\t'"jq --version"$'\t'"false"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"test"$'\t'""
+    "ghostty"$'\t'"brew"$'\t'"cask"$'\t'"ghostty --version"$'\t'"true"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"test"$'\t'""
+  )
 
-  run can_install_tool "tool1" "test.yaml"
-  [ "$status" -eq 1 ]
-}
+  # shellcheck disable=SC2016  # mock script is intentionally single-quoted
+  mock_command_with_script "brew" '
+case "$1 $2" in
+  "list --formula")
+    echo "jq"
+    exit 0
+    ;;
+  "list --cask")
+    echo "ghostty"
+    exit 0
+    ;;
+esac
 
-# Tests for check_dependencies function
-@test "check_dependencies returns success when no dependencies defined" {
-  # Mock yq to return 0 (no dependencies)
-  yq() {
-    if [[ "$*" == *".dependencies | length"* ]]; then
-      echo "0"
+case "$1" in
+  outdated)
+    if [[ "$2" == "--formula" ]]; then
+      echo "jq"
     fi
-  }
-  export -f yq
-
-  run check_dependencies "tool1" "test.yaml"
-  [ "$status" -eq 0 ]
-}
-
-@test "check_dependencies returns success when dependencies is null" {
-  # Mock yq to return null
-  yq() {
-    if [[ "$*" == *".dependencies | length"* ]]; then
-      echo "null"
+    exit 0
+    ;;
+  update)
+    echo "brew update ran"
+    exit 0
+    ;;
+  upgrade)
+    if [[ "$2" == "--cask" ]]; then
+      echo "unexpected cask upgrade"
+      exit 1
     fi
-  }
-  export -f yq
+    echo "upgraded $2"
+    exit 0
+    ;;
+  *)
+    exit 1
+    ;;
+esac
+'
 
-  run check_dependencies "tool1" "test.yaml"
+  run run_brew_update
   [ "$status" -eq 0 ]
+  [[ "$output" == *"Skip: Homebrew taps are managed repositories (1): felixkratz/formulae"* ]]
+  [[ "$output" == *"Skip: Homebrew updates disabled by configuration (1): ghostty (cask)"* ]]
+  [[ "$output" == *"Change: Updated 1 Homebrew formula(e)"* ]]
+  assert_mock_called "brew" "update"
+  assert_mock_called "brew" "upgrade jq"
 }
 
-@test "check_dependencies returns success when all dependencies are satisfied" {
-  # Mock yq to return 1 dependency
-  yq() {
-    if [[ "$*" == *".dependencies | length"* ]]; then
-      echo "1"
-    elif [[ "$*" == *".dependencies[0].name"* ]]; then
-      echo "krunkit"
-    elif [[ "$*" == *".dependencies[0].check_command"* ]]; then
-      echo "command -v krunkit"
-    fi
-  }
-  export -f yq
+@test "run_arkade_batch builds a single batch command from the TSV manifest" {
+  # shellcheck disable=SC2034  # consumed by the sourced installer
+  METADATA_LINES=(
+    "tool-alpha"$'\t'"arkade"$'\t'"get"$'\t'"tool-alpha version"$'\t'"false"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"test"$'\t'"--version 1.31.0"
+    "tool-beta"$'\t'"arkade"$'\t'"get"$'\t'"tool-beta version"$'\t'"false"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"test"$'\t'""
+  )
+  # shellcheck disable=SC2034  # consumed by the sourced installer
+  ARKADE_LINES=(
+    "tool-alpha"$'\t'"--version 1.31.0"
+    "tool-beta"$'\t'""
+  )
+  export DRY_RUN="true"
+  mock_command "arkade"
 
-  # Mock krunkit as available
-  mock_command "krunkit"
-
-  run check_dependencies "podman" "test.yaml"
+  run run_arkade_batch
   [ "$status" -eq 0 ]
+  [[ "$output" == *"Would execute: arkade get tool-alpha --version 1.31.0 tool-beta --parallel 10"* ]]
 }
 
-@test "check_dependencies returns failure when dependency is missing" {
-  # Mock yq to return 1 dependency
-  yq() {
-    if [[ "$*" == *".dependencies | length"* ]]; then
-      echo "1"
-    elif [[ "$*" == *".dependencies[0].name"* ]]; then
-      echo "missing-dep"
-    elif [[ "$*" == *".dependencies[0].check_command"* ]]; then
-      echo "command -v missing-dep"
-    fi
-  }
-  export -f yq
+@test "run_arkade_batch reports refreshes as info during updates" {
+  export UPDATE="true"
+  # shellcheck disable=SC2034  # consumed by the sourced installer
+  METADATA_LINES=(
+    "tool-alpha"$'\t'"arkade"$'\t'"get"$'\t'"tool-alpha version"$'\t'"false"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"test"$'\t'""
+  )
+  # shellcheck disable=SC2034  # consumed by the sourced installer
+  ARKADE_LINES=(
+    "tool-alpha"$'\t'""
+  )
+  mock_command "tool-alpha"
+  # shellcheck disable=SC2016  # mock script is intentionally single-quoted
+  mock_command_with_script "arkade" '
+if [[ "$1" == "get" ]]; then
+  echo "arkade refresh"
+  exit 0
+fi
+exit 1
+'
 
-  # Don't mock missing-dep - it's not available
-
-  run check_dependencies "tool1" "test.yaml"
-  [ "$status" -eq 1 ]
-  [[ "$output" =~ "⚠️ Skipping tool1 - missing dependency: missing-dep" ]]
-}
-
-@test "check_dependencies handles multiple dependencies" {
-  # Mock yq to return 2 dependencies
-  yq() {
-    if [[ "$*" == *".dependencies | length"* ]]; then
-      echo "2"
-    elif [[ "$*" == *".dependencies[0].name"* ]]; then
-      echo "dep1"
-    elif [[ "$*" == *".dependencies[0].check_command"* ]]; then
-      echo "command -v dep1"
-    elif [[ "$*" == *".dependencies[1].name"* ]]; then
-      echo "dep2"
-    elif [[ "$*" == *".dependencies[1].check_command"* ]]; then
-      echo "command -v dep2"
-    fi
-  }
-  export -f yq
-
-  # Mock both dependencies as available
-  mock_command "dep1"
-  mock_command "dep2"
-
-  run check_dependencies "tool1" "test.yaml"
+  run run_arkade_batch
   [ "$status" -eq 0 ]
+  [[ "$output" == *"Info: Refreshed 1 arkade tool(s)"* ]]
+  [[ "$output" != *"Change: Refreshed 1 arkade tool(s)"* ]]
 }
 
-@test "check_dependencies fails on first missing dependency" {
-  # Mock yq to return 2 dependencies
-  yq() {
-    if [[ "$*" == *".dependencies | length"* ]]; then
-      echo "2"
-    elif [[ "$*" == *".dependencies[0].name"* ]]; then
-      echo "dep1"
-    elif [[ "$*" == *".dependencies[0].check_command"* ]]; then
-      echo "command -v dep1"
-    elif [[ "$*" == *".dependencies[1].name"* ]]; then
-      echo "dep2"
-    elif [[ "$*" == *".dependencies[1].check_command"* ]]; then
-      echo "command -v dep2"
-    fi
-  }
-  export -f yq
+@test "run_code_extensions skips work when the VSCode CLI is unavailable" {
+  METADATA_LINES=(
+    "prettier-vscode"$'\t'"code"$'\t'"extension"$'\t'"code --list-extensions | grep -q esbenp.prettier-vscode"$'\t'"false"$'\t'"null"$'\t'"esbenp.prettier-vscode"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"test"$'\t'""
+  )
+  export VSCODE_CLI="missing-code"
 
-  # Mock only first dependency - second is missing
-  mock_command "dep1"
-
-  run check_dependencies "tool1" "test.yaml"
-  [ "$status" -eq 1 ]
-  [[ "$output" =~ "⚠️ Skipping tool1 - missing dependency: dep2" ]]
-}
-
-# Tests for install_tool function - Brew
-@test "install_tool installs brew package" {
-  mock_yq
-  mock_brew
-
-  run install_tool "jq" "test.yaml"
+  run run_code_extensions
   [ "$status" -eq 0 ]
-  assert_mock_called "brew" "install jq"
+  [[ "$output" == *"Skip: VSCode CLI unavailable; skipping extension management"* ]]
 }
 
-@test "install_tool falls back to apt for brew package when brew is unavailable" {
-  mock_yq
+@test "run_code_extensions batches installs for missing extensions" {
+  export HOME="$BATS_TEST_TMPDIR/home"
+  mkdir -p "$HOME"
+  METADATA_LINES=(
+    "prettier-vscode"$'\t'"code"$'\t'"extension"$'\t'"code --list-extensions | grep -q esbenp.prettier-vscode"$'\t'"false"$'\t'"null"$'\t'"esbenp.prettier-vscode"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"test"$'\t'""
+  )
+  cat > "$MOCK_BIN_DIR/code" <<'EOF'
+#!/usr/bin/env bash
+echo "$@" >> "$MOCK_CALLS_DIR/code.calls"
+if [[ "$1" == "--list-extensions" ]]; then
+  exit 0
+fi
+echo "installing extensions"
+EOF
+  chmod +x "$MOCK_BIN_DIR/code"
+
+  run run_code_extensions
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Change: Installed 1 VSCode extension(s)"* ]]
+  assert_mock_called "code" "--install-extension esbenp.prettier-vscode"
+}
+
+@test "run_brew_fallback_if_needed installs brew packages through apt when Homebrew is unavailable" {
+  METADATA_LINES=(
+    "fakefd"$'\t'"brew"$'\t'"package"$'\t'"fakefd --version"$'\t'"false"$'\t'"fdfind"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"test"$'\t'""
+  )
   mock_apt_get
   mock_id 0
-
-  # Force brew unavailable while keeping apt-get available
   command_exists() {
     case "$1" in
       apt-get|yq|which) return 0 ;;
@@ -496,1032 +408,195 @@ EOF
   }
   export -f command_exists
 
-  run install_tool "jq" "test.yaml"
+  run run_brew_fallback_if_needed
   [ "$status" -eq 0 ]
-  assert_mock_called "apt-get" "update -qq"
-  assert_mock_called "apt-get" "install -y jq"
-  assert_mock_not_called "brew"
+  assert_mock_called "apt-get" "install -y fdfind"
 }
 
-@test "install_tool installs brew cask" {
-  mock_yq
-  mock_brew
-
-  run install_tool "docker" "test.yaml"
-  [ "$status" -eq 0 ]
-  assert_mock_called "brew" "install --cask docker"
-}
-
-@test "install_tool installs brew tap" {
-  mock_yq
-  mock_brew
-
-  run install_tool "homebrew/cask-fonts" "test.yaml"
-  [ "$status" -eq 0 ]
-  assert_mock_called "brew" "tap homebrew/cask-fonts"
-}
-
-# Tests for install_tool function - Arkade
-@test "install_tool installs arkade get tool" {
-  mock_yq
-  mock_arkade
-
-  if install_tool "kubectl" "test.yaml"; then
-    rc=0
-  else
-    rc=$?
-  fi
-  [ "$rc" -eq 0 ]
-  assert_mock_not_called "arkade"
-  [[ " ${PENDING_ARKADE_TOOL_NAMES[*]:-} " == *" kubectl "* ]]
-}
-
-@test "queue_arkade_get_tool deduplicates repeated entries" {
-  if queue_arkade_get_tool "kubectl"; then
-    rc=0
-  else
-    rc=$?
-  fi
-  [ "$rc" -eq 0 ]
-
-  if queue_arkade_get_tool "kubectl"; then
-    rc=0
-  else
-    rc=$?
-  fi
-  [ "$rc" -eq 1 ]
-
-  [ "${#PENDING_ARKADE_TOOLS[@]}" -eq 1 ]
-  [ "${#PENDING_ARKADE_TOOL_NAMES[@]}" -eq 1 ]
-}
-
-@test "queue_brew_package deduplicates repeated entries" {
-  if queue_brew_package "jq"; then
-    rc=0
-  else
-    rc=$?
-  fi
-  [ "$rc" -eq 0 ]
-
-  if queue_brew_package "jq"; then
-    rc=0
-  else
-    rc=$?
-  fi
-  [ "$rc" -eq 1 ]
-
-  [ "${#PENDING_BREW_PACKAGES[@]}" -eq 1 ]
-}
-
-@test "queue_apt_package deduplicates repeated entries" {
-  if queue_apt_package "ripgrep"; then
-    rc=0
-  else
-    rc=$?
-  fi
-  [ "$rc" -eq 0 ]
-
-  if queue_apt_package "ripgrep"; then
-    rc=0
-  else
-    rc=$?
-  fi
-  [ "$rc" -eq 1 ]
-
-  [ "${#PENDING_APT_PACKAGES[@]}" -eq 1 ]
-}
-
-@test "queue_cargo_tool deduplicates repeated entries" {
-  if queue_cargo_tool "ripgrep"; then
-    rc=0
-  else
-    rc=$?
-  fi
-  [ "$rc" -eq 0 ]
-
-  if queue_cargo_tool "ripgrep"; then
-    rc=0
-  else
-    rc=$?
-  fi
-  [ "$rc" -eq 1 ]
-
-  [ "${#PENDING_CARGO_TOOLS[@]}" -eq 1 ]
-}
-
-@test "install_tool installs arkade system tool" {
-  mock_yq
-  mock_arkade
-
-  run install_tool "prometheus" "test.yaml"
-  [ "$status" -eq 0 ]
-  assert_mock_called "arkade" "system install prometheus"
-}
-
-@test "install_tool installs arkade app" {
-  mock_yq
-  mock_arkade
-
-  run install_tool "openfaas" "test.yaml"
-  [ "$status" -eq 0 ]
-  assert_mock_called "arkade" "install openfaas --namespace openfaas"
-}
-
-# Tests for install_tool function - Cargo
-@test "install_tool installs cargo binary" {
-  mock_yq
-  mock_cargo
-
-  run install_tool "ripgrep" "test.yaml"
-  [ "$status" -eq 0 ]
-  assert_mock_called "cargo" "install ripgrep"
-}
-
-@test "install_tool installs cargo git package" {
-  mock_yq
-  mock_cargo
-
-  run install_tool "zoxide" "test.yaml"
-  [ "$status" -eq 0 ]
-  assert_mock_called "cargo" "install --git https://github.com/ajeetdsouza/zoxide zoxide"
-}
-
-# Tests for install_tool function - UV
-@test "install_tool installs uv tool" {
-  mock_yq
-  mock_uv
-
-  run install_tool "ruff" "test.yaml"
-  [ "$status" -eq 0 ]
-  assert_mock_called "uv" "tool install ruff"
-}
-
-# Tests for install_tool function - MAS (Mac App Store)
-@test "install_tool installs mas app" {
-  mock_yq
-  mock_mas
-
-  # Override yq for this test to include app_id
-  yq() {
-    case "$*" in
-      *".tools.things.manager"*) echo "mas" ;;
-      *".tools.things.type"*) echo "app" ;;
-      *".tools.things.app_id"*) echo "904280696" ;;
-      *".tools.things.install_args[]"*) echo "" ;;
-      *) echo "null" ;;
-    esac
-  }
-  export -f yq
-
-  run install_tool "things" "test.yaml"
-  [ "$status" -eq 0 ]
-  assert_mock_called "mas" "install 904280696"
-}
-
-@test "install_tool fails when mas app_id is missing" {
-  mock_yq
-
-  # Override yq for this test without app_id
-  yq() {
-    case "$*" in
-      *".tools.paste.manager"*) echo "mas" ;;
-      *".tools.paste.type"*) echo "app" ;;
-      *".tools.paste.app_id"*) echo "null" ;;
-      *) echo "null" ;;
-    esac
-  }
-  export -f yq
-
-  run install_tool "paste" "test.yaml"
-  [ "$status" -eq 1 ]
-  [[ "$output" =~ "No app_id specified" ]]
-}
-
-@test "install_tool skips unknown mas type" {
-  mock_yq
-
-  # Override yq for this test with unknown type
-  yq() {
-    case "$*" in
-      *".tools.tool1.manager"*) echo "mas" ;;
-      *".tools.tool1.type"*) echo "unknown" ;;
-      *) echo "null" ;;
-    esac
-  }
-  export -f yq
-
-  run install_tool "tool1" "test.yaml"
-  [ "$status" -eq 0 ]
-  [[ "$output" =~ "unknown mas type" ]]
-}
-
-# Tests for install_tool function - APT
-@test "install_tool installs apt package" {
-  mock_yq
-  mock_apt_get
-
-  run install_tool "curl" "test.yaml"
-  [ "$status" -eq 0 ]
-  assert_mock_called "apt-get" "update -qq"
-  assert_mock_called "apt-get" "install -y curl"
-}
-
-# Tests for install_tool with dry run
-@test "install_tool respects dry run mode" {
-  mock_yq
-  mock_brew
-  # shellcheck disable=SC2030  # DRY_RUN modification is intentional in test
-  export DRY_RUN="true"
-
-  run install_tool "jq" "test.yaml"
-  [ "$status" -eq 0 ]
-  [[ "$output" =~ "Would execute: brew install" ]] && [[ "$output" =~ "jq" ]]
-  assert_mock_not_called "brew"
-}
-
-# Tests for run_stow function
-@test "run_stow fails when stow is not installed" {
-  # Override command_exists to simulate stow not installed
-  # shellcheck disable=SC2317  # Function is used when exported
-  command_exists() {
-    return 1
-  }
-  export -f command_exists
-
-  run run_stow
-  [ "$status" -eq 1 ]
-  [[ "$output" =~ "stow is not installed" ]]
-}
-
-@test "run_stow processes directories correctly" {
-  mock_stow
-
-  # Create test directories
-  mkdir -p "$BATS_TEST_DIRNAME/../zsh"
-  mkdir -p "$BATS_TEST_DIRNAME/../git"
-
-  run run_stow
-  [ "$status" -eq 0 ]
-  assert_mock_called "stow"
-}
-
-@test "run_stow respects dry run mode" {
-  mock_stow
-  # shellcheck disable=SC2030,SC2031  # DRY_RUN modification is intentional in test
-  export DRY_RUN="true"
-
-  mkdir -p "$BATS_TEST_DIRNAME/../zsh"
-
-  run run_stow
-  [ "$status" -eq 0 ]
-  assert_mock_called "stow" "--no"
-}
-
-@test "run_stow respects force mode" {
-  mock_stow
-  export FORCE="true"
-
-  mkdir -p "$BATS_TEST_DIRNAME/../zsh"
-
-  run run_stow
-  [ "$status" -eq 0 ]
-  assert_mock_called "stow" "--adopt"
-}
-
-# Tests for is_root function
-@test "is_root returns true when uid is 0" {
-  mock_id 0
-
-  run is_root
-  [ "$status" -eq 0 ]
-}
-
-@test "is_root returns false when uid is not 0" {
-  mock_id 1000
-
-  run is_root
-  [ "$status" -eq 1 ]
-}
-
-# Integration tests
-@test "main function with no available managers" {
-  # Create a simple mock that returns managers that don't exist
-  mock_command_with_script "yq" '
-case "$*" in
-  *".tools[].manager"*)
-    echo "fakemgr1"
-    echo "fakemgr2"
-    exit 0
-    ;;
-  *".tools | keys | .[]"*)
-    # Return some tools so we try to find managers
-    echo "tool1"
-    echo "tool2"
-    exit 0
-    ;;
-  *)
-    echo "null"
-    exit 0
-    ;;
-esac
-'
-  mock_command "which"
-
-  # Create a test config file
-  mkdir -p "$BATS_TEST_TMPDIR/_configs"
-  touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
-  export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
-  export CONFIG_FILES=("test")
-
-  # Override command_exists to simulate no managers available
-  command_exists() {
-    [[ "$1" == "yq" ]] && return 0
-    [[ "$1" == "which" ]] && return 0
-    return 1
-  }
-  export -f command_exists
-
-  run main
-  [ "$status" -eq 0 ]
-  # The output should show unavailable managers since they don't exist
-  [[ "$output" == *"Unavailable package managers"* ]]
-  [[ "$output" == *"unknown package manager: fakemgr1"* ]]
-  [[ "$output" == *"unknown package manager: fakemgr2"* ]]
-}
-
-@test "main function installs tools with available managers" {
-  # Create custom yq mock that only returns tool1
-  mock_command_with_script "yq" '
-case "$*" in
-  *".tools[].manager"*)
-    echo "brew"
-    exit 0
-    ;;
-  *".tools | keys | .[]"*|*".tools | select(. != null) | keys | .[]"*)
-    echo "tool1"
-    exit 0
-    ;;
-  *".tools.tool1.manager"*)
-    echo "brew"
-    exit 0
-    ;;
-  *".tools.tool1.type"*)
-    echo "package"
-    exit 0
-    ;;
-  *".tools.tool1.check_command"*)
-    echo "tool1 --version"
-    exit 0
-    ;;
-  *".tools.tool1.install_args[]"*)
-    exit 0
-    ;;
-  *)
-    echo "null"
-    exit 0
-    ;;
-esac
-'
-  mock_command "which"
-  mock_brew
-
-  # Create a test config file
-  mkdir -p "$BATS_TEST_TMPDIR/_configs"
-  touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
-  export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
-  export CONFIG_FILES=("test")
-
-  # tool1 is not installed (not in our mock bin)
-
-  run main
-  [ "$status" -eq 0 ]
-  [[ "$output" =~ "Installing tool1" ]]
-  assert_mock_called "brew"
-}
-
-@test "main function skips already installed tools" {
-  # Create custom yq mock that only returns tool1
-  mock_command_with_script "yq" '
-case "$*" in
-  *".tools[].manager"*)
-    echo "brew"
-    exit 0
-    ;;
-  *".tools | keys | .[]"*|*".tools | select(. != null) | keys | .[]"*)
-    echo "tool1"
-    exit 0
-    ;;
-  *".tools.tool1.manager"*)
-    echo "brew"
-    exit 0
-    ;;
-  *".tools.tool1.type"*)
-    echo "package"
-    exit 0
-    ;;
-  *".tools.tool1.check_command"*)
-    echo "tool1 --version"
-    exit 0
-    ;;
-  *".tools.tool1.install_args[]"*)
-    exit 0
-    ;;
-  *)
-    echo "null"
-    exit 0
-    ;;
-esac
-'
-  mock_command "which"
-  mock_brew
-
-  # Create a test config file
-  mkdir -p "$BATS_TEST_TMPDIR/_configs"
-  touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
-  export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
-  export CONFIG_FILES=("test")
-
-  # Mock tool1 as installed
-  mock_command "tool1" 0
-
-  run main
-  [ "$status" -eq 0 ]
-  [[ "$output" =~ tool1\ \(brew\ package\)\ is\ already\ installed ]]
-  assert_mock_not_called "brew"
-}
-
-@test "main function runs stow when requested" {
-  # Simple mock that returns brew as available manager
-  mock_command_with_script "yq" '
-case "$*" in
-  *".tools[].manager"*)
-    echo "brew"
-    exit 0
-    ;;
-  *".tools | keys | .[]"*|*".tools | select(. != null) | keys | .[]"*)
-    # Return empty - no tools to install
-    exit 0
-    ;;
-  *)
-    echo "null"
-    exit 0
-    ;;
-esac
-'
-  mock_command "which"
-  mock_brew
-  mock_stow
-  export STOW="true"
-
-  # Create a test config file
-  mkdir -p "$BATS_TEST_TMPDIR/_configs"
-  touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
-  export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
-  export CONFIG_FILES=("test")
-
-  mkdir -p "$BATS_TEST_DIRNAME/../zsh"
-
-  run main
-  [ "$status" -eq 0 ]
-  [[ "$output" =~ "Running stow" ]]
-  assert_mock_called "stow"
-}
-
-@test "main function handles tools with unknown package managers" {
-  # Create a custom mock that includes a tool with unknown manager
-  cat > "$MOCK_BIN_DIR/yq" << 'EOF'
+@test "run_direct_metadata_tools updates cargo binaries in batch when cargo-update is available" {
+  export UPDATE="true"
+  # shellcheck disable=SC2034  # consumed by the sourced installer
+  METADATA_LINES=(
+    "code2prompt"$'\t'"cargo"$'\t'"binary"$'\t'"code2prompt --version"$'\t'"false"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"test"$'\t'""
+  )
+  cat > "$MOCK_BIN_DIR/code2prompt" <<'EOF'
 #!/usr/bin/env bash
-case "$*" in
-  *".tools[].manager"*)
-    echo "brew"
-    echo "foo"
-    ;;
-  *".tools | keys | .[]"*|*".tools | select(. != null) | keys | .[]"*)
-    echo "tool1"
-    echo "footool"
-    ;;
-  *".tools.tool1.manager"*)
-    echo "brew"
-    ;;
-  *".tools.footool.manager"*)
-    echo "foo"
-    ;;
-  *".tools.tool1.check_command"*)
-    echo "which tool1"
-    ;;
-  *".tools.footool.check_command"*)
-    echo "which footool >/dev/null 2>&1"
-    ;;
-  *)
-    echo "package"
-    ;;
-esac
+echo "code2prompt 1.0.0"
 EOF
-  chmod +x "$MOCK_BIN_DIR/yq"
-
-  mock_command "brew"
-  mock_command "tool1"  # Mark tool1 as already installed
-
-  # Create a test config file
-  mkdir -p "$BATS_TEST_TMPDIR/_configs"
-  touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
-  export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
-  export CONFIG_FILES=("test")
-
-  # Create a smart 'which' mock that checks if commands exist in mock dir
-  cat > "$MOCK_BIN_DIR/which" << 'EOF'
-#!/usr/bin/env bash
-# Smart which mock that actually checks for existence
-cmd="$1"
-if [[ -x "$MOCK_BIN_DIR/$cmd" ]]; then
-  echo "$MOCK_BIN_DIR/$cmd"
+  chmod +x "$MOCK_BIN_DIR/code2prompt"
+  # shellcheck disable=SC2016  # mock script is intentionally single-quoted
+  mock_command_with_script "cargo" '
+if [[ "$1" == "install-update" && "$2" == "--version" ]]; then
+  echo "cargo-install-update 0.1"
   exit 0
-else
+fi
+if [[ "$1" == "install-update" && "$2" == "-l" ]]; then
+  echo "Package  Installed  Latest  Needs update"
+  echo "code2prompt  1.0.0  1.1.0  Yes"
+  exit 0
+fi
+if [[ "$1" == "install-update" ]]; then
+  echo "updated cargo binaries"
+  exit 0
+fi
+exit 1
+'
+
+  run run_direct_metadata_tools
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Change: Updated 1 cargo tool(s)"* ]]
+  assert_mock_called "cargo" "install-update code2prompt"
+}
+
+@test "run_direct_metadata_tools skips cargo updates when all selected tools are current" {
+  export UPDATE="true"
+  # shellcheck disable=SC2034  # consumed by the sourced installer
+  METADATA_LINES=(
+    "code2prompt"$'\t'"cargo"$'\t'"binary"$'\t'"code2prompt --version"$'\t'"false"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"test"$'\t'""
+  )
+  cat > "$MOCK_BIN_DIR/code2prompt" <<'EOF'
+#!/usr/bin/env bash
+echo "code2prompt 1.0.0"
+EOF
+  chmod +x "$MOCK_BIN_DIR/code2prompt"
+  # shellcheck disable=SC2016  # mock script is intentionally single-quoted
+  mock_command_with_script "cargo" '
+if [[ "$1" == "install-update" && "$2" == "--version" ]]; then
+  echo "cargo-install-update 0.1"
+  exit 0
+fi
+if [[ "$1" == "install-update" && "$2" == "-l" ]]; then
+  echo "Package  Installed  Latest  Needs update"
+  exit 0
+fi
+if [[ "$1" == "install-update" ]]; then
+  echo "unexpected cargo update run"
   exit 1
 fi
-EOF
-  chmod +x "$MOCK_BIN_DIR/which"
-
-  run main
-  [ "$status" -eq 0 ]
-  [[ "$output" =~ "unknown package manager: foo" ]]
-  [[ "$output" =~ "Skipping footool: foo not available" ]]
-}
-
-@test "main function handles install_tool return code 2 without exiting" {
-  # Mock one brew-managed tool that is reported as not installed.
-  mock_command_with_script "yq" '
-case "$*" in
-  *".tools[].manager"*)
-    echo "brew"
-    exit 0
-    ;;
-  *".tools | keys | .[]"*|*".tools | select(. != null) | keys | .[]"*)
-    echo "tool1"
-    exit 0
-    ;;
-  *".tools.tool1.manager"*)
-    echo "brew"
-    exit 0
-    ;;
-  *".tools.tool1.type"*)
-    echo "package"
-    exit 0
-    ;;
-  *".tools.tool1.check_command"*)
-    echo "command -v definitely-missing-tool"
-    exit 0
-    ;;
-  *".tools.tool1.install_args[]"*)
-    exit 0
-    ;;
-  *)
-    echo "null"
-    exit 0
-    ;;
-esac
+exit 1
 '
-  mock_command "which"
-  mock_command "brew"
 
-  # Force install_tool to signal "already up to date"
-  install_tool() {
-    return 2
-  }
-  export -f install_tool
-
-  mkdir -p "$BATS_TEST_TMPDIR/_configs"
-  touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
-  export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
-  export CONFIG_FILES=("test")
-
-  run main
+  run run_direct_metadata_tools
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "was already up to date" ]]
+  [[ "$output" == *"Skip: Selected cargo tools already up to date"* ]]
+  [[ "$output" != *"Change: Updated"* ]]
 }
 
-@test "main function update mode respects skip_update flag" {
+@test "run_mas_update ignores malformed manifest entries" {
+  # shellcheck disable=SC2034  # consumed by the sourced installer
+  MAS_UPDATE_LINES=(
+    $'\tmas\tapp\tcheck\tfalse\tnull\tnull\tnull\tnull\tnull\ttest\t'
+  )
+  # shellcheck disable=SC2016  # mock script is intentionally single-quoted
+  mock_command_with_script "mas" '
+if [[ "$1" == "outdated" ]]; then
+  exit 0
+fi
+exit 1
+'
+
+  run run_mas_update
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Skip: Ignoring malformed App Store manifest entry"* ]]
+}
+
+@test "run_mise_update skips when local runtimes are already current" {
   export UPDATE="true"
-  export DRY_RUN="true"
-
-  mock_command_with_script "yq" '
-case "$*" in
-  *".tools[].manager"*)
-    echo "brew"
-    exit 0
-    ;;
-  *".tools | keys | .[]"*|*".tools | select(. != null) | keys | .[]"*)
-    echo "tool1"
-    exit 0
-    ;;
-  *".tools.tool1.manager"*)
-    echo "brew"
-    exit 0
-    ;;
-  *".tools.tool1.type"*)
-    echo "package"
-    exit 0
-    ;;
-  *".tools.tool1.check_command"*)
-    echo "tool1 --version"
-    exit 0
-    ;;
-  *".tools.tool1.skip_update"*)
-    echo "true"
-    exit 0
-    ;;
-  *".tools.tool1.install_args[]"*)
-    exit 0
-    ;;
-  *)
-    echo "null"
-    exit 0
-    ;;
-esac
+  touch "$REPO_ROOT/mise.toml"
+  # shellcheck disable=SC2016  # mock script is intentionally single-quoted
+  mock_command_with_script "mise" '
+if [[ "$1" == "outdated" ]]; then
+  echo "{}"
+  exit 0
+fi
+if [[ "$1" == "upgrade" ]]; then
+  echo "unexpected mise upgrade run"
+  exit 1
+fi
+exit 1
 '
-  mock_command "which"
-  mock_brew
-  mock_command "tool1"
 
-  mkdir -p "$BATS_TEST_TMPDIR/_configs"
-  touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
-  export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
-  export CONFIG_FILES=("test")
-
-  run main
+  run run_mise_update
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "tool1 update skipped by configuration" ]]
-  [[ "$output" != *"Queued tool1 (brew package) for batch update"* ]]
-  [[ ! "$output" =~ "Would execute: brew upgrade tool1" ]]
-}
-# Tests for get_vscode_cli function
-@test "get_vscode_cli returns code by default" {
-  # Mock code command
-  echo '#!/usr/bin/env bash
-echo "code"' > "$MOCK_BIN_DIR/code"
-  chmod +x "$MOCK_BIN_DIR/code"
-
-  run get_vscode_cli
-  [ "$status" -eq 0 ]
-  [ "$output" = "code" ]
+  [[ "$output" == *"Skip: Runtimes declared in mise.toml already up to date"* ]]
 }
 
-@test "get_vscode_cli uses VSCODE_CLI environment variable" {
-  export VSCODE_CLI="cursor"
-
-  # Mock cursor command
-  echo '#!/usr/bin/env bash
-echo "cursor"' > "$MOCK_BIN_DIR/cursor"
-  chmod +x "$MOCK_BIN_DIR/cursor"
-
-  run get_vscode_cli
-  [ "$status" -eq 0 ]
-  [ "$output" = "cursor" ]
-}
-
-@test "get_vscode_cli fails when specified CLI not found" {
-  export VSCODE_CLI="nonexistent"
-
-  run get_vscode_cli
-  [ "$status" -eq 1 ]
-  [[ "$output" =~ "VSCode CLI 'nonexistent' not found" ]]
-}
-
-# Tests for code package manager
-@test "get_available_managers detects code when available" {
-  # Mock yq to return code as a manager
-  cat > "$MOCK_BIN_DIR/yq" << 'EOF'
-#!/usr/bin/env bash
-case "$*" in
-  *".tools[].manager"*)
-    echo "code"
-    ;;
-  *)
-    echo "null"
-    ;;
-esac
-EOF
-  chmod +x "$MOCK_BIN_DIR/yq"
-
-  # Mock code command
-  echo '#!/usr/bin/env bash
-echo "code"' > "$MOCK_BIN_DIR/code"
-  chmod +x "$MOCK_BIN_DIR/code"
-
-  run get_available_managers "test.yaml"
-  [ "$status" -eq 0 ]
-  # get_available_managers outputs to stdout, we need to check for "code" in output
-  [[ "$output" =~ "code" ]]
-}
-
-@test "install_tool installs code extension" {
-  mock_yq
-
-  # Mock code command
-  echo '#!/usr/bin/env bash
-echo "Installing extension: $*"' > "$MOCK_BIN_DIR/code"
-  chmod +x "$MOCK_BIN_DIR/code"
-
-  # Add extension_id to yq mock
-  yq() {
-    case "$*" in
-      *".tools.tool1.manager"*) echo "code" ;;
-      *".tools.tool1.type"*) echo "extension" ;;
-      *".tools.tool1.extension_id"*) echo "esbenp.prettier-vscode" ;;
-      *".tools.tool1.install_args[]"*) echo "" ;;
-      *) echo "null" ;;
-    esac
-  }
-  export -f yq
-
-  run install_tool "tool1" "test.yaml"
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"Installing extension: --install-extension esbenp.prettier-vscode"* ]]
-}
-
-@test "install_tool skips code extension without extension_id" {
-  mock_yq
-
-  # Override yq for this test
-  yq() {
-    case "$*" in
-      *".tools.tool1.manager"*) echo "code" ;;
-      *".tools.tool1.type"*) echo "extension" ;;
-      *".tools.tool1.extension_id"*) echo "null" ;;
-      *) echo "null" ;;
-    esac
-  }
-  export -f yq
-
-  run install_tool "tool1" "test.yaml"
-  [ "$status" -eq 0 ]
-  [[ "$output" =~ "no extension_id specified" ]]
-}
-
-@test "is_tool_installed checks mas app installation" {
-  # Mock mas command
-  cat > "$MOCK_BIN_DIR/mas" << 'EOF'
-#!/usr/bin/env bash
-if [[ "$1" == "list" ]]; then
-  echo "904280696   Things                 (3.21.14)"
-  echo "967805235    Paste                  (5.0.9)"
-fi
-EOF
-  chmod +x "$MOCK_BIN_DIR/mas"
-
-  # Mock yq
-  yq() {
-    case "$*" in
-      *".tools.things.check_command"*) echo "mas list | grep -q '^904280696'" ;;
-      *".tools.things.manager"*) echo "mas" ;;
-      *) echo "null" ;;
-    esac
-  }
-  export -f yq
-
-  run is_tool_installed "things" "test.yaml"
-  [ "$status" -eq 0 ]
-}
-
-@test "is_tool_installed detects missing mas app" {
-  # Mock mas command without the app
-  cat > "$MOCK_BIN_DIR/mas" << 'EOF'
-#!/usr/bin/env bash
-if [[ "$1" == "list" ]]; then
-  echo "967805235    Paste                  (5.0.9)"
-fi
-EOF
-  chmod +x "$MOCK_BIN_DIR/mas"
-
-  # Mock yq
-  yq() {
-    case "$*" in
-      *".tools.things.check_command"*) echo "mas list | grep -q '^904280696'" ;;
-      *".tools.things.manager"*) echo "mas" ;;
-      *) echo "null" ;;
-    esac
-  }
-  export -f yq
-
-  run is_tool_installed "things" "test.yaml"
-  [ "$status" -eq 1 ]
-}
-
-@test "is_tool_installed substitutes VSCode CLI for code extensions" {
-  export VSCODE_CLI="cursor"
-  local test_home="$BATS_TEST_TMPDIR/home-cursor"
-  export HOME="$test_home"
-  mkdir -p "$HOME"
-
-  # Mock cursor command
-  cat > "$MOCK_BIN_DIR/cursor" << 'EOF'
-#!/usr/bin/env bash
-if [[ "$1" == "--list-extensions" ]]; then
-  echo "esbenp.prettier-vscode"
-fi
-EOF
-  chmod +x "$MOCK_BIN_DIR/cursor"
-
-  # Mock yq
-  yq() {
-    case "$*" in
-      *".tools.prettier-vscode.check_command"*) echo "code --list-extensions | grep -q esbenp.prettier-vscode" ;;
-      *".tools.prettier-vscode.manager"*) echo "code" ;;
-      *".tools.prettier-vscode.type"*) echo "extension" ;;
-      *) echo "null" ;;
-    esac
-  }
-  export -f yq
-
-  # Mock the extensions directory with the extension installed
-  mkdir -p "$HOME/.cursor/extensions"
-  mkdir -p "$HOME/.cursor/extensions/esbenp.prettier-vscode-1.0.0"
-
-  run is_tool_installed "prettier-vscode" "test.yaml"
-  [ "$status" -eq 0 ]
-
-  # Cleanup
-  rm -rf "$HOME/.cursor/extensions"
-}
-
-@test "main function handles config file with no tools key" {
-  # Create a config file without tools key
-  mkdir -p "$BATS_TEST_TMPDIR/_configs"
-  cat > "$BATS_TEST_TMPDIR/_configs/empty.yaml" << 'EOF'
-# This file has no tools key
-package_managers:
-  brew:
-    types:
-      - package
-EOF
-
-  # Mock yq to handle the file
-  mock_command_with_script "yq" '
-case "$*" in
-  *".tools[].manager"*)
-    # No tools, return empty
-    exit 0
-    ;;
-  *".tools | keys | .[]"*|*".tools | select(. != null) | keys | .[]"*)
-    # No tools key, return empty
-    exit 0
-    ;;
-  *)
-    echo "null"
-    exit 0
-    ;;
-esac
-'
-  mock_command "which"
-  mock_brew
-
-  export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
-  export CONFIG_FILES=("empty")
-
-  run main
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"Processing: $BATS_TEST_TMPDIR/_configs/empty.yaml"* ]]
-  # Should not error on missing tools key
-  [[ ! "$output" =~ "error" ]]
-}
-
-# Tests for zsh init cache invalidation on update
-@test "main clears zsh init cache when UPDATE=true and cache exists" {
-  export UPDATE="true"
-  export DRY_RUN="false"
-  export XDG_CACHE_HOME="$BATS_TEST_TMPDIR/cache"
+@test "main update clears the zsh init cache and suppresses no-op brew chatter" {
+  local manifest_source="$BATS_TEST_TMPDIR/manifests"
   local zsh_cache_dir="$BATS_TEST_TMPDIR/cache/zsh-init"
   mkdir -p "$zsh_cache_dir"
   touch "$zsh_cache_dir/kubectl.zsh"
-  touch "$zsh_cache_dir/gk.zsh"
 
-  mock_command_with_script "yq" '
-case "$*" in
-  *".tools | keys | .[]"*|*".tools | select(. != null) | keys | .[]"*)
+  write_manifest_bundle "$manifest_source" \
+$'tap "felixkratz/formulae"\nbrew "jq"' \
+$'kubectl\t' \
+'[
+  {"tool":"felixkratz/formulae","manager":"brew","type":"tap","check_command":"brew tap | grep -q felixkratz/formulae","install_args":[],"skip_update":false,"apt_package":null,"dependencies":[],"extension_id":null,"app_id":null,"description":null,"documentation_url":null,"category":"tap"},
+  {"tool":"jq","manager":"brew","type":"package","check_command":"jq --version","install_args":[],"skip_update":false,"apt_package":null,"dependencies":[],"extension_id":null,"app_id":null,"description":null,"documentation_url":null,"category":"test"},
+  {"tool":"kubectl","manager":"arkade","type":"get","check_command":"kubectl version --client","install_args":[],"skip_update":true,"apt_package":null,"dependencies":[],"extension_id":null,"app_id":null,"description":null,"documentation_url":null,"category":"kubernetes"}
+]'
+  create_manifest_generator "$manifest_source"
+
+  export CONFIG_DIR="$BATS_TEST_TMPDIR/configs"
+  mkdir -p "$CONFIG_DIR"
+  touch "$CONFIG_DIR/test.yaml"
+  export CONFIG_FILES=("test")
+  export UPDATE="true"
+  export XDG_CACHE_HOME="$BATS_TEST_TMPDIR/cache"
+
+  mock_command "which"
+  # shellcheck disable=SC2016  # mock script is intentionally single-quoted
+  mock_command_with_script "brew" '
+case "$1 $2" in
+  "list --formula")
+    echo "jq"
     exit 0
     ;;
-  *".tools[].manager"*)
+  "list --cask")
+    exit 0
+    ;;
+esac
+case "$1" in
+  outdated)
     exit 0
     ;;
   *)
-    echo "null"
     exit 0
     ;;
 esac
 '
-  mock_command "which"
-  mock_brew
-
-  mkdir -p "$BATS_TEST_TMPDIR/_configs"
-  touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
-  export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
-  export CONFIG_FILES=("test")
+  # shellcheck disable=SC2016  # mock script is intentionally single-quoted
+  mock_command_with_script "mise" '
+if [[ "$1" == "outdated" ]]; then
+  echo "{}"
+  exit 0
+fi
+if [[ "$1" == "upgrade" ]]; then
+  echo "unexpected mise upgrade run"
+  exit 1
+fi
+exit 1
+'
+  mock_command "kubectl"
 
   run main
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "Cleared zsh init cache" ]]
+  [[ "$output" == *"Skip: 1 Homebrew formula(e) already up to date"* ]]
+  [[ "$output" == *"Skip: Homebrew taps are managed repositories (1): felixkratz/formulae"* ]]
+  [[ "$output" == *"Skip: Runtimes declared in mise.toml already up to date"* ]]
+  [[ "$output" != *"Warning: Not upgrading"* ]]
+  [[ "$output" == *"Change: Cleared zsh init cache"* ]]
   [ ! -d "$zsh_cache_dir" ]
 }
 
-@test "main does not clear zsh init cache when UPDATE=true but DRY_RUN=true" {
-  export UPDATE="true"
-  export DRY_RUN="true"
-  export XDG_CACHE_HOME="$BATS_TEST_TMPDIR/cache"
-  local zsh_cache_dir="$BATS_TEST_TMPDIR/cache/zsh-init"
-  mkdir -p "$zsh_cache_dir"
-  touch "$zsh_cache_dir/kubectl.zsh"
-
-  mock_command_with_script "yq" '
-case "$*" in
-  *".tools | keys | .[]"*|*".tools | select(. != null) | keys | .[]"*)
-    exit 0
-    ;;
-  *".tools[].manager"*)
-    exit 0
-    ;;
-  *)
-    echo "null"
-    exit 0
-    ;;
-esac
-'
+@test "main supports stow-only mode when CONFIG_FILES is empty" {
+  export CONFIG_FILES=()
+  export STOW="true"
+  mock_command "yq"
   mock_command "which"
-  mock_brew
-
-  mkdir -p "$BATS_TEST_TMPDIR/_configs"
-  touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
-  export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
-  export CONFIG_FILES=("test")
+  mock_stow
 
   run main
   [ "$status" -eq 0 ]
-  [ -d "$zsh_cache_dir" ]
-}
-
-@test "main does not clear zsh init cache when UPDATE=false" {
-  export UPDATE="false"
-  export DRY_RUN="false"
-  export XDG_CACHE_HOME="$BATS_TEST_TMPDIR/cache"
-  local zsh_cache_dir="$BATS_TEST_TMPDIR/cache/zsh-init"
-  mkdir -p "$zsh_cache_dir"
-  touch "$zsh_cache_dir/kubectl.zsh"
-
-  mock_command_with_script "yq" '
-case "$*" in
-  *".tools | keys | .[]"*|*".tools | select(. != null) | keys | .[]"*)
-    exit 0
-    ;;
-  *".tools[].manager"*)
-    exit 0
-    ;;
-  *)
-    echo "null"
-    exit 0
-    ;;
-esac
-'
-  mock_command "which"
-  mock_brew
-
-  mkdir -p "$BATS_TEST_TMPDIR/_configs"
-  touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
-  export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
-  export CONFIG_FILES=("test")
-
-  run main
-  [ "$status" -eq 0 ]
-  [ -d "$zsh_cache_dir" ]
-}
-
-@test "main does not error when UPDATE=true but zsh init cache does not exist" {
-  export UPDATE="true"
-  export DRY_RUN="false"
-  export XDG_CACHE_HOME="$BATS_TEST_TMPDIR/cache"
-  # Deliberately do not create the cache dir
-
-  mock_command_with_script "yq" '
-case "$*" in
-  *".tools | keys | .[]"*|*".tools | select(. != null) | keys | .[]"*)
-    exit 0
-    ;;
-  *".tools[].manager"*)
-    exit 0
-    ;;
-  *)
-    echo "null"
-    exit 0
-    ;;
-esac
-'
-  mock_command "which"
-  mock_brew
-
-  mkdir -p "$BATS_TEST_TMPDIR/_configs"
-  touch "$BATS_TEST_TMPDIR/_configs/test.yaml"
-  export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
-  export CONFIG_FILES=("test")
-
-  run main
-  [ "$status" -eq 0 ]
-  [[ ! "$output" =~ "Cleared zsh init cache" ]]
+  assert_mock_called "stow"
 }
