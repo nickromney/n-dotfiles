@@ -164,11 +164,12 @@ teardown() {
   [[ "$output" =~ "-u" ]]
 }
 
-@test "make update defaults to common profile" {
+@test "make update defaults to personal profile" {
   run make update
   [ "$status" -eq 0 ]
   [[ "$output" =~ "host/common" ]]
-  [[ ! "$output" =~ "host/personal" ]]
+  [[ "$output" =~ "host/personal" ]]
+  [[ "$output" =~ "focus/cloud" ]]
   [[ "$output" =~ "-u" ]]
 }
 

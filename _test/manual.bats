@@ -141,12 +141,12 @@ EOF
   manager="manual"
 
   if [[ "$manager" == "manual" ]]; then
-    echo "✓ camtasia (manual) - check vendor site for updates"
+    echo "✓ camtasia (manual) - update managed outside install.sh"
   fi
 
-  run echo "✓ camtasia (manual) - check vendor site for updates"
+  run echo "✓ camtasia (manual) - update managed outside install.sh"
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "check vendor site for updates" ]]
+  [[ "$output" =~ update\ managed\ outside\ install\.sh ]]
 }
 
 # Test manual tool already installed message

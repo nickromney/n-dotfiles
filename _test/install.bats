@@ -310,7 +310,8 @@ esac
   [ "$status" -eq 0 ]
   [[ "$output" == *"Skip: Homebrew taps are managed repositories (1): felixkratz/formulae"* ]]
   [[ "$output" == *"Skip: Homebrew updates disabled by configuration (1): ghostty (cask)"* ]]
-  [[ "$output" == *"Change: Updated 1 Homebrew formula(e)"* ]]
+  [[ "$output" == *"Info: Updating 1 Homebrew formula..."* ]]
+  [[ "$output" == *"Change: Updated 1 Homebrew formula: jq"* ]]
   assert_mock_called "brew" "update"
   assert_mock_called "brew" "upgrade jq"
 }
@@ -518,6 +519,7 @@ exit 1
 
   run run_mise_update
   [ "$status" -eq 0 ]
+  [[ "$output" == *"Info: Checking runtimes declared in mise.toml for updates..."* ]]
   [[ "$output" == *"Skip: Runtimes declared in mise.toml already up to date"* ]]
 }
 
@@ -581,8 +583,9 @@ exit 1
 
   run main
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Skip: 1 Homebrew formula(e) already up to date"* ]]
+  [[ "$output" == *"Skip: 1 Homebrew formula already up to date"* ]]
   [[ "$output" == *"Skip: Homebrew taps are managed repositories (1): felixkratz/formulae"* ]]
+  [[ "$output" == *"Info: Checking runtimes declared in mise.toml for updates..."* ]]
   [[ "$output" == *"Skip: Runtimes declared in mise.toml already up to date"* ]]
   [[ "$output" != *"Warning: Not upgrading"* ]]
   [[ "$output" == *"Change: Cleared zsh init cache"* ]]
