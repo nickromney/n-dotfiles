@@ -181,7 +181,7 @@ The `setup-ssh-from-1password.sh` script manages SSH configuration with security
 #### Default (Safe) Mode
 
 ```bash
-# Download SSH config + public keys only (private keys stay in 1Password)
+# Download base SSH config + per-profile fragment + public keys only
 ./setup-ssh-from-1password.sh
 
 # Check what's available without downloading
@@ -190,7 +190,8 @@ The `setup-ssh-from-1password.sh` script manages SSH configuration with security
 
 In safe mode:
 
-- Downloads SSH config from 1Password (stored as Secure Note)
+- Downloads base SSH config from 1Password (stored as Secure Note)
+- Downloads a per-profile SSH config fragment from 1Password
 - Downloads **public keys only** for reference
 - Private keys remain in 1Password
 - Uses 1Password SSH Agent for authentication
@@ -252,19 +253,40 @@ This approach:
 
 1. Open 1Password and create new item → SSH Key
 2. Name it exactly as expected by the script:
-   - `github_personal_authentication`
-   - `github_personal_signing`
-   - `aws_work_2024_client_1`
-   - `github_work_2025_client_1`
+   - `personal_github_authentication`
+   - `personal_github_signing`
+   - `work_2024_client_1_aws`
+   - `work_2025_client_1_github`
+   - `work_2025_client_2_github`
+   - `work_2025_client_2_ado`
 3. Paste your private key
-4. Save to "Private" vault (or adjust `VAULT` in script)
+4. Save to the vault expected by the script for that key
 
 #### SSH Config
 
 1. Create new item → Secure Note
-2. Name it: `SSH Config`
-3. Paste your complete SSH configuration
-4. Save to "Private" vault
+2. Name it: `~/.ssh/config`
+3. Add your base SSH configuration, for example:
+
+   ```sshconfig
+   Host *
+     IdentityAgent "~/.1password/agent.sock"
+
+   Include ~/.ssh/config.d/*.conf
+   ```
+
+4. Save it in the vault selected by `SSH_CONFIG_VAULT` or `VAULT`
+
+#### SSH Config Fragments
+
+1. Create new item → Secure Note
+2. Name it as one of:
+   - `~/.ssh/config.d/personal.conf`
+   - `~/.ssh/config.d/work-2024-client-1.conf`
+   - `~/.ssh/config.d/work-2025-client-1.conf`
+   - `~/.ssh/config.d/work-2025-client-2.conf`
+3. Add only the host stanzas for that profile
+4. Save it in the same vault as that profile's SSH keys
 
 #### Git Config
 
@@ -275,6 +297,11 @@ This approach:
    ```ini
    [url "github-work:OrgName/"]
      insteadOf = git@github.com:OrgName/
+     insteadOf = https://github.com/OrgName/
+
+   [url "git@ado-work-2025-client-2:v3/ORG/PROJECT/"]
+     insteadOf = git@ssh.dev.azure.com:v3/ORG/PROJECT/
+
    [user]
      email = work@company.com
    ```

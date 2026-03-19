@@ -71,6 +71,17 @@ The configuration is **fully modular and defensive** - every tool invocation che
 
 All tool-specific features (completions, plugins, integrations) are wrapped in conditional checks, so missing tools never cause errors.
 
+### Docker CLI Completion
+
+If Docker Desktop is installed, generate the zsh completion once and store it in `~/.docker/completions/_docker`:
+
+```bash
+mkdir -p ~/.docker/completions
+docker completion zsh > ~/.docker/completions/_docker
+```
+
+`zsh/.zshrc` adds `~/.docker/completions` to `FPATH` before `compinit`, so new shells will pick it up automatically.
+
 ### Conditional Tool Loading
 
 The configuration dynamically adapts based on which tools are installed:
@@ -79,6 +90,7 @@ The configuration dynamically adapts based on which tools are installed:
 - **FZF** (fuzzy finder) with optimizations if available
 - **Starship** prompt if available
 - **mise** runtime activation if installed
+- **Docker** CLI completion if `~/.docker/completions/_docker` exists
 - **kubectl** completions and aliases if available
 - **direnv** integration if available
 - Plugins like **zsh-autosuggestions** and **zsh-syntax-highlighting** if available via Homebrew

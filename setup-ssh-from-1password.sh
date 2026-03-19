@@ -13,7 +13,7 @@ UNSAFE_MODE="${UNSAFE_MODE:-false}"
 MACHINE_PROFILE="${MACHINE_PROFILE:-}"
 FORCE_OVERWRITE="${FORCE_OVERWRITE:-false}"
 LITERAL_TILDE='~'
-SSH_CONFIG_ITEM_NAME="${LITERAL_TILDE}/.ssh/config"
+SSH_CONFIG_BASE_ITEM_NAME="${LITERAL_TILDE}/.ssh/config"
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -42,7 +42,8 @@ usage() {
   echo "  work-2025-client-2  - Work 2025 Client 2 GitHub + Azure DevOps keys"
   echo ""
   echo "Default behavior:"
-  echo "  - Downloads SSH config from 1Password"
+  echo "  - Downloads base SSH config from 1Password"
+  echo "  - Downloads a per-profile SSH config fragment from 1Password"
   echo "  - Downloads public keys only (private keys stay in 1Password)"
   echo "  - Uses 1Password SSH Agent for authentication"
   echo "  - Prompts for machine profile if not specified"
@@ -113,11 +114,22 @@ if ! op account list >/dev/null 2>&1; then
 fi
 
 # Configuration
-readonly VAULT="${VAULT:-Private}" # Vault name is now configurable, defaults to "Private"
+readonly DEFAULT_VAULT="${VAULT:-Private}" # Backward-compatible default
+readonly SSH_CONFIG_VAULT="${SSH_CONFIG_VAULT:-$DEFAULT_VAULT}"
 readonly SSH_DIR="$HOME/.ssh"
+readonly SSH_CONFIG_DIR="$SSH_DIR/config.d"
 declare BACKUP_DIR
 BACKUP_DIR="$SSH_DIR/backups/$(date +%Y%m%d-%H%M%S)"
 readonly BACKUP_DIR
+
+# Per-profile SSH config fragments
+# Format: "profile:1password_item_name:local_filename:vault_name"
+declare -a ALL_SSH_CONFIG_FRAGMENTS=(
+  "personal:${LITERAL_TILDE}/.ssh/config.d/personal.conf:personal.conf:Private"
+  "work-2024-client-1:${LITERAL_TILDE}/.ssh/config.d/work-2024-client-1.conf:work-2024-client-1.conf:Work 2024 Client 1"
+  "work-2025-client-1:${LITERAL_TILDE}/.ssh/config.d/work-2025-client-1.conf:work-2025-client-1.conf:Work 2025 Client 1"
+  "work-2025-client-2:${LITERAL_TILDE}/.ssh/config.d/work-2025-client-2.conf:work-2025-client-2.conf:Work 2025 Client 2"
+)
 
 # All available SSH keys in 1Password
 # Format: "1password_item_name:local_filename:vault_name"
@@ -214,9 +226,49 @@ for key_mapping in "${ALL_SSH_KEYS[@]}"; do
   fi
 done
 
+# Filter SSH config fragments based on selected machine profile
+declare -a SSH_CONFIG_FRAGMENTS=()
+
+for fragment_mapping in "${ALL_SSH_CONFIG_FRAGMENTS[@]}"; do
+  IFS=':' read -r fragment_profile op_name local_name item_vault <<<"$fragment_mapping"
+
+  if [[ "$fragment_profile" == "$MACHINE_PROFILE" ]]; then
+    SSH_CONFIG_FRAGMENTS+=("$fragment_mapping")
+  fi
+done
+
 info "Machine profile: $MACHINE_PROFILE"
+info "Will download ${#SSH_CONFIG_FRAGMENTS[@]} SSH config fragment(s) for this profile"
 info "Will download ${#SSH_KEYS[@]} SSH key(s) for this profile"
 echo
+
+sanitize_downloaded_note() {
+  local file="$1"
+
+  if [[ "$(uname)" == "Darwin" ]]; then
+    sed -i '' 's/^"//; s/"$//; s/""/"/g' "$file"
+  else
+    sed -i 's/^"//; s/"$//; s/""/"/g' "$file"
+  fi
+}
+
+download_secure_note() {
+  local item_name="$1"
+  local item_vault="$2"
+  local destination="$3"
+
+  if op item get "$item_name" --vault="$item_vault" --fields notesPlain 2>/dev/null >"$destination" ||
+     op item get "$item_name" --vault="$item_vault" --fields notes 2>/dev/null >"$destination"; then
+    if [[ -s "$destination" ]]; then
+      sanitize_downloaded_note "$destination"
+      chmod 600 "$destination"
+      return 0
+    fi
+  fi
+
+  rm -f "$destination"
+  return 1
+}
 
 # Dry run mode - just check what's available
 if [[ "$DRY_RUN" == "true" ]]; then
@@ -231,18 +283,30 @@ if [[ "$DRY_RUN" == "true" ]]; then
   available_items=()
   missing_items=()
 
-  # Check SSH Config
-  if op item get "$SSH_CONFIG_ITEM_NAME" --vault="$VAULT" >/dev/null 2>&1; then
-    available_items+=("$SSH_CONFIG_ITEM_NAME (Secure Note)")
+  # Check base SSH config
+  if op item get "$SSH_CONFIG_BASE_ITEM_NAME" --vault="$SSH_CONFIG_VAULT" >/dev/null 2>&1; then
+    available_items+=("$SSH_CONFIG_BASE_ITEM_NAME (Secure Note, vault: $SSH_CONFIG_VAULT)")
   else
-    missing_items+=("$SSH_CONFIG_ITEM_NAME (Secure Note)")
+    missing_items+=("$SSH_CONFIG_BASE_ITEM_NAME (Secure Note, vault: $SSH_CONFIG_VAULT)")
   fi
+
+  # Check SSH config fragments
+  for fragment_mapping in "${SSH_CONFIG_FRAGMENTS[@]}"; do
+    IFS=':' read -r fragment_profile op_name local_name item_vault <<<"$fragment_mapping"
+    item_vault="${item_vault:-$DEFAULT_VAULT}"
+
+    if op item get "$op_name" --vault="$item_vault" >/dev/null 2>&1; then
+      available_items+=("$op_name → $local_name (vault: $item_vault)")
+    else
+      missing_items+=("$op_name → $local_name (vault: $item_vault)")
+    fi
+  done
 
   # Check SSH Keys
   for key_mapping in "${SSH_KEYS[@]}"; do
     IFS=':' read -r op_name local_name item_vault <<<"$key_mapping"
     # Use specified vault or fall back to default
-    item_vault="${item_vault:-$VAULT}"
+    item_vault="${item_vault:-$DEFAULT_VAULT}"
 
     if op item get "$op_name" --vault="$item_vault" >/dev/null 2>&1; then
       available_items+=("$op_name → $local_name (vault: $item_vault)")
@@ -266,7 +330,8 @@ if [[ "$DRY_RUN" == "true" ]]; then
     done
     echo
     echo "To add missing items:"
-    echo "  • SSH Config: Create a Secure Note named '~/.ssh/config'"
+    echo "  • Base SSH config: Create a Secure Note named '~/.ssh/config'"
+    echo "  • Per-profile config: Create a Secure Note named '~/.ssh/config.d/<profile>.conf'"
     echo "  • SSH Keys: Create SSH Key items with exact names shown above"
     echo "  • Save each item in the vault shown in parentheses"
   fi
@@ -327,6 +392,7 @@ if [[ "$UNSAFE_MODE" == "true" ]]; then
 fi
 
 # Create backup directory
+mkdir -p "$SSH_DIR" "$SSH_CONFIG_DIR"
 mkdir -p "$BACKUP_DIR"
 info "Created backup directory: $BACKUP_DIR"
 
@@ -343,47 +409,79 @@ backup_file() {
 info "Backing up existing SSH files..."
 backup_file "$SSH_DIR/config"
 
+for fragment_mapping in "${SSH_CONFIG_FRAGMENTS[@]}"; do
+  IFS=':' read -r fragment_profile op_name local_name item_vault <<<"$fragment_mapping"
+  backup_file "$SSH_CONFIG_DIR/$local_name"
+done
+
 for key_mapping in "${SSH_KEYS[@]}"; do
   IFS=':' read -r op_name local_name item_vault <<<"$key_mapping"
   backup_file "$SSH_DIR/$local_name"
   backup_file "$SSH_DIR/${local_name}.pub"
 done
 
-# Step 2: Setup SSH Config (from 1Password or example)
-info "Setting up SSH config..."
-# Try notesPlain first (Secure Notes), then notes (older format)
-if op item get "$SSH_CONFIG_ITEM_NAME" --vault="$VAULT" --fields notesPlain 2>/dev/null >"$SSH_DIR/config" ||
-   op item get "$SSH_CONFIG_ITEM_NAME" --vault="$VAULT" --fields notes 2>/dev/null >"$SSH_DIR/config"; then
-  # Remove surrounding quotes and fix escaped quotes (1Password CLI adds them)
-  # First remove outer quotes from entire file, then fix doubled quotes
-  # Detect platform for sed in-place editing
-  if [[ "$(uname)" == "Darwin" ]]; then
-    sed -i '' 's/^"//; s/"$//; s/""/"/g' "$SSH_DIR/config"
-  else
-    sed -i 's/^"//; s/"$//; s/""/"/g' "$SSH_DIR/config"
-  fi
-  chmod 600 "$SSH_DIR/config"
-  success "SSH config downloaded from 1Password and permissions set"
+# Step 2: Setup base SSH config (from 1Password or example)
+info "Setting up base SSH config..."
+if download_secure_note "$SSH_CONFIG_BASE_ITEM_NAME" "$SSH_CONFIG_VAULT" "$SSH_DIR/config"; then
+  success "Base SSH config downloaded from 1Password and permissions set"
 else
-  warning "SSH config not found in 1Password"
+  warning "Base SSH config not found in 1Password"
 
   # Check for config.example as fallback
   if [ -f "$SSH_DIR/config.example" ]; then
     info "Using config.example as template..."
     cp "$SSH_DIR/config.example" "$SSH_DIR/config"
     chmod 600 "$SSH_DIR/config"
-    success "SSH config created from example template"
-    echo "  Note: Update the config with your actual hosts and keys"
+    success "Base SSH config created from example template"
+    echo "  Note: Ensure it includes 'Include ~/.ssh/config.d/*.conf'"
   else
     warning "No config.example found either"
-    echo "  To add SSH config to 1Password:"
+    echo "  To add base SSH config to 1Password:"
     echo "  1. Create a Secure Note in 1Password called '~/.ssh/config'"
     echo "  2. Paste your SSH config content in the notes field"
-    echo "  3. Save in the '$VAULT' vault"
+    echo "  3. Save in the '$SSH_CONFIG_VAULT' vault"
   fi
 fi
 
-# Step 3: Download SSH Keys
+# Step 3: Setup per-profile SSH config fragments
+info "Setting up SSH config fragments..."
+if [[ "$FORCE_OVERWRITE" == "false" ]]; then
+  info "Skipping existing config fragments (use --force to overwrite)"
+fi
+echo
+
+failed_fragments=()
+successful_fragments=()
+skipped_fragments=()
+
+for fragment_mapping in "${SSH_CONFIG_FRAGMENTS[@]}"; do
+  IFS=':' read -r fragment_profile op_name local_name item_vault <<<"$fragment_mapping"
+  item_vault="${item_vault:-$DEFAULT_VAULT}"
+
+  info "Processing $op_name (vault: $item_vault)..."
+
+  if [[ "$FORCE_OVERWRITE" == "false" ]] && [[ -f "$SSH_CONFIG_DIR/$local_name" ]]; then
+    info "  Skipping $local_name (already exists)"
+    skipped_fragments+=("$local_name (use --force to overwrite)")
+    continue
+  fi
+
+  if download_secure_note "$op_name" "$item_vault" "$SSH_CONFIG_DIR/$local_name"; then
+    successful_fragments+=("$local_name")
+    continue
+  fi
+
+  if [[ -f "$SSH_CONFIG_DIR/${local_name}.example" ]]; then
+    cp "$SSH_CONFIG_DIR/${local_name}.example" "$SSH_CONFIG_DIR/$local_name"
+    chmod 600 "$SSH_CONFIG_DIR/$local_name"
+    successful_fragments+=("$local_name (from example)")
+    warning "Used ${local_name}.example as fallback"
+  else
+    failed_fragments+=("$op_name → $local_name")
+  fi
+done
+
+# Step 4: Download SSH Keys
 if [[ "$UNSAFE_MODE" == "true" ]]; then
   info "Retrieving SSH keys from 1Password (PRIVATE + PUBLIC)..."
 else
@@ -402,7 +500,7 @@ skipped_keys=()
 for key_mapping in "${SSH_KEYS[@]}"; do
   IFS=':' read -r op_name local_name item_vault <<<"$key_mapping"
   # Use specified vault or fall back to default
-  item_vault="${item_vault:-$VAULT}"
+  item_vault="${item_vault:-$DEFAULT_VAULT}"
 
   info "Processing $op_name (vault: $item_vault)..."
 
@@ -495,7 +593,7 @@ for key_mapping in "${SSH_KEYS[@]}"; do
   fi
 done
 
-# Step 4: Verify SSH agent access
+# Step 5: Verify SSH agent access
 info "Checking SSH agent..."
 if [ -S "$HOME/.1password/agent.sock" ]; then
   success "1Password SSH agent is available"
@@ -504,11 +602,41 @@ else
   echo "  Enable it in 1Password Settings → Developer → SSH Agent"
 fi
 
-# Step 5: Report results
+# Step 6: Report results
 echo
 echo "========================================="
 echo "SSH Setup Summary"
 echo "========================================="
+
+if [ ${#successful_fragments[@]} -gt 0 ]; then
+  success "Successfully configured SSH fragments:"
+  for fragment in "${successful_fragments[@]}"; do
+    echo "  • $fragment"
+  done
+fi
+
+if [ ${#skipped_fragments[@]} -gt 0 ]; then
+  echo
+  info "Skipped existing SSH fragments:"
+  for fragment in "${skipped_fragments[@]}"; do
+    echo "  ↷ $fragment"
+  done
+fi
+
+if [ ${#failed_fragments[@]} -gt 0 ]; then
+  echo
+  warning "Failed to download SSH fragments:"
+  for fragment in "${failed_fragments[@]}"; do
+    echo "  ✗ $fragment"
+  done
+  echo
+  echo "To add SSH config fragments to 1Password:"
+  echo "  1. Open 1Password"
+  echo "  2. Create new item → Secure Note"
+  echo "  3. Name it exactly as shown above (before the →)"
+  echo "  4. Paste your SSH host stanzas in the notes field"
+  echo "  5. Save in the vault shown in the error message"
+fi
 
 if [ ${#successful_keys[@]} -gt 0 ]; then
   success "Successfully downloaded keys:"
@@ -540,12 +668,13 @@ if [ ${#failed_keys[@]} -gt 0 ]; then
   echo "  5. Save in the vault shown in the error message"
 fi
 
-# Step 6: Test SSH connections
+# Step 7: Test SSH connections
 echo
 info "Testing SSH connections..."
 echo "You can test your connections with:"
 echo "  ssh -T git@github.com"
-echo "  ssh -T git@github-work"
+echo "  ssh -T git@github-work-2025-client-1"
+echo "  ssh -T git@ado-work-2025-client-2"
 
 echo
 success "SSH setup complete!"

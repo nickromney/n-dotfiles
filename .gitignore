@@ -24,6 +24,8 @@ _audit/
 # Local reference repos
 _reference/
 
+skills/.SKILLS_MANAGED_BY_JSM
+
 # Local compiled tools
 bin/browser-tools
 scripts/node_modules/

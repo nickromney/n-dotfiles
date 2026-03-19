@@ -73,14 +73,24 @@ if [[ "$1" == "item" ]] && [[ "$2" == "get" ]]; then
         cat <<'CONFIG'
 Host *
   IdentityAgent "~/.1password/agent.sock"
-
-Host github-work
-    HostName github.com
-    User git
-    IdentityFile ~/.ssh/work_key.pub
+Include ~/.ssh/config.d/*.conf
 CONFIG
       else
         echo "~/.ssh/config found"
+      fi
+      exit 0
+      ;;
+    "~/.ssh/config.d/personal.conf")
+      if [[ "$@" == *"--fields"* ]] && [[ "$@" == *"notes"* ]]; then
+        cat <<'CONFIG'
+Host github.com
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/personal_github_authentication.pub
+  IdentitiesOnly yes
+CONFIG
+      else
+        echo "~/.ssh/config.d/personal.conf found"
       fi
       exit 0
       ;;
@@ -89,6 +99,10 @@ CONFIG
         cat <<'GITCONFIG'
 [url "github-work:OrgName/"]
   insteadOf = git@github.com:OrgName/
+  insteadOf = https://github.com/OrgName/
+
+[url "git@ado-work-2025-client-2:v3/ORG/PROJECT/"]
+  insteadOf = git@ssh.dev.azure.com:v3/ORG/PROJECT/
 
 [user]
   email = work@example.com
@@ -98,7 +112,7 @@ GITCONFIG
       fi
       exit 0
       ;;
-    "personal_github_authentication"|"personal_github_signing"|"work_aws_2024_client_1"|"work_github_2025_client_1")
+    "personal_github_authentication"|"personal_github_signing"|"work_2024_client_1_aws"|"work_2025_client_1_github")
       echo "$item_name found"
       exit 0
       ;;
@@ -132,7 +146,8 @@ EOF
   [ "$status" -eq 0 ]
   [[ "$output" == *"SSH Config Dry Run"* ]]
   [[ "$output" == *"Found in 1Password:"* ]]
-  [[ "$output" == *"~/.ssh/config (Secure Note)"* ]]
+  [[ "$output" == *"~/.ssh/config (Secure Note, vault: Private)"* ]]
+  [[ "$output" == *"~/.ssh/config.d/personal.conf"* ]]
   [[ "$output" == *"personal_github_authentication"* ]]
   [[ "$output" == *"No files were modified"* ]]
 }
@@ -152,9 +167,19 @@ if [[ "$1" == "account" ]] && [[ "$2" == "list" ]]; then
 fi
 
 if [[ "$1" == "item" ]] && [[ "$2" == "get" ]]; then
-  if [[ "$@" == *"--fields notes"* ]]; then
+  if [[ "$3" == "~/.ssh/config" ]] && [[ "$@" == *"--fields notes"* ]]; then
     echo "Host *"
     echo "  IdentityAgent ~/.1password/agent.sock"
+    echo "Include ~/.ssh/config.d/*.conf"
+    exit 0
+  fi
+
+  if [[ "$3" == "~/.ssh/config.d/personal.conf" ]] && [[ "$@" == *"--fields notes"* ]]; then
+    echo "Host github.com"
+    echo "  HostName github.com"
+    echo "  User git"
+    echo "  IdentityFile ~/.ssh/personal_github_authentication.pub"
+    echo "  IdentitiesOnly yes"
     exit 0
   fi
 
@@ -179,6 +204,9 @@ EOF
   grep -q "public key" "$TEST_DIR/op-calls.log"
   run grep -q "private key" "$TEST_DIR/op-calls.log"
   [ "$status" -ne 0 ]
+  [ -f "$HOME/.ssh/config.d/personal.conf" ]
+  run grep -q "Host github.com" "$HOME/.ssh/config.d/personal.conf"
+  [ "$status" -eq 0 ]
 }
 
 @test "SSH setup: unsafe mode requires confirmation" {
