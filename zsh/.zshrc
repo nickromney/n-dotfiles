@@ -10,7 +10,7 @@
 #   3. Homebrew          - Package manager setup + BREW_PREFIX cache
 #   4. Init Caching      - Cache tool init scripts for faster startup
 #   5. Key Bindings      - Word/line navigation, history search
-#   6. Completions       - compinit, Azure CLI, kubectl
+#   6. Completions       - compinit, Docker, Azure CLI, kubectl
 #   7. Tool Init         - Starship, rbenv, zoxide, fzf, uv
 #   8. Plugins           - zsh-autosuggestions, zsh-syntax-highlighting
 #   9. FNM               - Fast Node Manager
@@ -121,10 +121,20 @@ bindkey "^[[B" history-beginning-search-forward  # Down arrow
 #
 # 6. Completions
 #
+# Add user-managed completion directories before compinit runs.
+if [[ -d "$HOME/.docker/completions" ]]; then
+  fpath=("$HOME/.docker/completions" $fpath)
+fi
+
 # -Uz ensures that compinit is loaded as a pure function according
 #  to zsh's standards, without interference from any aliases defined.
 #  Then executes it with the -i flag to ignore insecure files.
 autoload -Uz compinit && compinit -i
+
+# Docker CLI completion
+# Generate once with:
+#   mkdir -p ~/.docker/completions
+#   docker completion zsh > ~/.docker/completions/_docker
 
 # Azure CLI completion
 if [[ -n "$BREW_PREFIX" ]] && command -v az >/dev/null 2>&1; then

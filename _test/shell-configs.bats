@@ -181,6 +181,20 @@ EOF
   [ "$status" -eq 0 ]
 }
 
+@test "zshrc: prepends docker completions directory to fpath when present" {
+  mkdir -p "$HOME/.docker/completions"
+  touch "$HOME/.docker/completions/_docker"
+
+  result=$(/bin/zsh -c "
+    export HOME='$HOME'
+    export DOTFILES_DIR='$DOTFILES_DIR'
+    source $DOTFILES_DIR/zsh/.zshrc 2>/dev/null
+    print -r -- \$fpath[1]
+  ")
+
+  [ "$result" = "$HOME/.docker/completions" ]
+}
+
 @test "zshrc: direnv only initialized when direnv exists" {
   # Test without direnv - should not error
   run zsh -c "
@@ -276,11 +290,18 @@ EOF
     skip "No suitable 'time' command with -p flag available"
   fi
 
+  local zdotdir="$HOME/zdotdir"
+  mkdir -p "$zdotdir"
+  ln -sf "$DOTFILES_DIR/zsh/.zshrc" "$zdotdir/.zshrc"
+  if [ -f "$DOTFILES_DIR/zsh/.zshenv" ]; then
+    ln -sf "$DOTFILES_DIR/zsh/.zshenv" "$zdotdir/.zshenv"
+  fi
+
   local -a zsh_cmd=(
     env
     HOME="$HOME"
     DOTFILES_DIR="$DOTFILES_DIR"
-    ZDOTDIR="$DOTFILES_DIR/zsh"
+    ZDOTDIR="$zdotdir"
     TERM="xterm-256color"
     zsh -i -c exit
   )

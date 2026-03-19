@@ -17,9 +17,9 @@ tools:
     documentation_url: "https://terraform.io"
     category: infrastructure
 
-  tofu:
-    manager: arkade
-    type: get
+  opentofu:
+    manager: brew
+    type: package
     check_command: command -v tofu
     description: "Open-source Terraform fork"
     documentation_url: "https://opentofu.org/"

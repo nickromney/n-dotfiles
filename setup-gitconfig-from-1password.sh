@@ -283,6 +283,8 @@ if [ ${#failed_configs[@]} -gt 0 ]; then
   echo '  [url "github-work-alias:OrgName/"]'
   echo '    insteadOf = git@github.com:OrgName/'
   echo '    insteadOf = https://github.com/OrgName/'
+  echo '  [url "git@ado-work-2025-client-2:v3/ORG/PROJECT/"]'
+  echo '    insteadOf = git@ssh.dev.azure.com:v3/ORG/PROJECT/'
   echo '  [user]'
   echo '    email = first.last@company.com'
 fi
