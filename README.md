@@ -258,6 +258,7 @@ This approach:
    - `work_2024_client_1_aws`
    - `work_2025_client_1_github`
    - `work_2025_client_2_github`
+   - `work_2025_client_2_gitea`
    - `work_2025_client_2_ado`
 3. Paste your private key
 4. Save to the vault expected by the script for that key
@@ -273,6 +274,7 @@ This approach:
      IdentityAgent "~/.1password/agent.sock"
 
    Include ~/.ssh/config.d/*.conf
+   Include ~/.ssh/config.d/*/*.conf
    ```
 
 4. Save it in the vault selected by `SSH_CONFIG_VAULT` or `VAULT`

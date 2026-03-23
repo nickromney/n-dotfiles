@@ -9,11 +9,16 @@ ssh/
 └── .ssh/
     ├── config.example
     └── config.d/
+        ├── local/
+        │   └── gitea.conf.example
         ├── personal.conf.example
         ├── work-2024-client-1.conf.example
         ├── work-2025-client-1.conf.example
         └── work-2025-client-2.conf.example
 ```
+
+Optional grouped fragments can live one directory deep under `config.d/`, for
+example `~/.ssh/config.d/local/gitea.conf`.
 
 ## Why This Approach?
 
@@ -57,6 +62,7 @@ The setup script manages SSH configuration with security in mind:
 | `work_2024_client_1_aws`           | `~/.ssh/work_2024_client_1_aws.pem.pub` | `~/.ssh/work_2024_client_1_aws.pem` + `.pub` | AWS EC2 access        |
 | `work_2025_client_1_github`        | `~/.ssh/work_2025_client_1_github.pub` | `~/.ssh/work_2025_client_1_github` + `.pub` | Work GitHub access      |
 | `work_2025_client_2_github`        | `~/.ssh/work_2025_client_2_github.pub` | `~/.ssh/work_2025_client_2_github` + `.pub` | Work GitHub access      |
+| `work_2025_client_2_gitea`         | `~/.ssh/work_2025_client_2_gitea.pub` | `~/.ssh/work_2025_client_2_gitea` + `.pub` | Work Gitea access       |
 | `work_2025_client_2_ado`           | `~/.ssh/work_2025_client_2_ado.pub` | `~/.ssh/work_2025_client_2_ado` + `.pub` | Azure DevOps access     |
 
 ### Running Setup
@@ -90,6 +96,7 @@ The setup script `setup-ssh-from-1password.sh` (in repository root) handles ever
      IdentityAgent "~/.1password/agent.sock"
 
    Include ~/.ssh/config.d/*.conf
+   Include ~/.ssh/config.d/*/*.conf
    ```
 
 4. Save it to the vault selected by `SSH_CONFIG_VAULT` or `VAULT`
@@ -104,6 +111,7 @@ Create one Secure Note per profile and store it in the same vault as that profil
 - `~/.ssh/config.d/work-2025-client-2.conf`
 
 The setup script downloads only the fragment for the selected profile and leaves the others in place, which makes multi-profile machines additive instead of overwrite-only.
+It also supports grouped fragments one directory deep under `~/.ssh/config.d/`.
 
 ### SSH Keys (SSH Key Items)
 
@@ -141,6 +149,32 @@ git clone git@ado-work-2025-client-2:v3/ORG/PROJECT/REPO
 ```
 
 If OpenSSH warns that the connection is not using a post-quantum key exchange algorithm when talking to `ssh.dev.azure.com`, that warning is about the server's key exchange support, not whether your uploaded key is valid.
+
+### Gitea Setup
+
+For a dedicated Gitea key on the `work-2025-client-2` profile:
+
+1. Create an SSH Key item in 1Password named `work_2025_client_2_gitea`
+2. Add that item's public key to Gitea at User Settings -> SSH / GPG Keys
+3. Add a host stanza to `~/.ssh/config.d/work-2025-client-2.conf` that points your local or forwarded Gitea host at `~/.ssh/work_2025_client_2_gitea.pub`
+4. Run `./setup-ssh-from-1password.sh --profile work-2025-client-2` on the target machine
+
+Example host stanza:
+
+```sshconfig
+Host gitea-work-2025-client-2
+  HostName gitea.127.0.0.1.sslip.io
+  Port 2222
+  User git
+  IdentityFile ~/.ssh/work_2025_client_2_gitea.pub
+  IdentitiesOnly yes
+```
+
+Example clone URL using that alias:
+
+```bash
+git clone ssh://git@gitea-work-2025-client-2:2222/OWNER/REPO.git
+```
 
 ## Security Notes
 
