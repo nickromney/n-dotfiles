@@ -136,11 +136,21 @@ autoload -Uz compinit && compinit -i
 #   mkdir -p ~/.docker/completions
 #   docker completion zsh > ~/.docker/completions/_docker
 
+# Enable bash-style completion support for tools that do not ship native zsh
+# completions.
+if command -v az >/dev/null 2>&1 || command -v tofu >/dev/null 2>&1; then
+  autoload -Uz bashcompinit && bashcompinit
+fi
+
 # Azure CLI completion
 if [[ -n "$BREW_PREFIX" ]] && command -v az >/dev/null 2>&1; then
-  autoload bashcompinit && bashcompinit
   AZ_COMPLETION="$BREW_PREFIX/etc/bash_completion.d/az"
   [ -f "$AZ_COMPLETION" ] && source "$AZ_COMPLETION"
+fi
+
+# OpenTofu completion
+if command -v tofu >/dev/null 2>&1; then
+  complete -o nospace -C "$(command -v tofu)" tofu
 fi
 
 # kubectl completion and aliases

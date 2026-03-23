@@ -18,7 +18,7 @@ else
 fi
 
 REQUIRED_COMMANDS=("yq" "which")
-STOW_DIRS=(aerospace aws bash bat claude codex factory gh ghostty git kitty nushell nvim prettier starship tmux vscode yazi zsh)
+STOW_DIRS=(aerospace aws bash bat claude codex factory gh ghostty git kitty nushell nvim prettier ssh starship tmux vscode yazi zsh)
 
 DRY_RUN="${DRY_RUN:-false}"
 VERBOSE="${VERBOSE:-false}"

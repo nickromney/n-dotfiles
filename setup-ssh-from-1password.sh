@@ -39,7 +39,7 @@ usage() {
   echo "  personal            - Personal GitHub keys (authentication + signing)"
   echo "  work-2024-client-1  - Work 2024 Client 1 AWS key"
   echo "  work-2025-client-1  - Work 2025 Client 1 GitHub key"
-  echo "  work-2025-client-2  - Work 2025 Client 2 GitHub + Azure DevOps keys"
+  echo "  work-2025-client-2  - Work 2025 Client 2 GitHub + Gitea + Azure DevOps keys"
   echo ""
   echo "Default behavior:"
   echo "  - Downloads base SSH config from 1Password"
@@ -139,6 +139,7 @@ declare -a ALL_SSH_KEYS=(
   "work_2024_client_1_aws:work_2024_client_1_aws.pem:Work 2024 Client 1"
   "work_2025_client_1_github:work_2025_client_1_github:Work 2025 Client 1"
   "work_2025_client_2_github:work_2025_client_2_github:Work 2025 Client 2"
+  "work_2025_client_2_gitea:work_2025_client_2_gitea:Work 2025 Client 2"
   "work_2025_client_2_ado:work_2025_client_2_ado:Work 2025 Client 2"
 )
 
@@ -157,7 +158,7 @@ get_profile_keys() {
       echo "work_2025_client_1_github"
       ;;
     work-2025-client-2)
-      echo "work_2025_client_2_github work_2025_client_2_ado"
+      echo "work_2025_client_2_github work_2025_client_2_gitea work_2025_client_2_ado"
       ;;
     *)
       return 1
@@ -187,7 +188,7 @@ if [[ -z "$MACHINE_PROFILE" ]]; then
   echo "  1) personal            - Personal GitHub keys"
   echo "  2) work-2024-client-1  - Work 2024 Client 1 AWS key"
   echo "  3) work-2025-client-1  - Work 2025 Client 1 GitHub key"
-  echo "  4) work-2025-client-2  - Work 2025 Client 2 GitHub + Azure DevOps keys"
+  echo "  4) work-2025-client-2  - Work 2025 Client 2 GitHub + Gitea + Azure DevOps keys"
   echo
   read -r -p "Enter selection (1-4): " selection
 
@@ -433,7 +434,7 @@ else
     cp "$SSH_DIR/config.example" "$SSH_DIR/config"
     chmod 600 "$SSH_DIR/config"
     success "Base SSH config created from example template"
-    echo "  Note: Ensure it includes 'Include ~/.ssh/config.d/*.conf'"
+    echo "  Note: Ensure it includes both 'Include ~/.ssh/config.d/*.conf' and 'Include ~/.ssh/config.d/*/*.conf'"
   else
     warning "No config.example found either"
     echo "  To add base SSH config to 1Password:"

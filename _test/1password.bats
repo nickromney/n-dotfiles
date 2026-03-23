@@ -74,6 +74,7 @@ if [[ "$1" == "item" ]] && [[ "$2" == "get" ]]; then
 Host *
   IdentityAgent "~/.1password/agent.sock"
 Include ~/.ssh/config.d/*.conf
+Include ~/.ssh/config.d/*/*.conf
 CONFIG
       else
         echo "~/.ssh/config found"
@@ -171,6 +172,7 @@ if [[ "$1" == "item" ]] && [[ "$2" == "get" ]]; then
     echo "Host *"
     echo "  IdentityAgent ~/.1password/agent.sock"
     echo "Include ~/.ssh/config.d/*.conf"
+    echo "Include ~/.ssh/config.d/*/*.conf"
     exit 0
   fi
 
