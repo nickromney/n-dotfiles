@@ -12,8 +12,14 @@ DRY_RUN="${DRY_RUN:-false}"
 UNSAFE_MODE="${UNSAFE_MODE:-false}"
 MACHINE_PROFILE="${MACHINE_PROFILE:-}"
 FORCE_OVERWRITE="${FORCE_OVERWRITE:-false}"
+NO_INPUT="${NO_INPUT:-false}"
+ASSUME_YES="${ASSUME_YES:-false}"
 LITERAL_TILDE='~'
 SSH_CONFIG_BASE_ITEM_NAME="${LITERAL_TILDE}/.ssh/config"
+
+if [[ -n "${NON_INTERACTIVE:-}" ]]; then
+  NO_INPUT=true
+fi
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -27,12 +33,16 @@ error() { echo -e "${RED}✗${NC} $1" >&2; }
 success() { echo -e "${GREEN}✓${NC} $1"; }
 
 usage() {
+  local exit_code=${1:-0}
+
   echo "Usage: $0 [OPTIONS]"
   echo "Options:"
   echo "  -p, --profile PROFILE   Machine profile (personal, work-2024-client-1, work-2025-client-1, work-2025-client-2)"
   echo "  -d, --dry-run           Check 1Password items without downloading"
   echo "  -f, --force             Overwrite existing keys (default: skip existing)"
+  echo "      --no-input          Disable prompts; require --profile and --yes for unsafe mode"
   echo "  -u, --unsafe            Download private keys (DANGEROUS - breaks 1Password SSH Agent model)"
+  echo "  -y, --yes               Confirm unsafe private-key download without prompting"
   echo "  -h, --help              Show this help message"
   echo ""
   echo "Machine Profiles:"
@@ -47,6 +57,7 @@ usage() {
   echo "  - Downloads public keys only (private keys stay in 1Password)"
   echo "  - Uses 1Password SSH Agent for authentication"
   echo "  - Prompts for machine profile if not specified"
+  echo "  - --no-input requires --profile and skips all prompts"
   echo "  - Skips existing keys (use --force to overwrite)"
   echo ""
   echo "Examples:"
@@ -54,6 +65,8 @@ usage() {
   echo "  $0 -p personal --dry-run                  # Check personal keys"
   echo "  $0 -p work-2025-client-1                  # Add Client 1 keys (keeps existing)"
   echo "  $0 -p personal --force                    # Refresh personal keys"
+  echo "  $0 --profile personal --no-input         # Non-interactive safe mode"
+  echo "  $0 --profile personal --unsafe --yes     # Non-interactive private key download"
   echo "  $0 --profile work-2025-client-2 --unsafe  # Download private keys (requires confirmation)"
   echo ""
   echo "Multi-profile workflow (consulting laptop):"
@@ -64,15 +77,20 @@ usage() {
   echo ""
   echo "WARNING: The --unsafe option defeats the purpose of 1Password SSH Agent!"
   echo "         Private keys should remain in 1Password for security."
-  exit 0
+  exit "$exit_code"
 }
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
   case $1 in
     -p | --profile)
-      MACHINE_PROFILE="$2"
-      shift 2
+      if [[ -n "${2:-}" && ! "$2" =~ ^- ]]; then
+        MACHINE_PROFILE="$2"
+        shift 2
+      else
+        error "--profile requires a machine profile"
+        usage 1
+      fi
       ;;
     -d | --dry-run)
       DRY_RUN=true
@@ -86,13 +104,20 @@ while [[ $# -gt 0 ]]; do
       UNSAFE_MODE=true
       shift
       ;;
+    --no-input)
+      NO_INPUT=true
+      shift
+      ;;
+    -y | --yes)
+      ASSUME_YES=true
+      shift
+      ;;
     -h | --help)
-      usage
+      usage 0
       ;;
     *)
       error "Unknown option: $1"
-      echo "Use -h or --help for usage information" >&2
-      exit 1
+      usage 1
       ;;
   esac
 done
@@ -182,6 +207,12 @@ is_valid_profile() {
 
 # Prompt for machine profile if not specified
 if [[ -z "$MACHINE_PROFILE" ]]; then
+  if [[ "$NO_INPUT" == "true" ]]; then
+    error "No machine profile specified."
+    echo "Re-run with: $0 --profile <personal|work-2024-client-1|work-2025-client-1|work-2025-client-2> --no-input" >&2
+    exit 1
+  fi
+
   echo
   warning "No machine profile specified. Please select your machine type:"
   echo
@@ -380,9 +411,18 @@ if [[ "$UNSAFE_MODE" == "true" ]]; then
   echo
   warning "════════════════════════════════════════════════════════════════"
   echo
-  read -r -p "Do you want to download private keys? (type 'yes' to continue): " confirmation
+  if [[ "$ASSUME_YES" == "true" ]]; then
+    confirmation="yes"
+    warning "Proceeding without prompt because --yes was provided"
+  elif [[ "$NO_INPUT" == "true" ]]; then
+    error "Unsafe mode requires --yes when --no-input is enabled"
+    echo "Re-run with: $0 --profile $MACHINE_PROFILE --unsafe --yes --no-input" >&2
+    exit 1
+  else
+    read -r -p "Do you want to download private keys? (type 'yes' to continue): " confirmation
+  fi
 
-  if [[ "$confirmation" != "yes" ]]; then
+  if [[ "${confirmation:-}" != "yes" ]]; then
     info "Cancelled. Running in safe mode (public keys only)."
     UNSAFE_MODE=false
   else

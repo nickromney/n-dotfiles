@@ -15,7 +15,9 @@ setup() {
   export STOW="false"
   export FORCE="false"
   export UPDATE="false"
+  export LIST_MODE="false"
   export CONFIG_FILES_SET_VIA_CLI="false"
+  export CONFIG_FILES_SET_VIA_ENV="true"
 
   cd "$REPO_ROOT" || return 1
 
@@ -87,6 +89,75 @@ EOF
 
   prepare_config_files
   [ "${RESOLVED_CONFIG_FILES[0]}" = "$BATS_TEST_TMPDIR/_configs/test.yaml" ]
+}
+
+@test "collect_catalog_config_files walks the config tree when no config was explicitly selected" {
+  mkdir -p "$BATS_TEST_TMPDIR/_configs/focus" "$BATS_TEST_TMPDIR/_configs/host"
+  touch "$BATS_TEST_TMPDIR/_configs/focus/demo.yaml"
+  touch "$BATS_TEST_TMPDIR/_configs/host/common.yml"
+  export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
+  export CONFIG_FILES=("host/common")
+  export CONFIG_FILES_SET_VIA_CLI="false"
+  export CONFIG_FILES_SET_VIA_ENV="false"
+
+  run collect_catalog_config_files
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"$BATS_TEST_TMPDIR/_configs/focus/demo.yaml"* ]]
+  [[ "$output" == *"$BATS_TEST_TMPDIR/_configs/host/common.yml"* ]]
+}
+
+@test "print_available_tool_catalog emits tab-separated inventory rows" {
+  mkdir -p "$BATS_TEST_TMPDIR/_configs/focus" "$BATS_TEST_TMPDIR/_configs/host"
+  cat >"$BATS_TEST_TMPDIR/_configs/focus/demo.yaml" <<'EOF'
+tools:
+  jq:
+    manager: brew
+    type: package
+    description: "JSON processor"
+    documentation_url: "https://jqlang.org/"
+    category: data
+  docker-desktop:
+    manager: manual
+    type: check
+    description: "Docker Desktop"
+    documentation_url: "https://www.docker.com/"
+    category: containers
+    skip_update: true
+EOF
+  cat >"$BATS_TEST_TMPDIR/_configs/host/common.yaml" <<'EOF'
+tools:
+  uv:
+    manager: brew
+    type: package
+    description: "Python installer"
+    documentation_url: "https://docs.astral.sh/uv/"
+    category: python
+EOF
+  export CONFIG_DIR="$BATS_TEST_TMPDIR/_configs"
+  export CONFIG_FILES=("host/common")
+  export CONFIG_FILES_SET_VIA_CLI="false"
+  export CONFIG_FILES_SET_VIA_ENV="false"
+
+  run print_available_tool_catalog
+  [ "$status" -eq 0 ]
+  [[ "$output" == $'config\ttool\tmanager\ttype\tcategory\tauto_install\tupdatable\tdescription\tdocumentation_url'* ]]
+  [[ "$output" == *$'focus/demo\tdocker-desktop\tmanual\tcheck\tcontainers\tno\tno\tDocker Desktop\thttps://www.docker.com/'* ]]
+  [[ "$output" == *$'focus/demo\tjq\tbrew\tpackage\tdata\tyes\tyes\tJSON processor\thttps://jqlang.org/'* ]]
+  [[ "$output" == *$'host/common\tuv\tbrew\tpackage\tpython\tyes\tyes\tPython installer\thttps://docs.astral.sh/uv/'* ]]
+}
+
+@test "install.sh help exits successfully and documents list mode" {
+  run "$REPO_ROOT/install.sh" --help
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"--list"* ]]
+  [[ "$output" == *"$REPO_ROOT/install.sh --list"* ]]
+  [[ "$output" == *"--update            Update tools already installed from selected configs; missing tools are skipped"* ]]
+}
+
+@test "install.sh rejects list mode with update" {
+  run "$REPO_ROOT/install.sh" --list --update
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Error: --list cannot be combined with --stow, --update, or --force"* ]]
 }
 
 @test "generate_manifests calls wrapper and sets manifest paths" {

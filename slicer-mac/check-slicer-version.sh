@@ -4,7 +4,31 @@
 
 set -euo pipefail
 
-# Check dependencies
+usage() {
+  local exit_code=${1:-0}
+
+  cat <<'EOF'
+Usage: slicer-mac/check-slicer-version.sh [options]
+
+Compare the installed slicer version with the latest stable release tag in GHCR.
+
+Options:
+  -h, --help  Show this help message
+
+Examples:
+  slicer-mac/check-slicer-version.sh
+EOF
+
+  exit "$exit_code"
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  usage 0
+elif [[ $# -gt 0 ]]; then
+  echo "Unknown argument: $1" >&2
+  usage 1
+fi
+
 if ! command -v crane >/dev/null 2>&1; then
   echo "crane not found. Install with: arkade get crane" >&2
   exit 1
@@ -15,8 +39,6 @@ if ! command -v slicer >/dev/null 2>&1; then
   exit 1
 fi
 
-# Get latest semver tag from the registry
-# Filters out digests (40-char hex), pre-release tags (containing -), and 'latest'
 echo "Fetching tags from ghcr.io/openfaasltd/slicer..."
 latest_tag=$(crane ls ghcr.io/openfaasltd/slicer 2>/dev/null \
   | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' \
@@ -28,7 +50,6 @@ if [[ -z "$latest_tag" ]]; then
   exit 1
 fi
 
-# Get installed version — strip the commit hash suffix (e.g. 0.1.103-abc123 → 0.1.103)
 installed_full=$(slicer version 2>/dev/null | grep '^Version:' | awk '{print $2}')
 installed_semver="${installed_full%%-*}"
 
@@ -45,6 +66,6 @@ echo ""
 if [[ "$installed_semver" == "$latest_tag" ]]; then
   echo "Up to date."
 else
-  echo "Update available: $installed_semver → $latest_tag"
+  echo "Update available: $installed_semver -> $latest_tag"
   echo "Run 'slicer update' to update."
 fi

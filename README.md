@@ -28,6 +28,7 @@ git clone https://github.com/nickromney/n-dotfiles.git
 cd n-dotfiles
 
 # Run bootstrap to install essential tools
+./bootstrap.sh --dry-run --no-input --skip-1password
 ./bootstrap.sh
 
 # Preferred installation flow
@@ -127,6 +128,7 @@ make personal configure      # apply macOS settings
 ./install.sh -d -s        # Preview changes
 ./install.sh -s -f        # Force stow
 ./install.sh -u           # Update installed packages
+./install.sh --list       # List available bundles and tools
 ```
 
 ### Preferred Installer Stack
@@ -164,6 +166,9 @@ Light-touch macOS configuration management:
 # Dry run to preview changes
 ./_macos/macos.sh -d personal.yaml
 
+# Non-interactive apply with follow-up instructions instead of prompts
+./_macos/macos.sh --no-input personal.yaml
+
 # Equivalent Makefile helper
 make personal configure
 ```
@@ -182,10 +187,10 @@ The `setup-ssh-from-1password.sh` script manages SSH configuration with security
 
 ```bash
 # Download base SSH config + per-profile fragment + public keys only
-./setup-ssh-from-1password.sh
+./setup-ssh-from-1password.sh --profile personal --no-input
 
 # Check what's available without downloading
-./setup-ssh-from-1password.sh --dry-run
+./setup-ssh-from-1password.sh --profile personal --dry-run --no-input
 ```
 
 In safe mode:
@@ -200,7 +205,10 @@ In safe mode:
 
 ```bash
 # Download private keys (requires explicit confirmation)
-./setup-ssh-from-1password.sh --unsafe
+./setup-ssh-from-1password.sh --profile personal --unsafe
+
+# Non-interactive private-key download
+./setup-ssh-from-1password.sh --profile personal --unsafe --yes --no-input
 ```
 
 Use unsafe mode when:
