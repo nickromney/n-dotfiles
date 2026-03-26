@@ -64,11 +64,24 @@ check_file() {
 }
 
 # Check main scripts
-check_file "install.sh" "install.sh"
+for script in bootstrap.sh install.sh setup-*.sh; do
+    if [[ -f "$script" ]]; then
+        check_file "$script" "$script"
+    fi
+done
 check_file "_macos/macos.sh" "_macos/macos.sh"
 
-# Check setup scripts at root
-for script in setup-*.sh; do
+# Check user-facing repo scripts
+echo -e "${YELLOW}Checking repo scripts...${NC}"
+for script in scripts/*.sh slicer-mac/*.sh; do
+    if [[ -f "$script" ]]; then
+        check_file "$script" "$script"
+    fi
+done
+
+# Check relevant skill scripts
+echo -e "${YELLOW}Checking skill scripts...${NC}"
+for script in skills/shell-cli-contract-audit/scripts/*.sh; do
     if [[ -f "$script" ]]; then
         check_file "$script" "$script"
     fi

@@ -6,6 +6,7 @@ CONFIG_DIR="${CONFIG_DIR:-}"
 VSCODE_CLI="${VSCODE_CLI:-}"
 
 if [[ -n "${CONFIG_FILES+x}" ]]; then
+  CONFIG_FILES_SET_VIA_ENV="${CONFIG_FILES_SET_VIA_ENV:-true}"
   config_files_env="$CONFIG_FILES"
   if [[ -z "$config_files_env" ]]; then
     CONFIG_FILES=()
@@ -14,6 +15,7 @@ if [[ -n "${CONFIG_FILES+x}" ]]; then
   fi
   unset config_files_env
 else
+  CONFIG_FILES_SET_VIA_ENV="${CONFIG_FILES_SET_VIA_ENV:-false}"
   CONFIG_FILES=("host/common")
 fi
 
@@ -25,6 +27,7 @@ VERBOSE="${VERBOSE:-false}"
 STOW="${STOW:-false}"
 FORCE="${FORCE:-false}"
 UPDATE="${UPDATE:-false}"
+LIST_MODE="${LIST_MODE:-false}"
 CONFIG_FILES_SET_VIA_CLI="${CONFIG_FILES_SET_VIA_CLI:-false}"
 
 INSTALL_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -66,6 +69,10 @@ is_dry_run() {
 
 is_verbose() {
   [[ "$VERBOSE" == "true" ]]
+}
+
+is_list_mode() {
+  [[ "$LIST_MODE" == "true" ]]
 }
 
 emit_log() {
@@ -461,12 +468,138 @@ prepare_config_files() {
       error "  - $config_file"
       error "  - $CONFIG_DIR/$config_file"
       error "  - $INSTALL_REPO_ROOT/$CONFIG_DIR/$config_file"
+      error "Run $0 --list to inspect available config bundles and tools."
       return 1
     fi
   done
 
   RESOLVED_CONFIG_FILES=("${resolved_files[@]}")
   return 0
+}
+
+resolved_config_dir() {
+  if [[ "$CONFIG_DIR" = /* ]]; then
+    printf '%s\n' "$CONFIG_DIR"
+  else
+    printf '%s\n' "$INSTALL_REPO_ROOT/$CONFIG_DIR"
+  fi
+}
+
+config_name_from_path() {
+  local config_file=$1
+  local config_root
+  local config_name
+
+  config_root=$(resolved_config_dir)
+  if [[ "$config_file" == "$config_root/"* ]]; then
+    config_name="${config_file#"$config_root"/}"
+  else
+    config_name=$(basename "$config_file")
+  fi
+
+  config_name="${config_name%.yaml}"
+  config_name="${config_name%.yml}"
+  printf '%s\n' "$config_name"
+}
+
+collect_catalog_config_files() {
+  local config_root
+  local -a catalog_files=()
+  local config_file
+
+  if [[ "$CONFIG_FILES_SET_VIA_CLI" == "true" || "$CONFIG_FILES_SET_VIA_ENV" == "true" ]]; then
+    prepare_config_files || return 1
+    printf '%s\n' "${RESOLVED_CONFIG_FILES[@]}"
+    return 0
+  fi
+
+  config_root=$(resolved_config_dir)
+  if [[ ! -d "$config_root" ]]; then
+    error "Configuration directory not found: $config_root"
+    return 1
+  fi
+
+  while IFS= read -r config_file; do
+    [[ -n "$config_file" ]] && catalog_files+=("$config_file")
+  done < <(find "$config_root" -type f \( -name '*.yaml' -o -name '*.yml' \) | sort)
+
+  if [[ ${#catalog_files[@]} -eq 0 ]]; then
+    error "No configuration files found under $config_root"
+    return 1
+  fi
+
+  printf '%s\n' "${catalog_files[@]}"
+}
+
+print_available_tool_catalog() {
+  local -a catalog_files=()
+  local config_file
+  local config_name
+  local tool
+  local manager
+  local type
+  local category
+  local skip_update
+  local description
+  local documentation_url
+  local auto_install
+  local updatable
+
+  mapfile -t catalog_files < <(collect_catalog_config_files)
+  if [[ ${#catalog_files[@]} -eq 0 ]]; then
+    error "No configuration files available to list"
+    return 1
+  fi
+
+  printf 'config\ttool\tmanager\ttype\tcategory\tauto_install\tupdatable\tdescription\tdocumentation_url\n'
+
+  for config_file in "${catalog_files[@]}"; do
+    config_name=$(config_name_from_path "$config_file")
+
+    while IFS=$'\t' read -r tool manager type category skip_update description documentation_url; do
+      [[ -z "$tool" ]] && continue
+
+      auto_install="yes"
+      updatable="yes"
+
+      if [[ "$manager" == "manual" ]]; then
+        auto_install="no"
+        updatable="no"
+      elif [[ "$skip_update" == "true" ]]; then
+        updatable="no"
+      fi
+
+      description=${description//$'\n'/ }
+      description=${description//$'\r'/ }
+      description=${description//$'\t'/ }
+
+      printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+        "$config_name" \
+        "$tool" \
+        "$manager" \
+        "$type" \
+        "$category" \
+        "$auto_install" \
+        "$updatable" \
+        "$description" \
+        "$documentation_url"
+    done < <(
+      yq -r '
+      (.tools // {})
+      | to_entries[]?
+      | [
+          .key,
+          (.value.manager // ""),
+          (.value.type // ""),
+          (.value.category // ""),
+          ((.value.skip_update // false) | tostring),
+          (.value.description // ""),
+          (.value.documentation_url // "")
+        ]
+      | @tsv
+    ' "$config_file"
+    )
+  done | sort -t$'\t' -k1,1 -k2,2
 }
 
 cleanup_generated_manifests() {
@@ -2046,7 +2179,7 @@ run_mise_update() {
     return "$outdated_exit_code"
   fi
 
-  outdated_json=${outdated_json:-{}}
+  outdated_json=${outdated_json:-"{}"}
   if ! printf '%s' "$outdated_json" | grep -q '"[^"]\+"' ; then
     skip "Runtimes declared in mise.toml already up to date (checked in $elapsed)"
     return 0
@@ -2109,12 +2242,19 @@ print_selected_configs() {
 
 main() {
   [[ -z "$CONFIG_DIR" ]] && CONFIG_DIR="$DEFAULT_CONFIG_DIR"
-  [[ "$DRY_RUN" == "true" ]] && info "Running in dry-run mode - no changes will be made"
-  [[ "$FORCE" == "true" ]] && info "Running in force mode - destructive update/install paths will be retried where supported"
 
   if ! check_requirements; then
     return 1
   fi
+
+  if is_list_mode; then
+    print_available_tool_catalog
+    return $?
+  fi
+
+  [[ "$DRY_RUN" == "true" ]] && info "Running in dry-run mode - no changes will be made"
+  [[ "$FORCE" == "true" ]] && info "Running in force mode - destructive update/install paths will be retried where supported"
+  [[ "$UPDATE" == "true" ]] && info "Update mode refreshes tools already installed from the selected configs; missing tools are skipped"
 
   if ! prepare_config_files; then
     if [[ "$STOW" == "true" && ${#CONFIG_FILES[@]} -eq 0 ]]; then

@@ -71,13 +71,16 @@ The setup script `setup-ssh-from-1password.sh` (in repository root) handles ever
 
 ```bash
 # Safe mode (default) - base config + per-profile fragment + public keys only
-./setup-ssh-from-1password.sh
+./setup-ssh-from-1password.sh --profile personal
 
 # Check what would be downloaded without making changes
-./setup-ssh-from-1password.sh --dry-run
+./setup-ssh-from-1password.sh --profile personal --dry-run --no-input
 
 # Unsafe mode - download private keys (requires confirmation)
-./setup-ssh-from-1password.sh --unsafe
+./setup-ssh-from-1password.sh --profile personal --unsafe
+
+# Unsafe mode without prompts (requires explicit confirmation bypass)
+./setup-ssh-from-1password.sh --profile personal --unsafe --yes --no-input
 
 # Or automatic during Mac setup
 ./setup-personal-mac.sh  # Includes SSH setup as Step 7 (safe mode)

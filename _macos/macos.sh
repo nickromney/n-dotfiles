@@ -5,8 +5,13 @@ set -euo pipefail
 MODE="show"
 CONFIG_FILE=""
 DRY_RUN=false
+NO_INPUT="${NO_INPUT:-false}"
 # shellcheck disable=SC2034  # VERBOSE is reserved for future use
 VERBOSE=false
+
+if [[ -n "${NON_INTERACTIVE:-}" ]]; then
+  NO_INPUT=true
+fi
 
 # Color output
 RED='\033[0;31m'
@@ -299,13 +304,15 @@ apply_system_settings() {
           echo "  1. Open System Settings → Accessibility → Display"
           echo "  2. Toggle 'Reduce transparency' to $([ "$value" == "1" ] && echo "ON" || echo "OFF")"
           echo ""
-          if [[ "$DRY_RUN" == "false" ]]; then
+          if [[ "$DRY_RUN" == "false" && "$NO_INPUT" != "true" ]]; then
             read -p "Would you like to open System Settings now? (y/N) " -n 1 -r
             echo
             if [[ $REPLY =~ ^[Yy]$ ]]; then
               open "x-apple.systempreferences:com.apple.preference.universalaccess?Seeing_Display"
               info "Opened Accessibility → Display settings"
             fi
+          elif [[ "$NO_INPUT" == "true" ]]; then
+            info "Skipping System Settings prompt because --no-input is enabled"
           fi
         fi
       fi
@@ -993,6 +1000,7 @@ usage() {
   echo
   echo "Options:"
   echo "  -d, --dry-run     Show what would be changed without making changes"
+  echo "      --no-input    Disable prompts and print follow-up instructions instead"
   echo "  -v, --verbose     Show detailed output"
   echo "  -h, --help        Show this help message"
   echo
@@ -1000,6 +1008,7 @@ usage() {
   echo "  $0                    # Show current system configuration"
   echo "  $0 personal.yaml      # Apply personal configuration"
   echo "  $0 -d work.yaml       # Dry run with work configuration"
+  echo "  $0 --no-input work.yaml"
   echo "  $0 ../personal.yaml   # Apply config from parent directory"
 }
 
@@ -1008,6 +1017,10 @@ while [[ $# -gt 0 ]]; do
   case $1 in
   -d | --dry-run)
     DRY_RUN=true
+    shift
+    ;;
+  --no-input)
+    NO_INPUT=true
     shift
     ;;
   -v | --verbose)

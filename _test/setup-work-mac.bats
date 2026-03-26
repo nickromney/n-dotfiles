@@ -1,230 +1,93 @@
 #!/usr/bin/env bats
 
+load helpers/mocks.bash
+
 setup() {
-  # Set test environment
-  export BATS_TEST_TMPDIR="${BATS_TEST_TMPDIR:-/tmp/bats-test-$$}"
-  mkdir -p "$BATS_TEST_TMPDIR"
+  setup_mocks
 
-  # Save original directory
-  ORIG_DIR="$PWD"
+  export REPO_ROOT
+  REPO_ROOT="$(cd "$BATS_TEST_DIRNAME/.." && pwd)"
+  export TEST_REPO
+  TEST_REPO="$(mktemp -d)"
+  export CALLS_DIR="$TEST_REPO/.calls"
 
-  # Copy the setup script
-  cp "${BATS_TEST_DIRNAME}/../setup-work-mac.sh" "$BATS_TEST_TMPDIR/setup-work-mac.sh"
-  chmod +x "$BATS_TEST_TMPDIR/setup-work-mac.sh"
+  mkdir -p "$TEST_REPO/scripts" "$TEST_REPO/_configs/host" "$TEST_REPO/_macos" "$CALLS_DIR"
 
-  # Create mock directories in temp dir
-  mkdir -p "$BATS_TEST_TMPDIR/mocks"
-  mkdir -p "$BATS_TEST_TMPDIR/_configs/host"
-  mkdir -p "$BATS_TEST_TMPDIR/_macos"
+  cp "$REPO_ROOT/setup-work-mac.sh" "$TEST_REPO/setup-work-mac.sh"
+  cp "$REPO_ROOT/scripts/setup-mac-lib.sh" "$TEST_REPO/scripts/setup-mac-lib.sh"
+  chmod +x "$TEST_REPO/setup-work-mac.sh"
 
-  # Set PATH to use mocks
-  export PATH="$BATS_TEST_TMPDIR/mocks:$PATH"
+  cat >"$TEST_REPO/install.sh" <<'EOF'
+#!/usr/bin/env bash
+echo "CONFIG_FILES=${CONFIG_FILES-} ARGS=$*" >>"$CALLS_DIR/install.calls"
+exit 0
+EOF
+  chmod +x "$TEST_REPO/install.sh"
 
-  # Change to test directory - this is where script will run
-  cd "$BATS_TEST_TMPDIR" || return 1
+  cat >"$TEST_REPO/bootstrap.sh" <<'EOF'
+#!/usr/bin/env bash
+echo "$*" >>"$CALLS_DIR/bootstrap.calls"
+exit 0
+EOF
+  chmod +x "$TEST_REPO/bootstrap.sh"
+
+  cat >"$TEST_REPO/_macos/macos.sh" <<'EOF'
+#!/usr/bin/env bash
+echo "$*" >>"$CALLS_DIR/macos.calls"
+exit 0
+EOF
+  chmod +x "$TEST_REPO/_macos/macos.sh"
+
+  cat >"$TEST_REPO/_configs/host/work.yaml" <<'EOF'
+tools: {}
+EOF
+
+  cat >"$TEST_REPO/_macos/work.yaml" <<'EOF'
+finder:
+  show_hidden_files: true
+EOF
+
+  mock_command "uname" 0 "Darwin"
+  mock_command "brew" 0 ""
+  mock_command "yq" 0 ""
+  mock_command "stow" 0 ""
+
+  export PATH="$MOCK_BIN_DIR:/usr/bin:/bin"
+  cd "$TEST_REPO" || return 1
 }
 
 teardown() {
-  cd "$ORIG_DIR" || return 1
-  rm -rf "$BATS_TEST_TMPDIR"
+  teardown_mocks
+  rm -rf "$TEST_REPO"
 }
 
-# Helper to create mock commands
-create_mock() {
-  local cmd="$1"
-  local exit_code="${2:-0}"
-  local output="${3:-}"
+@test "setup-work-mac: help output includes examples" {
+  run ./setup-work-mac.sh --help
 
-  cat > "$BATS_TEST_TMPDIR/mocks/$cmd" << EOF
-#!/usr/bin/env bash
-[[ -n "$output" ]] && echo "$output"
-exit $exit_code
-EOF
-  chmod +x "$BATS_TEST_TMPDIR/mocks/$cmd"
-}
-
-@test "setup-work-mac: fails on non-macOS" {
-  export UNAME_OUTPUT="Linux"
-  create_mock "uname" 0 "$UNAME_OUTPUT"
-
-  run ./setup-work-mac.sh
-  [ "$status" -eq 1 ]
-  [[ "$output" =~ "This script is for macOS only" ]]
-}
-
-@test "setup-work-mac: runs bootstrap when tools missing" {
-  skip "Complex integration test - command builtin cannot be mocked via PATH"
-  create_mock "uname" 0 "Darwin"
-  create_mock "command" 1  # Simulate tools not found
-
-  # Create mock bootstrap
-  cat > "./bootstrap.sh" << 'EOF'
-#!/usr/bin/env bash
-echo "Bootstrap executed"
-exit 0
-EOF
-  chmod +x "./bootstrap.sh"
-
-  # Create mock install.sh
-  create_mock "./install.sh" 0 "Install executed"
-
-  run ./setup-work-mac.sh
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "Bootstrap executed" ]]
+  [[ "$output" == *"Usage:"* ]]
+  [[ "$output" == *"Examples:"* ]]
+  [[ "$output" == *"--skip-profile-packages"* ]]
 }
 
-@test "setup-work-mac: skips bootstrap when tools present" {
-  skip "Complex integration test - command builtin cannot be mocked via PATH"
-  create_mock "uname" 0 "Darwin"
-  create_mock "command" 0  # All tools found
-  create_mock "brew" 0
-  create_mock "yq" 0
-  create_mock "stow" 0
-  create_mock "./install.sh" 0
+@test "setup-work-mac: dry-run forwards non-interactive flags to nested commands" {
+  run ./setup-work-mac.sh --dry-run --no-input
 
-  run ./setup-work-mac.sh
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "Essential tools already installed" ]]
+  [[ "$output" == *"Essential tools already installed"* ]]
+  grep -q 'CONFIG_FILES=shared/shell shared/git shared/search shared/file-tools shared/data-tools shared/network shared/neovim host/common ARGS=-d' "$CALLS_DIR/install.calls"
+  grep -q 'CONFIG_FILES=host/work ARGS=-d' "$CALLS_DIR/install.calls"
+  grep -q 'CONFIG_FILES= ARGS=-d -s' "$CALLS_DIR/install.calls"
+  grep -q -- '--dry-run --no-input _macos/work.yaml' "$CALLS_DIR/macos.calls"
+  [ ! -f "$CALLS_DIR/bootstrap.calls" ]
 }
 
-@test "setup-work-mac: installs shared and common packages" {
-  skip "Complex integration test - command builtin cannot be mocked via PATH"
-  create_mock "uname" 0 "Darwin"
-  create_mock "command" 0
+@test "setup-work-mac: skip flags suppress optional steps" {
+  run ./setup-work-mac.sh --dry-run --skip-profile-packages --skip-macos --skip-vscode
 
-  # Track install.sh calls
-  cat > "./install.sh" << 'EOF'
-#!/usr/bin/env bash
-echo "install.sh called with: $*"
-exit 0
-EOF
-  chmod +x "./install.sh"
-
-  run ./setup-work-mac.sh
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "CONFIG_FILES=\"shared/shell shared/git shared/search shared/file-tools shared/data-tools shared/network shared/neovim host/common\"" ]]
-}
-
-@test "setup-work-mac: installs work packages when config exists" {
-  skip "Complex integration test - command builtin cannot be mocked via PATH"
-  create_mock "uname" 0 "Darwin"
-  create_mock "command" 0
-
-  # Create work config
-  touch "_configs/host/work.yaml"
-
-  # Track install.sh calls
-  cat > "./install.sh" << 'EOF'
-#!/usr/bin/env bash
-echo "install.sh called with: $*"
-[[ "$*" == "-s" ]] && echo "Stowing configurations"
-exit 0
-EOF
-  chmod +x "./install.sh"
-
-  run ./setup-work-mac.sh
-  [ "$status" -eq 0 ]
-  [[ "$output" =~ "CONFIG_FILES=\"host/work\"" ]]
-}
-
-@test "setup-work-mac: skips work packages when config missing" {
-  skip "Complex integration test - command builtin cannot be mocked via PATH"
-  create_mock "uname" 0 "Darwin"
-  create_mock "command" 0
-  create_mock "./install.sh" 0
-
-  # No work.yaml file
-
-  run ./setup-work-mac.sh
-  [ "$status" -eq 0 ]
-  [[ "$output" =~ "No work-specific configuration found" ]]
-}
-
-@test "setup-work-mac: applies macOS settings when config exists" {
-  skip "Complex integration test - command builtin cannot be mocked via PATH"
-  create_mock "uname" 0 "Darwin"
-  create_mock "command" 0
-  create_mock "./install.sh" 0
-
-  # Create work macOS config
-  touch "_macos/work.yaml"
-
-  # Create mock macos.sh
-  cat > "./_macos/macos.sh" << 'EOF'
-#!/usr/bin/env bash
-echo "macos.sh called with: $*"
-exit 0
-EOF
-  chmod +x "./_macos/macos.sh"
-
-  run ./setup-work-mac.sh
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"macos.sh called with: work.yaml"* ]]
-}
-
-@test "setup-work-mac: runs stow" {
-  create_mock "uname" 0 "Darwin"
-  create_mock "command" 0
-
-  # Track install.sh calls
-  cat > "./install.sh" << 'EOF'
-#!/usr/bin/env bash
-[[ "$1" == "-s" ]] && echo "Stow executed"
-exit 0
-EOF
-  chmod +x "./install.sh"
-
-  run ./setup-work-mac.sh
-  [ "$status" -eq 0 ]
-  [[ "$output" =~ "Stow executed" ]]
-}
-
-@test "setup-work-mac: installs VSCode extensions when code available" {
-  create_mock "uname" 0 "Darwin"
-  create_mock "command" 0
-  create_mock "code" 0
-
-  # Track install.sh calls
-  cat > "./install.sh" << 'EOF'
-#!/usr/bin/env bash
-[[ "$*" =~ "focus/vscode" ]] && echo "VSCode extensions installed"
-exit 0
-EOF
-  chmod +x "./install.sh"
-
-  run ./setup-work-mac.sh
-  [ "$status" -eq 0 ]
-  [[ "$output" =~ "VSCode extensions installed" ]]
-}
-
-@test "setup-work-mac: skips VSCode when not available" {
-  skip "Complex integration test - command builtin cannot be mocked via PATH"
-  create_mock "uname" 0 "Darwin"
-
-  # Make command return failure for 'code'
-  cat > "$BATS_TEST_TMPDIR/mocks/command" << 'EOF'
-#!/usr/bin/env bash
-[[ "$2" == "code" ]] && exit 1
-exit 0
-EOF
-  chmod +x "$BATS_TEST_TMPDIR/mocks/command"
-
-  create_mock "./install.sh" 0
-
-  run ./setup-work-mac.sh
-  [ "$status" -eq 0 ]
-  [[ "$output" =~ "VSCode not found, skipping extensions" ]]
-}
-
-@test "setup-work-mac: shows next steps" {
-  skip "Complex integration test - command builtin cannot be mocked via PATH"
-  create_mock "uname" 0 "Darwin"
-  create_mock "command" 0
-  create_mock "./install.sh" 0
-
-  run ./setup-work-mac.sh
-  [ "$status" -eq 0 ]
-  [[ "$output" =~ "Setup Complete!" ]]
-  [[ "$output" =~ "Next steps:" ]]
-  [[ "$output" =~ "git config" ]]
+  grep -q 'CONFIG_FILES=shared/shell shared/git shared/search shared/file-tools shared/data-tools shared/network shared/neovim host/common ARGS=-d' "$CALLS_DIR/install.calls"
+  run grep -q 'CONFIG_FILES=host/work' "$CALLS_DIR/install.calls"
+  [ "$status" -ne 0 ]
+  [ ! -f "$CALLS_DIR/macos.calls" ]
 }

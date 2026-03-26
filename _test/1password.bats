@@ -280,9 +280,32 @@ EOF
   [[ "$output" == *"Usage:"* ]]
   [[ "$output" == *"--dry-run"* ]]
   [[ "$output" == *"--unsafe"* ]]
+  [[ "$output" == *"--no-input"* ]]
+  [[ "$output" == *"--yes"* ]]
   [[ "$output" == *"Default behavior:"* ]]
   [[ "$output" == *"public keys only"* ]]
   [[ "$output" == *"Examples:"* ]]
+}
+
+@test "SSH setup: non-interactive mode requires an explicit profile" {
+  cd "$TEST_DIR"
+  cp "${BATS_TEST_DIRNAME}/../setup-ssh-from-1password.sh" .
+
+  run ./setup-ssh-from-1password.sh --dry-run --no-input
+
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"No machine profile specified."* ]]
+  [[ "$output" == *"--profile"* ]]
+}
+
+@test "SSH setup: unsafe non-interactive mode requires --yes" {
+  cd "$TEST_DIR"
+  cp "${BATS_TEST_DIRNAME}/../setup-ssh-from-1password.sh" .
+
+  run ./setup-ssh-from-1password.sh --profile personal --unsafe --no-input
+
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Unsafe mode requires --yes when --no-input is enabled"* ]]
 }
 
 @test "SSH setup: detects missing op command" {

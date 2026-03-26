@@ -59,6 +59,37 @@ teardown() {
   [[ "$output" =~ "Usage:" ]]
 }
 
+@test "macos.sh skips the accessibility prompt when --no-input is set" {
+  if ! command -v yq >/dev/null 2>&1; then
+    skip "yq is required for config-driven macOS tests"
+  fi
+
+  cat > "$TEST_TEMP_DIR/no-input.yaml" <<'EOF'
+system:
+  reduce_transparency: true
+EOF
+
+  mock_command_with_script "defaults" '
+if [[ "$1" == "read" ]]; then
+  echo "0"
+  exit 0
+fi
+
+if [[ "$1" == "write" && "$2" == "com.apple.universalaccess" && "$3" == "reduceTransparency" ]]; then
+  exit 1
+fi
+
+exit 0
+'
+  mock_command "open" 0 ""
+
+  run "$MACOS_SCRIPT" --no-input "$TEST_TEMP_DIR/no-input.yaml"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "Skipping System Settings prompt because --no-input is enabled" ]]
+  assert_mock_not_called "open"
+}
+
 @test "macos.sh runs in show mode by default" {
   # Mock all required commands for show mode
   mock_command_with_script "sw_vers" '
