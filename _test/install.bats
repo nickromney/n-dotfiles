@@ -152,6 +152,7 @@ EOF
   [[ "$output" == *"--list"* ]]
   [[ "$output" == *"$REPO_ROOT/install.sh --list"* ]]
   [[ "$output" == *"--update            Update tools already installed from selected configs; missing tools are skipped"* ]]
+  [[ "$output" == *"BREW_REFRESH=true"* ]]
 }
 
 @test "install.sh rejects list mode with update" {
@@ -168,6 +169,22 @@ $'kubectl\t--version 1.31.0' \
 '[]'
   create_manifest_generator "$manifest_source"
   RESOLVED_CONFIG_FILES=("dummy.yaml")
+
+  generate_manifests
+  [ -f "$MANIFEST_BREWFILE" ]
+  [ -f "$MANIFEST_ARKADE" ]
+  [ -f "$MANIFEST_METADATA" ]
+}
+
+@test "generate_manifests writes manifests even when install is in dry-run mode" {
+  local manifest_source="$BATS_TEST_TMPDIR/manifests"
+  write_manifest_bundle "$manifest_source" \
+'tap "example/tap"' \
+$'kubectl\t--version 1.31.0' \
+'[]'
+  create_manifest_generator "$manifest_source"
+  RESOLVED_CONFIG_FILES=("dummy.yaml")
+  export DRY_RUN="true"
 
   generate_manifests
   [ -f "$MANIFEST_BREWFILE" ]
@@ -381,10 +398,98 @@ esac
   [ "$status" -eq 0 ]
   [[ "$output" == *"Skip: Homebrew taps are managed repositories (1): felixkratz/formulae"* ]]
   [[ "$output" == *"Skip: Homebrew updates disabled by configuration (1): ghostty (cask)"* ]]
+  [[ "$output" == *"Skip: Homebrew metadata refresh skipped; run 'make brew update' separately or set BREW_REFRESH=true"* ]]
   [[ "$output" == *"Info: Updating 1 Homebrew formula..."* ]]
   [[ "$output" == *"Change: Updated 1 Homebrew formula: jq"* ]]
+  run grep -qx -- "update" "$MOCK_CALLS_DIR/brew.calls"
+  [ "$status" -ne 0 ]
+  assert_mock_called "brew" "upgrade jq"
+}
+
+@test "run_brew_update can refresh Homebrew metadata when requested" {
+  export BREW_REFRESH="true"
+  METADATA_LINES=(
+    "jq"$'\t'"brew"$'\t'"package"$'\t'"jq --version"$'\t'"false"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"test"$'\t'""
+  )
+
+  # shellcheck disable=SC2016  # mock script is intentionally single-quoted
+  mock_command_with_script "brew" '
+case "$1 $2" in
+  "list --formula")
+    echo "jq"
+    exit 0
+    ;;
+  "list --cask")
+    exit 0
+    ;;
+esac
+
+case "$1" in
+  outdated)
+    if [[ "$2" == "--formula" ]]; then
+      echo "jq"
+    fi
+    exit 0
+    ;;
+  update)
+    echo "brew update ran"
+    exit 0
+    ;;
+  upgrade)
+    echo "upgraded $2"
+    exit 0
+    ;;
+  *)
+    exit 1
+    ;;
+esac
+'
+
+  run run_brew_update
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Info: Refreshing Homebrew metadata..."* ]]
   assert_mock_called "brew" "update"
   assert_mock_called "brew" "upgrade jq"
+}
+
+@test "write_update_manifest records selected update tools and manager counts" {
+  export UPDATE="true"
+  export UPDATE_MANIFEST_PATH="$BATS_TEST_TMPDIR/update-plan.tsv"
+  export BREW_REFRESH="false"
+  RESOLVED_CONFIG_FILES=("$BATS_TEST_TMPDIR/_configs/host/common.yaml")
+  # shellcheck disable=SC2034  # consumed by write_update_manifest
+  AVAILABLE_MANAGERS=("brew" "manual")
+  METADATA_LINES=(
+    "jq"$'\t'"brew"$'\t'"package"$'\t'"jq --version"$'\t'"false"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"data"$'\t'""
+    "docker-desktop"$'\t'"manual"$'\t'"check"$'\t'"test -d /Applications/Docker.app"$'\t'"true"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"containers"$'\t'""
+  )
+
+  run write_update_manifest
+  [ "$status" -eq 0 ]
+  [ -f "$UPDATE_MANIFEST_PATH" ]
+  run grep -F $'jq\tbrew\tpackage\tyes\tjq --version' "$UPDATE_MANIFEST_PATH"
+  [ "$status" -eq 0 ]
+  run grep -F $'docker-desktop\tmanual\tcheck\tno\ttest -d /Applications/Docker.app' "$UPDATE_MANIFEST_PATH"
+  [ "$status" -eq 0 ]
+  run grep -F $'brew\tpackage\t1\t1' "$UPDATE_MANIFEST_PATH"
+  [ "$status" -eq 0 ]
+}
+
+@test "run_update_phase reports failed phases without suppressing exit status" {
+  export UPDATE="true"
+  # shellcheck disable=SC2034  # consumed by run_update_phase
+  UPDATE_PHASE_INDEX=0
+  # shellcheck disable=SC2034  # consumed by run_update_phase
+  UPDATE_PHASE_TOTAL=1
+
+  failing_update_step() {
+    return 7
+  }
+
+  run run_update_phase "Failing demo phase" failing_update_step
+  [ "$status" -eq 7 ]
+  [[ "$output" == *"Info: Phase 1/1: Failing demo phase"* ]]
+  [[ "$output" == *"Fail: Phase 1/1 failed after"* ]]
 }
 
 @test "run_arkade_batch builds a single batch command from the TSV manifest" {
@@ -463,6 +568,42 @@ EOF
   [ "$status" -eq 0 ]
   [[ "$output" == *"Change: Installed 1 VSCode extension(s)"* ]]
   assert_mock_called "code" "--install-extension esbenp.prettier-vscode"
+}
+
+@test "run_code_extensions uses VSCode updater during update mode" {
+  export HOME="$BATS_TEST_TMPDIR/home"
+  export UPDATE="true"
+  mkdir -p "$HOME"
+  METADATA_LINES=(
+    "prettier-vscode"$'\t'"code"$'\t'"extension"$'\t'"code --list-extensions | grep -q esbenp.prettier-vscode"$'\t'"false"$'\t'"null"$'\t'"esbenp.prettier-vscode"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"test"$'\t'""
+  )
+  cat > "$MOCK_BIN_DIR/code" <<'EOF'
+#!/usr/bin/env bash
+echo "$@" >> "$MOCK_CALLS_DIR/code.calls"
+case "$1" in
+  --list-extensions)
+    echo "esbenp.prettier-vscode"
+    exit 0
+    ;;
+  --update-extensions)
+    echo "updating extensions"
+    exit 0
+    ;;
+  --install-extension)
+    exit 2
+    ;;
+esac
+exit 0
+EOF
+  chmod +x "$MOCK_BIN_DIR/code"
+
+  run run_code_extensions
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Info: Updating VSCode extensions via profile-wide updater for 1 selected installed extension(s)..."* ]]
+  [[ "$output" == *"Info: Updated VSCode extensions"* ]]
+  assert_mock_called "code" "--update-extensions"
+  run grep -q -- "--install-extension" "$MOCK_CALLS_DIR/code.calls"
+  [ "$status" -ne 0 ]
 }
 
 @test "run_brew_fallback_if_needed installs brew packages through apt when Homebrew is unavailable" {

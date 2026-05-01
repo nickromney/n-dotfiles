@@ -49,6 +49,10 @@ paths=(
   "$HOME/.cargo/bin"
   "$HOME/.tfenv/bin"
   "$HOME/.arkade/bin"
+  "$HOME/.lmstudio/bin"
+  "$HOME/.omlx/bin"
+  "$HOME/.ollama/bin"
+  "$HOME/.vmlx/bin"
 )
 
 for path_entry in "${paths[@]}"; do

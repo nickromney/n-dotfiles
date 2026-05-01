@@ -29,6 +29,8 @@ FORCE="${FORCE:-false}"
 UPDATE="${UPDATE:-false}"
 LIST_MODE="${LIST_MODE:-false}"
 CONFIG_FILES_SET_VIA_CLI="${CONFIG_FILES_SET_VIA_CLI:-false}"
+BREW_REFRESH="${BREW_REFRESH:-false}"
+UPDATE_MANIFEST_PATH="${UPDATE_MANIFEST_PATH:-}"
 
 INSTALL_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INSTALL_REPO_ROOT="${INSTALL_REPO_ROOT:-$(cd "$INSTALL_LIB_DIR/.." && pwd)}"
@@ -54,6 +56,8 @@ BREW_UPDATE_FORMULAS=()
 BREW_UPDATE_CASKS=()
 MAS_UPDATE_LINES=()
 BREW_BUNDLE_SKIP_ENV=()
+UPDATE_PHASE_INDEX=0
+UPDATE_PHASE_TOTAL=8
 
 command_exists() {
   type "$1" >/dev/null 2>&1
@@ -108,6 +112,38 @@ debug() {
   if is_verbose; then
     emit_log "Info" "$@"
   fi
+}
+
+run_update_phase() {
+  local name=$1
+  shift
+
+  if [[ "$UPDATE" != "true" ]]; then
+    "$@"
+    return $?
+  fi
+
+  local started_at
+  local elapsed
+  local status
+
+  UPDATE_PHASE_INDEX=$((UPDATE_PHASE_INDEX + 1))
+  started_at=$(timestamp_now)
+  info "Phase ${UPDATE_PHASE_INDEX}/${UPDATE_PHASE_TOTAL}: $name"
+  if "$@"; then
+    status=0
+  else
+    status=$?
+  fi
+  elapsed=$(duration_since "$started_at")
+
+  if [[ $status -eq 0 ]]; then
+    info "Phase ${UPDATE_PHASE_INDEX}/${UPDATE_PHASE_TOTAL} completed in $elapsed: $name"
+  else
+    error "Phase ${UPDATE_PHASE_INDEX}/${UPDATE_PHASE_TOTAL} failed after $elapsed: $name"
+  fi
+
+  return "$status"
 }
 
 timestamp_now() {
@@ -545,7 +581,9 @@ print_available_tool_catalog() {
   local auto_install
   local updatable
 
-  mapfile -t catalog_files < <(collect_catalog_config_files)
+  while IFS= read -r config_file; do
+    [[ -n "$config_file" ]] && catalog_files+=("$config_file")
+  done < <(collect_catalog_config_files)
   if [[ ${#catalog_files[@]} -eq 0 ]]; then
     error "No configuration files available to list"
     return 1
@@ -625,7 +663,7 @@ generate_manifests() {
     info "Generating manifests for ${#RESOLVED_CONFIG_FILES[@]} config file(s)..."
   fi
 
-  run_and_capture "$MANIFEST_GENERATOR" "$MANIFEST_DIR" "${RESOLVED_CONFIG_FILES[@]}"
+  run_and_capture env DRY_RUN=false "$MANIFEST_GENERATOR" "$MANIFEST_DIR" "${RESOLVED_CONFIG_FILES[@]}"
   if [[ $CAPTURE_EXIT_CODE -ne 0 ]]; then
     error "Manifest generation failed"
     return "$CAPTURE_EXIT_CODE"
@@ -1432,18 +1470,22 @@ run_brew_update() {
     return 0
   fi
 
-  info "Refreshing Homebrew metadata..."
-  if is_dry_run; then
-    info "Would execute: brew update"
-  else
-    started_at=$(timestamp_now)
-    run_and_capture brew update
-    if [[ $CAPTURE_EXIT_CODE -ne 0 ]]; then
-      error "brew update failed"
-      return "$CAPTURE_EXIT_CODE"
+  if [[ "$BREW_REFRESH" == "true" ]]; then
+    info "Refreshing Homebrew metadata..."
+    if is_dry_run; then
+      info "Would execute: brew update"
+    else
+      started_at=$(timestamp_now)
+      run_and_capture brew update
+      if [[ $CAPTURE_EXIT_CODE -ne 0 ]]; then
+        error "brew update failed"
+        return "$CAPTURE_EXIT_CODE"
+      fi
+      elapsed=$(duration_since "$started_at")
+      info "Refreshed Homebrew metadata in $elapsed"
     fi
-    elapsed=$(duration_since "$started_at")
-    info "Refreshed Homebrew metadata in $elapsed"
+  else
+    skip "Homebrew metadata refresh skipped; run 'make brew update' separately or set BREW_REFRESH=true"
   fi
 
   if [[ ${#BREW_UPDATE_FORMULAS[@]} -gt 0 ]]; then
@@ -1452,7 +1494,7 @@ run_brew_update() {
       info "Would execute: brew upgrade $(join_by_space "${BREW_UPDATE_FORMULAS[@]}")"
     else
       started_at=$(timestamp_now)
-      run_and_capture brew upgrade "${BREW_UPDATE_FORMULAS[@]}"
+      run_and_capture env HOMEBREW_NO_AUTO_UPDATE=1 brew upgrade "${BREW_UPDATE_FORMULAS[@]}"
       if [[ $CAPTURE_EXIT_CODE -ne 0 ]]; then
         error "brew formula upgrade failed"
         return "$CAPTURE_EXIT_CODE"
@@ -1468,7 +1510,7 @@ run_brew_update() {
       info "Would execute: brew upgrade --cask $(join_by_space "${BREW_UPDATE_CASKS[@]}")"
     else
       started_at=$(timestamp_now)
-      run_and_capture brew upgrade --cask "${BREW_UPDATE_CASKS[@]}"
+      run_and_capture env HOMEBREW_NO_AUTO_UPDATE=1 brew upgrade --cask "${BREW_UPDATE_CASKS[@]}"
       if [[ $CAPTURE_EXIT_CODE -ne 0 ]]; then
         error "brew cask upgrade failed"
         return "$CAPTURE_EXIT_CODE"
@@ -1740,6 +1782,7 @@ run_arkade_batch() {
 run_code_extensions() {
   local vscode_cli
   local -a install_ids=()
+  local -a update_ids=()
   local line
   local tool manager type check_command extension_id install_args
 
@@ -1780,7 +1823,7 @@ run_code_extensions() {
 
     if is_tool_installed_from_fields "$tool" "$manager" "$type" "$check_command" "$extension_id"; then
       if [[ "$UPDATE" == "true" ]]; then
-        install_ids+=("$extension_id"$'\t'"$install_args")
+        update_ids+=("$extension_id")
       else
         skip "$tool (code extension) already installed"
       fi
@@ -1792,6 +1835,27 @@ run_code_extensions() {
       fi
     fi
   done
+
+  if [[ "$UPDATE" == "true" ]]; then
+    if [[ ${#update_ids[@]} -eq 0 ]]; then
+      return 0
+    fi
+
+    info "Updating VSCode extensions via profile-wide updater for ${#update_ids[@]} selected installed extension(s)..."
+    if is_dry_run; then
+      info "Would execute: $vscode_cli --update-extensions"
+      return 0
+    fi
+
+    run_and_capture "$vscode_cli" --update-extensions
+    if [[ $CAPTURE_EXIT_CODE -ne 0 ]]; then
+      error "VSCode extension update failed"
+      return "$CAPTURE_EXIT_CODE"
+    fi
+
+    info "Updated VSCode extensions"
+    return 0
+  fi
 
   if [[ ${#install_ids[@]} -eq 0 ]]; then
     return 0
@@ -1818,11 +1882,7 @@ run_code_extensions() {
     return "$CAPTURE_EXIT_CODE"
   fi
 
-  if [[ "$UPDATE" == "true" ]]; then
-    change "Refreshed ${#install_ids[@]} VSCode extension(s)"
-  else
-    change "Installed ${#install_ids[@]} VSCode extension(s)"
-  fi
+  change "Installed ${#install_ids[@]} VSCode extension(s)"
 }
 
 run_manual_messages() {
@@ -2216,6 +2276,66 @@ refresh_available_managers() {
   fi
 }
 
+write_update_manifest() {
+  if [[ "$UPDATE" != "true" || -z "$UPDATE_MANIFEST_PATH" ]]; then
+    return 0
+  fi
+
+  local manifest_dir
+  manifest_dir=$(dirname "$UPDATE_MANIFEST_PATH")
+  mkdir -p "$manifest_dir"
+
+  {
+    printf '# n-dotfiles update manifest\n'
+    printf '# generated_at\t%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    printf '# brew_refresh\t%s\n' "$BREW_REFRESH"
+    printf '# configs'
+    local config_file
+    for config_file in "${RESOLVED_CONFIG_FILES[@]}"; do
+      printf '\t%s' "$config_file"
+    done
+    printf '\n'
+    printf '# available_managers'
+    local manager
+    for manager in "${AVAILABLE_MANAGERS[@]}"; do
+      printf '\t%s' "$manager"
+    done
+    printf '\n'
+    printf '\n'
+    printf 'tool\tmanager\ttype\tupdatable\tcheck_command\n'
+    local line
+    local tool type check_command skip_update
+    for line in "${METADATA_LINES[@]:-}"; do
+      IFS=$'\t' read -r tool manager type check_command skip_update _ _ _ _ _ _ _ <<<"$line"
+      if [[ -z "$tool" || -z "$manager" ]]; then
+        continue
+      fi
+      if [[ "$skip_update" == "true" || "$manager" == "manual" ]]; then
+        printf '%s\t%s\t%s\tno\t%s\n' "$tool" "$manager" "$type" "$check_command"
+      else
+        printf '%s\t%s\t%s\tyes\t%s\n' "$tool" "$manager" "$type" "$check_command"
+      fi
+    done
+    printf '\n'
+    printf 'manager\ttype\ttotal\tupdatable\n'
+    printf '%s\n' "${METADATA_LINES[@]:-}" | awk -F '\t' '
+      NF >= 5 && $1 != "" && $2 != "" {
+        total[$2 "\t" $3]++
+        if ($5 != "true" && $2 != "manual") {
+          updatable[$2 "\t" $3]++
+        }
+      }
+      END {
+        for (key in total) {
+          print key "\t" total[key] "\t" (key in updatable ? updatable[key] : 0)
+        }
+      }
+    ' | sort
+  } >"$UPDATE_MANIFEST_PATH"
+
+  info "Wrote update manifest: $UPDATE_MANIFEST_PATH"
+}
+
 clear_zsh_cache_if_needed() {
   if [[ "$UPDATE" != "true" || "$DRY_RUN" == "true" ]]; then
     return 0
@@ -2280,14 +2400,15 @@ main() {
     fi
 
     if [[ "$UPDATE" == "true" ]]; then
-      run_brew_update || return 1
-      run_mas_update || return 1
-      run_brew_fallback_if_needed || return 1
-      run_direct_metadata_tools || return 1
-      run_arkade_batch || return 1
-      run_code_extensions || return 1
-      run_manual_messages || return 1
-      run_mise_update || return 1
+      write_update_manifest || return 1
+      run_update_phase "Homebrew formulae and casks" run_brew_update || return 1
+      run_update_phase "Mac App Store apps" run_mas_update || return 1
+      run_update_phase "APT fallback packages" run_brew_fallback_if_needed || return 1
+      run_update_phase "Direct package managers" run_direct_metadata_tools || return 1
+      run_update_phase "Arkade tools" run_arkade_batch || return 1
+      run_update_phase "VSCode extensions" run_code_extensions || return 1
+      run_update_phase "Manual tool reminders" run_manual_messages || return 1
+      run_update_phase "mise runtimes" run_mise_update || return 1
       clear_zsh_cache_if_needed
     else
       run_brew_install || return 1

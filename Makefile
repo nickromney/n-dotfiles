@@ -65,6 +65,7 @@ help: ## Show this help message
 	@echo ""
 	@echo "$(BLUE)Environment variables:$(NC)"
 	@echo "  VSCODE_CLI                VSCode binary to use (default: code)"
+	@echo "  BREW_REFRESH=true         Refresh Homebrew metadata during config-driven updates"
 	@echo ""
 	@echo "$(BLUE)Profile Examples:$(NC)"
 	@echo "  make install             Safe base install (common profile by default)"
@@ -208,7 +209,7 @@ FOCUS_AREAS = ai app-store cloud container-base containers hardware-home infrast
 # Dynamic pattern rule for focus areas
 .PHONY: $(FOCUS_AREAS)
 $(FOCUS_AREAS):
-	@CONFIG_FILES="focus/$@" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s) $(if $(filter install-dry-run,$(MAKECMDGOALS)),-d)
+	@UPDATE_MANIFEST_PATH=".generated/update-plans/focus-$@.tsv" CONFIG_FILES="focus/$@" ./install.sh $(if $(filter update,$(MAKECMDGOALS)),-u) $(if $(filter stow,$(MAKECMDGOALS)),-s) $(if $(filter install-dry-run,$(MAKECMDGOALS)),-d) $(if $(filter true,$(DRY_RUN)),-d)
 
 # Help text for focus areas
 ai: ## AI/ML tools <install|stow|update>
@@ -368,7 +369,7 @@ else ifneq ($(filter mas,$(MAKECMDGOALS)),)
 	fi
 else
 	@echo "$(BLUE)Updating $(SELECTED_PROFILE) profile...$(NC)"
-	@CONFIG_FILES="$(PROFILE_CONFIGS)" ./install.sh -u
+	@CONFIG_FILES="$(PROFILE_CONFIGS)" UPDATE_MANIFEST_PATH=".generated/update-plans/$(SELECTED_PROFILE).tsv" ./install.sh -u $(if $(filter true,$(DRY_RUN)),-d)
 endif
 
 ##@ macOS Configuration

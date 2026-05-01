@@ -25,6 +25,10 @@ Options:
   -u, --update            Update tools already installed from selected configs; missing tools are skipped
   -v, --verbose           Show raw package-manager output
 
+Environment:
+  BREW_REFRESH=true       Run brew update before config-driven Homebrew upgrades
+  UPDATE_MANIFEST_PATH    Write an update manifest to this path during --update
+
 Examples:
   $0
   $0 -c focus/vscode

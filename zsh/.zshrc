@@ -185,6 +185,10 @@ declare -a early_paths=(
   "$HOME/.tfenv/bin"
   "$HOME/slicer-mac"
   "$HOME/.arkade/bin"
+  "$HOME/.lmstudio/bin"
+  "$HOME/.omlx/bin"
+  "$HOME/.ollama/bin"
+  "$HOME/.vmlx/bin"
 )
 
 for path_entry in "${early_paths[@]}"; do
@@ -311,6 +315,10 @@ declare -a paths=(
   "$HOME/.tfenv/bin"
   "$HOME/slicer-mac"
   "$HOME/.arkade/bin"
+  "$HOME/.lmstudio/bin"
+  "$HOME/.omlx/bin"
+  "$HOME/.ollama/bin"
+  "$HOME/.vmlx/bin"
 )
 
 for path_entry in "${paths[@]}"; do
