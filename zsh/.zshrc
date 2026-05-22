@@ -185,6 +185,10 @@ declare -a early_paths=(
   "$HOME/.tfenv/bin"
   "$HOME/slicer-mac"
   "$HOME/.arkade/bin"
+  "$HOME/.lmstudio/bin"
+  "$HOME/.omlx/bin"
+  "$HOME/.ollama/bin"
+  "$HOME/.vmlx/bin"
 )
 
 for path_entry in "${early_paths[@]}"; do
@@ -311,6 +315,10 @@ declare -a paths=(
   "$HOME/.tfenv/bin"
   "$HOME/slicer-mac"
   "$HOME/.arkade/bin"
+  "$HOME/.lmstudio/bin"
+  "$HOME/.omlx/bin"
+  "$HOME/.ollama/bin"
+  "$HOME/.vmlx/bin"
 )
 
 for path_entry in "${paths[@]}"; do
@@ -483,7 +491,7 @@ fi
 # 17. mise (polyglot runtime manager)
 #
 if command -v mise >/dev/null 2>&1; then
-  _cache_init mise "mise activate zsh"
+  eval "$(/opt/homebrew/bin/mise activate zsh)"
 fi
 
 #

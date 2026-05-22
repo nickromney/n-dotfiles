@@ -173,6 +173,13 @@ teardown() {
   [[ "$output" =~ "-u" ]]
 }
 
+@test "make update passes dry-run flag when requested" {
+  DRY_RUN=true run make update
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "-u" ]]
+  [[ "$output" =~ "-d" ]]
+}
+
 @test "PROFILE environment variable overrides selection" {
   PROFILE=work run make install
   [ "$status" -eq 0 ]

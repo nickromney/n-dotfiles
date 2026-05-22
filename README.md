@@ -93,6 +93,11 @@ make cargo update          # Update Rust toolchain and cargo binaries
 make uv update             # Update uv package manager (use ./install.sh -u for uv tools)
 make mas update            # Update Mac App Store applications
 
+# Config-driven updates (target only tools declared in selected configs)
+make update                # Update personal profile tools; writes .generated/update-plans/personal.tsv
+DRY_RUN=true make update   # Preview the same update path without changing tools
+BREW_REFRESH=true make update # Also run brew update before targeted Homebrew upgrades
+
 > **Note:** Mac App Store installs require you to sign in via the App Store app and click "Get" once per app before `make app-store install` (or any `mas install`) can succeed.
 
 > **Note:** Some tools (`arkade`, `slicer`) install their binaries to `/usr/local/bin` which is
@@ -109,6 +114,7 @@ make mas update            # Update Mac App Store applications
 - Installs only tools that match available package managers
 - Uses GNU Stow for configuration management
 - Force mode (`-f`) to handle existing configurations
+- Update manifests under `.generated/update-plans/` show selected tools, managers, and updatable counts
 
 ## Usage
 

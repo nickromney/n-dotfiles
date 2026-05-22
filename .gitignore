@@ -20,11 +20,15 @@ Thumbs.db
 *.bak
 *.cache
 _audit/
+.generated/update-plans/
 
 # Local reference repos
 _reference/
 
+# JSM-managed skills are installed locally and may include paid content.
+# Already tracked skills remain tracked; new local installs stay out of git.
 skills/.SKILLS_MANAGED_BY_JSM
+skills/*
 
 # Local compiled tools
 bin/browser-tools
