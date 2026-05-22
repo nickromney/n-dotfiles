@@ -491,7 +491,7 @@ fi
 # 17. mise (polyglot runtime manager)
 #
 if command -v mise >/dev/null 2>&1; then
-  _cache_init mise "mise activate zsh"
+  eval "$(/opt/homebrew/bin/mise activate zsh)"
 fi
 
 #
