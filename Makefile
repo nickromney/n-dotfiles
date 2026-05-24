@@ -447,6 +447,10 @@ test-macos: ## Run macOS configuration tests only
 audit-installed: ## Audit installed brew/npm packages vs YAML-managed entries
 	@./scripts/audit-installed.sh
 
+.PHONY: audit-local-git
+audit-local-git: ## Fast local-only audit for repos under ~/Developer/personal
+	@./scripts/audit-local-git-repos.sh --execute
+
 .PHONY: audit
 audit: ## Alias for audit-installed
 	@./scripts/audit.sh
