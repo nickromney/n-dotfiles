@@ -14,6 +14,19 @@ changes and branch drift from `origin/main`. The GitHub repo list is cached for
 ./scripts/audit-github-repos.sh --execute --exclude-file ~/.config/repo-audit/excludes.txt
 ```
 
+## audit-local-git-repos
+
+Fast local-only audit for directories that should each be Git repositories. It
+scans one level under the target root, reports non-git directories, and compares
+each repo's current branch with `origin/main` without network access by default.
+
+```bash
+./scripts/audit-local-git-repos.sh --dry-run
+./scripts/audit-local-git-repos.sh --execute
+./scripts/audit-local-git-repos.sh --execute --all
+./scripts/audit-local-git-repos.sh --execute --root ~/Developer/work --format tsv
+```
+
 ## list-non-owner-repos
 
 Review local repos whose `origin` remote is not owned by an expected GitHub
@@ -48,4 +61,18 @@ Makefile target:
 
 ```bash
 make browser-tools
+```
+
+## audit-installed
+
+Compare globally installed Homebrew and npm artifacts with the repo-managed YAML
+definitions, then write timestamped inventory files under `_audit/installed/`.
+The `package-manager-surface.tsv` output traces each brew formula/cask and npm
+global package to its owning package manager, repo-managed status, and direct
+npm dependency footprint where package metadata is local.
+
+```bash
+./scripts/audit-installed.sh
+./scripts/audit-installed.sh --out-base /tmp/n-dotfiles-audit
+make audit-installed
 ```
