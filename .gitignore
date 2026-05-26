@@ -29,6 +29,16 @@ _reference/
 # Already tracked skills remain tracked; new local installs stay out of git.
 skills/.SKILLS_MANAGED_BY_JSM
 skills/*
+claude/.claude/skills/.SKILLS_MANAGED_BY_JSM
+claude/.claude/skills/*
+!claude/.claude/skills/.gitkeep
+codex/.codex/skills/.SKILLS_MANAGED_BY_JSM
+codex/.codex/skills/*
+!codex/.codex/skills/.gitkeep
+codex/.codex/rules/*
+!codex/.codex/rules/.gitkeep
+agents/.agents/skills/*
+!agents/.agents/skills/.gitkeep
 
 # Local compiled tools
 bin/browser-tools
