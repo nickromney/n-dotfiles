@@ -610,3 +610,7 @@ if command -v aerospace >/dev/null 2>&1; then
     aerospace-snap &>/dev/null &!
   fi
 fi
+
+# BEGIN superterm
+eval "$(superterm shell-init zsh)"
+# END superterm

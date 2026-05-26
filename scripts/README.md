@@ -27,6 +27,20 @@ each repo's current branch with `origin/main` without network access by default.
 ./scripts/audit-local-git-repos.sh --execute --root ~/Developer/work --format tsv
 ```
 
+## audit-harness-guides
+
+Read-only audit for repo-local harness guide files such as `AGENTS.md`,
+`CLAUDE.md`, and `GEMINI.md`. It scans one level under the target root and
+reports guide size metrics, repo-local skill references, and likely review
+states.
+
+```bash
+./scripts/audit-harness-guides.sh --dry-run
+./scripts/audit-harness-guides.sh --execute
+./scripts/audit-harness-guides.sh --execute --all
+./scripts/audit-harness-guides.sh --execute --root ~/Developer/work --format tsv
+```
+
 ## list-non-owner-repos
 
 Review local repos whose `origin` remote is not owned by an expected GitHub

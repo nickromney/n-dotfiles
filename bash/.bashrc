@@ -105,3 +105,7 @@ if [ -f "$HOME/.bashrc.local" ]; then
   # shellcheck disable=SC1091
   source "$HOME/.bashrc.local"
 fi
+
+# BEGIN superterm
+eval "$(superterm shell-init bash)"
+# END superterm

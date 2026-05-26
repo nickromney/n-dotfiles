@@ -33,6 +33,7 @@ assert_help_contract() {
     "scripts/generate-brewfile.sh"
     "scripts/generate-install-manifests.sh"
     "scripts/audit.sh"
+    "scripts/audit-harness-guides.sh"
     "scripts/audit-installed.sh"
     "scripts/build-browser-tools.sh"
     "slicer-mac/check-slicer-version.sh"
