@@ -5,7 +5,8 @@ Configuration for [Claude Code](https://claude.com/claude-code), Anthropic's off
 ## Files
 
 - `settings.json` - Claude Code settings including status line configuration
-- `skills/` - symlink to shared skills (see `skills/`)
+- `skills/` - Claude Code skill view, used as the target for `~/.claude/skills`
+- `rules/` - Claude Code rules view, used as the target for `~/.claude/rules`
 
 ## Installation
 
@@ -43,4 +44,8 @@ Example: `~/Developer/project git main ✓2 !1 ?3 󰎙 20.0.0 [14:23]`
 
 When stowed, this creates:
 
-- `~/.claude/settings.json` → symlink to dotfiles
+- `~/.claude/skills` → `claude/.claude/skills`
+- `~/.claude/rules` → `claude/.claude/rules`
+
+`~/.claude/settings.json` is currently ignored by this Stow package because
+the live Claude directory also contains runtime state.

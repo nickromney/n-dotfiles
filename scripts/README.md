@@ -41,6 +41,23 @@ states.
 ./scripts/audit-harness-guides.sh --execute --root ~/Developer/work --format tsv
 ```
 
+## sync-private-harness-assets
+
+Link selected private harness assets from the optional sibling
+`../harnesses-private` repo into the global, Claude, and Codex harness views.
+The script links individual skill directories only, skips cleanly when the
+private repo is absent, and discovers provider-grouped catalogs such as
+`mattpocock/skills/tdd`, `joshpigford/skills/example`, and
+`agents/skills/use-platform`. If a provider has `load/*.txt` manifests, only
+listed skills are exposed. Supported manifests are `load/global.txt`,
+`load/claude.txt`, and `load/codex.txt`.
+
+```bash
+./scripts/sync-private-harness-assets.sh --dry-run
+./scripts/sync-private-harness-assets.sh --execute
+./scripts/sync-private-harness-assets.sh --dry-run --private-root ../harnesses-private
+```
+
 ## list-non-owner-repos
 
 Review local repos whose `origin` remote is not owned by an expected GitHub

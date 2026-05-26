@@ -35,6 +35,7 @@ assert_help_contract() {
     "scripts/audit.sh"
     "scripts/audit-harness-guides.sh"
     "scripts/audit-installed.sh"
+    "scripts/sync-private-harness-assets.sh"
     "scripts/build-browser-tools.sh"
     "slicer-mac/check-slicer-version.sh"
     "slicer-mac/install-slicer-mac.sh"
