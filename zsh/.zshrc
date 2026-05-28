@@ -404,6 +404,15 @@ if command -v nvim >/dev/null 2>&1; then
   alias n="nvim"
 fi
 
+# Codex app helper
+if ! command -v capp >/dev/null 2>&1 && command -v codex >/dev/null 2>&1 && codex app --help >/dev/null 2>&1; then
+  capp() {
+    local target_dir
+    target_dir="$(git rev-parse --show-toplevel 2>/dev/null)" || target_dir="$PWD"
+    codex app "$target_dir"
+  }
+fi
+
 # FZF combination aliases - only if required tools are available
 if $FZF_AVAILABLE; then
   alias f="fzf"
