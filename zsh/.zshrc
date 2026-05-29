@@ -367,14 +367,24 @@ function y() {
   tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
   command yazi "$@" --cwd-file="$tmp"
   IFS= read -r -d '' cwd <"$tmp"
-  [ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd" || true
-  rm -f -- "$tmp"
+  [ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd"
+  command rm -f -- "$tmp"
 }
+
+# Keep Yazi's directory in sync when exiting a shell opened from inside Yazi.
+if [[ -n "$YAZI_ID" ]] && command -v ya >/dev/null 2>&1; then
+  autoload -Uz add-zsh-hook
+  _yazi_cd() {
+    ya emit cd "$PWD"
+  }
+  add-zsh-hook zshexit _yazi_cd
+fi
 
 # Git aliases
 if command -v git >/dev/null 2>&1; then
   alias gs='git status'
   alias gc='git commit'
+  alias gmain='git switch main && git pull'
 
   # Only add lazygit alias if it's available
   if command -v lazygit >/dev/null 2>&1; then

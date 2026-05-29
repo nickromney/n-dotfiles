@@ -16,6 +16,46 @@ tools:
     documentation_url: "https://github.com/eza-community/eza"
     category: file-tools
 
+  ffmpeg:
+    manager: brew
+    type: package
+    check_command: command -v ffmpeg
+    description: "Audio and video toolkit used by Yazi for video thumbnails"
+    documentation_url: "https://www.ffmpeg.org/"
+    category: file-tools
+
+  sevenzip:
+    manager: brew
+    type: package
+    check_command: command -v 7zz
+    description: "Archive extraction and preview support for Yazi"
+    documentation_url: "https://www.7-zip.org/"
+    category: file-tools
+
+  poppler:
+    manager: brew
+    type: package
+    check_command: command -v pdftoppm
+    description: "PDF preview support for Yazi"
+    documentation_url: "https://poppler.freedesktop.org/"
+    category: file-tools
+
+  resvg:
+    manager: brew
+    type: package
+    check_command: command -v resvg
+    description: "SVG preview support for Yazi"
+    documentation_url: "https://github.com/linebender/resvg"
+    category: file-tools
+
+  imagemagick:
+    manager: brew
+    type: package
+    check_command: command -v magick
+    description: "Image conversion support for Yazi font, HEIC, and JPEG XL previews"
+    documentation_url: "https://imagemagick.org/"
+    category: file-tools
+
   ranger:
     manager: brew
     type: package
