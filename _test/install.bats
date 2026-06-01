@@ -296,6 +296,32 @@ esac
   [ "$status" -eq 0 ]
 }
 
+@test "run_brew_install applies Homebrew tap trust policy to brew bundle" {
+  MANIFEST_BREWFILE="$BATS_TEST_TMPDIR/Brewfile"
+  cat > "$MANIFEST_BREWFILE" <<'EOF'
+brew "jq"
+EOF
+  METADATA_LINES=("jq"$'\t'"brew"$'\t'"package"$'\t'"jq --version"$'\t'"false"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"test"$'\t'"")
+
+  # shellcheck disable=SC2016  # mock script is intentionally single-quoted
+  mock_command_with_script "brew" '
+case "$1" in
+  bundle)
+    printf "%s\t%s\n" "${HOMEBREW_NO_REQUIRE_TAP_TRUST:-}" "${HOMEBREW_NO_ENV_HINTS:-}" > "'"$BATS_TEST_TMPDIR"'/brew-policy-env.txt"
+    exit 0
+    ;;
+  *)
+    exit 1
+    ;;
+esac
+'
+
+  run run_brew_install
+  [ "$status" -eq 0 ]
+  run awk -F '\t' '$1 == "1" && $2 == "1" { found = 1 } END { exit found ? 0 : 1 }' "$BATS_TEST_TMPDIR/brew-policy-env.txt"
+  [ "$status" -eq 0 ]
+}
+
 @test "run_brew_install skips formulae already satisfied by install checks" {
   MANIFEST_BREWFILE="$BATS_TEST_TMPDIR/Brewfile"
   cat > "$MANIFEST_BREWFILE" <<'EOF'

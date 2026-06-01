@@ -1335,9 +1335,9 @@ run_brew_install() {
   fi
 
   if [[ ${#BREW_BUNDLE_SKIP_ENV[@]} -gt 0 ]]; then
-    run_and_capture env "${BREW_BUNDLE_SKIP_ENV[@]}" brew bundle --file="$MANIFEST_BREWFILE"
+    run_and_capture env "${BREW_BUNDLE_SKIP_ENV[@]}" "$BREW_WITH_POLICY" bundle --file="$MANIFEST_BREWFILE"
   else
-    run_and_capture brew bundle --file="$MANIFEST_BREWFILE"
+    run_brew_with_policy bundle --file="$MANIFEST_BREWFILE"
   fi
   if [[ $CAPTURE_EXIT_CODE -ne 0 ]]; then
     error "Homebrew bundle failed"

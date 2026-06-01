@@ -45,6 +45,7 @@ BREWFILE_WORK := Brewfile.work
 BREWFILE_COMMON := Brewfile.common
 BREWFILE_ALL := Brewfile.all
 BREWFILE_POSIX := Brewfile.posix
+BREW_WITH_POLICY := ./scripts/brew-with-policy.sh
 BREW_UPDATE := ./scripts/brew-update.sh
 
 define profile-brewfile
@@ -252,7 +253,7 @@ brewfile-install: ## Install from the selected profile Brewfile (preferred)
 		$(MAKE) brewfile-generate; \
 	fi
 	@echo "$(BLUE)Installing via brew bundle: $(SELECTED_BREWFILE)$(NC)"
-	@brew bundle --file="$(SELECTED_BREWFILE)"
+	@$(BREW_WITH_POLICY) bundle --file="$(SELECTED_BREWFILE)"
 
 .PHONY: runtime-install
 runtime-install: ## Install runtimes declared in local mise.toml (project-level)

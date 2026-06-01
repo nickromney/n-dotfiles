@@ -127,6 +127,29 @@ teardown() {
   [ "$status" -eq 0 ]
 }
 
+@test "make brewfile-install applies Homebrew tap trust policy to brew bundle" {
+  cat > "$TEST_DIR/mocks/brew" <<'EOF'
+#!/usr/bin/env bash
+if [[ "$1" == "bundle" ]]; then
+  shift
+  printf "%s\n" "$@" > "${TEST_DIR}/brew-bundle-args.txt"
+  printf "%s\t%s\n" "${HOMEBREW_NO_REQUIRE_TAP_TRUST:-}" "${HOMEBREW_NO_ENV_HINTS:-}" > "${TEST_DIR}/brew-policy-env.txt"
+  echo "brew bundle called"
+  exit 0
+fi
+echo "brew $*"
+exit 0
+EOF
+  chmod +x "$TEST_DIR/mocks/brew"
+
+  run make brewfile-install
+  [ "$status" -eq 0 ]
+  run grep -qx -- '--file=Brewfile.common' "$TEST_DIR/brew-bundle-args.txt"
+  [ "$status" -eq 0 ]
+  run awk -F '\t' '$1 == "1" && $2 == "1" { found = 1 } END { exit found ? 0 : 1 }' "$TEST_DIR/brew-policy-env.txt"
+  [ "$status" -eq 0 ]
+}
+
 @test "make personal without action triggers install" {
   run make personal
   [ "$status" -eq 0 ]
