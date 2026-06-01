@@ -45,7 +45,7 @@ BREWFILE_WORK := Brewfile.work
 BREWFILE_COMMON := Brewfile.common
 BREWFILE_ALL := Brewfile.all
 BREWFILE_POSIX := Brewfile.posix
-BREW_WITH_POLICY := ./scripts/brew-with-policy.sh
+BREW_UPDATE := ./scripts/brew-update.sh
 
 define profile-brewfile
 $(if $(filter work,$1),$(BREWFILE_WORK),$(if $(filter common,$1),$(BREWFILE_COMMON),$(if $(filter all,$1),$(BREWFILE_ALL),$(BREWFILE_PERSONAL))))
@@ -112,15 +112,7 @@ personal-setup: ## Full personal Mac setup (packages + macOS settings)
 update-all: ## Update all installed tools (brew, apt, cargo, uv, mas, mise)
 	@echo "$(YELLOW)Updating all package managers and tools...$(NC)"
 	@echo ""
-	@if command -v brew >/dev/null 2>&1; then \
-		echo "$(BLUE)Updating Homebrew...$(NC)"; \
-		$(BREW_WITH_POLICY) update || echo "$(YELLOW)  Warning: brew update failed$(NC)"; \
-		$(BREW_WITH_POLICY) upgrade || echo "$(YELLOW)  Warning: brew upgrade failed$(NC)"; \
-		$(BREW_WITH_POLICY) upgrade --cask || echo "$(YELLOW)  Warning: brew cask upgrade failed (some casks may have issues)$(NC)"; \
-		$(BREW_WITH_POLICY) cleanup || echo "$(YELLOW)  Warning: brew cleanup failed$(NC)"; \
-		echo "$(GREEN)✓ Homebrew update completed$(NC)"; \
-		echo ""; \
-	fi
+	@$(BREW_UPDATE) update-all
 	@if command -v apt-get >/dev/null 2>&1 && [ "$$(id -u)" -eq 0 ]; then \
 		echo "$(BLUE)Updating apt packages...$(NC)"; \
 		apt-get update && apt-get upgrade -y && apt-get autoremove -y; \
@@ -321,17 +313,7 @@ update: ## Update packages for the selected profile/focus/package-manager (only 
 ifneq ($(filter $(FOCUS_AREAS),$(MAKECMDGOALS)),)
 	@: # No-op if a focus target was specified
 else ifneq ($(filter brew,$(MAKECMDGOALS)),)
-	@if command -v brew >/dev/null 2>&1; then \
-		echo "$(BLUE)Updating Homebrew packages and casks...$(NC)"; \
-		$(BREW_WITH_POLICY) update || echo "$(YELLOW)  Warning: brew update failed$(NC)"; \
-		$(BREW_WITH_POLICY) upgrade || echo "$(YELLOW)  Warning: brew upgrade failed$(NC)"; \
-		$(BREW_WITH_POLICY) upgrade --cask || echo "$(YELLOW)  Warning: brew upgrade --cask failed$(NC)"; \
-		$(BREW_WITH_POLICY) cleanup || echo "$(YELLOW)  Warning: brew cleanup failed$(NC)"; \
-		echo "$(GREEN)✓ Homebrew updated$(NC)"; \
-	else \
-		echo "$(RED)Homebrew is not installed$(NC)"; \
-		exit 1; \
-	fi
+	@$(BREW_UPDATE) package-manager
 else ifneq ($(filter cargo,$(MAKECMDGOALS)),)
 	@if command -v rustup >/dev/null 2>&1; then \
 		echo "$(BLUE)Updating Rust toolchain...$(NC)"; \

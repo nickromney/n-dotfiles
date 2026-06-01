@@ -70,10 +70,12 @@ echo "generate-install-manifests called for $out_dir with: $*"
 EOF
   chmod +x scripts/generate-install-manifests.sh
 
-  if [ -f "$REPO_ROOT/scripts/brew-with-policy.sh" ]; then
-    cp "$REPO_ROOT/scripts/brew-with-policy.sh" scripts/
-    chmod +x scripts/brew-with-policy.sh
-  fi
+  for script in brew-with-policy.sh brew-update.sh; do
+    if [ -f "$REPO_ROOT/scripts/$script" ]; then
+      cp "$REPO_ROOT/scripts/$script" scripts/
+      chmod +x "scripts/$script"
+    fi
+  done
 
   # Copy the Makefile
   cp "$REPO_ROOT/Makefile" .
@@ -222,6 +224,38 @@ EOF
   run awk -F '\t' '$1 == "upgrade" && $2 == "1" && $3 == "1" { found = 1 } END { exit found ? 0 : 1 }' "$TEST_DIR/brew-policy-env.txt"
   [ "$status" -eq 0 ]
   run awk -F '\t' '$1 == "cleanup" && $2 == "1" && $3 == "1" { found = 1 } END { exit found ? 0 : 1 }' "$TEST_DIR/brew-policy-env.txt"
+  [ "$status" -eq 0 ]
+}
+
+@test "make Homebrew update targets use the shared Homebrew update module" {
+  cat > scripts/brew-update.sh <<'EOF'
+#!/usr/bin/env bash
+printf "%s\n" "$1" >> "$TEST_DIR/brew-update-calls.txt"
+echo "shared Homebrew update module: $1"
+exit 0
+EOF
+  chmod +x scripts/brew-update.sh
+
+  for command in rustup uv mas mise; do
+    cat > "$TEST_DIR/mocks/$command" <<'EOF'
+#!/usr/bin/env bash
+echo "$0 $*"
+exit 0
+EOF
+    chmod +x "$TEST_DIR/mocks/$command"
+  done
+
+  run make brew update
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "shared Homebrew update module: package-manager" ]]
+
+  run make update-all
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "shared Homebrew update module: update-all" ]]
+
+  run grep -qx "package-manager" "$TEST_DIR/brew-update-calls.txt"
+  [ "$status" -eq 0 ]
+  run grep -qx "update-all" "$TEST_DIR/brew-update-calls.txt"
   [ "$status" -eq 0 ]
 }
 
