@@ -11,6 +11,11 @@ The adapter keeps Homebrew's current default of allowing non-official taps
 unless the caller has explicitly configured tap trust, and hides repeated tap
 trust migration hints during update paths.
 
+Policy:
+  HOMEBREW_NO_ENV_HINTS=1 is applied to reduce repeated policy hints.
+  HOMEBREW_NO_REQUIRE_TAP_TRUST=1 is applied unless the caller has already set
+  HOMEBREW_REQUIRE_TAP_TRUST or HOMEBREW_NO_REQUIRE_TAP_TRUST.
+
 Examples:
   scripts/brew-with-policy.sh update
   scripts/brew-with-policy.sh upgrade --cask
