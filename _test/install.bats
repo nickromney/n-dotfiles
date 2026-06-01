@@ -410,6 +410,25 @@ esac
   [ "$status" -eq 0 ]
 }
 
+@test "run_brew_update reports tap and skip_update entries without querying Homebrew" {
+  METADATA_LINES=(
+    "felixkratz/formulae"$'\t'"brew"$'\t'"tap"$'\t'"brew tap | grep -q felixkratz/formulae"$'\t'"false"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"test"$'\t'""
+    "jq"$'\t'"brew"$'\t'"package"$'\t'"jq --version"$'\t'"true"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"test"$'\t'""
+    "ghostty"$'\t'"brew"$'\t'"cask"$'\t'"ghostty --version"$'\t'"true"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"test"$'\t'""
+  )
+
+  mock_command_with_script "brew" '
+echo "unexpected brew call: $*" >&2
+exit 1
+'
+
+  run run_brew_update
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Skip: Homebrew taps are managed repositories (1): felixkratz/formulae"* ]]
+  [[ "$output" == *"Skip: Homebrew updates disabled by configuration (2): jq (package), ghostty (cask)"* ]]
+  assert_mock_not_called "brew"
+}
+
 @test "run_brew_update can refresh Homebrew metadata when requested" {
   export BREW_REFRESH="true"
   METADATA_LINES=(

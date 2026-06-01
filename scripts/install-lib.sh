@@ -1347,7 +1347,7 @@ run_brew_install() {
   change "Homebrew bundle applied"
 }
 
-queue_brew_updates() {
+prepare_brew_update_plan() {
   BREW_UPDATE_FORMULAS=()
   BREW_UPDATE_CASKS=()
   MAS_UPDATE_LINES=()
@@ -1358,6 +1358,8 @@ queue_brew_updates() {
   local outdated_casks=""
   local line
   local tool manager type check_command skip_update extension_id
+  local -a candidate_formulas=()
+  local -a candidate_casks=()
   local -a managed_taps=()
   local -a update_disabled=()
   local -a up_to_date_formulas=()
@@ -1365,15 +1367,6 @@ queue_brew_updates() {
   local -a not_installed_formulas=()
   local -a not_installed_casks=()
   local -a unsupported_types=()
-
-  if ! command_exists "brew"; then
-    return 0
-  fi
-
-  installed_formulas=$(brew list --formula 2>/dev/null || true)
-  installed_casks=$(brew list --cask 2>/dev/null || true)
-  outdated_formulas=$(brew outdated --formula 2>/dev/null || true)
-  outdated_casks=$(brew outdated --cask 2>/dev/null || true)
 
   for line in "${METADATA_LINES[@]:-}"; do
     IFS=$'\t' read -r tool manager type check_command skip_update _ extension_id _ _ _ _ _ <<<"$line"
@@ -1399,32 +1392,50 @@ queue_brew_updates() {
 
     case "$type" in
     package)
-      if echo "$installed_formulas" | grep -qx "$tool"; then
-        if echo "$outdated_formulas" | grep -qx "$tool"; then
-          BREW_UPDATE_FORMULAS+=("$tool")
-        else
-          up_to_date_formulas+=("$tool")
-        fi
-      else
-        not_installed_formulas+=("$tool")
-      fi
+      candidate_formulas+=("$tool")
       ;;
     cask)
-      if echo "$installed_casks" | grep -qx "$tool"; then
-        if echo "$outdated_casks" | grep -qx "$tool"; then
-          BREW_UPDATE_CASKS+=("$tool")
-        else
-          up_to_date_casks+=("$tool")
-        fi
-      else
-        not_installed_casks+=("$tool")
-      fi
+      candidate_casks+=("$tool")
       ;;
     *)
       unsupported_types+=("$tool ($type)")
       ;;
     esac
   done
+
+  if command_exists "brew"; then
+    if [[ ${#candidate_formulas[@]} -gt 0 ]]; then
+      installed_formulas=$(brew list --formula 2>/dev/null || true)
+      outdated_formulas=$(brew outdated --formula 2>/dev/null || true)
+      for tool in "${candidate_formulas[@]}"; do
+        if echo "$installed_formulas" | grep -qx "$tool"; then
+          if echo "$outdated_formulas" | grep -qx "$tool"; then
+            BREW_UPDATE_FORMULAS+=("$tool")
+          else
+            up_to_date_formulas+=("$tool")
+          fi
+        else
+          not_installed_formulas+=("$tool")
+        fi
+      done
+    fi
+
+    if [[ ${#candidate_casks[@]} -gt 0 ]]; then
+      installed_casks=$(brew list --cask 2>/dev/null || true)
+      outdated_casks=$(brew outdated --cask 2>/dev/null || true)
+      for tool in "${candidate_casks[@]}"; do
+        if echo "$installed_casks" | grep -qx "$tool"; then
+          if echo "$outdated_casks" | grep -qx "$tool"; then
+            BREW_UPDATE_CASKS+=("$tool")
+          else
+            up_to_date_casks+=("$tool")
+          fi
+        else
+          not_installed_casks+=("$tool")
+        fi
+      done
+    fi
+  fi
 
   if [[ ${#up_to_date_formulas[@]} -gt 0 ]]; then
     skip "$(counted_noun "${#up_to_date_formulas[@]}" "Homebrew formula" "Homebrew formulae") already up to date"
@@ -1461,69 +1472,95 @@ queue_brew_updates() {
   fi
 }
 
-run_brew_update() {
-  if ! command_exists "brew"; then
+brew_update_plan_has_upgrades() {
+  [[ ${#BREW_UPDATE_FORMULAS[@]} -gt 0 || ${#BREW_UPDATE_CASKS[@]} -gt 0 ]]
+}
+
+run_brew_metadata_refresh_for_update_plan() {
+  if [[ "$BREW_REFRESH" != "true" ]]; then
+    skip "Homebrew metadata refresh skipped; run 'make brew update' separately or set BREW_REFRESH=true"
     return 0
   fi
 
   local started_at
   local elapsed
 
-  queue_brew_updates
-
-  if [[ ${#BREW_UPDATE_FORMULAS[@]} -eq 0 && ${#BREW_UPDATE_CASKS[@]} -eq 0 ]]; then
+  info "Refreshing Homebrew metadata..."
+  if is_dry_run; then
+    info "Would execute: brew update"
     return 0
   fi
 
-  if [[ "$BREW_REFRESH" == "true" ]]; then
-    info "Refreshing Homebrew metadata..."
-    if is_dry_run; then
-      info "Would execute: brew update"
-    else
-      started_at=$(timestamp_now)
-      run_brew_with_policy update
-      if [[ $CAPTURE_EXIT_CODE -ne 0 ]]; then
-        error "brew update failed"
-        return "$CAPTURE_EXIT_CODE"
-      fi
-      elapsed=$(duration_since "$started_at")
-      info "Refreshed Homebrew metadata in $elapsed"
-    fi
-  else
-    skip "Homebrew metadata refresh skipped; run 'make brew update' separately or set BREW_REFRESH=true"
+  started_at=$(timestamp_now)
+  run_brew_with_policy update
+  if [[ $CAPTURE_EXIT_CODE -ne 0 ]]; then
+    error "brew update failed"
+    return "$CAPTURE_EXIT_CODE"
+  fi
+  elapsed=$(duration_since "$started_at")
+  info "Refreshed Homebrew metadata in $elapsed"
+}
+
+run_brew_upgrade_batch_for_update_plan() {
+  local update_kind=$1
+  shift
+
+  local -a tools=("$@")
+  if [[ ${#tools[@]} -eq 0 ]]; then
+    return 0
   fi
 
-  if [[ ${#BREW_UPDATE_FORMULAS[@]} -gt 0 ]]; then
-    info "Updating $(counted_noun "${#BREW_UPDATE_FORMULAS[@]}" "Homebrew formula" "Homebrew formulae")..."
-    if is_dry_run; then
-      info "Would execute: brew upgrade $(join_by_space "${BREW_UPDATE_FORMULAS[@]}")"
-    else
-      started_at=$(timestamp_now)
-      run_and_capture env HOMEBREW_NO_AUTO_UPDATE=1 "$BREW_WITH_POLICY" upgrade "${BREW_UPDATE_FORMULAS[@]}"
-      if [[ $CAPTURE_EXIT_CODE -ne 0 ]]; then
-        error "brew formula upgrade failed"
-        return "$CAPTURE_EXIT_CODE"
-      fi
-      elapsed=$(duration_since "$started_at")
-      change "Updated $(counted_noun "${#BREW_UPDATE_FORMULAS[@]}" "Homebrew formula" "Homebrew formulae"): $(format_compact_list 10 "${BREW_UPDATE_FORMULAS[@]}") in $elapsed"
-    fi
+  local -a brew_args=("upgrade")
+  local noun_singular
+  local noun_plural
+  local failure_message
+
+  case "$update_kind" in
+  formula)
+    noun_singular="Homebrew formula"
+    noun_plural="Homebrew formulae"
+    failure_message="formula upgrade"
+    ;;
+  cask)
+    brew_args+=("--cask")
+    noun_singular="Homebrew cask"
+    noun_plural="Homebrew casks"
+    failure_message="cask upgrade"
+    ;;
+  *)
+    error "unsupported Homebrew update plan kind: $update_kind"
+    return 1
+    ;;
+  esac
+
+  info "Updating $(counted_noun "${#tools[@]}" "$noun_singular" "$noun_plural")..."
+  if is_dry_run; then
+    info "Would execute: brew $(join_by_space "${brew_args[@]}" "${tools[@]}")"
+    return 0
   fi
 
-  if [[ ${#BREW_UPDATE_CASKS[@]} -gt 0 ]]; then
-    info "Updating $(counted_noun "${#BREW_UPDATE_CASKS[@]}" "Homebrew cask")..."
-    if is_dry_run; then
-      info "Would execute: brew upgrade --cask $(join_by_space "${BREW_UPDATE_CASKS[@]}")"
-    else
-      started_at=$(timestamp_now)
-      run_and_capture env HOMEBREW_NO_AUTO_UPDATE=1 "$BREW_WITH_POLICY" upgrade --cask "${BREW_UPDATE_CASKS[@]}"
-      if [[ $CAPTURE_EXIT_CODE -ne 0 ]]; then
-        error "brew cask upgrade failed"
-        return "$CAPTURE_EXIT_CODE"
-      fi
-      elapsed=$(duration_since "$started_at")
-      change "Updated $(counted_noun "${#BREW_UPDATE_CASKS[@]}" "Homebrew cask"): $(format_compact_list 10 "${BREW_UPDATE_CASKS[@]}") in $elapsed"
-    fi
+  local started_at
+  local elapsed
+  started_at=$(timestamp_now)
+  run_and_capture env HOMEBREW_NO_AUTO_UPDATE=1 "$BREW_WITH_POLICY" "${brew_args[@]}" "${tools[@]}"
+  if [[ $CAPTURE_EXIT_CODE -ne 0 ]]; then
+    error "brew $failure_message failed"
+    return "$CAPTURE_EXIT_CODE"
   fi
+  elapsed=$(duration_since "$started_at")
+  change "Updated $(counted_noun "${#tools[@]}" "$noun_singular" "$noun_plural"): $(format_compact_list 10 "${tools[@]}") in $elapsed"
+}
+
+run_brew_update() {
+  prepare_brew_update_plan
+
+  if ! brew_update_plan_has_upgrades; then
+    return 0
+  fi
+
+  run_brew_metadata_refresh_for_update_plan || return 1
+  run_brew_upgrade_batch_for_update_plan "formula" "${BREW_UPDATE_FORMULAS[@]}" || return 1
+  run_brew_upgrade_batch_for_update_plan "cask" "${BREW_UPDATE_CASKS[@]}" || return 1
 }
 
 run_mas_update() {
