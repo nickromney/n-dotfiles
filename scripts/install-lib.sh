@@ -35,6 +35,7 @@ UPDATE_MANIFEST_PATH="${UPDATE_MANIFEST_PATH:-}"
 INSTALL_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INSTALL_REPO_ROOT="${INSTALL_REPO_ROOT:-$(cd "$INSTALL_LIB_DIR/.." && pwd)}"
 MANIFEST_GENERATOR="${MANIFEST_GENERATOR:-$INSTALL_REPO_ROOT/scripts/generate-install-manifests.sh}"
+BREW_WITH_POLICY="${BREW_WITH_POLICY:-$INSTALL_REPO_ROOT/scripts/brew-with-policy.sh}"
 
 RESOLVED_CONFIG_FILES=()
 MANIFEST_DIR=""
@@ -229,6 +230,10 @@ run_eval_and_capture() {
 
   print_captured_output "$CAPTURE_OUTPUT" "$CAPTURE_EXIT_CODE"
   return 0
+}
+
+run_brew_with_policy() {
+  run_and_capture "$BREW_WITH_POLICY" "$@"
 }
 
 can_use_apt() {
@@ -1476,7 +1481,7 @@ run_brew_update() {
       info "Would execute: brew update"
     else
       started_at=$(timestamp_now)
-      run_and_capture brew update
+      run_brew_with_policy update
       if [[ $CAPTURE_EXIT_CODE -ne 0 ]]; then
         error "brew update failed"
         return "$CAPTURE_EXIT_CODE"
@@ -1494,7 +1499,7 @@ run_brew_update() {
       info "Would execute: brew upgrade $(join_by_space "${BREW_UPDATE_FORMULAS[@]}")"
     else
       started_at=$(timestamp_now)
-      run_and_capture env HOMEBREW_NO_AUTO_UPDATE=1 brew upgrade "${BREW_UPDATE_FORMULAS[@]}"
+      run_and_capture env HOMEBREW_NO_AUTO_UPDATE=1 "$BREW_WITH_POLICY" upgrade "${BREW_UPDATE_FORMULAS[@]}"
       if [[ $CAPTURE_EXIT_CODE -ne 0 ]]; then
         error "brew formula upgrade failed"
         return "$CAPTURE_EXIT_CODE"
@@ -1510,7 +1515,7 @@ run_brew_update() {
       info "Would execute: brew upgrade --cask $(join_by_space "${BREW_UPDATE_CASKS[@]}")"
     else
       started_at=$(timestamp_now)
-      run_and_capture env HOMEBREW_NO_AUTO_UPDATE=1 brew upgrade --cask "${BREW_UPDATE_CASKS[@]}"
+      run_and_capture env HOMEBREW_NO_AUTO_UPDATE=1 "$BREW_WITH_POLICY" upgrade --cask "${BREW_UPDATE_CASKS[@]}"
       if [[ $CAPTURE_EXIT_CODE -ne 0 ]]; then
         error "brew cask upgrade failed"
         return "$CAPTURE_EXIT_CODE"

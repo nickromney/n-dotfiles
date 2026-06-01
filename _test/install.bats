@@ -358,6 +358,8 @@ esac
 
   # shellcheck disable=SC2016  # mock script is intentionally single-quoted
   mock_command_with_script "brew" '
+printf "%s\t%s\t%s\t%s\n" "$*" "${HOMEBREW_NO_REQUIRE_TAP_TRUST:-}" "${HOMEBREW_NO_ENV_HINTS:-}" "${HOMEBREW_NO_AUTO_UPDATE:-}" >> "'"$BATS_TEST_TMPDIR"'/brew-policy-env.txt"
+
 case "$1 $2" in
   "list --formula")
     echo "jq"
@@ -404,6 +406,8 @@ esac
   run grep -qx -- "update" "$MOCK_CALLS_DIR/brew.calls"
   [ "$status" -ne 0 ]
   assert_mock_called "brew" "upgrade jq"
+  run awk -F '\t' '$1 == "upgrade jq" && $2 == "1" && $3 == "1" && $4 == "1" { found = 1 } END { exit found ? 0 : 1 }' "$BATS_TEST_TMPDIR/brew-policy-env.txt"
+  [ "$status" -eq 0 ]
 }
 
 @test "run_brew_update can refresh Homebrew metadata when requested" {
@@ -414,6 +418,8 @@ esac
 
   # shellcheck disable=SC2016  # mock script is intentionally single-quoted
   mock_command_with_script "brew" '
+printf "%s\t%s\t%s\t%s\n" "$*" "${HOMEBREW_NO_REQUIRE_TAP_TRUST:-}" "${HOMEBREW_NO_ENV_HINTS:-}" "${HOMEBREW_NO_AUTO_UPDATE:-}" >> "'"$BATS_TEST_TMPDIR"'/brew-policy-env.txt"
+
 case "$1 $2" in
   "list --formula")
     echo "jq"
@@ -450,6 +456,10 @@ esac
   [[ "$output" == *"Info: Refreshing Homebrew metadata..."* ]]
   assert_mock_called "brew" "update"
   assert_mock_called "brew" "upgrade jq"
+  run awk -F '\t' '$1 == "update" && $2 == "1" && $3 == "1" { found = 1 } END { exit found ? 0 : 1 }' "$BATS_TEST_TMPDIR/brew-policy-env.txt"
+  [ "$status" -eq 0 ]
+  run awk -F '\t' '$1 == "upgrade jq" && $2 == "1" && $3 == "1" && $4 == "1" { found = 1 } END { exit found ? 0 : 1 }' "$BATS_TEST_TMPDIR/brew-policy-env.txt"
+  [ "$status" -eq 0 ]
 }
 
 @test "write_update_manifest records selected update tools and manager counts" {

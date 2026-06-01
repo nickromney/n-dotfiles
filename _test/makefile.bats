@@ -70,6 +70,11 @@ echo "generate-install-manifests called for $out_dir with: $*"
 EOF
   chmod +x scripts/generate-install-manifests.sh
 
+  if [ -f "$REPO_ROOT/scripts/brew-with-policy.sh" ]; then
+    cp "$REPO_ROOT/scripts/brew-with-policy.sh" scripts/
+    chmod +x scripts/brew-with-policy.sh
+  fi
+
   # Copy the Makefile
   cp "$REPO_ROOT/Makefile" .
 }
@@ -171,6 +176,53 @@ teardown() {
   [[ "$output" =~ "host/personal" ]]
   [[ "$output" =~ "focus/cloud" ]]
   [[ "$output" =~ "-u" ]]
+}
+
+@test "make brew update applies Homebrew tap trust policy to brew commands" {
+  cat > "$TEST_DIR/mocks/brew" <<'EOF'
+#!/usr/bin/env bash
+printf "%s\t%s\t%s\n" "$*" "${HOMEBREW_NO_REQUIRE_TAP_TRUST:-}" "${HOMEBREW_NO_ENV_HINTS:-}" >> "$TEST_DIR/brew-policy-env.txt"
+echo "brew $*"
+exit 0
+EOF
+  chmod +x "$TEST_DIR/mocks/brew"
+
+  run make brew update
+  [ "$status" -eq 0 ]
+  run awk -F '\t' '$1 == "update" && $2 == "1" && $3 == "1" { found = 1 } END { exit found ? 0 : 1 }' "$TEST_DIR/brew-policy-env.txt"
+  [ "$status" -eq 0 ]
+  run awk -F '\t' '$1 == "upgrade" && $2 == "1" && $3 == "1" { found = 1 } END { exit found ? 0 : 1 }' "$TEST_DIR/brew-policy-env.txt"
+  [ "$status" -eq 0 ]
+  run awk -F '\t' '$1 == "upgrade --cask" && $2 == "1" && $3 == "1" { found = 1 } END { exit found ? 0 : 1 }' "$TEST_DIR/brew-policy-env.txt"
+  [ "$status" -eq 0 ]
+}
+
+@test "make update-all applies Homebrew tap trust policy to brew commands" {
+  cat > "$TEST_DIR/mocks/brew" <<'EOF'
+#!/usr/bin/env bash
+printf "%s\t%s\t%s\n" "$*" "${HOMEBREW_NO_REQUIRE_TAP_TRUST:-}" "${HOMEBREW_NO_ENV_HINTS:-}" >> "$TEST_DIR/brew-policy-env.txt"
+echo "brew $*"
+exit 0
+EOF
+  chmod +x "$TEST_DIR/mocks/brew"
+
+  for command in rustup uv mas mise; do
+    cat > "$TEST_DIR/mocks/$command" <<'EOF'
+#!/usr/bin/env bash
+echo "$0 $*"
+exit 0
+EOF
+    chmod +x "$TEST_DIR/mocks/$command"
+  done
+
+  run make update-all
+  [ "$status" -eq 0 ]
+  run awk -F '\t' '$1 == "update" && $2 == "1" && $3 == "1" { found = 1 } END { exit found ? 0 : 1 }' "$TEST_DIR/brew-policy-env.txt"
+  [ "$status" -eq 0 ]
+  run awk -F '\t' '$1 == "upgrade" && $2 == "1" && $3 == "1" { found = 1 } END { exit found ? 0 : 1 }' "$TEST_DIR/brew-policy-env.txt"
+  [ "$status" -eq 0 ]
+  run awk -F '\t' '$1 == "cleanup" && $2 == "1" && $3 == "1" { found = 1 } END { exit found ? 0 : 1 }' "$TEST_DIR/brew-policy-env.txt"
+  [ "$status" -eq 0 ]
 }
 
 @test "make update passes dry-run flag when requested" {
