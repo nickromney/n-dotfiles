@@ -116,6 +116,12 @@ BREW_REFRESH=true make update # Also run brew update before targeted Homebrew up
 - Force mode (`-f`) to handle existing configurations
 - Update manifests under `.generated/update-plans/` show selected tools, managers, and updatable counts
 
+## Architecture Maps
+
+The durable architecture maps live in [docs/architecture/index.html](docs/architecture/index.html).
+They document how the Makefile, Configuration Bundles, Install Manifests, package manager adapters,
+macOS profiles, Stow trees, Harness Assets, and Validation Harness fit together.
+
 ## Usage
 
 ### Package Installation and Configuration

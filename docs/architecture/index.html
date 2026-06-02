@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Architecture maps - n-dotfiles</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-stone-50 text-slate-900 font-sans">
+    <main class="mx-auto max-w-5xl px-6 py-10 space-y-8">
+      <header class="space-y-3">
+        <p class="text-xs uppercase tracking-wider text-slate-500">Architecture maps</p>
+        <h1 class="text-3xl font-semibold">n-dotfiles: how the codebase works</h1>
+        <p class="max-w-3xl text-sm text-slate-600">
+          These documents map the main modules, interfaces, seams, and adapters in the repository.
+          They use the same architecture vocabulary as the review reports: module, interface,
+          implementation, depth, seam, adapter, leverage, and locality.
+        </p>
+      </header>
+
+      <section class="grid gap-4 md:grid-cols-2">
+        <a class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm hover:border-slate-400" href="makefile-entrypoints.html">
+          <p class="text-xs uppercase tracking-wider text-slate-500">Entrypoints</p>
+          <h2 class="mt-2 text-lg font-semibold">Makefile profile and action router</h2>
+          <p class="mt-2 text-sm text-slate-600">How profile, action, and focus targets select the next module.</p>
+        </a>
+
+        <a class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm hover:border-slate-400" href="config-manifest-pipeline.html">
+          <p class="text-xs uppercase tracking-wider text-slate-500">Catalog</p>
+          <h2 class="mt-2 text-lg font-semibold">Configuration bundles to install manifests</h2>
+          <p class="mt-2 text-sm text-slate-600">How YAML bundles become Brewfile, arkade.tsv, and metadata.json.</p>
+        </a>
+
+        <a class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm hover:border-slate-400" href="install-update-execution.html">
+          <p class="text-xs uppercase tracking-wider text-slate-500">Execution</p>
+          <h2 class="mt-2 text-lg font-semibold">Install and update engine</h2>
+          <p class="mt-2 text-sm text-slate-600">How install.sh executes manager-specific adapters from one manifest interface.</p>
+        </a>
+
+        <a class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm hover:border-slate-400" href="homebrew-update-tap-trust.html">
+          <p class="text-xs uppercase tracking-wider text-slate-500">Homebrew</p>
+          <h2 class="mt-2 text-lg font-semibold">Homebrew update and tap trust path</h2>
+          <p class="mt-2 text-sm text-slate-600">The promoted review report for Homebrew policy and update depth.</p>
+        </a>
+
+        <a class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm hover:border-slate-400" href="macos-stow-setup.html">
+          <p class="text-xs uppercase tracking-wider text-slate-500">Host state</p>
+          <h2 class="mt-2 text-lg font-semibold">macOS, setup, and Stow flows</h2>
+          <p class="mt-2 text-sm text-slate-600">How machine state is applied without mixing package and dotfile interfaces.</p>
+        </a>
+
+        <a class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm hover:border-slate-400" href="test-validation-harness.html">
+          <p class="text-xs uppercase tracking-wider text-slate-500">Validation</p>
+          <h2 class="mt-2 text-lg font-semibold">Test and validation harness</h2>
+          <p class="mt-2 text-sm text-slate-600">How Bats, mocks, shellcheck, and smoke tests protect public interfaces.</p>
+        </a>
+
+        <a class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm hover:border-slate-400" href="harness-asset-flow.html">
+          <p class="text-xs uppercase tracking-wider text-slate-500">Harness assets</p>
+          <h2 class="mt-2 text-lg font-semibold">Harness asset source and discovery routes</h2>
+          <p class="mt-2 text-sm text-slate-600">How public, private, and harness-specific assets are exposed without duplication.</p>
+        </a>
+      </section>
+    </main>
+  </body>
+</html>
