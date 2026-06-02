@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>macOS Stow setup - n-dotfiles</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+    </script>
+  </head>
+  <body class="bg-stone-50 text-slate-900 font-sans">
+    <main class="mx-auto max-w-6xl px-6 py-10 space-y-8">
+      <header class="space-y-4">
+        <a class="text-sm text-slate-500 hover:text-slate-900" href="index.html">Architecture maps</a>
+        <div>
+          <p class="text-xs uppercase tracking-wider text-slate-500">Host state modules</p>
+          <h1 class="text-3xl font-semibold">macOS, setup, and Stow flows</h1>
+          <p class="mt-2 max-w-3xl text-sm text-slate-600">
+            Package installation, macOS defaults, and dotfile symlinks are separate modules with separate interfaces.
+            The setup scripts compose them for fresh or profile-specific machines.
+          </p>
+        </div>
+      </header>
+
+      <section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 class="text-xl font-semibold">Fresh host flow</h2>
+        <pre class="mermaid mt-4">
+flowchart LR
+  Bootstrap[bootstrap.sh] --> Essential[Homebrew, yq, stow, mise]
+  Essential --> MakeInstall[make install]
+  MakeInstall --> Stow[make personal stow]
+  Stow --> Macos[make personal configure]
+  Macos --> Optional[VSCode, Neovim, SSH setup]
+        </pre>
+      </section>
+
+      <section class="grid gap-4 lg:grid-cols-3">
+        <article class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 class="text-lg font-semibold">macOS Profile</h2>
+          <p class="mt-2 text-sm text-slate-600">The interface is <code>_macos/macos.sh [profile.yaml]</code>. YAML sections map to defaults domains and restart actions.</p>
+          <p class="mt-3 font-mono text-sm">_macos/personal.yaml</p>
+          <p class="font-mono text-sm">_macos/work.yaml</p>
+        </article>
+
+        <article class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 class="text-lg font-semibold">Stow Tree</h2>
+          <p class="mt-2 text-sm text-slate-600">Directories such as <code>zsh/</code>, <code>git/</code>, <code>nvim/</code>, and <code>kitty/</code> are modules whose implementation is GNU Stow layout.</p>
+          <p class="mt-3 font-mono text-sm">run_stow in scripts/install-lib.sh</p>
+        </article>
+
+        <article class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 class="text-lg font-semibold">Setup Flow</h2>
+          <p class="mt-2 text-sm text-slate-600"><code>setup-personal-mac.sh</code> and work setup scripts compose bootstrap, packages, macOS settings, Stow, VSCode, and SSH setup with skip flags.</p>
+        </article>
+      </section>
+
+      <section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 class="text-xl font-semibold">Why this stays separate</h2>
+        <div class="mt-4 grid gap-4 md:grid-cols-3">
+          <p class="text-sm text-slate-600"><strong>Locality.</strong> macOS defaults logic lives in <code>_macos/</code>, not in package configs.</p>
+          <p class="text-sm text-slate-600"><strong>Leverage.</strong> Stow can run with <code>CONFIG_FILES="" ./install.sh -s</code> when packages are irrelevant.</p>
+          <p class="text-sm text-slate-600"><strong>Seam.</strong> Setup scripts compose modules but do not own their implementation.</p>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

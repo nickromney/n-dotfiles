@@ -296,6 +296,32 @@ esac
   [ "$status" -eq 0 ]
 }
 
+@test "run_brew_install applies Homebrew tap trust policy to brew bundle" {
+  MANIFEST_BREWFILE="$BATS_TEST_TMPDIR/Brewfile"
+  cat > "$MANIFEST_BREWFILE" <<'EOF'
+brew "jq"
+EOF
+  METADATA_LINES=("jq"$'\t'"brew"$'\t'"package"$'\t'"jq --version"$'\t'"false"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"test"$'\t'"")
+
+  # shellcheck disable=SC2016  # mock script is intentionally single-quoted
+  mock_command_with_script "brew" '
+case "$1" in
+  bundle)
+    printf "%s\t%s\n" "${HOMEBREW_NO_REQUIRE_TAP_TRUST:-}" "${HOMEBREW_NO_ENV_HINTS:-}" > "'"$BATS_TEST_TMPDIR"'/brew-policy-env.txt"
+    exit 0
+    ;;
+  *)
+    exit 1
+    ;;
+esac
+'
+
+  run run_brew_install
+  [ "$status" -eq 0 ]
+  run awk -F '\t' '$1 == "1" && $2 == "1" { found = 1 } END { exit found ? 0 : 1 }' "$BATS_TEST_TMPDIR/brew-policy-env.txt"
+  [ "$status" -eq 0 ]
+}
+
 @test "run_brew_install skips formulae already satisfied by install checks" {
   MANIFEST_BREWFILE="$BATS_TEST_TMPDIR/Brewfile"
   cat > "$MANIFEST_BREWFILE" <<'EOF'
@@ -358,6 +384,8 @@ esac
 
   # shellcheck disable=SC2016  # mock script is intentionally single-quoted
   mock_command_with_script "brew" '
+printf "%s\t%s\t%s\t%s\n" "$*" "${HOMEBREW_NO_REQUIRE_TAP_TRUST:-}" "${HOMEBREW_NO_ENV_HINTS:-}" "${HOMEBREW_NO_AUTO_UPDATE:-}" >> "'"$BATS_TEST_TMPDIR"'/brew-policy-env.txt"
+
 case "$1 $2" in
   "list --formula")
     echo "jq"
@@ -404,6 +432,27 @@ esac
   run grep -qx -- "update" "$MOCK_CALLS_DIR/brew.calls"
   [ "$status" -ne 0 ]
   assert_mock_called "brew" "upgrade jq"
+  run awk -F '\t' '$1 == "upgrade jq" && $2 == "1" && $3 == "1" && $4 == "1" { found = 1 } END { exit found ? 0 : 1 }' "$BATS_TEST_TMPDIR/brew-policy-env.txt"
+  [ "$status" -eq 0 ]
+}
+
+@test "run_brew_update reports tap and skip_update entries without querying Homebrew" {
+  METADATA_LINES=(
+    "felixkratz/formulae"$'\t'"brew"$'\t'"tap"$'\t'"brew tap | grep -q felixkratz/formulae"$'\t'"false"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"test"$'\t'""
+    "jq"$'\t'"brew"$'\t'"package"$'\t'"jq --version"$'\t'"true"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"test"$'\t'""
+    "ghostty"$'\t'"brew"$'\t'"cask"$'\t'"ghostty --version"$'\t'"true"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"null"$'\t'"test"$'\t'""
+  )
+
+  mock_command_with_script "brew" '
+echo "unexpected brew call: $*" >&2
+exit 1
+'
+
+  run run_brew_update
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Skip: Homebrew taps are managed repositories (1): felixkratz/formulae"* ]]
+  [[ "$output" == *"Skip: Homebrew updates disabled by configuration (2): jq (package), ghostty (cask)"* ]]
+  assert_mock_not_called "brew"
 }
 
 @test "run_brew_update can refresh Homebrew metadata when requested" {
@@ -414,6 +463,8 @@ esac
 
   # shellcheck disable=SC2016  # mock script is intentionally single-quoted
   mock_command_with_script "brew" '
+printf "%s\t%s\t%s\t%s\n" "$*" "${HOMEBREW_NO_REQUIRE_TAP_TRUST:-}" "${HOMEBREW_NO_ENV_HINTS:-}" "${HOMEBREW_NO_AUTO_UPDATE:-}" >> "'"$BATS_TEST_TMPDIR"'/brew-policy-env.txt"
+
 case "$1 $2" in
   "list --formula")
     echo "jq"
@@ -450,6 +501,10 @@ esac
   [[ "$output" == *"Info: Refreshing Homebrew metadata..."* ]]
   assert_mock_called "brew" "update"
   assert_mock_called "brew" "upgrade jq"
+  run awk -F '\t' '$1 == "update" && $2 == "1" && $3 == "1" { found = 1 } END { exit found ? 0 : 1 }' "$BATS_TEST_TMPDIR/brew-policy-env.txt"
+  [ "$status" -eq 0 ]
+  run awk -F '\t' '$1 == "upgrade jq" && $2 == "1" && $3 == "1" && $4 == "1" { found = 1 } END { exit found ? 0 : 1 }' "$BATS_TEST_TMPDIR/brew-policy-env.txt"
+  [ "$status" -eq 0 ]
 }
 
 @test "write_update_manifest records selected update tools and manager counts" {

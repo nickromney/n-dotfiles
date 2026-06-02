@@ -48,6 +48,18 @@ assert_help_contract() {
   done
 }
 
+@test "brew-with-policy: help documents tap trust policy without requiring Homebrew" {
+  run "$REPO_ROOT/scripts/brew-with-policy.sh" --help
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Usage:"* ]]
+  [[ "$output" == *"Homebrew tap trust policy"* ]]
+  [[ "$output" == *"HOMEBREW_REQUIRE_TAP_TRUST"* ]]
+  [[ "$output" == *"HOMEBREW_NO_REQUIRE_TAP_TRUST"* ]]
+  [[ "$output" == *"HOMEBREW_NO_ENV_HINTS"* ]]
+  [[ "$output" == *"Examples:"* ]]
+}
+
 @test "generate-brewfile: dry-run previews output without writing the file" {
   if ! command -v yq >/dev/null 2>&1; then
     skip "yq is required for manifest generation tests"

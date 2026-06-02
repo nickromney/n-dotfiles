@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Makefile entrypoints - n-dotfiles</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+    </script>
+    <style>
+      .deep { background: linear-gradient(135deg, #0f172a, #1e293b); color: white; }
+      .seam { border-top: 2px dashed #64748b; }
+    </style>
+  </head>
+  <body class="bg-stone-50 text-slate-900 font-sans">
+    <main class="mx-auto max-w-6xl px-6 py-10 space-y-8">
+      <header class="space-y-4">
+        <a class="text-sm text-slate-500 hover:text-slate-900" href="index.html">Architecture maps</a>
+        <div>
+          <p class="text-xs uppercase tracking-wider text-slate-500">Entrypoint module</p>
+          <h1 class="text-3xl font-semibold">Makefile profile and action router</h1>
+          <p class="mt-2 max-w-3xl text-sm text-slate-600">
+            The Makefile is the first seam most callers cross. Its interface is profile plus action,
+            while its implementation selects config bundles and delegates to deeper shell modules.
+          </p>
+        </div>
+      </header>
+
+      <section class="grid gap-4 lg:grid-cols-2">
+        <article class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <div class="flex items-center gap-2">
+            <h2 class="mr-auto text-xl font-semibold">Current call graph</h2>
+            <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs text-emerald-800">Deep</span>
+          </div>
+          <pre class="mermaid mt-4">
+flowchart TB
+  User[caller: make work update] --> Router[Makefile router]
+  Router --> Profile[profile-configs]
+  Router --> Action[action target]
+  Action --> Install[install.sh]
+  Action --> Macos[_macos/macos.sh]
+  Action --> Stow[install.sh -s]
+  Action --> BrewUpdate[scripts/brew-update.sh]
+          </pre>
+        </article>
+
+        <article class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 class="text-xl font-semibold">Interface and implementation</h2>
+          <div class="mt-4 grid gap-3">
+            <div class="rounded-md border border-slate-200 p-3">
+              <p class="text-xs uppercase tracking-wider text-slate-500">Interface</p>
+              <p class="mt-1 text-sm">Profiles: <code>common</code>, <code>personal</code>, <code>work</code>, <code>all</code>. Actions: <code>install</code>, <code>update</code>, <code>stow</code>, <code>configure</code>. Focus areas are direct config adapters.</p>
+            </div>
+            <div class="rounded-md border border-slate-200 p-3">
+              <p class="text-xs uppercase tracking-wider text-slate-500">Implementation</p>
+              <p class="mt-1 text-sm">Make variables compute <code>PROFILE_CONFIGS</code>, <code>SELECTED_BREWFILE</code>, and <code>SELECTED_MACOS_PROFILE</code>, then shell modules perform the actual work.</p>
+            </div>
+            <div class="deep rounded-md p-3">
+              <p class="text-xs uppercase tracking-wider text-slate-300">Depth</p>
+              <p class="mt-1 text-sm">Callers learn one command shape; package-manager and host-state details stay behind seams.</p>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 class="text-xl font-semibold">Important seams</h2>
+        <div class="mt-4 grid gap-4 md:grid-cols-3">
+          <div>
+            <p class="font-mono text-sm">PROFILE_CONFIGS</p>
+            <p class="mt-1 text-sm text-slate-600">Maps profile words to ordered Configuration Bundles. Shared bundles come first.</p>
+          </div>
+          <div>
+            <p class="font-mono text-sm">FOCUS_AREAS</p>
+            <p class="mt-1 text-sm text-slate-600">Bypasses profile selection and sends one bundle directly to <code>install.sh</code>.</p>
+          </div>
+          <div>
+            <p class="font-mono text-sm">BREW_UPDATE</p>
+            <p class="mt-1 text-sm text-slate-600">Adapter for full Homebrew update contexts, keeping the Makefile from owning the sequence.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

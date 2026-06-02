@@ -100,6 +100,46 @@ _Avoid_: installer, migration, reset
 A long `AGENTS.md`, `CLAUDE.md`, or equivalent **Project Harness Guide** that may contain copied guidance better kept in repo-local skills or docs.
 _Avoid_: legacy Claude guide, canonical guide
 
+**Configuration Bundle**:
+A YAML file under `_configs/` that declares tools, managers, install checks, dependencies, update behavior, and documentation for one slice of the machine setup.
+_Avoid_: package list, config file
+
+**Profile**:
+A named selection of **Configuration Bundles** for a host shape such as `common`, `personal`, `work`, or `all`.
+_Avoid_: environment, machine type
+
+**Focus Area**:
+A single-purpose **Configuration Bundle** exposed as a Makefile target, such as `vscode`, `kubernetes`, or `typescript`.
+_Avoid_: package group, category target
+
+**Install Manifest**:
+A generated file consumed by the install and update engine, such as `Brewfile`, `arkade.tsv`, or `metadata.json`.
+_Avoid_: generated config, output file
+
+**Update Manifest**:
+A generated TSV record of selected update work, including tools, managers, types, and updatable counts.
+_Avoid_: log, report
+
+**Package Manager Adapter**:
+A module that translates **Install Manifest** rows into manager-specific commands for Homebrew, arkade, apt, cargo, uv, mas, mise, VSCode, or manual reporting.
+_Avoid_: installer, plugin
+
+**Stow Tree**:
+A GNU Stow directory such as `zsh/`, `git/`, or `nvim/` whose contents map into `$HOME`.
+_Avoid_: dotfile folder, package
+
+**macOS Profile**:
+A YAML file under `_macos/` that declares macOS defaults and host UI settings for a **Profile**.
+_Avoid_: defaults file, system settings blob
+
+**Setup Flow**:
+A high-level script that composes bootstrap, package installation, macOS settings, Stow, VSCode, and SSH setup without owning those modules' implementations.
+_Avoid_: mega installer, script pile
+
+**Validation Harness**:
+The Bats, mock-command, shellcheck, and smoke-test modules under `_test/` that verify public command interfaces.
+_Avoid_: tests, CI scripts
+
 ## Relationships
 
 - A **Skill Catalog** is exposed through one or more **Visible Skill Roots**.
@@ -120,53 +160,47 @@ _Avoid_: legacy Claude guide, canonical guide
 - A **Project Harness Guide** can reference repo-local skills without making those skills part of the global **Asset Catalog**.
 - A **Workspace Harness Audit** belongs with other local repo audits and should not mutate harness configuration.
 - A **Bloated Harness Guide** is a review signal because it may duplicate guidance that belongs in repo-local skills or docs.
+- A **Profile** is implemented as an ordered list of **Configuration Bundles**.
+- A **Focus Area** bypasses profile composition and sends one **Configuration Bundle** to the install and update engine.
+- A **Configuration Bundle** becomes one or more **Install Manifests** before package operations run.
+- A **Package Manager Adapter** consumes **Install Manifest** rows and owns manager-specific command details.
+- An **Update Manifest** records the selected update surface and should not be treated as the source catalog.
+- A **Stow Tree** changes dotfile symlinks, while a **macOS Profile** changes host defaults.
+- A **Setup Flow** composes modules; it should not duplicate their implementation.
+- The **Validation Harness** tests public interfaces and should avoid depending on private helper names.
 
-## Example dialogue
+## Example Dialogue
 
-> **Dev:** "Chops shows `changelog-md-workmanship` under both Claude and Codex. Is that two versions?"
-> **Domain expert:** "No, that is a **Duplicate Skill** because the same skill is visible from two **Visible Skill Roots**."
-
-> **Dev:** "Where should `changelog-md-workmanship` live if both Claude and Codex can use it?"
-> **Domain expert:** "In the **Shared Skill Root**, unless one agent needs a materially different version."
-
-> **Dev:** "What if `grill-with-docs` has different content under Global and Codex?"
-> **Domain expert:** "That is **Skill Drift**, not a harmless **Duplicate Skill**."
-
-> **Dev:** "Should setup infer the correct catalog by deduplicating every old skill?"
-> **Domain expert:** "No. A **Skill Reset** starts from known sources and only re-adds selected skills."
-
-> **Dev:** "Do we need backups before rebuilding installed skill roots?"
-> **Domain expert:** "No. The sources are version controlled; the important part is clear **Symlink Routes**."
-
-> **Dev:** "Should we decide whole-directory symlinks before checking harness settings?"
-> **Domain expert:** "No. First identify the **Discovery Routes**; then choose the simplest **Symlink Routes** that do not duplicate them."
-
-> **Dev:** "`~/.codex/AGENTS.md` exists but is empty. Is that a managed rule?"
-> **Domain expert:** "No. It is a **Placeholder Asset** unless we intentionally put global Codex instructions there."
-
-> **Dev:** "A repo has `AGENTS.md` pointing at `skills/use-platform/SKILL.md`. Is that a global skill?"
-> **Domain expert:** "No. That is a **Project Harness Guide** referencing a repo-local skill."
-
-> **Dev:** "Should we audit all personal repos for `CLAUDE.md`, `AGENTS.md`, and skill references?"
-> **Domain expert:** "Yes. That is a **Workspace Harness Audit**, not an install or reset step."
-
-> **Dev:** "Is a `CLAUDE.md` or `AGENTS.md` file automatically healthy project guidance?"
-> **Domain expert:** "No. Treat long guide files as possible **Bloated Harness Guides** until they are shown to delegate cleanly."
-
-> **Dev:** "Should logs and session databases go in dotfiles with MCP settings?"
-> **Domain expert:** "No. MCP settings are **Harness Assets**; logs and sessions are **Runtime State**."
-
-> **Dev:** "Chops shows Skills, Agents, and Rules. Are we only managing skills?"
-> **Domain expert:** "No. Skills are one kind of **Harness Asset** in the broader **Asset Catalog**."
-
-> **Dev:** "Should `shared/` be scanned directly by agents?"
-> **Domain expert:** "No. `shared/` is the **Shared Asset Source**; agents and Chops should scan **Harness Views**."
-
-> **Dev:** "What if private paid skills are not cloned on a new machine?"
-> **Domain expert:** "The **Optional Private Source** is skipped without error, so those skills are simply unavailable."
-
-> **Dev:** "Should Chops scan source folders like `shared/`?"
-> **Domain expert:** "No. The **Chops View** should reflect the same **Harness Views** exposed to Claude, Codex, and other harnesses."
+- **Dev:** "Chops shows `changelog-md-workmanship` under both Claude and Codex. Is that two versions?"
+  **Domain expert:** "No, that is a **Duplicate Skill** because the same skill is visible from two **Visible Skill Roots**."
+- **Dev:** "Where should `changelog-md-workmanship` live if both Claude and Codex can use it?"
+  **Domain expert:** "In the **Shared Skill Root**, unless one agent needs a materially different version."
+- **Dev:** "What if `grill-with-docs` has different content under Global and Codex?"
+  **Domain expert:** "That is **Skill Drift**, not a harmless **Duplicate Skill**."
+- **Dev:** "Should setup infer the correct catalog by deduplicating every old skill?"
+  **Domain expert:** "No. A **Skill Reset** starts from known sources and only re-adds selected skills."
+- **Dev:** "Do we need backups before rebuilding installed skill roots?"
+  **Domain expert:** "No. The sources are version controlled; the important part is clear **Symlink Routes**."
+- **Dev:** "Should we decide whole-directory symlinks before checking harness settings?"
+  **Domain expert:** "No. First identify the **Discovery Routes**; then choose the simplest **Symlink Routes** that do not duplicate them."
+- **Dev:** "`~/.codex/AGENTS.md` exists but is empty. Is that a managed rule?"
+  **Domain expert:** "No. It is a **Placeholder Asset** unless we intentionally put global Codex instructions there."
+- **Dev:** "A repo has `AGENTS.md` pointing at `skills/use-platform/SKILL.md`. Is that a global skill?"
+  **Domain expert:** "No. That is a **Project Harness Guide** referencing a repo-local skill."
+- **Dev:** "Should we audit all personal repos for `CLAUDE.md`, `AGENTS.md`, and skill references?"
+  **Domain expert:** "Yes. That is a **Workspace Harness Audit**, not an install or reset step."
+- **Dev:** "Is a `CLAUDE.md` or `AGENTS.md` file automatically healthy project guidance?"
+  **Domain expert:** "No. Treat long guide files as possible **Bloated Harness Guides** until they are shown to delegate cleanly."
+- **Dev:** "Should logs and session databases go in dotfiles with MCP settings?"
+  **Domain expert:** "No. MCP settings are **Harness Assets**; logs and sessions are **Runtime State**."
+- **Dev:** "Chops shows Skills, Agents, and Rules. Are we only managing skills?"
+  **Domain expert:** "No. Skills are one kind of **Harness Asset** in the broader **Asset Catalog**."
+- **Dev:** "Should `shared/` be scanned directly by agents?"
+  **Domain expert:** "No. `shared/` is the **Shared Asset Source**; agents and Chops should scan **Harness Views**."
+- **Dev:** "What if private paid skills are not cloned on a new machine?"
+  **Domain expert:** "The **Optional Private Source** is skipped without error, so those skills are simply unavailable."
+- **Dev:** "Should Chops scan source folders like `shared/`?"
+  **Domain expert:** "No. The **Chops View** should reflect the same **Harness Views** exposed to Claude, Codex, and other harnesses."
 
 ## Flagged ambiguities
 
