@@ -29,6 +29,10 @@ _reference/
 # Already tracked skills remain tracked; new local installs stay out of git.
 skills/.SKILLS_MANAGED_BY_JSM
 skills/*
+!skills/use-dotfiles/
+!skills/use-dotfiles/SKILL.md
+!skills/shell-cli-contract-audit/
+!skills/shell-cli-contract-audit/SKILL.md
 claude/.claude/skills/.SKILLS_MANAGED_BY_JSM
 claude/.claude/skills/*
 !claude/.claude/skills/.gitkeep

@@ -7,6 +7,9 @@
 
 set -euo pipefail
 
+# Keep downloaded SSH material private from file creation time, before chmod runs.
+umask 077
+
 # Default values
 DRY_RUN="${DRY_RUN:-false}"
 UNSAFE_MODE="${UNSAFE_MODE:-false}"

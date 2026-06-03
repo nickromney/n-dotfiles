@@ -270,6 +270,92 @@ EOF
   grep -q "private key" "$TEST_DIR/op-calls.log"
 }
 
+@test "SSH setup: unsafe private key file is restricted while op writes" {
+  cd "$TEST_DIR"
+  cp "${BATS_TEST_DIRNAME}/../setup-ssh-from-1password.sh" .
+
+  umask 022
+
+  cat > "$MOCK_BIN_DIR/sleep" <<'EOF'
+#!/bin/bash
+exit 0
+EOF
+  chmod +x "$MOCK_BIN_DIR/sleep"
+
+  cat > "$MOCK_BIN_DIR/op" <<'EOF'
+#!/bin/bash
+echo "$@" >> "$TEST_DIR/op-calls.log"
+
+file_mode() {
+  if stat -c %a "$1" >/dev/null 2>&1; then
+    stat -c %a "$1"
+  else
+    stat -f %Lp "$1"
+  fi
+}
+
+field_name=""
+previous=""
+for arg in "$@"; do
+  if [[ "$previous" == "--fields" ]]; then
+    field_name="$arg"
+    break
+  fi
+  previous="$arg"
+done
+
+if [[ "$1" == "account" ]] && [[ "$2" == "list" ]]; then
+  echo "Account ID: test-account"
+  exit 0
+fi
+
+if [[ "$1" == "item" ]] && [[ "$2" == "get" ]]; then
+  item_name="$3"
+
+  if [[ "$item_name" == "~/.ssh/config" && ( "$field_name" == "notesPlain" || "$field_name" == "notes" ) ]]; then
+    echo "Host *"
+    echo "  IdentityAgent ~/.1password/agent.sock"
+    echo "Include ~/.ssh/config.d/*.conf"
+    echo "Include ~/.ssh/config.d/*/*.conf"
+    exit 0
+  fi
+
+  if [[ "$item_name" == "~/.ssh/config.d/personal.conf" && ( "$field_name" == "notesPlain" || "$field_name" == "notes" ) ]]; then
+    echo "Host github.com"
+    echo "  HostName github.com"
+    echo "  User git"
+    echo "  IdentityFile ~/.ssh/personal_github_authentication.pub"
+    echo "  IdentitiesOnly yes"
+    exit 0
+  fi
+
+  if [[ "$field_name" == "private key" ]]; then
+    file_mode "$HOME/.ssh/$item_name" >> "$TEST_DIR/private-key-open-modes.log"
+    echo "-----BEGIN OPENSSH PRIVATE KEY-----"
+    echo "mock private key content"
+    echo "-----END OPENSSH PRIVATE KEY-----"
+    exit 0
+  fi
+
+  if [[ "$field_name" == "public key" ]]; then
+    echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN... test@example.com"
+    exit 0
+  fi
+fi
+
+echo "Unhandled op command: $@" >&2
+exit 1
+EOF
+  chmod +x "$MOCK_BIN_DIR/op"
+
+  run ./setup-ssh-from-1password.sh --profile personal --unsafe --yes --no-input
+
+  [ "$status" -eq 0 ]
+  [ -f "$TEST_DIR/private-key-open-modes.log" ]
+  run grep -qx "600" "$TEST_DIR/private-key-open-modes.log"
+  [ "$status" -eq 0 ]
+}
+
 @test "SSH setup: help option shows usage" {
   cd "$TEST_DIR"
   cp "${BATS_TEST_DIRNAME}/../setup-ssh-from-1password.sh" .

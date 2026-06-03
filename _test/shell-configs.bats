@@ -277,6 +277,9 @@ EOF
 
   run grep -c '_cache_init fzf' "$DOTFILES_DIR/zsh/.zshrc"
   [ "$output" = "1" ]
+
+  run grep -c '_cache_init mise' "$DOTFILES_DIR/zsh/.zshrc"
+  [ "$output" = "1" ]
 }
 
 @test "zshrc: startup time under 125ms" {
