@@ -55,17 +55,27 @@ export EDITOR="nvim"
 export SUDO_EDITOR="$EDITOR"
 export LANG="en_GB.UTF-8"
 export WORDCHARS="" # Specify word boundaries for command line navigation
+_ZSH_COMMAND_MODE=false
+[[ -o interactive && -n "${ZSH_EXECUTION_STRING:-}" ]] && _ZSH_COMMAND_MODE=true
 
 #
 # 3. Homebrew
 #
 if [[ "$OSTYPE" == "darwin"* ]]; then
   if [[ -d "/opt/homebrew" ]]; then
-    eval "$(/opt/homebrew/bin/brew shellenv)"
     BREW_PREFIX="/opt/homebrew"
+    if [[ "$_ZSH_COMMAND_MODE" == "true" ]]; then
+      export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
+    else
+      eval "$(/opt/homebrew/bin/brew shellenv)"
+    fi
   elif [[ -d "/usr/local/Homebrew" ]]; then
-    eval "$(/usr/local/bin/brew shellenv)"
     BREW_PREFIX="/usr/local"
+    if [[ "$_ZSH_COMMAND_MODE" == "true" ]]; then
+      export PATH="/usr/local/bin:$PATH"
+    else
+      eval "$(/usr/local/bin/brew shellenv)"
+    fi
   fi
 fi
 
@@ -83,16 +93,30 @@ _cache_init() {
   local name="$1"
   local cmd="$2"
   local cache_file="$_ZSH_CACHE_DIR/$name.zsh"
+  local temp_file
+
+  if [[ "$_ZSH_COMMAND_MODE" == "true" ]]; then
+    return 0
+  fi
 
   # Generate cache if it doesn't exist
   if [[ ! -f "$cache_file" ]]; then
-    if ! eval "$cmd" >"$cache_file" 2>&1; then
+    temp_file="$(mktemp "$_ZSH_CACHE_DIR/$name.XXXXXX")" || return 1
+    if ! eval "$cmd" >"$temp_file" 2>/dev/null; then
       echo "Warning: Failed to cache $name initialization" >&2
-      rm -f "$cache_file"
+      rm -f "$temp_file"
       return 1
     fi
+    mv "$temp_file" "$cache_file"
   fi
   source "$cache_file"
+}
+
+_dedupe_path() {
+  typeset -gaU path
+  path=(${(s/:/)PATH})
+  path=(${(M)path:#?*})
+  export PATH
 }
 
 #
@@ -121,51 +145,58 @@ bindkey "^[[B" history-beginning-search-forward  # Down arrow
 #
 # 6. Completions
 #
-# Add user-managed completion directories before compinit runs.
-if [[ -d "$HOME/.docker/completions" ]]; then
-  fpath=("$HOME/.docker/completions" $fpath)
-fi
+if [[ "$_ZSH_COMMAND_MODE" != "true" ]]; then
+  # Add user-managed completion directories before compinit runs.
+  if [[ -d "$HOME/.docker/completions" ]]; then
+    fpath=("$HOME/.docker/completions" $fpath)
+  fi
 
-# -Uz ensures that compinit is loaded as a pure function according
-#  to zsh's standards, without interference from any aliases defined.
-#  Then executes it with the -i flag to ignore insecure files.
-autoload -Uz compinit && compinit -i
+  # -Uz ensures that compinit is loaded as a pure function according
+  #  to zsh's standards, without interference from any aliases defined.
+  #  Use the cache dir so `sz` also rebuilds completion metadata.
+  _ZSH_COMPDUMP="$_ZSH_CACHE_DIR/zcompdump"
+  if [[ -f "$_ZSH_COMPDUMP" ]]; then
+    autoload -Uz compinit && compinit -C -i -d "$_ZSH_COMPDUMP"
+  else
+    autoload -Uz compinit && compinit -i -d "$_ZSH_COMPDUMP"
+  fi
 
-# Docker CLI completion
-# Generate once with:
-#   mkdir -p ~/.docker/completions
-#   docker completion zsh > ~/.docker/completions/_docker
+  # Docker CLI completion
+  # Generate once with:
+  #   mkdir -p ~/.docker/completions
+  #   docker completion zsh > ~/.docker/completions/_docker
 
-# Enable bash-style completion support for tools that do not ship native zsh
-# completions.
-if command -v az >/dev/null 2>&1 || command -v tofu >/dev/null 2>&1; then
-  autoload -Uz bashcompinit && bashcompinit
-fi
+  # Enable bash-style completion support for tools that do not ship native zsh
+  # completions.
+  if command -v az >/dev/null 2>&1 || command -v tofu >/dev/null 2>&1; then
+    autoload -Uz bashcompinit && bashcompinit
+  fi
 
-# Azure CLI completion
-if [[ -n "$BREW_PREFIX" ]] && command -v az >/dev/null 2>&1; then
-  AZ_COMPLETION="$BREW_PREFIX/etc/bash_completion.d/az"
-  [ -f "$AZ_COMPLETION" ] && source "$AZ_COMPLETION"
-fi
+  # Azure CLI completion
+  if [[ -n "$BREW_PREFIX" ]] && command -v az >/dev/null 2>&1; then
+    AZ_COMPLETION="$BREW_PREFIX/etc/bash_completion.d/az"
+    [ -f "$AZ_COMPLETION" ] && source "$AZ_COMPLETION"
+  fi
 
-# OpenTofu completion
-if command -v tofu >/dev/null 2>&1; then
-  complete -o nospace -C "$(command -v tofu)" tofu
-fi
+  # OpenTofu completion
+  if command -v tofu >/dev/null 2>&1; then
+    complete -o nospace -C "$(command -v tofu)" tofu
+  fi
 
-# kubectl completion and aliases
-if command -v kubectl >/dev/null 2>&1; then
-  _cache_init kubectl "kubectl completion zsh"
-  # shellcheck disable=SC1091
-  DOTFILES_DIR="${DOTFILES_DIR:-$HOME/Developer/personal/n-dotfiles}"
-  source "$DOTFILES_DIR/scripts/kubectl-aliases.sh"
-  # In zsh, use compdef instead of bash's complete
-  compdef _kubectl k
-fi
+  # kubectl completion and aliases
+  if command -v kubectl >/dev/null 2>&1; then
+    _cache_init kubectl "kubectl completion zsh"
+    # shellcheck disable=SC1091
+    DOTFILES_DIR="${DOTFILES_DIR:-$HOME/Developer/personal/n-dotfiles}"
+    source "$DOTFILES_DIR/scripts/kubectl-aliases.sh"
+    # In zsh, use compdef instead of bash's complete
+    compdef _kubectl k
+  fi
 
-# GitKraken CLI completion
-if command -v gk >/dev/null 2>&1; then
-  _cache_init gk "gk completion zsh"
+  # GitKraken CLI completion
+  if command -v gk >/dev/null 2>&1; then
+    _cache_init gk "gk completion zsh"
+  fi
 fi
 
 # Local environment will be sourced later in the file
@@ -196,6 +227,11 @@ for path_entry in "${early_paths[@]}"; do
     export PATH="$path_entry:$PATH"
   fi
 done
+
+if [[ "$_ZSH_COMMAND_MODE" == "true" ]]; then
+  _dedupe_path
+  return 0
+fi
 
 #
 # 7. Tool Init
@@ -249,7 +285,7 @@ fi
 #
 # 8. Plugins
 #
-if [[ -n "$BREW_PREFIX" ]]; then
+if [[ "$_ZSH_COMMAND_MODE" != "true" && -n "$BREW_PREFIX" ]]; then
   ZSH_AUTOSUGGESTIONS="$BREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
   ZSH_SYNTAX_HIGHLIGHTING="$BREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
@@ -327,9 +363,8 @@ for path_entry in "${paths[@]}"; do
   fi
 done
 
-# De-duplicate PATH and remove empty entries
-PATH=$(echo "$PATH" | awk -v RS=: '!a[$0]++' | grep -v '^$' | paste -sd: -)
-export PATH
+# De-duplicate PATH and remove empty entries.
+_dedupe_path
 
 #
 # 13. Podman
@@ -510,7 +545,7 @@ fi
 # 17. mise (polyglot runtime manager)
 #
 if command -v mise >/dev/null 2>&1; then
-  eval "$(/opt/homebrew/bin/mise activate zsh)"
+  _cache_init mise "mise activate zsh"
 fi
 
 #
