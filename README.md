@@ -116,6 +116,20 @@ BREW_REFRESH=true make update # Also run brew update before targeted Homebrew up
 - Force mode (`-f`) to handle existing configurations
 - Update manifests under `.generated/update-plans/` show selected tools, managers, and updatable counts
 
+## Harness Assets
+
+Private harness assets are synced from the optional sibling
+`../harnesses-private` repo into the global, Claude, and Codex skill roots.
+Run this from the `n-dotfiles` repo root:
+
+```bash
+./scripts/sync-private-harness-assets.sh --dry-run
+./scripts/sync-private-harness-assets.sh --execute
+```
+
+Use `--private-root <path>` if the private harness repo is not a sibling of
+`n-dotfiles`.
+
 ## Architecture Maps
 
 The durable architecture maps live in [docs/architecture/index.html](docs/architecture/index.html).

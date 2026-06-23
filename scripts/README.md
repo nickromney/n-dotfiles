@@ -52,6 +52,9 @@ private repo is absent, and discovers provider-grouped catalogs such as
 listed skills are exposed. Supported manifests are `load/global.txt`,
 `load/claude.txt`, and `load/codex.txt`.
 
+Run from the `n-dotfiles` repo root. The default private source is
+`../harnesses-private`; pass `--private-root <path>` for another location.
+
 ```bash
 ./scripts/sync-private-harness-assets.sh --dry-run
 ./scripts/sync-private-harness-assets.sh --execute
