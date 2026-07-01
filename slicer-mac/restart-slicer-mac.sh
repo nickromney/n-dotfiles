@@ -16,6 +16,7 @@ Usage: slicer-mac/restart-slicer-mac.sh [options]
 
 Restart the slicer-mac tray service, daemon, or both.
 This script defaults to dry-run mode.
+Run this as your login user, not with sudo, because these are per-user launchd services.
 
 Options:
       --daemon   Restart only the daemon service
@@ -28,9 +29,14 @@ Examples:
   slicer-mac/restart-slicer-mac.sh
   slicer-mac/restart-slicer-mac.sh --execute
   slicer-mac/restart-slicer-mac.sh --execute --daemon
+  slicer-mac/restart-slicer-mac.sh --execute --tray
 EOF
 
   exit "$exit_code"
+}
+
+current_uid() {
+  id -u
 }
 
 parse_args() {
@@ -65,6 +71,13 @@ parse_args() {
 
 main() {
   parse_args "$@"
+
+  if [[ "$(current_uid)" == "0" ]]; then
+    echo "Error: do not run this script with sudo." >&2
+    echo "slicer-mac services are per-user launchd services and must target your login user's gui domain." >&2
+    echo "Run without sudo: ./restart-slicer-mac.sh --execute" >&2
+    exit 1
+  fi
 
   if ! "$DO_TRAY" && ! "$DO_DAEMON"; then
     DO_TRAY=true

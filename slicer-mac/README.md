@@ -2,6 +2,19 @@
 
 Configuration for [slicer-mac](https://slicervm.com).
 
+## Activation
+
+Slicer needs periodic license activation, roughly monthly. If Slicer starts failing
+with license or activation errors, refresh the local license:
+
+```bash
+slicer activate
+```
+
+This reads the GitHub access token from `$HOME/.slicer/gh-access-token`,
+exchanges it for a Slicer license, and writes the license to
+`$HOME/.slicer/LICENSE`.
+
 ## PATH Setup
 
 The [installation docs](https://docs.slicervm.com/mac/installation/#install-the-binaries) assume
@@ -22,6 +35,23 @@ Then re-source your shell. With it on the PATH, the binaries work as expected:
 ```bash
 slicer-mac up
 slicer-tray --url ./slicer.sock --terminal "ghostty"
+```
+
+## Service Restarts
+
+Restart slicer-mac services as your login user, not with `sudo`. These are
+per-user launchd services, and running the commands with `sudo` targets `gui/0`
+instead of your user domain.
+
+```bash
+slicer-mac service restart tray
+slicer-mac service restart daemon
+```
+
+Or use the helper:
+
+```bash
+./restart-slicer-mac.sh --execute
 ```
 
 ## Setup

@@ -20,6 +20,15 @@ assert_help_contract() {
   [[ "$output" == *"Examples:"* ]]
 }
 
+write_mock_slicer_mac() {
+  mkdir -p "$TEST_TMP_DIR/bin"
+  cat >"$TEST_TMP_DIR/bin/slicer-mac" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >> "$SLICER_MAC_CALL_LOG"
+EOF
+  chmod +x "$TEST_TMP_DIR/bin/slicer-mac"
+}
+
 @test "user-facing scripts expose help with examples" {
   local script
   scripts=(
@@ -46,6 +55,46 @@ assert_help_contract() {
   for script in "${scripts[@]}"; do
     assert_help_contract "$script"
   done
+}
+
+@test "restart-slicer-mac: execute restarts tray and daemon as the current user" {
+  write_mock_slicer_mac
+
+  run env \
+    PATH="$TEST_TMP_DIR/bin:$PATH" \
+    SLICER_MAC_CALL_LOG="$TEST_TMP_DIR/slicer-mac-calls.log" \
+    "$REPO_ROOT/slicer-mac/restart-slicer-mac.sh" --execute
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"slicer-mac service restart tray"* ]]
+  [[ "$output" == *"slicer-mac service restart daemon"* ]]
+
+  run cat "$TEST_TMP_DIR/slicer-mac-calls.log"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"service status tray"* ]]
+  [[ "$output" == *"service status daemon"* ]]
+  [[ "$output" == *"service restart tray"* ]]
+  [[ "$output" == *"service restart daemon"* ]]
+}
+
+@test "restart-slicer-mac: rejects sudo/root because slicer-mac services are per-user" {
+  mkdir -p "$TEST_TMP_DIR/bin"
+  cat >"$TEST_TMP_DIR/bin/id" <<'EOF'
+#!/usr/bin/env bash
+if [[ "$1" == "-u" ]]; then
+  echo 0
+  exit 0
+fi
+command id "$@"
+EOF
+  chmod +x "$TEST_TMP_DIR/bin/id"
+
+  run env PATH="$TEST_TMP_DIR/bin:$PATH" "$REPO_ROOT/slicer-mac/restart-slicer-mac.sh" --execute
+
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"do not run this script with sudo"* ]]
+  [[ "$output" == *"per-user launchd services"* ]]
+  [[ "$output" == *"Run without sudo: ./restart-slicer-mac.sh --execute"* ]]
 }
 
 @test "brew-with-policy: help documents tap trust policy without requiring Homebrew" {
