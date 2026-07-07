@@ -100,40 +100,36 @@ _Avoid_: installer, migration, reset
 A long `AGENTS.md`, `CLAUDE.md`, or equivalent **Project Harness Guide** that may contain copied guidance better kept in repo-local skills or docs.
 _Avoid_: legacy Claude guide, canonical guide
 
-**Configuration Bundle**:
-A YAML file under `_configs/` that declares tools, managers, install checks, dependencies, update behavior, and documentation for one slice of the machine setup.
-_Avoid_: package list, config file
+**Declarative Layer**:
+One of the three hand-maintained sources of truth for machine setup: the **Brewfile**, the **Global Mise Config**, or the **Stow Trees**. Each is applied by a tool this repo does not implement (`brew bundle`, `mise install`, `stow`).
+_Avoid_: config pipeline, installer engine
 
-**Profile**:
-A named selection of **Configuration Bundles** for a host shape such as `common`, `personal`, `work`, or `all`.
-_Avoid_: environment, machine type
+**Brewfile**:
+The hand-maintained macOS layer (`Brewfile`, with `Brewfile.posix` for Linux) declaring casks, fonts, Mac App Store apps, and formulae that are better from Homebrew.
+_Avoid_: generated manifest, package list
 
-**Focus Area**:
-A single-purpose **Configuration Bundle** exposed as a Makefile target, such as `vscode`, `kubernetes`, or `typescript`.
-_Avoid_: package group, category target
+**Global Mise Config**:
+The stow-managed `mise/.config/mise/config.toml` declaring cross-platform CLI tools and language runtimes. The same file installs the same tools on macOS and Linux.
+_Avoid_: runtime list, tool manifest
 
-**Install Manifest**:
-A generated file consumed by the install and update engine, such as `Brewfile`, `arkade.tsv`, or `metadata.json`.
-_Avoid_: generated config, output file
+**Stow Entrypoint**:
+The `stow.sh` script that symlinks **Stow Trees** into `$HOME`; the only entrypoint a stow-only machine needs.
+_Avoid_: installer, setup script
 
-**Update Manifest**:
-A generated TSV record of selected update work, including tools, managers, types, and updatable counts.
-_Avoid_: log, report
-
-**Package Manager Adapter**:
-A module that translates **Install Manifest** rows into manager-specific commands for Homebrew, arkade, apt, cargo, uv, mas, mise, VSCode, or manual reporting.
-_Avoid_: installer, plugin
+**Unmanaged Tool**:
+A tool deliberately excluded from every **Declarative Layer** because its native installer owns updates, such as the AI CLIs (claude, codex, opencode, copilot).
+_Avoid_: missing tool, gap
 
 **Stow Tree**:
 A GNU Stow directory such as `zsh/`, `git/`, or `nvim/` whose contents map into `$HOME`.
 _Avoid_: dotfile folder, package
 
 **macOS Profile**:
-A YAML file under `_macos/` that declares macOS defaults and host UI settings for a **Profile**.
+A YAML file under `_macos/` that declares macOS defaults and host UI settings, such as `personal.yaml` or `work.yaml`.
 _Avoid_: defaults file, system settings blob
 
 **Setup Flow**:
-A high-level script that composes bootstrap, package installation, macOS settings, Stow, VSCode, and SSH setup without owning those modules' implementations.
+A high-level script that composes bootstrap, macOS settings, and SSH setup without owning those modules' implementations.
 _Avoid_: mega installer, script pile
 
 **Validation Harness**:
@@ -160,11 +156,10 @@ _Avoid_: tests, CI scripts
 - A **Project Harness Guide** can reference repo-local skills without making those skills part of the global **Asset Catalog**.
 - A **Workspace Harness Audit** belongs with other local repo audits and should not mutate harness configuration.
 - A **Bloated Harness Guide** is a review signal because it may duplicate guidance that belongs in repo-local skills or docs.
-- A **Profile** is implemented as an ordered list of **Configuration Bundles**.
-- A **Focus Area** bypasses profile composition and sends one **Configuration Bundle** to the install and update engine.
-- A **Configuration Bundle** becomes one or more **Install Manifests** before package operations run.
-- A **Package Manager Adapter** consumes **Install Manifest** rows and owns manager-specific command details.
-- An **Update Manifest** records the selected update surface and should not be treated as the source catalog.
+- Each **Declarative Layer** is applied by its owning tool; the repo scripts only sequence them.
+- The **Brewfile** owns macOS-only concerns; the **Global Mise Config** owns cross-platform CLI tools and runtimes.
+- The **Global Mise Config** reaches `$HOME` through a **Stow Tree**, so `stow` must run before `mise install` on a fresh machine.
+- An **Unmanaged Tool** is a deliberate decision and should not be "fixed" by adding it to a **Declarative Layer**.
 - A **Stow Tree** changes dotfile symlinks, while a **macOS Profile** changes host defaults.
 - A **Setup Flow** composes modules; it should not duplicate their implementation.
 - The **Validation Harness** tests public interfaces and should avoid depending on private helper names.

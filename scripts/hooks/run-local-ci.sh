@@ -32,9 +32,7 @@ n-dotfiles pre-push local CI gate
 
 Running:
   make lint
-  make test-install
-  make test-macos
-  ./install.sh -d -v
+  make test
 
 Skip only when you have a reason:
   LEFTHOOK=0 git push
@@ -47,12 +45,8 @@ failed_gate=""
 
 if ! make lint; then
   failed_gate="make lint"
-elif ! make test-install; then
-  failed_gate="make test-install"
-elif ! make test-macos; then
-  failed_gate="make test-macos"
-elif ! ./install.sh -d -v; then
-  failed_gate="./install.sh -d -v"
+elif ! make test; then
+  failed_gate="make test"
 fi
 
 if [[ -n "${failed_gate}" ]]; then

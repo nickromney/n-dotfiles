@@ -4,15 +4,27 @@ An opinionated dotfiles setup designed to:
 
 - work on Mac OS X with brew
 - work on Ubuntu (particularly in dev containers and for GitHub Actions)
-- be extensible to add other package managers
+- be simple enough to reason about at a glance
 
 ## Design considerations
 
 - I work on Mac OS X
-- I'm trying to move to use dev containers
 - I'm a DevOps Engineer by recent training, so like idempotent code
+- The setup is three declarative layers, each owned by a tool someone
+  else maintains:
+
+| Layer | Owns | Source of truth |
+|-------|------|-----------------|
+| `brew bundle` | Casks, fonts, Mac App Store apps, mac-only formulae | [Brewfile](Brewfile) ([Brewfile.posix](Brewfile.posix) on Linux) |
+| `mise install` | Cross-platform CLI tools and language runtimes | [mise/.config/mise/config.toml](mise/.config/mise/config.toml) |
+| `stow` | Dotfile symlinks into `$HOME` | The stow trees (`zsh/`, `git/`, `nvim/`, ...) via [stow.sh](stow.sh) |
 
 I looked at [nix flakes](https://nixos.wiki/wiki/flakes) but although I'm often tweaking my configuration, I don't need to set up whole new machines enough to warrant it. This [blog](https://jvns.ca/blog/2023/11/11/notes-on-nix-flakes/) from Julia Evans convinced me away from it.
+
+AI CLIs (claude, codex, opencode, copilot) are deliberately unmanaged:
+they self-update via their own native installers, and pinning them
+through a package manager just fights the updater. Install them with
+their official one-liners and let them look after themselves.
 
 ## Quick Start
 
@@ -27,94 +39,98 @@ cd ~/Developer/personal
 git clone https://github.com/nickromney/n-dotfiles.git
 cd n-dotfiles
 
-# Run bootstrap to install essential tools
+# Preview, then run: Homebrew + Brewfile + stow + mise
 ./bootstrap.sh --dry-run --no-input --skip-1password
 ./bootstrap.sh
 
-# Preferred installation flow
-make install           # Config-driven: brew, apt fallback, then mise runtimes
-make personal stow     # Stow configurations
-make personal configure # Apply macOS settings
+# Apply macOS settings (dock, defaults)
+make configure
+```
+
+Or run the whole personal flow (bootstrap + macOS settings + SSH from
+1Password) in one script:
+
+```bash
+./setup-personal-mac.sh --dry-run
+./setup-personal-mac.sh
 ```
 
 ### Existing System
 
-If you already have Homebrew and basic tools:
+```bash
+make install    # brew bundle + stow + mise install (idempotent)
+make update     # update brew, mise, and Mac App Store packages
+```
+
+### Stow-only machine (e.g. work)
+
+The work machine gets dotfiles only — no package management:
 
 ```bash
-# Clone and enter directory
-git clone https://github.com/nickromney/n-dotfiles.git ~/n-dotfiles
-cd ~/n-dotfiles
+git clone https://github.com/nickromney/n-dotfiles.git
+cd n-dotfiles
+./stow.sh --dry-run   # preview (shows conflicts with existing files)
+./stow.sh             # symlink everything
+./stow.sh zsh git     # or just selected packages
+```
 
-# Install the default safe/base toolchain (common profile)
-make install
+`./stow.sh --adopt` pulls pre-existing real files into the repo if you
+want to keep them — review with `git diff` afterwards.
 
-# Install personal additions
-make install personal
+### Linux
 
-# Provision a work Mac
-make work install
-
-# Apply macOS tweaks (dock, defaults) for the active profile
-make personal configure
-
-# Or just install VSCode and extensions
-make focus-vscode
+```bash
+brew bundle --file Brewfile.posix   # Homebrew on Linux formulae
+./stow.sh                           # symlink dotfiles
+mise install                        # same CLI tools as the Mac
 ```
 
 ## Using the Makefile
 
-The Makefile provides convenient targets for different configurations:
-
-Combine a profile (`common`, `personal`, `work`, or `all`) with an action (`install`, `update`, `stow`, `configure`). Order does not matter, so `make work install` equals `make install work`.
-
 ```bash
-# Profile + action examples
-make install              # Safe base install (common profile default)
-make install personal     # Install personal apps and CLIs
-make work update          # Update tooling for work machines
-make stow work            # Symlink configs for the work profile
-make personal configure   # Apply macOS defaults (dock, keyboard, etc.)
-make install all          # Install all profile bundles
-make install PROFILE=work # Alternate syntax using PROFILE env var
-make app-store install    # Optional Mac App Store apps (after "purchasing" once)
-
-# Focus targets (specific tool categories)
-make vscode               # VSCode and extensions
-make neovim               # Neovim and plugins
-make app-store            # Mac App Store apps (requires App Store login)
-
-# VSCode for different editors
-VSCODE_CLI=cursor make vscode  # Install extensions for Cursor
-
-# Package manager updates (updates both the manager and all installed packages)
-make brew update           # Update Homebrew and all brew/cask packages
-make cargo update          # Update Rust toolchain and cargo binaries
-make uv update             # Update uv package manager (use ./install.sh -u for uv tools)
-make mas update            # Update Mac App Store applications
-
-# Config-driven updates (target only tools declared in selected configs)
-make update                # Update personal profile tools; writes .generated/update-plans/personal.tsv
-DRY_RUN=true make update   # Preview the same update path without changing tools
-BREW_REFRESH=true make update # Also run brew update before targeted Homebrew upgrades
-
-> **Note:** Mac App Store installs require you to sign in via the App Store app and click "Get" once per app before `make app-store install` (or any `mas install`) can succeed.
-
-> **Note:** Some tools (`arkade`, `slicer`) install their binaries to `/usr/local/bin` which is
-> root-owned on Apple Silicon Macs. Self-update commands for these tools (`arkade update`,
-> `slicer update`) require `sudo` as a result. This is expected — the install scripts for both
-> tools write to `/usr/local/bin` by default, and the root ownership is not a Homebrew concern
-> on Apple Silicon (Homebrew uses `/opt/homebrew` instead).
+make install       # brew bundle + stow + mise install
+make stow          # symlink dotfiles only
+make update        # update brew, mise, mas (and rustup if present)
+make configure     # apply macOS settings (MACOS_PROFILE=personal|work)
+make lint          # shellcheck + markdownlint
+make test          # full BATS suite
+make audit         # drift report: installed vs Brewfile/mise config
 ```
 
-## Features
+> **Note:** Mac App Store installs require you to sign in via the App
+> Store app and click "Get" once per app before `brew bundle` can
+> install them via `mas`.
 
-- Automatically detects available package managers
-- Skips unavailable package managers without failing
-- Installs only tools that match available package managers
-- Uses GNU Stow for configuration management
-- Force mode (`-f`) to handle existing configurations
-- Update manifests under `.generated/update-plans/` show selected tools, managers, and updatable counts
+## Tool Management
+
+### Adding a CLI tool
+
+Add one line to [mise/.config/mise/config.toml](mise/.config/mise/config.toml):
+
+```toml
+[tools]
+kubectl = "latest"                        # short name from `mise registry`
+"github:cilium/hubble" = "latest"         # or any GitHub release directly
+```
+
+Then run `mise install`. The same entry works on macOS and Linux.
+Useful commands:
+
+```bash
+mise registry <name>   # check whether a tool has a short name
+mise ls                # what is installed/active
+mise upgrade           # update everything to latest
+mise use -g foo@latest # add + install a global tool in one step
+```
+
+### Adding a mac app, font, or formula
+
+Add a `cask`/`brew`/`mas` line to the [Brewfile](Brewfile) and run
+`make install` (or `brew bundle --file Brewfile`).
+
+To find drift in either direction, run `make audit` — it reports
+Brewfile entries missing from the machine and installed packages
+missing from the Brewfile.
 
 ## Harness Assets
 
@@ -130,55 +146,7 @@ Run this from the `n-dotfiles` repo root:
 Use `--private-root <path>` if the private harness repo is not a sibling of
 `n-dotfiles`.
 
-## Architecture Maps
-
-The durable architecture maps live in [docs/architecture/index.html](docs/architecture/index.html).
-They document how the Makefile, Configuration Bundles, Install Manifests, package manager adapters,
-macOS profiles, Stow trees, Harness Assets, and Validation Harness fit together.
-
-## Usage
-
-### Package Installation and Configuration
-
-```bash
-# Preferred workflow
-make install                 # safe base/common profile
-make install personal        # personal additions (or: make install work)
-make app-store install       # optional, run after clicking "Get" in App Store
-make stow personal           # symlink dotfiles
-make personal configure      # apply macOS settings
-
-# Direct install.sh usage (legacy/CI)
-./install.sh              # Install packages only
-./install.sh -s           # Install packages and stow configurations
-./install.sh -d -s        # Preview changes
-./install.sh -s -f        # Force stow
-./install.sh -u           # Update installed packages
-./install.sh --list       # List available bundles and tools
-```
-
-### Preferred Installer Stack
-
-`make install` follows this order:
-
-1. Read selected `_configs/*.yaml` bundle(s)
-2. Generate plain-text manifests (`Brewfile`, `arkade.tsv`, `metadata.json`)
-3. Apply system-wide dependencies with native tools (`brew bundle`, `arkade`, manager-specific runners)
-4. Fall back to `apt` for `brew` package tools when `brew` is unavailable
-5. Install project runtimes via `mise install` from local `mise.toml`
-
-```bash
-# One-shot preferred install path
-make install
-
-# Optional helpers
-make install-system    # system deps only (config-driven install.sh)
-make runtime-install   # project runtimes only (mise.toml)
-make install-dry-run   # preview system + runtime changes
-make manifests-generate # inspect generated install manifests for the selected profile
-```
-
-### macOS System Configuration
+## macOS System Configuration
 
 Light-touch macOS configuration management:
 
@@ -196,7 +164,7 @@ Light-touch macOS configuration management:
 ./_macos/macos.sh --no-input personal.yaml
 
 # Equivalent Makefile helper
-make personal configure
+make configure
 ```
 
 See [_macos/README.md](_macos/README.md) for detailed macOS configuration options.
@@ -366,7 +334,7 @@ This approach:
 
 ### Installing Rust/Cargo
 
-The dotfiles manage PATH configuration for Rust/Cargo in `zsh/.zshrc` (lines 197-208). To prevent rustup from modifying your shell files during installation:
+The dotfiles manage PATH configuration for Rust/Cargo in `zsh/.zshrc`. To prevent rustup from modifying your shell files during installation:
 
 ```bash
 # Install Rust without modifying shell configuration
@@ -386,10 +354,10 @@ The ZSH configuration automatically adds tool directories to PATH if they exist:
 
 - `$HOME/.local/bin` - Local user binaries
 - `$HOME/.cargo/bin` - Rust/Cargo binaries
+- `$HOME/.local/share/mise/shims` - mise-managed tools (non-interactive shells)
 - `$HOME/.lmstudio/bin` - LM Studio CLI
-- `$HOME/.tfenv/bin` - Terraform version manager
 
-Each directory is only added if it exists, preventing errors on partial installations.
+Each directory is only added if it exists, preventing errors on partial installations. Interactive zsh shells also run `mise activate`, which keeps tool versions in sync per directory.
 
 ## Shell Configuration
 
@@ -419,222 +387,32 @@ The shell adapts based on installed tools:
 
 See [zsh/README.md](zsh/README.md) for complete shell configuration documentation.
 
-## Configuration Structure
-
-The `_configs/` directory uses a layered approach:
-
-```text
-_configs/
-├── shared/           # Cross-platform tools
-│   ├── shell.yaml        # Shell utilities (zsh, starship, etc.)
-│   ├── git.yaml          # Git tools
-│   ├── search.yaml       # Search tools (ripgrep, fzf, etc.)
-│   ├── neovim.yaml       # Neovim configuration
-│   ├── file-tools.yaml   # File management utilities
-│   ├── data-tools.yaml   # Data processing tools
-│   └── network.yaml      # Network utilities
-├── host/             # Host-specific configurations
-│   ├── common.yaml       # Tools for any Mac (Ghostty, VSCode, Obsidian, etc.)
-│   ├── personal.yaml     # Personal additions
-│   └── work.yaml         # Work-specific tools
-└── focus/            # Development focus areas
-    ├── vscode.yaml       # VSCode + 38 extensions
-    ├── python.yaml       # Python development
-    ├── typescript.yaml   # TypeScript/Node development
-    ├── rust.yaml         # Rust development
-    ├── kubernetes.yaml   # Kubernetes tools
-    └── container-base.yaml  # Base container tools
-
-## All Available Configurations
-
-### Tool Configurations (_configs/)
-
-| Configuration | Type | Description | Use Case |
-|--------------|------|-------------|----------|
-| **focus/ai** | Focus | AI/ML tools (ollama, etc.) | AI development |
-| **focus/container-base** | Focus | Podman and container tools | Container development |
-| **focus/kubernetes** | Focus | K8s tools (kubectl, k9s, helm) | Kubernetes management |
-| **focus/neovim** | Focus | Extended Neovim plugins | Advanced vim setup |
-| **focus/python** | Focus | Python dev tools (uv, ruff) | Python development with Rust-based tooling |
-| **focus/rust** | Focus | Rust toolchain and utilities | Rust development |
-| **focus/typescript** | Focus | Node.js, TypeScript, Biome | JavaScript/TypeScript dev with Rust-based linting |
-| **focus/vscode** | Focus | VSCode + 38 extensions | Full VSCode development |
-| **host/common** | Host | Common Mac apps (Ghostty, VSCode, Obsidian) | Standard Mac productivity |
-| **host/personal** | Host | Personal additions (games, media apps) | Personal Mac extras |
-| **host/work** | Host | Work-specific tools | Work Mac requirements |
-| **shared/data-tools** | Shared | Data processing (jq, yq, csvlens) | JSON/YAML/CSV manipulation |
-| **shared/file-tools** | Shared | File management (eza, tree, etc.) | Directory navigation |
-| **shared/git** | Shared | Git tools (delta, lazygit, gh CLI) | Version control essentials |
-| **shared/neovim** | Shared | Neovim and plugins | Text editor setup |
-| **shared/network** | Shared | Network utilities (httpie, curlie, etc.) | API testing and network debugging |
-| **shared/search** | Shared | Search tools (ripgrep, fzf, fd, etc.) | File and text searching |
-| **shared/shell** | Shared | Shell utilities (zsh, starship, atuin, etc.) | Essential for all setups |
-
-### macOS System Settings (_macos/)
-
-| Configuration | Description | Key Settings |
-|--------------|-------------|--------------|
-| **personal.yaml** | Personal Mac settings | Natural scroll, dock apps, keyboard shortcuts |
-| **work.yaml** | Work Mac settings | Corporate defaults, security settings |
-
-### Makefile Targets (Convenient Combinations)
-
-| Target | Includes | Purpose |
-|--------|----------|---------|
-| **make install** | All shared/ + host/common | Safe base install (default profile) |
-| **make common install** | All shared/ + host/common | Essential Mac setup |
-| **make ai** | focus/ai | AI/ML development tools |
-| **make app-store** | focus/app-store | Optional Mac App Store apps (requires prior purchase) |
-| **make container-base** | focus/container-base | Podman and container tools |
-| **make containers** | focus/containers | Podman container tools |
-| **make hardware-home** | focus/hardware-home | Optional home hardware + chargeable apps |
-| **make kubernetes** | focus/kubernetes | Kubernetes toolchain |
-| **make neovim** | focus/neovim | Enhanced Neovim |
-| **make python** | focus/python | Python development |
-| **make rust** | focus/rust | Rust development |
-| **make typescript** | focus/typescript | TypeScript/Node.js |
-| **make vscode** | focus/vscode | VSCode + extensions |
-| **make personal install** | Shared + host/common + host/personal + focus/containers + focus/kubernetes + focus/vscode + focus/cloud + focus/ai + focus/typescript | Base personal Mac (no hardware/chargeable extras) |
-| **make work install** | Shared + host/common + host/work + focus/containers + focus/kubernetes + focus/vscode | Work laptop tooling |
-| **make all install** | Shared + host/common + host/personal + host/work + focus/containers + focus/kubernetes + focus/vscode + focus/hardware-home + host/manual-check | Full superset |
-| **make install hardware-home** | focus/hardware-home | Optional home hardware and chargeable apps |
-| **make work-setup** | Runs setup-work-mac.sh | Legacy scripted work setup |
-
-### Quick Setup Guide
-
-For a new personal Mac (like yours):
-
-```bash
-# 1. Install base tools and personal apps
-make personal install
-
-# 2. Optional: install Mac App Store apps once you're signed in + clicked "Get"
-make app-store install
-
-# 3. Create configuration symlinks
-make personal stow
-
-# 4. Apply macOS system settings (mouse scroll, dock, etc.)
-make personal configure
-
-# Or stow + configure together:
-make personal stow && make personal configure
-```
-
-### Package Manager Examples
-
-### Tap a Homebrew repository
-
-```yaml
-noahgorstein/tap:
-  manager: brew
-  type: tap
-  check_command: "brew tap | grep -q '^noahgorstein/tap$'"
-  install_args: []
-```
-
-### Install a Homebrew cask application
-
-```yaml
-kitty:
-  manager: brew
-  type: cask
-  check_command: 'brew list --cask kitty >/dev/null 2>&1 || [ -d "/Applications/kitty.app" ] || which kitty >/dev/null 2>&1'
-  install_args: []
-```
-
-### Install a Homebrew package
-
-```yaml
-bat:
-  manager: brew
-  type: package
-  check_command: "bat --version"
-  install_args: []
-```
-
-### Install a Python tool via uv
-
-```yaml
-posting:
-  manager: uv
-  type: tool
-  check_command: "which posting >/dev/null 2>&1"
-  install_args: ["--python", "3.12"]
-```
-
-### Install VSCode extensions
-
-```yaml
-prettier-vscode:
-  manager: code
-  type: extension
-  extension_id: esbenp.prettier-vscode
-  check_command: "code --list-extensions | grep -q esbenp.prettier-vscode"
-  description: "Code formatter"
-  documentation_url: "https://prettier.io/"
-  category: vscode-extension
-```
-
-Each tool entry requires:
-
-```yaml
-manager: Package manager to use (brew/uv/cargo/apt/code/manual/mas)
-type: Installation method specific to the manager
-check_command: Command to verify installation
-install_args: Additional installation arguments (optional)
-skip_update: Set to true to opt the tool out of `install.sh -u` updates (optional)
-extension_id: Required for VSCode extensions (manager: code)
-```
-
-### VSCode Extension Management
-
-The `code` package manager supports VSCode and compatible editors:
-
-```bash
-# Default: uses 'code' CLI
-make focus-vscode
-
-# For Cursor editor
-VSCODE_CLI=cursor make focus-vscode
-
-# For VSCodium
-VSCODE_CLI=vscodium make focus-vscode
-```
-
 ## Directory Structure
 
 ```shell
 .
-├── Brewfile        # Preferred personal bundle (generated from _configs)
-├── Brewfile.*      # Profile/OS variants (work, common, posix)
-├── install.sh      # Thin entrypoint for the manifest-driven installer
-├── Makefile        # Convenient targets for common operations
-├── _configs/       # Modular configuration files
-│   ├── shared/     # Cross-platform tools
-│   ├── host/       # Host-specific configurations
-│   └── focus/      # Development focus areas
-├── _macos/         # macOS system configuration
-│   ├── macos.sh    # macOS settings script
-│   └── *.yaml      # Settings profiles
-├── _test/          # Comprehensive test suite
-│   ├── install.bats     # Installation tests
-│   ├── macos.bats       # macOS tests
-│   ├── makefile.bats    # Makefile tests
-│   └── run_tests.sh     # Test runner
-└── */              # Stow directories for dotfiles
-    ├── aerospace/  # Tiling window manager
-    ├── git/        # Git configuration
-    ├── nvim/       # Neovim config
-    ├── tmux/       # Tmux config
-    ├── vscode/     # VSCode settings
-    ├── zsh/        # Zsh configuration
-    └── ...         # Other tool configs
+├── Brewfile         # macOS layer: casks, fonts, mas apps, formulae
+├── Brewfile.posix   # Linux (Homebrew on Linux) formulae
+├── bootstrap.sh     # Fresh-Mac bootstrap: brew + Brewfile + stow + mise
+├── stow.sh          # Stow entrypoint (all a work machine needs)
+├── Makefile         # install / stow / update / configure / test targets
+├── mise/            # Stow tree for ~/.config/mise/config.toml (CLI tools)
+├── _macos/          # macOS system configuration
+│   ├── macos.sh     # macOS settings script
+│   └── *.yaml       # Settings profiles (personal, work)
+├── _test/           # BATS suites, shellcheck, Lima smoke tests
+└── */               # Stow directories for dotfiles
+    ├── aerospace/   # Tiling window manager
+    ├── git/         # Git configuration
+    ├── nvim/        # Neovim config
+    ├── tmux/        # Tmux config
+    ├── zsh/         # Zsh configuration
+    └── ...          # Other tool configs
 ```
 
 ## Testing
 
-The repository includes a comprehensive test suite using BATS (Bash Automated Testing System):
+The repository includes a test suite using BATS (Bash Automated Testing System):
 
 ```bash
 # Install BATS (required for testing)
@@ -644,8 +422,8 @@ sudo apt-get install bats  # Ubuntu/Debian
 # Run all tests
 ./_test/run_tests.sh
 
-# Run tests with specific filter
-cd _test && bats install.bats --filter "install_tool"
+# Run a single suite
+bats _test/makefile.bats
 ```
 
 ### Local Git hooks
@@ -668,12 +446,9 @@ gh workflow run test.yml
 
 ### Ubuntu 24.04 Lima smoke test (non-mac/POSIX path)
 
-This repository now includes a Lima-based Ubuntu 24.04 smoke test for non-mac flows.
-It validates Linux Homebrew setup and runs the POSIX install/test path without applying
-macOS settings.
-
-By default it uses the composed non-mac personal superset bundle at:
-`_configs/host/personal-posix.list`
+A Lima-based Ubuntu 24.04 smoke test validates the Linux path:
+Homebrew on Linux + `Brewfile.posix`, `stow.sh` in a fresh `$HOME`,
+and the global mise config.
 
 ```bash
 # Start/create test VM
@@ -692,50 +467,10 @@ make test-lima-destroy
 
 # Optional: make shellcheck failures blocking for this VM run
 STRICT_SHELLCHECK=true make test-lima-run
-
-# Optional: override the config set for a run
-POSIX_CONFIG_FILES="shared/shell shared/git focus/kubernetes" make test-lima-run
 ```
 
-The test suite includes:
-
-- Unit tests for all utility functions
-- Integration tests for package manager detection
-- Installation tests for each package manager type
-- macOS configuration tests with defaults mocking
-- Mocking framework to simulate external commands
-- 65+ comprehensive tests covering all major functionality
-
-### Handling `errexit` in Shell Scripts
-
-The `install.sh` script uses `set -euo pipefail` for strict error handling, which is a best practice for production scripts. However, this can cause issues in certain scenarios:
-
-1. **Testing**: When functions are sourced in test environments, commands that normally fail (like checking for non-existent commands) will cause the entire function to exit.
-
-2. **Information Gathering**: Functions that check system state need to handle failures gracefully without exiting.
-
-The script handles this by temporarily disabling `errexit` in functions that need to tolerate failures:
-
-```bash
-get_available_managers() {
-  # Save current errexit setting and disable it
-  local old_errexit
-  old_errexit=$(set +o | grep errexit)
-  set +e
-
-  # ... function body that may have failing commands ...
-
-  # Restore errexit setting before returning
-  eval "$old_errexit"
-  return 0
-}
-```
-
-This pattern ensures:
-
-- The function can complete even if some commands fail
-- The original shell options are preserved
-- The script maintains strict error handling elsewhere
+See [_test/README.md](_test/README.md) for suite structure and the
+mocking framework.
 
 ## Inspiration
 

@@ -1,0 +1,56 @@
+# Global mise configuration (stowed from n-dotfiles/mise/)
+#
+# Single source of truth for CLI tools and language runtimes on every
+# machine. Cross-platform: the same list installs on macOS and Linux.
+# macOS-only concerns (casks, fonts, Mac App Store apps) live in the
+# Brewfile instead.
+#
+# AI CLIs (claude, codex, opencode, copilot) are deliberately absent:
+# they self-update via their own native installers, so managing them
+# here would fight the updater. See README.md.
+#
+# Apply with: mise install
+# Update with: mise upgrade
+
+[tools]
+# Runtimes
+node = "lts"
+
+# Shell and dev workflow
+atuin = "latest"
+direnv = "latest"
+fd = "latest"
+gh = "latest"
+gitleaks = "latest"
+jq = "latest"
+lazygit = "latest"
+lefthook = "latest"
+ripgrep = "latest"
+starship = "latest"
+yq = "latest"
+bun = "latest"
+"github:mufeedvh/code2prompt" = "latest"
+
+# Python tooling
+ruff = "latest"
+
+# Kubernetes
+helm = "latest"
+k9s = "latest"
+kind = "latest"
+kubectl = "latest"
+kubectx = "latest"
+kubens = "latest"
+"github:vladimirvivien/ktop" = "latest"
+cilium-cli = "latest"
+"github:cilium/hubble" = "latest"
+argocd = "latest"
+
+# Infrastructure as code
+terraform = "latest"
+terragrunt = "latest"
+tflint = "latest"
+
+# Containers and security
+lazydocker = "latest"
+trivy = "latest"

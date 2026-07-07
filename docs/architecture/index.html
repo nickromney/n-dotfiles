@@ -14,27 +14,22 @@
         <p class="max-w-3xl text-sm text-slate-600">
           These documents map the main modules, interfaces, seams, and adapters in the repository.
           They use the same architecture vocabulary as the review reports: module, interface,
-          implementation, depth, seam, adapter, leverage, and locality.
+          implementation, depth, seam, adapter, leverage, and locality. Since July 2026 the setup
+          is three declarative layers (brew bundle, stow, mise install) with thin orchestration.
         </p>
       </header>
 
       <section class="grid gap-4 md:grid-cols-2">
+        <a class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm hover:border-slate-400" href="declarative-layers.html">
+          <p class="text-xs uppercase tracking-wider text-slate-500">Core model</p>
+          <h2 class="mt-2 text-lg font-semibold">Three declarative layers</h2>
+          <p class="mt-2 text-sm text-slate-600">How Brewfile, stow trees, and the global mise config divide machine state, and why AI CLIs stay unmanaged.</p>
+        </a>
+
         <a class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm hover:border-slate-400" href="makefile-entrypoints.html">
           <p class="text-xs uppercase tracking-wider text-slate-500">Entrypoints</p>
-          <h2 class="mt-2 text-lg font-semibold">Makefile profile and action router</h2>
-          <p class="mt-2 text-sm text-slate-600">How profile, action, and focus targets select the next module.</p>
-        </a>
-
-        <a class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm hover:border-slate-400" href="config-manifest-pipeline.html">
-          <p class="text-xs uppercase tracking-wider text-slate-500">Catalog</p>
-          <h2 class="mt-2 text-lg font-semibold">Configuration bundles to install manifests</h2>
-          <p class="mt-2 text-sm text-slate-600">How YAML bundles become Brewfile, arkade.tsv, and metadata.json.</p>
-        </a>
-
-        <a class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm hover:border-slate-400" href="install-update-execution.html">
-          <p class="text-xs uppercase tracking-wider text-slate-500">Execution</p>
-          <h2 class="mt-2 text-lg font-semibold">Install and update engine</h2>
-          <p class="mt-2 text-sm text-slate-600">How install.sh executes manager-specific adapters from one manifest interface.</p>
+          <h2 class="mt-2 text-lg font-semibold">Entrypoints and orchestration</h2>
+          <p class="mt-2 text-sm text-slate-600">How bootstrap.sh, stow.sh, setup-personal-mac.sh, and the Makefile sequence the layers.</p>
         </a>
 
         <a class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm hover:border-slate-400" href="homebrew-update-tap-trust.html">

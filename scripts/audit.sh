@@ -10,13 +10,12 @@ Usage: scripts/audit.sh [options]
 Run the installed-tools audit and write a timestamped report under `_audit/installed/`.
 
 Options:
-  -C, --config-dir <path>  Config directory to scan (default: _configs)
   -h, --help               Show this help message
   -o, --out-base <path>    Base directory for audit output
 
 Examples:
   scripts/audit.sh
-  scripts/audit.sh --config-dir _configs --out-base /tmp/n-dotfiles-audit
+  scripts/audit.sh --out-base /tmp/n-dotfiles-audit
 EOF
 
   exit "$exit_code"

@@ -341,8 +341,8 @@ EOF
 # Common Tests (both bash and zsh)
 # ============================================================================
 
-@test "both configs: add arkade bin to PATH before Homebrew path" {
-  mkdir -p "$HOME/.arkade/bin"
+@test "both configs: add mise shims to PATH before Homebrew path" {
+  mkdir -p "$HOME/.local/share/mise/shims"
 
   # Test bash
   result=$(bash -c "
@@ -350,12 +350,12 @@ EOF
     source $DOTFILES_DIR/bash/.bashrc 2>/dev/null
     echo \$PATH
   ")
-  [[ "$result" == *".arkade/bin"* ]]
-  bash_arkade_index=$(echo "$result" | tr ':' '\n' | nl -ba | awk '$2 ~ /\.arkade\/bin$/ {print $1; exit}')
+  [[ "$result" == *"mise/shims"* ]]
+  bash_shims_index=$(echo "$result" | tr ':' '\n' | nl -ba | awk '$2 ~ /mise\/shims$/ {print $1; exit}')
   bash_brew_index=$(echo "$result" | tr ':' '\n' | nl -ba | awk '$2 == "/opt/homebrew/bin" {print $1; exit}')
-  [ -n "$bash_arkade_index" ]
+  [ -n "$bash_shims_index" ]
   [ -n "$bash_brew_index" ]
-  [ "$bash_arkade_index" -lt "$bash_brew_index" ]
+  [ "$bash_shims_index" -lt "$bash_brew_index" ]
 
   # Test zsh
   result=$(zsh -c "
@@ -363,12 +363,12 @@ EOF
     source $DOTFILES_DIR/zsh/.zshrc 2>/dev/null
     echo \$PATH
   ")
-  [[ "$result" == *".arkade/bin"* ]]
-  zsh_arkade_index=$(echo "$result" | tr ':' '\n' | nl -ba | awk '$2 ~ /\.arkade\/bin$/ {print $1; exit}')
+  [[ "$result" == *"mise/shims"* ]]
+  zsh_shims_index=$(echo "$result" | tr ':' '\n' | nl -ba | awk '$2 ~ /mise\/shims$/ {print $1; exit}')
   zsh_brew_index=$(echo "$result" | tr ':' '\n' | nl -ba | awk '$2 == "/opt/homebrew/bin" {print $1; exit}')
-  [ -n "$zsh_arkade_index" ]
+  [ -n "$zsh_shims_index" ]
   [ -n "$zsh_brew_index" ]
-  [ "$zsh_arkade_index" -lt "$zsh_brew_index" ]
+  [ "$zsh_shims_index" -lt "$zsh_brew_index" ]
 }
 
 @test "both configs: set EDITOR to nvim" {

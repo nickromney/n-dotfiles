@@ -32,7 +32,7 @@ flowchart TB
   Runner --> Shellcheck[_test/shellcheck.sh]
   Bats --> Helpers[_test/helpers/mocks.bash]
   Bats --> Makefile[_test/makefile.bats]
-  Bats --> Install[_test/install.bats]
+  Bats --> Bootstrap[_test/bootstrap.bats]
   Bats --> Macos[_test/macos.bats]
   Bats --> Contracts[_test/cli-contracts.bats]
   Smoke[_test/lima/run-posix-smoke.sh] --> Linux[Linuxbrew and POSIX path]
@@ -42,12 +42,12 @@ flowchart TB
       <section class="grid gap-4 lg:grid-cols-3">
         <article class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <h2 class="text-lg font-semibold">Public interface tests</h2>
-          <p class="mt-2 text-sm text-slate-600">Makefile, install.sh, setup scripts, and generator scripts are tested through their command interface and output contracts.</p>
+          <p class="mt-2 text-sm text-slate-600">Makefile, bootstrap.sh, stow.sh, and the setup scripts are tested through their command interface and output contracts.</p>
         </article>
 
         <article class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <h2 class="text-lg font-semibold">Mock adapters</h2>
-          <p class="mt-2 text-sm text-slate-600">Mocks replace external managers at the process seam: brew, arkade, mas, cargo, code, mise, yq, defaults, and stow.</p>
+          <p class="mt-2 text-sm text-slate-600">Mocks replace external commands at the process seam: brew, mise, mas, stow, defaults, uname, and op.</p>
         </article>
 
         <article class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">

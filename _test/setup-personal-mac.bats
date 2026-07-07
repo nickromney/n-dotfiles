@@ -11,18 +11,10 @@ setup() {
   TEST_REPO="$(mktemp -d)"
   export CALLS_DIR="$TEST_REPO/.calls"
 
-  mkdir -p "$TEST_REPO/scripts" "$TEST_REPO/_configs/host" "$TEST_REPO/_macos" "$CALLS_DIR"
+  mkdir -p "$TEST_REPO/_macos" "$CALLS_DIR"
 
   cp "$REPO_ROOT/setup-personal-mac.sh" "$TEST_REPO/setup-personal-mac.sh"
-  cp "$REPO_ROOT/scripts/setup-mac-lib.sh" "$TEST_REPO/scripts/setup-mac-lib.sh"
   chmod +x "$TEST_REPO/setup-personal-mac.sh"
-
-  cat >"$TEST_REPO/install.sh" <<'EOF'
-#!/usr/bin/env bash
-echo "CONFIG_FILES=${CONFIG_FILES-} ARGS=$*" >>"$CALLS_DIR/install.calls"
-exit 0
-EOF
-  chmod +x "$TEST_REPO/install.sh"
 
   cat >"$TEST_REPO/bootstrap.sh" <<'EOF'
 #!/usr/bin/env bash
@@ -45,23 +37,12 @@ exit 0
 EOF
   chmod +x "$TEST_REPO/setup-ssh-from-1password.sh"
 
-  cat >"$TEST_REPO/_configs/host/personal.yaml" <<'EOF'
-tools: {}
-EOF
-
-  cat >"$TEST_REPO/_configs/host/manual-check.yaml" <<'EOF'
-tools: {}
-EOF
-
   cat >"$TEST_REPO/_macos/personal.yaml" <<'EOF'
 finder:
   show_hidden_files: true
 EOF
 
   mock_command "uname" 0 "Darwin"
-  mock_command "brew" 0 ""
-  mock_command "yq" 0 ""
-  mock_command "stow" 0 ""
   mock_command "op" 0 ""
 
   export PATH="$MOCK_BIN_DIR:/usr/bin:/bin"
@@ -73,20 +54,36 @@ teardown() {
   rm -rf "$TEST_REPO"
 }
 
-@test "setup-personal-mac: dry-run forwards no-input to SSH setup" {
-  run ./setup-personal-mac.sh --dry-run --no-input --skip-vscode
+@test "setup-personal-mac: help output includes examples" {
+  run ./setup-personal-mac.sh --help
 
   [ "$status" -eq 0 ]
-  grep -q 'CONFIG_FILES=host/manual-check ARGS=-d' "$CALLS_DIR/install.calls"
-  grep -q -- '--profile personal --dry-run --no-input' "$CALLS_DIR/ssh.calls"
-  grep -q -- '--dry-run --no-input _macos/personal.yaml' "$CALLS_DIR/macos.calls"
+  [[ "$output" == *"Usage:"* ]]
+  [[ "$output" == *"Examples:"* ]]
+  [[ "$output" == *"--no-input"* ]]
 }
 
-@test "setup-personal-mac: skip flags suppress manual-check and SSH steps" {
-  run ./setup-personal-mac.sh --dry-run --skip-manual-check --skip-ssh --skip-vscode
+@test "setup-personal-mac: dry-run forwards flags to bootstrap, macOS, and SSH steps" {
+  run ./setup-personal-mac.sh --dry-run --no-input
 
   [ "$status" -eq 0 ]
-  run grep -q 'CONFIG_FILES=host/manual-check' "$CALLS_DIR/install.calls"
-  [ "$status" -ne 0 ]
+  grep -q -- '--dry-run --no-input' "$CALLS_DIR/bootstrap.calls"
+  grep -q -- '--dry-run --no-input personal.yaml' "$CALLS_DIR/macos.calls"
+  grep -q -- '--profile personal --dry-run --no-input' "$CALLS_DIR/ssh.calls"
+}
+
+@test "setup-personal-mac: skip flags suppress bootstrap, macOS, and SSH steps" {
+  run ./setup-personal-mac.sh --dry-run --skip-bootstrap --skip-macos --skip-ssh
+
+  [ "$status" -eq 0 ]
+  [ ! -f "$CALLS_DIR/bootstrap.calls" ]
+  [ ! -f "$CALLS_DIR/macos.calls" ]
   [ ! -f "$CALLS_DIR/ssh.calls" ]
+}
+
+@test "setup-personal-mac: unknown option fails with usage" {
+  run ./setup-personal-mac.sh --skip-vscode
+
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Unknown option: --skip-vscode"* ]]
 }

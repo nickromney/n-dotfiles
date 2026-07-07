@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Declarative layers - n-dotfiles</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+    </script>
+  </head>
+  <body class="bg-stone-50 text-slate-900 font-sans">
+    <main class="mx-auto max-w-6xl px-6 py-10 space-y-8">
+      <header class="space-y-4">
+        <a class="text-sm text-slate-500 hover:text-slate-900" href="index.html">Architecture maps</a>
+        <div>
+          <p class="text-xs uppercase tracking-wider text-slate-500">Core model</p>
+          <h1 class="text-3xl font-semibold">Three declarative layers</h1>
+          <p class="mt-2 max-w-3xl text-sm text-slate-600">
+            Machine setup is three hand-maintained sources of truth, each applied by a tool this
+            repository does not implement. The repo scripts only sequence them; there is no
+            custom install engine.
+          </p>
+        </div>
+      </header>
+
+      <section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 class="text-xl font-semibold">Layers and owners</h2>
+        <pre class="mermaid mt-4">
+flowchart LR
+  Brewfile[Brewfile / Brewfile.posix] --> BrewBundle[brew bundle]
+  Trees[Stow trees: zsh/, git/, nvim/, mise/, ...] --> StowSh[./stow.sh]
+  StowSh --> MiseConfig[~/.config/mise/config.toml]
+  MiseConfig --> MiseInstall[mise install]
+  BrewBundle --> Machine[(machine state)]
+  StowSh --> Machine
+  MiseInstall --> Machine
+        </pre>
+        <p class="mt-3 text-sm text-slate-600">
+          Ordering matters once: the global mise config reaches <code>$HOME</code> through the
+          <code>mise/</code> Stow tree, so stow must run before <code>mise install</code> on a fresh machine.
+          <code>bootstrap.sh</code> encodes that sequence.
+        </p>
+      </section>
+
+      <section class="grid gap-4 lg:grid-cols-3">
+        <article class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 class="text-lg font-semibold">brew bundle</h2>
+          <p class="mt-2 text-sm text-slate-600">Owns macOS-only concerns: casks, fonts, Mac App Store apps, and formulae that are better from Homebrew. <code>Brewfile.posix</code> covers Homebrew on Linux.</p>
+          <p class="mt-3 font-mono text-sm">Brewfile</p>
+          <p class="font-mono text-sm">Brewfile.posix</p>
+        </article>
+
+        <article class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 class="text-lg font-semibold">stow</h2>
+          <p class="mt-2 text-sm text-slate-600">Symlinks dotfile packages into <code>$HOME</code>. <code>STOW_DIRS</code> in <code>stow.sh</code> is the package registry; a stow-only machine (e.g. work) needs nothing else.</p>
+          <p class="mt-3 font-mono text-sm">stow.sh</p>
+        </article>
+
+        <article class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 class="text-lg font-semibold">mise install</h2>
+          <p class="mt-2 text-sm text-slate-600">Owns cross-platform CLI tools and language runtimes. One TOML file installs the same tools on macOS and Linux, via registry short names or <code>github:owner/repo</code> backends.</p>
+          <p class="mt-3 font-mono text-sm">mise/.config/mise/config.toml</p>
+        </article>
+      </section>
+
+      <section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 class="text-xl font-semibold">Deliberate exclusions</h2>
+        <div class="mt-4 grid gap-4 md:grid-cols-2">
+          <p class="text-sm text-slate-600"><strong>Unmanaged tools.</strong> AI CLIs (claude, codex, opencode, copilot) self-update through their native installers. Adding them to a layer would fight the updater, so their absence is a decision, not a gap.</p>
+          <p class="text-sm text-slate-600"><strong>No generators.</strong> The Brewfiles and the mise config are hand-maintained. The previous YAML catalog, manifest generators, and 2,400-line install library were deleted in July 2026; <code>git log</code> has the history.</p>
+        </div>
+      </section>
+
+      <section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 class="text-xl font-semibold">Drift detection</h2>
+        <p class="mt-3 text-sm text-slate-600">
+          <code>make audit</code> (<code>scripts/audit-installed.sh</code>) reports Brewfile entries missing from
+          the machine, installed leaves/casks missing from the Brewfile, and mise tool status —
+          keeping the declared and actual state honest in both directions.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

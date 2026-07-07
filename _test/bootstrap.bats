@@ -31,7 +31,7 @@ teardown() {
     HOME="$TEST_HOME" \
     OSTYPE="darwin22" \
     PATH="$MOCK_BIN_DIR:/usr/bin:/bin" \
-    "$BOOTSTRAP_SCRIPT" --dry-run --no-input --skip-1password --skip-brewfile --skip-mise
+    "$BOOTSTRAP_SCRIPT" --dry-run --no-input --skip-1password --skip-brewfile --skip-stow --skip-mise
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"Running in dry-run mode"* ]]
@@ -45,7 +45,7 @@ teardown() {
     HOME="$TEST_HOME" \
     OSTYPE="darwin22" \
     PATH="$MOCK_BIN_DIR:/usr/bin:/bin" \
-    "$BOOTSTRAP_SCRIPT" --dry-run --install-1password --skip-brewfile --skip-mise
+    "$BOOTSTRAP_SCRIPT" --dry-run --install-1password --skip-brewfile --skip-stow --skip-mise
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"brew install --cask 1password"* ]]

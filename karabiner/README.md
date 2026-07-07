@@ -9,7 +9,7 @@ Configuration for [Karabiner-Elements](https://karabiner-elements.pqrs.org/), a 
 - **Personal Mac**: Uses [SuperKey](https://superkey.app/) instead (CapsLock → Hyper key)
 - **Work Mac**: May use Karabiner-Elements if SuperKey cannot be installed
 - **NOT in STOW_DIRS**: This config is intentionally excluded from auto-stowing
-- **NOT in install configs**: Commented out in `_configs/host/common.yaml`
+- **NOT in the Brewfile**: install manually with `brew install --cask karabiner-elements` if needed
 
 ## Files
 

@@ -1,14 +1,48 @@
+# Git hooks via lefthook (https://lefthook.dev/)
+#
+# Install into .git/hooks: lefthook install   (or: make hooks)
+# Run manually:            lefthook run pre-commit --all-files
+#
+# Fast staged-file checks run at commit time; the full local CI gate
+# (lint + BATS suites) runs at push time.
+#
+# Skip for an intentional one-off:
+#   LEFTHOOK=0 git commit -m "message"
+#   git push --no-verify
+
 pre-commit:
   parallel: true
-  commands:
-    shellcheck:
+  jobs:
+    - name: shellcheck
       glob: "*.{sh,bash,bats}"
       run: scripts/hooks/check-staged-shell.sh --execute {staged_files}
-    yamllint:
+
+    - name: yamllint
       glob: "*.{yaml,yml}"
       run: scripts/hooks/check-staged-yaml.sh --execute {staged_files}
 
+    - name: markdownlint
+      glob: "*.md"
+      run: markdownlint-cli2 --fix {staged_files}
+      stage_fixed: true
+
+    - name: gitleaks
+      run: gitleaks git --pre-commit --staged --redact --verbose
+
+    - name: whitespace and conflict markers
+      run: git diff --cached --check
+
+    - name: block large files (>1MB)
+      run: |
+        large=$(git diff --cached --name-only --diff-filter=ACMR -z |
+          xargs -0 -I{} find "{}" -size +1000k 2>/dev/null)
+        if [ -n "$large" ]; then
+          echo "Files over 1MB staged for commit:"
+          echo "$large"
+          exit 1
+        fi
+
 pre-push:
-  commands:
-    local-ci:
+  jobs:
+    - name: local-ci
       run: scripts/hooks/run-local-ci.sh --execute

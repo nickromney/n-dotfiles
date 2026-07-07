@@ -47,8 +47,7 @@ fi
 paths=(
   "$HOME/.local/bin"
   "$HOME/.cargo/bin"
-  "$HOME/.tfenv/bin"
-  "$HOME/.arkade/bin"
+  "$HOME/.local/share/mise/shims"
   "$HOME/.lmstudio/bin"
   "$HOME/.omlx/bin"
   "$HOME/.ollama/bin"

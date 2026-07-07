@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Checks installed slicer version against the latest release in the registry.
-# Requires: crane (arkade get crane), slicer
+# Requires: crane (mise use -g crane@latest), slicer
 
 set -euo pipefail
 
@@ -30,7 +30,7 @@ elif [[ $# -gt 0 ]]; then
 fi
 
 if ! command -v crane >/dev/null 2>&1; then
-  echo "crane not found. Install with: arkade get crane" >&2
+  echo "crane not found. Install with: mise use -g crane@latest" >&2
   exit 1
 fi
 

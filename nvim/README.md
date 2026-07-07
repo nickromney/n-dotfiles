@@ -39,7 +39,7 @@ make personal stow
 or
 
 ```bash
-./install.sh -s
+./stow.sh nvim
 ```
 
 ## Structure

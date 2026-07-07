@@ -1,4 +1,0 @@
-# Ruby development tools
-# Note: Ruby versions are managed by mise (see shared/shell.yaml)
-# Use: mise use ruby@3.3
-tools: {}

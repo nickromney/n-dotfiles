@@ -46,8 +46,7 @@
           <div class="mt-4 grid gap-2 font-mono text-sm text-slate-700 sm:grid-cols-2">
             <div>scripts/brew-with-policy.sh</div>
             <div>Makefile</div>
-            <div>scripts/install-lib.sh</div>
-            <div>_test/makefile.bats, _test/install.bats, _test/cli-contracts.bats</div>
+            <div>_test/makefile.bats, _test/cli-contracts.bats</div>
           </div>
           <div class="mt-6 grid gap-4 lg:grid-cols-2">
             <div class="rounded-lg border border-slate-200 p-4">
@@ -67,7 +66,6 @@ flowchart TB
               <pre class="mermaid">
 flowchart TB
   MF[Makefile callers] --> A[brew-with-policy module]
-  IL[install-lib callers] --> A
   A --> BU[brew update]
   A --> BG[brew bundle]
   classDef deep fill:#0f172a,stroke:#0f172a,color:#fff;
@@ -91,9 +89,7 @@ flowchart TB
           </div>
           <div class="mt-4 grid gap-2 font-mono text-sm text-slate-700 sm:grid-cols-2">
             <div>Makefile</div>
-            <div>scripts/install-lib.sh</div>
             <div>_test/makefile.bats</div>
-            <div>_test/install.bats</div>
           </div>
           <div class="mt-6 grid gap-4 lg:grid-cols-2">
             <div class="rounded-lg border border-slate-200 p-4">
@@ -110,7 +106,7 @@ flowchart TB
             <div class="rounded-lg border border-slate-200 p-4">
               <p class="mb-3 text-xs uppercase tracking-wider text-slate-500">After</p>
               <div class="space-y-3 text-sm">
-                <div class="grid grid-cols-2 gap-3"><div class="rounded border border-slate-300 p-3">make brewfile-install</div><div class="rounded border border-slate-300 p-3">run_brew_install</div></div>
+                <div class="grid grid-cols-2 gap-3"><div class="rounded border border-slate-300 p-3">make brewfile-install</div><div class="rounded border border-slate-300 p-3">make install</div></div>
                 <div class="text-center arrow">↓ shared seam</div>
                 <div class="deep rounded p-4 text-center">brew-with-policy module</div>
                 <div class="text-center arrow">↓</div>
@@ -176,41 +172,6 @@ flowchart TB
           </div>
         </article>
 
-        <article id="config-brew-update-plan" class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <div class="flex flex-wrap items-center gap-2">
-            <h2 class="mr-auto text-xl font-semibold">Config-driven Homebrew update plan</h2>
-            <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-800">Strong</span>
-            <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">in-process</span>
-            <span class="rounded-full bg-indigo-100 px-3 py-1 text-xs font-medium text-indigo-800">Implemented</span>
-          </div>
-          <div class="mt-4 grid gap-2 font-mono text-sm text-slate-700 sm:grid-cols-2">
-            <div>scripts/install-lib.sh</div>
-            <div>_test/install.bats</div>
-            <div>_configs/*.yaml</div>
-          </div>
-          <div class="mt-6 grid gap-4 lg:grid-cols-2">
-            <div class="rounded-lg border border-slate-200 p-4">
-              <p class="mb-3 text-xs uppercase tracking-wider text-slate-500">Before</p>
-              <div class="mass">
-                <div class="face h-28 rounded p-2 text-xs">interface: all entries query brew</div>
-                <div class="impl h-32 rounded p-2 text-xs">implementation: classify tap, skip_update, package, cask, inventory, outdated, execute</div>
-              </div>
-            </div>
-            <div class="rounded-lg border border-slate-200 p-4">
-              <p class="mb-3 text-xs uppercase tracking-wider text-slate-500">After</p>
-              <div class="mass">
-                <div class="face h-12 rounded p-2 text-xs">interface: update plan</div>
-                <div class="impl h-40 rounded p-2 text-xs deep">implementation: classify Asset Catalog entries, probe only candidates, execute selected upgrades</div>
-              </div>
-            </div>
-          </div>
-          <div class="mt-5 grid gap-4 md:grid-cols-3">
-            <p><strong>Problem.</strong> Config-only entries forced callers through inventory probes, weakening locality around Asset Catalog semantics.</p>
-            <p><strong>Solution.</strong> Prepare an update plan first; execute only formula and cask candidates that need Homebrew state.</p>
-            <ul class="list-disc pl-5 text-sm text-slate-700"><li>locality: classification first</li><li>leverage: fewer Homebrew probes</li><li>tests hit public update seam</li></ul>
-          </div>
-        </article>
-
         <article id="remaining-risk" class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <div class="flex flex-wrap items-center gap-2">
             <h2 class="mr-auto text-xl font-semibold">Remaining raw Homebrew read calls</h2>
@@ -218,36 +179,11 @@ flowchart TB
             <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">local-substitutable</span>
           </div>
           <div class="mt-4 grid gap-2 font-mono text-sm text-slate-700 sm:grid-cols-2">
-            <div>scripts/install-lib.sh: brew list/outdated</div>
-            <div>scripts/audit-installed.sh: brew list</div>
+            <div>scripts/audit-installed.sh: brew leaves, brew list --cask, brew bundle check</div>
             <div>_test/debug/check-brew.sh</div>
           </div>
-          <div class="mt-6 grid gap-4 lg:grid-cols-2">
-            <div class="rounded-lg border border-slate-200 p-4">
-              <p class="mb-3 text-xs uppercase tracking-wider text-slate-500">Current</p>
-              <pre class="mermaid">
-flowchart LR
-  P[update plan] --> L[brew list]
-  P --> O[brew outdated]
-  A[audit module] --> R[brew list versions]
-  D[debug script] --> V[brew update --verbose]
-              </pre>
-            </div>
-            <div class="rounded-lg border border-slate-200 p-4">
-              <p class="mb-3 text-xs uppercase tracking-wider text-slate-500">Possible later</p>
-              <pre class="mermaid">
-flowchart LR
-  P[update plan] --> I[Homebrew inventory module]
-  A[audit module] --> I
-  D[debug script] --> X[debug-only raw command]
-  I --> L[brew read commands]
-  classDef deep fill:#0f172a,stroke:#0f172a,color:#fff;
-  class I deep
-              </pre>
-            </div>
-          </div>
           <div class="mt-5 grid gap-4 md:grid-cols-3">
-            <p><strong>Problem.</strong> Read-only Homebrew calls are still spread across modules, but the update/tap-trust behavior does not currently leak through them.</p>
+            <p><strong>Problem.</strong> Read-only Homebrew calls sit in the audit and debug modules, but the update/tap-trust behavior does not leak through them.</p>
             <p><strong>Solution.</strong> Defer a Homebrew inventory module until a second caller needs the same read semantics.</p>
             <ul class="list-disc pl-5 text-sm text-slate-700"><li>locality: not yet worth it</li><li>leverage: currently low</li><li>one adapter is hypothetical</li></ul>
           </div>
@@ -257,7 +193,7 @@ flowchart LR
       <section id="top-recommendation" class="rounded-lg border border-emerald-200 bg-emerald-50 p-6">
         <p class="text-xs uppercase tracking-wider text-emerald-700">Top recommendation</p>
         <h2 class="mt-1 text-2xl font-semibold">Stop the loop for this path.</h2>
-        <p class="mt-3 text-slate-700">The productive change was <a class="font-medium text-emerald-800 underline" href="#brew-bundle-policy">Homebrew bundle policy coverage</a>. After that, the update/tap-trust path has one policy adapter, one Makefile update module, and one config-driven update plan. Remaining raw Homebrew reads are speculative until a real second adapter appears.</p>
+        <p class="mt-3 text-slate-700">The productive change was <a class="font-medium text-emerald-800 underline" href="#brew-bundle-policy">Homebrew bundle policy coverage</a>. After that, the update/tap-trust path has one policy adapter (<code>scripts/brew-with-policy.sh</code>) and one Makefile update module (<code>scripts/brew-update.sh</code>). The July 2026 restructure removed the config-driven update plan along with the YAML installer; the policy and update adapters survived unchanged. Remaining raw Homebrew reads are speculative until a real second adapter appears.</p>
       </section>
     </main>
   </body>

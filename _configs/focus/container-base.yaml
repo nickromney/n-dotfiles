@@ -1,9 +1,0 @@
-# Base tools for any development container
-tools:
-  direnv:
-    manager: arkade
-    type: get
-    check_command: command -v direnv
-    description: "Load/unload environment variables based on directory"
-    documentation_url: "https://direnv.net/"
-    category: development
