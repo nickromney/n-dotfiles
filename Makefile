@@ -393,6 +393,10 @@ lint: ## Run linters (shellcheck, markdownlint)
 	@find . -name "*.md" -not -path "./_test/*" -not -path "./.git/*" -exec markdownlint {} + 2>/dev/null || echo "  markdownlint not available"
 	@echo "$(GREEN)✓ Linting complete$(NC)"
 
+.PHONY: hooks
+hooks: ## Install lefthook git hooks
+	@lefthook install
+
 .PHONY: precommit
 precommit: ## Run all pre-commit hooks on all files
 	@echo "$(YELLOW)Running all pre-commit hooks...$(NC)"
