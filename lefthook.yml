@@ -1,0 +1,42 @@
+# Git hooks via lefthook (https://lefthook.dev/)
+#
+# Install into .git/hooks: lefthook install   (or: make hooks-install)
+# Run manually:            lefthook run pre-commit --all-files
+#
+# Fast staged-file checks run at commit time; the full shellcheck and
+# BATS suites run at push time.
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: shellcheck
+      glob: "*.{sh,bash}"
+      run: shellcheck --severity=warning {staged_files}
+
+    - name: markdownlint
+      glob: "*.md"
+      run: markdownlint-cli2 --fix {staged_files}
+      stage_fixed: true
+
+    - name: gitleaks
+      run: gitleaks git --pre-commit --staged --redact --verbose
+
+    - name: whitespace and conflict markers
+      run: git diff --cached --check
+
+    - name: block large files (>1MB)
+      run: |
+        large=$(git diff --cached --name-only --diff-filter=ACMR -z | xargs -0 -I{} find "{}" -size +1000k 2>/dev/null)
+        if [ -n "$large" ]; then
+          echo "Files over 1MB staged for commit:"
+          echo "$large"
+          exit 1
+        fi
+
+pre-push:
+  jobs:
+    - name: shellcheck suite
+      run: ./_test/shellcheck.sh
+
+    - name: bats suite
+      run: ./_test/run_tests.sh
