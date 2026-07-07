@@ -14,8 +14,8 @@ Configuration for [Claude Code](https://claude.com/claude-code), Anthropic's off
 # Using stow from repository root
 stow claude
 
-# Or using install.sh with stow flag
-./install.sh -s
+# Or using the stow entrypoint
+./stow.sh claude
 ```
 
 ## Settings

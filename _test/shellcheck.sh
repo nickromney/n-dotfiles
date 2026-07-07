@@ -64,7 +64,7 @@ check_file() {
 }
 
 # Check main scripts
-for script in bootstrap.sh install.sh setup-*.sh; do
+for script in bootstrap.sh stow.sh setup-*.sh; do
     if [[ -f "$script" ]]; then
         check_file "$script" "$script"
     fi

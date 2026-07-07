@@ -33,14 +33,11 @@ EOF
   local script
   scripts=(
     "bootstrap.sh"
-    "install.sh"
+    "stow.sh"
     "setup-personal-mac.sh"
-    "setup-work-mac.sh"
     "setup-ssh-from-1password.sh"
     "setup-gitconfig-from-1password.sh"
     "_macos/macos.sh"
-    "scripts/generate-brewfile.sh"
-    "scripts/generate-install-manifests.sh"
     "scripts/audit.sh"
     "scripts/audit-harness-guides.sh"
     "scripts/audit-installed.sh"
@@ -109,54 +106,21 @@ EOF
   [[ "$output" == *"Examples:"* ]]
 }
 
-@test "generate-brewfile: dry-run previews output without writing the file" {
-  if ! command -v yq >/dev/null 2>&1; then
-    skip "yq is required for manifest generation tests"
-  fi
-
-  cat >"$TEST_TMP_DIR/core.yaml" <<'EOF'
-tools:
-  jq:
-    manager: brew
-    type: package
-  ghostty:
-    manager: brew
-    type: cask
-EOF
-
-  run "$REPO_ROOT/scripts/generate-brewfile.sh" --dry-run --output-file "$TEST_TMP_DIR/Brewfile" --config "$TEST_TMP_DIR/core.yaml"
+@test "stow: list mode prints packages without touching the filesystem" {
+  run "$REPO_ROOT/stow.sh" --list
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"[dry-run] Would write $TEST_TMP_DIR/Brewfile"* ]]
-  [[ "$output" == *'brew "jq"'* ]]
-  [[ "$output" == *'cask "ghostty"'* ]]
-  [ ! -f "$TEST_TMP_DIR/Brewfile" ]
+  [[ "$output" == *"zsh"* ]]
+  [[ "$output" == *"git"* ]]
+  [[ "$output" == *"mise"* ]]
+  [[ "$output" != *"vscode"* ]]
 }
 
-@test "generate-install-manifests: dry-run previews all manifest files without writing them" {
-  if ! command -v yq >/dev/null 2>&1; then
-    skip "yq is required for manifest generation tests"
-  fi
+@test "stow: rejects unknown packages" {
+  run "$REPO_ROOT/stow.sh" --dry-run no-such-package
 
-  cat >"$TEST_TMP_DIR/core.yaml" <<'EOF'
-tools:
-  kubectl:
-    manager: arkade
-    type: get
-    install_args: ["--path", "/tmp/tools"]
-  jq:
-    manager: brew
-    type: package
-EOF
-
-  run "$REPO_ROOT/scripts/generate-install-manifests.sh" --dry-run --output-dir "$TEST_TMP_DIR/out" --config "$TEST_TMP_DIR/core.yaml"
-
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"[dry-run] Would generate install manifests in $TEST_TMP_DIR/out"* ]]
-  [[ "$output" == *"--- $TEST_TMP_DIR/out/Brewfile ---"* ]]
-  [[ "$output" == *"--- $TEST_TMP_DIR/out/arkade.tsv ---"* ]]
-  [[ "$output" == *"--- $TEST_TMP_DIR/out/metadata.json ---"* ]]
-  [ ! -d "$TEST_TMP_DIR/out" ]
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Unknown stow package: no-such-package"* ]]
 }
 
 @test "build-browser-tools: dry-run prints the planned build commands" {

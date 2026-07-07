@@ -1,14 +1,24 @@
 #!/usr/bin/env bash
-# Bootstrap script for fresh macOS installation.
-# This handles the chicken-and-egg problem of needing tools to install tools.
+# Bootstrap script for a fresh macOS installation.
+#
+# The whole setup is three declarative layers:
+#   1. brew bundle   — casks, fonts, Mac App Store apps, mac formulae (Brewfile)
+#   2. stow          — symlink dotfiles into $HOME (stow.sh)
+#   3. mise install  — CLI tools and runtimes (mise/.config/mise/config.toml)
+#
+# AI CLIs (claude, codex, opencode, copilot) are managed by their own
+# native installers, not by brew or mise. See README.md.
 
 set -euo pipefail
+
+BOOTSTRAP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 DRY_RUN="${DRY_RUN:-false}"
 NO_INPUT="${NO_INPUT:-false}"
 INSTALL_1PASSWORD=false
 SKIP_1PASSWORD=false
 SKIP_BREWFILE=false
+SKIP_STOW=false
 SKIP_MISE=false
 
 usage() {
@@ -17,7 +27,8 @@ usage() {
   cat <<EOF
 Usage: $0 [options]
 
-Bootstrap a fresh macOS host with Homebrew, required tooling, optional Brewfile packages, and mise runtimes.
+Bootstrap a fresh macOS host: Homebrew, Brewfile packages, stowed
+dotfiles, and mise-managed CLI tools and runtimes.
 
 Options:
   -d, --dry-run           Show what would happen without making changes
@@ -25,6 +36,7 @@ Options:
       --install-1password Install 1Password without prompting
       --skip-1password    Skip 1Password installation
       --skip-brewfile     Skip applying ./Brewfile even if it exists
+      --skip-stow         Skip stowing dotfiles
       --skip-mise         Skip running mise install
   -h, --help              Show this help message
 
@@ -67,20 +79,18 @@ run_cmd() {
 print_next_steps() {
   echo
   echo "Next steps:"
-  echo "1. Run: make install              # Preferred install (Brewfile + mise + legacy bridge)"
-  echo "2. Run: make personal stow        # Stow configurations"
-  echo "3. Run: make personal configure   # Apply macOS settings"
-  echo "4. Run: make vscode install       # If using VSCode"
-  echo "5. Run: make neovim install       # If using Neovim"
+  echo "1. Restart your terminal to load new shell configurations"
+  echo "2. Run: make configure           # Apply macOS settings"
+  echo "3. Run: ./setup-ssh-from-1password.sh   # If using 1Password for SSH"
+  echo "4. Install AI CLIs via their native installers (see README.md)"
   echo
-  echo "Legacy fallback (deprecated):"
-  echo "  ./install.sh -d"
-  echo "  ./install.sh"
+  echo "Keep things up to date with: make update"
 }
 
 ensure_macos() {
   if [[ "$OSTYPE" != "darwin"* ]]; then
     error "This bootstrap script is designed for macOS only"
+    error "On Linux: brew bundle --file Brewfile.posix && ./stow.sh && mise install"
     exit 1
   fi
 }
@@ -114,36 +124,53 @@ install_homebrew_if_needed() {
   ensure_brew_on_path
 }
 
-install_essential_tools() {
-  info "Installing essential tools..."
-  run_cmd brew install yq
-  run_cmd brew install stow
-  run_cmd brew install mise
-}
-
 run_brewfile_if_needed() {
   if [[ "$SKIP_BREWFILE" == "true" ]]; then
     info "Skipping Brewfile installation"
+    # stow and mise are normally provided by the Brewfile
+    run_cmd brew install stow mise
     return 0
   fi
 
-  if [[ ! -f "./Brewfile" ]]; then
-    info "No Brewfile found, skipping Brewfile installation"
+  if [[ ! -f "$BOOTSTRAP_DIR/Brewfile" ]]; then
+    error "No Brewfile found at $BOOTSTRAP_DIR/Brewfile"
+    exit 1
+  fi
+
+  info "Installing Brewfile packages..."
+  run_cmd brew bundle --file "$BOOTSTRAP_DIR/Brewfile"
+}
+
+run_stow_if_needed() {
+  if [[ "$SKIP_STOW" == "true" ]]; then
+    info "Skipping stow"
     return 0
   fi
 
-  info "Installing Brewfile packages (preferred path)..."
-  run_cmd brew bundle --file ./Brewfile --no-lock
+  info "Stowing dotfiles..."
+  local -a stow_args=()
+  [[ "$DRY_RUN" == "true" ]] && stow_args+=("--dry-run")
+
+  if ! "$BOOTSTRAP_DIR/stow.sh" "${stow_args[@]}"; then
+    error "Stow reported conflicts. Existing real files are in the way."
+    error "Review them, then re-run './stow.sh' (or './stow.sh --adopt' to pull them into the repo — check 'git diff' afterwards)."
+    exit 1
+  fi
 }
 
 run_mise_if_needed() {
   if [[ "$SKIP_MISE" == "true" ]]; then
-    info "Skipping runtimes via mise"
+    info "Skipping tools and runtimes via mise"
     return 0
   fi
 
-  info "Installing runtimes via mise..."
-  run_cmd mise install
+  info "Installing CLI tools and runtimes via mise..."
+  if [[ "$DRY_RUN" == "true" ]]; then
+    echo "[dry-run] Would execute: mise install"
+    return 0
+  fi
+
+  mise install
 }
 
 should_install_1password() {
@@ -199,6 +226,10 @@ parse_args() {
         SKIP_BREWFILE=true
         shift
         ;;
+      --skip-stow)
+        SKIP_STOW=true
+        shift
+        ;;
       --skip-mise)
         SKIP_MISE=true
         shift
@@ -233,8 +264,8 @@ main() {
 
   install_homebrew_if_needed
   ensure_brew_on_path
-  install_essential_tools
   run_brewfile_if_needed
+  run_stow_if_needed
   run_mise_if_needed
   install_1password_if_requested
 

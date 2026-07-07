@@ -208,14 +208,13 @@ bindkey '^[[Z' reverse-menu-complete
 #
 # Early PATH bootstrap for tool initialization
 #
-# Some tools (e.g., starship via arkade) may live outside the default PATH.
+# Some tools (e.g., starship via mise) may live outside the default PATH.
 # Add common user-managed bins before tool init checks run.
 declare -a early_paths=(
   "$HOME/.local/bin"
   "$HOME/.cargo/bin"
-  "$HOME/.tfenv/bin"
   "$HOME/slicer-mac"
-  "$HOME/.arkade/bin"
+  "$HOME/.local/share/mise/shims"
   "$HOME/.lmstudio/bin"
   "$HOME/.omlx/bin"
   "$HOME/.ollama/bin"
@@ -348,9 +347,8 @@ fi
 declare -a paths=(
   "$HOME/.local/bin"
   "$HOME/.cargo/bin"
-  "$HOME/.tfenv/bin"
   "$HOME/slicer-mac"
-  "$HOME/.arkade/bin"
+  "$HOME/.local/share/mise/shims"
   "$HOME/.lmstudio/bin"
   "$HOME/.omlx/bin"
   "$HOME/.ollama/bin"

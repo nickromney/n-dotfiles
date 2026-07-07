@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DEFAULT_POSIX_CONFIG_LIST="_configs/host/personal-posix.list"
-
 resolve_repo_dir() {
   local repo_hint=${1:-}
 
@@ -21,30 +19,6 @@ resolve_repo_dir() {
   done
 
   return 1
-}
-
-load_posix_config_files() {
-  local list_file="${POSIX_CONFIG_LIST_FILE:-$DEFAULT_POSIX_CONFIG_LIST}"
-
-  if [[ -n "${POSIX_CONFIG_FILES:-}" ]]; then
-    echo "$POSIX_CONFIG_FILES"
-    return 0
-  fi
-
-  if [[ ! -f "$list_file" ]]; then
-    echo "ERROR: POSIX config list not found: $list_file"
-    exit 1
-  fi
-
-  local -a entries=()
-  mapfile -t entries < <(sed -e 's/#.*$//' -e '/^[[:space:]]*$/d' "$list_file")
-
-  if [[ ${#entries[@]} -eq 0 ]]; then
-    echo "ERROR: POSIX config list is empty: $list_file"
-    exit 1
-  fi
-
-  printf '%s\n' "${entries[@]}" | paste -sd' ' -
 }
 
 enable_linuxbrew() {
@@ -73,15 +47,10 @@ main() {
   enable_linuxbrew
 
   echo "Installing Linux test dependencies via Homebrew..."
-  brew install bats-core shellcheck stow yq
+  brew install bats-core shellcheck stow mise
 
-  local posix_config_files
-  posix_config_files=$(load_posix_config_files)
-  echo "Using POSIX config bundle: ${POSIX_CONFIG_LIST_FILE:-$DEFAULT_POSIX_CONFIG_LIST}"
-  echo "Resolved configs: $posix_config_files"
-
-  echo "Running non-mac install dry-run (POSIX configs only)..."
-  CONFIG_FILES="$posix_config_files" ./install.sh -d
+  echo "Validating Brewfile.posix parses via brew bundle list..."
+  brew bundle list --file Brewfile.posix >/dev/null
 
   echo "Running stow dry-run in isolated HOME (fresh-home assertion)..."
   local fresh_home stow_log
@@ -89,20 +58,27 @@ main() {
   stow_log="$(mktemp)"
   trap 'rm -rf "$fresh_home" "$stow_log"' RETURN
 
-  if ! HOME="$fresh_home" XDG_CONFIG_HOME="$fresh_home/.config" CONFIG_FILES="" ./install.sh -d -s >"$stow_log" 2>&1; then
+  if ! HOME="$fresh_home" XDG_CONFIG_HOME="$fresh_home/.config" ./stow.sh --dry-run >"$stow_log" 2>&1; then
     cat "$stow_log"
     echo "ERROR: stow dry-run failed in isolated HOME."
     exit 1
   fi
 
   cat "$stow_log"
-  if grep -Eq '× Error stowing|would cause conflicts|All operations aborted\.' "$stow_log"; then
+  if grep -Eq 'Failed to stow|would cause conflicts|All operations aborted\.' "$stow_log"; then
     echo "ERROR: stow dry-run reported conflicts in isolated HOME."
     exit 1
   fi
 
-  echo "Running install.sh BATS suite..."
-  ./_test/run_install_tests.sh
+  echo "Validating global mise config parses in isolated HOME..."
+  HOME="$fresh_home" XDG_CONFIG_HOME="$fresh_home/.config" ./stow.sh mise >/dev/null
+  HOME="$fresh_home" XDG_CONFIG_HOME="$fresh_home/.config" mise ls >/dev/null
+
+  echo "Running CLI contract BATS suite..."
+  bats _test/cli-contracts.bats
+
+  echo "Running Makefile BATS suite..."
+  bats _test/makefile.bats
 
   echo "Running shellcheck suite..."
   if [[ "${STRICT_SHELLCHECK:-false}" == "true" ]]; then
