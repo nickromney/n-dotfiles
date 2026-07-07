@@ -1,10 +1,7 @@
 name: Test Install Script
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
   shellcheck:
