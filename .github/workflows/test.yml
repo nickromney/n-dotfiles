@@ -1,10 +1,10 @@
 name: Test Setup Scripts
 
+# Manual-only: local enforcement is handled by lefthook. Run this
+# workflow from the Actions tab (or `gh workflow run test.yml`) when a
+# cross-platform check is wanted.
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
   shellcheck:
