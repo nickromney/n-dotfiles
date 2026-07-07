@@ -426,6 +426,24 @@ sudo apt-get install bats  # Ubuntu/Debian
 bats _test/makefile.bats
 ```
 
+### Local Git hooks
+
+Local validation runs through lefthook.
+
+```bash
+# Install hooks
+lefthook install
+# or
+make hooks
+
+# Skip a hook for an intentional one-off
+LEFTHOOK=0 git commit -m "message"
+git push --no-verify
+
+# Run on-demand GitHub CI
+gh workflow run test.yml
+```
+
 ### Ubuntu 24.04 Lima smoke test (non-mac/POSIX path)
 
 A Lima-based Ubuntu 24.04 smoke test validates the Linux path:

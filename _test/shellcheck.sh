@@ -73,7 +73,7 @@ check_file "_macos/macos.sh" "_macos/macos.sh"
 
 # Check user-facing repo scripts
 echo -e "${YELLOW}Checking repo scripts...${NC}"
-for script in scripts/*.sh slicer-mac/*.sh; do
+for script in scripts/*.sh scripts/hooks/*.sh slicer-mac/*.sh; do
     if [[ -f "$script" ]]; then
         check_file "$script" "$script"
     fi

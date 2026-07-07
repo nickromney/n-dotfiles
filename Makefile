@@ -133,17 +133,17 @@ lint: ## Run linters (shellcheck, markdownlint)
 	@echo "$(GREEN)✓ Linting complete$(NC)"
 
 .PHONY: hooks
-hooks: ## Run the lefthook pre-commit checks on all files
+hooks: ## Install lefthook git hooks into .git/hooks
+	@echo "$(YELLOW)Installing lefthook git hooks...$(NC)"
+	@lefthook install
+	@echo "$(GREEN)✓ lefthook hooks installed$(NC)"
+
+.PHONY: hooks-run
+hooks-run: ## Run the lefthook pre-commit checks on all files
 	@echo "$(YELLOW)Running lefthook pre-commit checks on all files...$(NC)"
 	@echo "$(YELLOW)Note: The git commit hook runs on staged files only.$(NC)"
 	@lefthook run pre-commit --all-files
 	@echo "$(GREEN)✓ All hook checks passed$(NC)"
-
-.PHONY: hooks-install
-hooks-install: ## Install lefthook git hooks into .git/hooks
-	@echo "$(YELLOW)Installing lefthook git hooks...$(NC)"
-	@lefthook install
-	@echo "$(GREEN)✓ lefthook hooks installed$(NC)"
 
 .PHONY: test
 test: ## Run all tests

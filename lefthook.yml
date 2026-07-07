@@ -1,17 +1,25 @@
 # Git hooks via lefthook (https://lefthook.dev/)
 #
-# Install into .git/hooks: lefthook install   (or: make hooks-install)
+# Install into .git/hooks: lefthook install   (or: make hooks)
 # Run manually:            lefthook run pre-commit --all-files
 #
-# Fast staged-file checks run at commit time; the full shellcheck and
-# BATS suites run at push time.
+# Fast staged-file checks run at commit time; the full local CI gate
+# (lint + BATS suites) runs at push time.
+#
+# Skip for an intentional one-off:
+#   LEFTHOOK=0 git commit -m "message"
+#   git push --no-verify
 
 pre-commit:
   parallel: true
   jobs:
     - name: shellcheck
-      glob: "*.{sh,bash}"
-      run: shellcheck --severity=warning {staged_files}
+      glob: "*.{sh,bash,bats}"
+      run: scripts/hooks/check-staged-shell.sh --execute {staged_files}
+
+    - name: yamllint
+      glob: "*.{yaml,yml}"
+      run: scripts/hooks/check-staged-yaml.sh --execute {staged_files}
 
     - name: markdownlint
       glob: "*.md"
@@ -26,7 +34,8 @@ pre-commit:
 
     - name: block large files (>1MB)
       run: |
-        large=$(git diff --cached --name-only --diff-filter=ACMR -z | xargs -0 -I{} find "{}" -size +1000k 2>/dev/null)
+        large=$(git diff --cached --name-only --diff-filter=ACMR -z |
+          xargs -0 -I{} find "{}" -size +1000k 2>/dev/null)
         if [ -n "$large" ]; then
           echo "Files over 1MB staged for commit:"
           echo "$large"
@@ -35,8 +44,5 @@ pre-commit:
 
 pre-push:
   jobs:
-    - name: shellcheck suite
-      run: ./_test/shellcheck.sh
-
-    - name: bats suite
-      run: ./_test/run_tests.sh
+    - name: local-ci
+      run: scripts/hooks/run-local-ci.sh --execute
