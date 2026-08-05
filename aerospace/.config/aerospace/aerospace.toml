@@ -1,6 +1,12 @@
 # Inspired heavily by:
 # https://github.com/joshmedeski/dotfiles/blob/main/.config/aerospace/aerospace.toml
 
+config-version = 2
+
+# Config v1 inferred persistent workspaces from keyboard bindings. Declare them
+# explicitly to preserve that behavior under config v2.
+persistent-workspaces = ['W', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']']
+
 # after-login-command = []
 # after-startup-command = []
 after-startup-command = [
