@@ -85,6 +85,10 @@ brew bundle --file Brewfile.posix   # Homebrew on Linux formulae
 mise install                        # same CLI tools as the Mac
 ```
 
+For Omarchy/Arch, keep Omarchy's system packages and Super-key defaults, then
+layer selected Stow packages and the separate Caps-Lock Hyper bindings on top.
+See [omarchy/README.md](omarchy/README.md).
+
 ## Using the Makefile
 
 ```bash
