@@ -1,9 +1,9 @@
-# Brewfile.posix — Linux (Homebrew on Linux)
+# Brewfile.posix — optional Linux (Homebrew on Linux) layer
 #
-# Hand-maintained. Covers formulae that stay in Homebrew on Linux
-# hosts. Cross-platform CLI tools live in mise instead
-# (mise/.config/mise/config.toml), so the Linux path is:
-#   brew bundle --file Brewfile.posix && ./stow.sh && mise install
+# Hand-maintained. Covers formulae for Linux hosts that intentionally use
+# Homebrew. Cross-platform CLI tools live in mise instead
+# (mise/.config/mise/config.toml). Arch/Omarchy uses pacman for system
+# packages and should use ./setup-omarchy.sh instead.
 #
 # Apply with: brew bundle --file Brewfile.posix
 

@@ -47,9 +47,24 @@ Use a second terminal or a TTY while changing keyboard input. `keyd` has a
 panic sequence of **Backspace + Escape + Enter** if a bad mapping traps the
 keyboard.
 
+The repository provides an idempotent setup command. Preview it first; the
+real run uses `pacman` for prerequisites, stows the personal layers, installs
+the mise tools, adds the Hyprland include, and configures keyd without
+replacing Omarchy's generated files:
+
 ```bash
-# Omarchy is Arch-based; keep its package manager as the system-package owner.
-sudo pacman -S --needed git stow keyd
+./setup-omarchy.sh --dry-run
+./setup-omarchy.sh
+```
+
+The default stow set intentionally omits `git` because the tracked Git config
+points at the macOS 1Password SSH signer. Configure a Linux signer, then opt
+in explicitly with `--with-git` or run `./stow.sh git` yourself.
+
+For a manual setup, keep Omarchy's package manager as the system-package owner:
+
+```bash
+sudo pacman -S --needed git stow keyd mise
 
 git clone https://github.com/nickromney/n-dotfiles.git \
   ~/Developer/personal/n-dotfiles
@@ -61,6 +76,7 @@ cd ~/Developer/personal/n-dotfiles
 # Preview first. Select packages rather than importing every Mac-only tree.
 ./stow.sh --dry-run git zsh nvim tmux mise codex claude agents omarchy
 ./stow.sh git zsh nvim tmux mise codex claude agents omarchy
+mise install
 
 # keyd loads system configs, so expose the stowed file under a new name rather
 # than replacing any existing /etc/keyd/default.conf.

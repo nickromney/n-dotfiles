@@ -34,6 +34,7 @@ EOF
   scripts=(
     "bootstrap.sh"
     "stow.sh"
+    "setup-omarchy.sh"
     "setup-personal-mac.sh"
     "setup-ssh-from-1password.sh"
     "setup-gitconfig-from-1password.sh"
