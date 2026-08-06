@@ -33,6 +33,12 @@ STOW_DIRS=(
   zsh
 )
 
+# Omarchy is a Linux-only package. Keep it out of the default macOS stow set
+# so a normal dotfile sync cannot touch the Mac's Hyprland/keyd paths.
+if [[ "$(uname -s)" == "Linux" ]]; then
+  STOW_DIRS+=(omarchy)
+fi
+
 DRY_RUN=false
 ADOPT=false
 LIST_MODE=false
@@ -141,13 +147,19 @@ main() {
   [[ "$DRY_RUN" == "true" ]] && stow_opts+=("--no")
 
   local dir failed=0
+  local -a package_stow_opts
   for dir in "${dirs[@]}"; do
     if [[ ! -d "$STOW_SH_DIR/$dir" ]]; then
       echo "Skipping missing package: $dir"
       continue
     fi
 
-    if stow "${stow_opts[@]}" "$dir"; then
+    package_stow_opts=("${stow_opts[@]}")
+    # Keep Omarchy's shared ~/.config tree as real directories. Without this,
+    # Stow can fold a fresh ~/.config into a single package symlink.
+    [[ "$dir" == "omarchy" ]] && package_stow_opts+=("--no-folding")
+
+    if stow "${package_stow_opts[@]}" "$dir"; then
       echo "Stowed $dir"
     else
       error "Failed to stow $dir"

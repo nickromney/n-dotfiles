@@ -1,81 +1,119 @@
-# Keyboard Shortcuts Configuration
+# Keyboard shortcuts
 
-This document outlines the keyboard shortcuts and modifications used in this dotfiles setup.
+This is the current keyboard model on the personal Mac. It records the
+settings visible in AeroSpace, Superkey, and Homerow on 2026-08-06, rather
+than only the intended setup.
 
-## Hyperkey Configuration
+## Modifier model
 
-### Overview
+Superkey turns **Caps Lock** into **Hyper**:
 
-The **Hyperkey** is a virtual modifier that combines all four modifiers: `⌘ + ⌥ + ⌃ + ⇧` (Command + Option + Control + Shift). This creates a dedicated modifier that's unlikely to conflict with any existing shortcuts.
+```text
+Hyper = Control + Option + Command + Shift
+```
 
-### Implementation
+The physical Command key remains Command. Holding Caps Lock supplies Hyper;
+quickly tapping Caps Lock sends Right Arrow, which accepts the current zsh
+autosuggestion. Pressing Left Shift and Right Shift together toggles the real
+Caps Lock state.
 
-Due to issues with Karabiner-Elements on work machines wanting to access a protected setting that is governed by a profile, I use the following tools - Keyboard Scroller is free, but I have paid for the other two which I find very useful for keyboard-centric searching
+Superkey's active editing presets are:
 
-- **[Superkey](https://superkey.app/)** - Transforms Caps Lock into the Hyperkey, and uses OCR for finding items on the screen.
-- **[Homerow](https://www.homerow.app/)** - Provides keyboard-driven navigation
-- **[Keyboard Scroller](https://github.com/dexterleng/KeyboardScroller.docs)** - Enables Vim-like scrolling with Hyperkey
+- `Hyper + Delete` -> forward delete
+- `Hyper + V` -> paste without formatting
+- `Home` / `End` -> beginning / end of line
+- `Left Shift + Right Shift` -> toggle Caps Lock
 
-### Configured Hyperkey Bindings
+The Superkey Seek page currently has no shortcut or remapped key configured.
+The older `Hyper + G` Seek mapping in this document was therefore historical,
+not part of the inspected configuration.
 
-Currently, the Hyperkey (Caps Lock) is configured for the following:
+## Homerow
 
-#### Navigation
+### Clicking
 
-- `Hyper + G` - Seek (Go) - Quick navigation/jump functionality
+- `Hyper + F` -> label clickable UI elements
+- Automatic click: on
+- Chain clicks: off
+- Mission Control support: on
+- Label characters: `SADFJKLEWCMPGH`
+- Browser labels: Fast
+- Search shortcut: not set
 
-#### Vim-like Scrolling (via Keyboard Scroller)
+### Scrolling
 
-- `Hyper + J` - Scroll down
-- `Hyper + K` - Scroll up
+- `Hyper + S` -> choose a scroll area
+- Arrow keys select the scroll area
+- Scroll-area numbers: on
+- Scroll keys: `HJKL`
+- Scroll commands: on
+- Auto-deactivation: off
+- Scroll speed: `1.0`
+- Dash speed: `1.5`
 
-Note that Keyboard Scroller does allow "Jump Up" and "Jump Down" which in vim-world might be mapped to U and D, but I am already using `Hyper + U` for Aerospace "Utilities" workspace
+### General
 
-#### Text Editing (via Superkey Presets)
+- Launch at login: on
+- Menu-bar icon: on
+- Automatic updates: on; beta updates: off
+- Input source: British
+- Homerow's own Hyperkey emulation: off (Superkey owns it)
+- Sound effects: on, volume `0.6`
 
-- `Hyper + Delete` - Forward delete
-- `Hyper + V` - Paste without formatting
-- `Home` - Move to beginning of line
-- `End` - Move to end of line
-- `Left Shift + Right Shift` - Toggle Caps Lock
+## AeroSpace
 
-#### Aerospace Workspace Navigation
+The source of truth is
+[`aerospace/.config/aerospace/aerospace.toml`](aerospace/.config/aerospace/aerospace.toml).
 
-- `Hyper + T` - Focus workspace T (Terminal)
-- `Hyper + Y` - Focus workspace Y (IDE/Development)
-- `Hyper + U` - Focus workspace U (Utilities) - Note: conflicts with Jump up
-- `Hyper + I` - Focus workspace I (Browsers)
-- `Hyper + O` - Focus workspace O (Office)
-- `Hyper + P` - Focus workspace P (Productivity)
-- `Hyper + [` - Focus workspace [ (Email)
-- `Hyper + ]` - Focus workspace ] (Communication)
+### Focus and resize
 
-## Setup Instructions
+- `Alt + H/J/K/L` -> focus left/down/up/right
+- `Alt + Shift + -/=` -> resize by -/+100
 
-### Work Mac Setup
+### Named workspaces
 
-1. Install and configure Superkey from [superkey.app](https://superkey.app/)
+| Key | Workspace | Typical apps |
+|---|---|---|
+| `Hyper + W` | Work | Chrome profiles |
+| `Hyper + T` | Terminal | Ghostty, Kitty |
+| `Hyper + Y` | Development | VS Code, Cursor, Codex, GitKraken |
+| `Hyper + U` | Utilities | Finder, Preview, Docker, capture/device tools |
+| `Hyper + I` | Internet | Brave, Safari, Firefox |
+| `Hyper + O` | Office | Excel, Word |
+| `Hyper + P` | Productivity | Notes, Obsidian, Things, Spotify, Claude |
+| `Hyper + [` | Email | HEY, Outlook |
+| `Hyper + ]` | Communication | Messages, Teams, WhatsApp, Slack, Zoom |
 
-   **Hyperkey Tab:**
+`Hyper + H` toggles the last two workspaces. `Hyper + L` moves the current
+workspace to the next monitor.
 
-   - Remap key to hyper key: `Caps Lock`
-   - Enable "Include shift in hyper key" (checkbox)
+### Move the current window and follow it
 
-   **Presets Tab:**
+The number row mirrors the physical position of the workspace letters:
 
-   - Enable "Left shift + right shift = Caps Lock"
-   - Enable "Hyper + delete = forward delete"
-   - Enable "Remap paste to paste w/o formatting: Hyper + V"
-   - Enable "Home & end operate on lines"
+- `Hyper + 2/5/6/7/8/9/0/-/=` -> move to and focus
+  `W/T/Y/U/I/O/P/[/]`
 
-2. Install Homerow from [homerow.app](https://www.homerow.app/)
+### Layout mode
 
-   - Use for keyboard-driven navigation
+- `Hyper + N` -> accordion layout
+- `Hyper + M` -> tiled layout
+- `Hyper + ;` -> enter move mode
 
-3. Install Keyboard Scroller from [github.com/dexterleng/KeyboardScroller.docs](https://github.com/dexterleng/KeyboardScroller.docs)
+Within move mode:
 
-   - Configure the Vim-like scrolling bindings:
-     - Scroll up: `⌃⌥⇧⌘K`
-     - Scroll down: `⌃⌥⇧⌘J`
+- `H/J/K/L` -> move the window
+- `E` -> accordion layout
+- `F` -> fullscreen
+- `T` -> toggle floating/tiling and leave move mode
+- `B` -> balance sizes
+- `Escape` or `Enter` -> leave move mode
 
-4. Configure Aerospace with the workspace bindings listed above by using the [aerospace.toml](./aerospace/.config/aerospace/aerospace.toml)
+## Omarchy translation
+
+The Mac workspace taxonomy is deliberately compressed to five numeric
+workspaces on the smaller Omarchy laptop. Caps Lock still becomes Hyper, but
+the physical Windows key remains Omarchy's Super key. See
+[`omarchy/README.md`](omarchy/README.md) for the mapping and setup.
+Workspace 2 is the coding stack: Cursor, terminals, Claude Code/Codex, and
+Slicer agent shells.
