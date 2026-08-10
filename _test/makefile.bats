@@ -95,10 +95,20 @@ teardown() {
   [[ "$output" =~ "Dotfile and Tool Management" ]]
 }
 
+@test "make help honors NO_COLOR and emits no ANSI escapes" {
+  run env NO_COLOR=1 make help
+  [ "$status" -eq 0 ]
+  [[ "$output" != *$'\033['* ]]
+}
+
 @test "make install runs brew bundle, stow, and mise install" {
   run make install
   [ "$status" -eq 0 ]
-  [[ "$output" == *"brew bundle called"* ]]
+  if [[ "$EXPECTED_BREWFILE" == "Brewfile" ]]; then
+    [[ "$output" == *"brew bundle called"* ]]
+  else
+    [[ "$output" != *"brew bundle called"* ]]
+  fi
   [[ "$output" == *"stow.sh called with:"* ]]
   [[ "$output" == *"mise install"* ]]
 }
@@ -150,11 +160,19 @@ EOF
 
   run make update
   [ "$status" -eq 0 ]
-  [[ "$output" =~ "shared Homebrew update module: update-all" ]]
+  if [[ "$EXPECTED_BREWFILE" == "Brewfile" ]]; then
+    [[ "$output" =~ "shared Homebrew update module: update-all" ]]
+  else
+    [[ "$output" != *"shared Homebrew update module: update-all"* ]]
+  fi
   [[ "$output" =~ "mise upgrade" ]]
 
-  run grep -qx "update-all" "$TEST_DIR/brew-update-calls.txt"
-  [ "$status" -eq 0 ]
+  if [[ "$EXPECTED_BREWFILE" == "Brewfile" ]]; then
+    run grep -qx "update-all" "$TEST_DIR/brew-update-calls.txt"
+    [ "$status" -eq 0 ]
+  else
+    [ ! -f "$TEST_DIR/brew-update-calls.txt" ]
+  fi
 }
 
 @test "make configure defaults to personal macOS profile" {

@@ -3,12 +3,37 @@
 #   stow          (stow.sh: symlink dotfiles into $HOME)
 #   mise install  (mise/.config/mise/config.toml: CLI tools + runtimes)
 
-# Colors for output
+# Colors for output. GNU make 4 exposes MAKE_TERMOUT when stdout is a
+# terminal. Older make versions and dumb terminals stay uncoloured so escape
+# sequences never leak into logs or redirected output. FORCE_COLOR is useful
+# when an interactive terminal is detected incorrectly by a wrapper.
+ifeq ($(strip $(NO_COLOR)),)
+ifeq ($(TERM),dumb)
+COLOR_ENABLED :=
+else ifneq ($(strip $(FORCE_COLOR)),)
+COLOR_ENABLED := 1
+else ifneq ($(strip $(MAKE_TERMOUT)),)
+COLOR_ENABLED := 1
+else
+COLOR_ENABLED :=
+endif
+else
+COLOR_ENABLED :=
+endif
+
+ifeq ($(COLOR_ENABLED),1)
 GREEN := \033[0;32m
 YELLOW := \033[1;33m
 BLUE := \033[0;34m
 RED := \033[0;31m
 NC := \033[0m
+else
+GREEN :=
+YELLOW :=
+BLUE :=
+RED :=
+NC :=
+endif
 
 BREW_WITH_POLICY := ./scripts/brew-with-policy.sh
 BREW_UPDATE := ./scripts/brew-update.sh
@@ -18,6 +43,12 @@ BREWFILE := $(if $(filter Darwin,$(HOST_OS)),Brewfile,Brewfile.posix)
 
 # macOS settings profile for `make configure` (personal or work)
 MACOS_PROFILE ?= personal
+
+ifeq ($(HOST_OS),Darwin)
+INSTALL_TARGETS := brewfile-install stow mise-install
+else
+INSTALL_TARGETS := stow mise-install
+endif
 
 # Default target
 .DEFAULT_GOAL := help
@@ -31,28 +62,27 @@ help: ## Show this help message
 		awk 'BEGIN {FS = ":.*?## "}; /^##@/ {printf "\n$(YELLOW)%s$(NC)\n", substr($$0, 5)} /^[a-zA-Z_-]+:.*?## / {printf "  $(GREEN)%-25s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(BLUE)Typical flows:$(NC)"
-	@echo "  ./bootstrap.sh            Fresh Mac: Homebrew + Brewfile + stow + mise"
-	@echo "  make install              Re-apply Brewfile + stow + mise"
+	@if [ "$(HOST_OS)" = "Darwin" ]; then \
+		echo "  ./bootstrap.sh            Fresh Mac: Homebrew + Brewfile + stow + mise"; \
+		echo "  make install              Re-apply Brewfile + stow + mise"; \
+		echo "  make configure            Apply macOS settings (MACOS_PROFILE=personal)"; \
+	else \
+		echo "  make linux-install        Linux: stow dotfiles + install mise tools"; \
+		echo "  make omarchy-setup        Arch/Omarchy: packages + dotfiles + keyd"; \
+	fi
 	@echo "  make stow                 Symlink dotfiles only (all a work machine needs)"
 	@echo "  Arch/Omarchy              No Brewfile: pacman + ./stow.sh + mise install (see omarchy/README.md)"
 	@echo "  make update               Update brew, mise, and mas-managed tools"
-	@echo "  make configure            Apply macOS settings (MACOS_PROFILE=personal)"
 
 ##@ Install
 
 .PHONY: install
-install: brewfile-install stow mise-install ## Apply Brewfile + stow + mise (idempotent)
+install: $(INSTALL_TARGETS) ## Apply the host-appropriate package, stow, and mise layers
 
 .PHONY: brewfile-install
 brewfile-install: ## Install packages from the Brewfile (Brewfile.posix on Linux)
 	@if ! command -v brew >/dev/null 2>&1; then \
-		if [ "$(HOST_OS)" = "Darwin" ]; then \
-			echo "$(RED)Homebrew is required; run ./bootstrap.sh first$(NC)"; \
-		else \
-			echo "$(RED)Homebrew is not installed$(NC)"; \
-			echo "$(YELLOW)Arch/Omarchy: skip this and use pacman + ./stow.sh + mise install instead (see omarchy/README.md)$(NC)"; \
-			echo "$(YELLOW)Other Linux: install Homebrew on Linux, then re-run 'make install'$(NC)"; \
-		fi; \
+		echo "$(RED)Homebrew is required for brewfile-install; use 'make linux-install' (generic Linux) or 'make omarchy-setup' (Arch/Omarchy) instead$(NC)"; \
 		exit 1; \
 	fi
 	@echo "$(BLUE)Installing via brew bundle: $(BREWFILE)$(NC)"
@@ -69,9 +99,21 @@ mise-install: ## Install CLI tools and runtimes declared in mise config
 		mise install; \
 		echo "$(GREEN)✓ mise tools installed$(NC)"; \
 	else \
-		echo "$(RED)mise not found; run ./bootstrap.sh or 'brew install mise'$(NC)"; \
+		echo "$(RED)mise not found; install it with the host package manager first$(NC)"; \
 		exit 1; \
 	fi
+
+.PHONY: linux-install
+linux-install: ## Install Linux dotfiles and mise tools without Homebrew
+	@if [ "$(HOST_OS)" = "Darwin" ]; then \
+		echo "$(RED)linux-install is for Linux; use make install on macOS$(NC)"; \
+		exit 1; \
+	fi
+	@$(MAKE) stow mise-install
+
+.PHONY: omarchy-setup
+omarchy-setup: ## Run the idempotent Arch/Omarchy setup flow
+	@./bootstrap-omarchy.sh
 
 .PHONY: personal-setup
 personal-setup: ## Full personal Mac setup (bootstrap + macOS settings + SSH)
@@ -81,20 +123,22 @@ personal-setup: ## Full personal Mac setup (bootstrap + macOS settings + SSH)
 
 .PHONY: update
 update: ## Update brew packages, mise tools, and Mac App Store apps
-	@$(BREW_UPDATE) update-all
+	@if [ "$(HOST_OS)" = "Darwin" ]; then \
+		$(BREW_UPDATE) update-all; \
+	fi
 	@if command -v mise >/dev/null 2>&1; then \
 		echo "$(BLUE)Updating mise tools and runtimes...$(NC)"; \
 		mise upgrade || echo "$(YELLOW)  Warning: mise upgrade failed$(NC)"; \
 		echo "$(GREEN)✓ mise upgrade attempted$(NC)"; \
 		echo ""; \
 	fi
-	@if command -v mas >/dev/null 2>&1; then \
+	@if [ "$(HOST_OS)" = "Darwin" ] && command -v mas >/dev/null 2>&1; then \
 		echo "$(BLUE)Updating Mac App Store apps...$(NC)"; \
 		mas upgrade; \
 		echo "$(GREEN)✓ Mac App Store apps updated$(NC)"; \
 		echo ""; \
 	fi
-	@if command -v rustup >/dev/null 2>&1; then \
+	@if [ "$(HOST_OS)" = "Darwin" ] && command -v rustup >/dev/null 2>&1; then \
 		echo "$(BLUE)Updating Rust toolchain...$(NC)"; \
 		rustup update; \
 		echo "$(GREEN)✓ Rust updated$(NC)"; \

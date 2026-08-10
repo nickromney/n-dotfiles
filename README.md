@@ -66,7 +66,7 @@ Or run the whole personal flow (bootstrap + macOS settings + SSH from
 ### Existing System
 
 ```bash
-make install    # brew bundle + stow + mise install (idempotent)
+make install    # host-appropriate package layer + stow + mise (idempotent)
 make update     # update brew, mise, and Mac App Store packages
 ```
 
@@ -87,11 +87,14 @@ want to keep them — review with `git diff` afterwards.
 
 ### Linux
 
+For a general Linux host where the prerequisites are already installed:
+
 ```bash
-brew bundle --file Brewfile.posix   # Homebrew on Linux formulae
-./stow.sh                           # symlink dotfiles
-mise install                        # same CLI tools as the Mac
+make linux-install                  # symlink dotfiles + install mise tools
 ```
+
+`Brewfile.posix` remains available for Linux hosts that intentionally use
+Homebrew, but it is not part of the Arch/Omarchy path.
 
 For Omarchy/Arch, keep Omarchy's system packages and Super-key defaults, then
 layer selected Stow packages and the separate Caps-Lock Hyper bindings on top.
@@ -103,7 +106,9 @@ that stay manual (1Password sign-in, git SSH signing, mail client choice).
 ## Using the Makefile
 
 ```bash
-make install       # brew bundle + stow + mise install
+make install       # host-appropriate package layer + stow + mise
+make linux-install  # Linux: stow + mise, no Homebrew
+make omarchy-setup  # Arch/Omarchy: pacman prerequisites + personal layers
 make stow          # symlink dotfiles only
 make update        # update brew, mise, mas (and rustup if present)
 make configure     # apply macOS settings (MACOS_PROFILE=personal|work)
