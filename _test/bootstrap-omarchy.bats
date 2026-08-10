@@ -193,6 +193,33 @@ teardown() {
   [[ "$output" != *"WARN git:"* ]]
 }
 
+@test "bootstrap-omarchy: a stow conflict on one package does not abort the rest of the script" {
+  # Real files already at the target (e.g. Omarchy's own ~/.config/nvim) are
+  # a per-package stow conflict, not a reason to skip unrelated later steps
+  # like keyd/hypr/mise — this is what actually happened on a real run.
+  # shellcheck disable=SC2016
+  mock_command_with_script "stow" '
+for arg in "$@"; do
+  if [[ "$arg" == "nvim" ]]; then
+    echo "WARNING! stowing nvim would cause conflicts" >&2
+    exit 1
+  fi
+done
+exit 0
+'
+
+  run env \
+    HOME="$TEST_HOME" \
+    OSTYPE="linux-gnu" \
+    PATH="$MOCK_BIN_DIR:/usr/bin:/bin" \
+    "$BOOTSTRAP_SCRIPT" --no-input --skip-pacman --skip-keyd --skip-hypr --skip-mise --packages "git nvim tmux"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Stow reported conflicts"* ]]
+  [[ "$output" == *"Continuing with the rest of bootstrap"* ]]
+  [[ "$output" == *"Bootstrap complete!"* ]]
+}
+
 @test "bootstrap-omarchy: a failing mise install does not abort the rest of the script" {
   mock_command "mise" 1 ""
 
