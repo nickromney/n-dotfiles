@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Portable op-ssh-sign shim so git/.gitconfig's gpg.ssh.program can point at
+# one stable path (~/.local/bin/op-ssh-sign) on both macOS and Linux, instead
+# of hardcoding either platform's real 1Password install path.
+set -euo pipefail
+
+CANDIDATES=(
+  "/opt/1Password/op-ssh-sign"                                    # Linux
+  "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"        # macOS
+)
+
+for candidate in "${CANDIDATES[@]}"; do
+  if [[ -x "$candidate" ]]; then
+    exec "$candidate" "$@"
+  fi
+done
+
+echo "op-ssh-sign: no 1Password op-ssh-sign binary found at any known path:" >&2
+printf '  %s\n' "${CANDIDATES[@]}" >&2
+echo "Run scripts/check-1password-dev-tools.sh for diagnostics." >&2
+exit 1

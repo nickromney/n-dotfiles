@@ -12,8 +12,9 @@ NC='\033[0m' # No Color
 if ! command -v shellcheck &> /dev/null; then
     echo -e "${RED}Error: shellcheck is not installed${NC}"
     echo "Please install shellcheck:"
-    echo "  brew install shellcheck  # on macOS"
-    echo "  apt-get install shellcheck  # on Ubuntu/Debian"
+    echo "  mise install                # shellcheck is in mise/.config/mise/config.toml"
+    echo "  brew install shellcheck     # macOS/Homebrew-on-Linux, alternative"
+    echo "  sudo pacman -S shellcheck   # Arch/Omarchy, alternative"
     exit 1
 fi
 
@@ -64,7 +65,7 @@ check_file() {
 }
 
 # Check main scripts
-for script in bootstrap.sh stow.sh setup-*.sh; do
+for script in bootstrap.sh bootstrap-omarchy.sh stow.sh setup-*.sh; do
     if [[ -f "$script" ]]; then
         check_file "$script" "$script"
     fi

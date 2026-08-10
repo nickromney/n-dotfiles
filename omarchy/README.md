@@ -43,13 +43,21 @@ window-management bindings remain available.
 
 ## First application on Omarchy
 
+`../bootstrap-omarchy.sh --dry-run` mechanizes the mechanical parts of this
+walkthrough (pacman base packages, stow, keyd symlink/enable, the hyper.conf
+include, `mise install`). This section documents the same steps by hand, plus
+the parts that stay manual either way: 1Password sign-in, git SSH signing,
+and mail client choice.
+
 Use a second terminal or a TTY while changing keyboard input. `keyd` has a
 panic sequence of **Backspace + Escape + Enter** if a bad mapping traps the
 keyboard.
 
 ```bash
 # Omarchy is Arch-based; keep its package manager as the system-package owner.
-sudo pacman -S --needed git stow keyd
+# No Homebrew/Brewfile on this path: mise (also in pacman's extra repo) owns
+# the cross-platform CLI tool layer instead.
+sudo pacman -S --needed git stow keyd mise zsh zsh-autosuggestions zsh-syntax-highlighting
 
 git clone https://github.com/nickromney/n-dotfiles.git \
   ~/Developer/personal/n-dotfiles
@@ -69,6 +77,15 @@ sudo ln -s "$HOME/.config/keyd/default.conf" /etc/keyd/n-dotfiles.conf
 sudo keyd check /etc/keyd/n-dotfiles.conf
 sudo systemctl enable --now keyd
 sudo keyd reload
+
+# CLI tools and runtimes declared in mise/.config/mise/config.toml, now
+# reachable at ~/.config/mise/config.toml via the stow above. This also
+# provides shellcheck, bats, markdownlint-cli2, and yamllint — required for
+# this repo's own `make lint` / `make test` and lefthook git hooks.
+mise install
+
+# Optional: install this repo's lefthook git hooks (pre-commit/pre-push).
+make hooks
 ```
 
 Add the personal Hyprland include once to `~/.config/hypr/bindings.conf`:

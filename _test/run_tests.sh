@@ -11,8 +11,9 @@ NC='\033[0m' # No Color
 if ! command -v bats &> /dev/null; then
     echo -e "${RED}Error: BATS is not installed${NC}"
     echo "Please install BATS:"
-    echo "  brew install bats-core  # on macOS"
-    echo "  or visit: https://github.com/bats-core/bats-core"
+    echo "  mise install             # bats is in mise/.config/mise/config.toml"
+    echo "  brew install bats-core   # macOS/Homebrew-on-Linux, alternative"
+    echo "  sudo pacman -S bats      # Arch/Omarchy, alternative"
     exit 1
 fi
 

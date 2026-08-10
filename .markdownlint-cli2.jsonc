@@ -1,0 +1,13 @@
+{
+  // Rule config lives in .markdownlint.yaml (auto-loaded by markdownlint-cli2).
+  "ignores": [
+    // Example files demonstrate bad markdown for teaching purposes.
+    "claude/.claude/skills/*/examples.md",
+    // Test fixtures.
+    "_test/**",
+    // Vendored/third-party files.
+    "yazi/.config/yazi/flavors/*/README.md",
+    // Machine-generated skill-loop log.
+    ".skill-loop-progress.md"
+  ]
+}

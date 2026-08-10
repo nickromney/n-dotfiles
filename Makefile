@@ -34,6 +34,7 @@ help: ## Show this help message
 	@echo "  ./bootstrap.sh            Fresh Mac: Homebrew + Brewfile + stow + mise"
 	@echo "  make install              Re-apply Brewfile + stow + mise"
 	@echo "  make stow                 Symlink dotfiles only (all a work machine needs)"
+	@echo "  Arch/Omarchy              No Brewfile: pacman + ./stow.sh + mise install (see omarchy/README.md)"
 	@echo "  make update               Update brew, mise, and mas-managed tools"
 	@echo "  make configure            Apply macOS settings (MACOS_PROFILE=personal)"
 
@@ -45,7 +46,13 @@ install: brewfile-install stow mise-install ## Apply Brewfile + stow + mise (ide
 .PHONY: brewfile-install
 brewfile-install: ## Install packages from the Brewfile (Brewfile.posix on Linux)
 	@if ! command -v brew >/dev/null 2>&1; then \
-		echo "$(RED)Homebrew is required; run ./bootstrap.sh first$(NC)"; \
+		if [ "$(HOST_OS)" = "Darwin" ]; then \
+			echo "$(RED)Homebrew is required; run ./bootstrap.sh first$(NC)"; \
+		else \
+			echo "$(RED)Homebrew is not installed$(NC)"; \
+			echo "$(YELLOW)Arch/Omarchy: skip this and use pacman + ./stow.sh + mise install instead (see omarchy/README.md)$(NC)"; \
+			echo "$(YELLOW)Other Linux: install Homebrew on Linux, then re-run 'make install'$(NC)"; \
+		fi; \
 		exit 1; \
 	fi
 	@echo "$(BLUE)Installing via brew bundle: $(BREWFILE)$(NC)"
@@ -121,7 +128,7 @@ clean: ## Clean cached files and build artifacts
 .PHONY: fmt
 fmt: ## Format all code (markdown, shell scripts)
 	@echo "$(YELLOW)Formatting markdown files...$(NC)"
-	@find . -name "*.md" -not -path "./_test/*" -not -path "./.git/*" -exec markdownlint --fix {} + 2>/dev/null || echo "  markdownlint not available"
+	@find . -name "*.md" -not -path "./_test/*" -not -path "./.git/*" -exec markdownlint-cli2 --fix {} + 2>/dev/null || echo "  markdownlint-cli2 not available"
 	@echo "$(GREEN)✓ Formatting complete$(NC)"
 
 .PHONY: lint
@@ -129,7 +136,11 @@ lint: ## Run linters (shellcheck, markdownlint)
 	@echo "$(YELLOW)Running shellcheck...$(NC)"
 	@./_test/shellcheck.sh
 	@echo "$(YELLOW)Running markdownlint...$(NC)"
-	@find . -name "*.md" -not -path "./_test/*" -not -path "./.git/*" -exec markdownlint {} + 2>/dev/null || echo "  markdownlint not available"
+	@if command -v markdownlint-cli2 >/dev/null 2>&1; then \
+		find . -name "*.md" -not -path "./_test/*" -not -path "./.git/*" -exec markdownlint-cli2 {} + ; \
+	else \
+		echo "  markdownlint-cli2 not available"; \
+	fi
 	@echo "$(GREEN)✓ Linting complete$(NC)"
 
 .PHONY: hooks

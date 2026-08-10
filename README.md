@@ -26,6 +26,14 @@ they self-update via their own native installers, and pinning them
 through a package manager just fights the updater. Install them with
 their official one-liners and let them look after themselves.
 
+[Slicer](https://slicervm.com) and superterm are unmanaged for a different
+reason: they're a paid tier, licensed together (currently billed through a
+GitHub-linked subscription), not free packages a package manager should
+track. Install and license them directly rather than through
+Brewfile/mise — the shell configs (`zsh/.zshrc`, `bash/.bashrc`) already
+guard their hooks with `command -v superterm`, so nothing breaks on a
+machine without an active license.
+
 ## Quick Start
 
 ### Fresh macOS Installation
@@ -87,7 +95,10 @@ mise install                        # same CLI tools as the Mac
 
 For Omarchy/Arch, keep Omarchy's system packages and Super-key defaults, then
 layer selected Stow packages and the separate Caps-Lock Hyper bindings on top.
-See [omarchy/README.md](omarchy/README.md).
+There's no Brewfile on this path — `./bootstrap-omarchy.sh --dry-run`
+mechanizes the pacman + stow + keyd + mise sequence; see
+[omarchy/README.md](omarchy/README.md) for the full walkthrough and the parts
+that stay manual (1Password sign-in, git SSH signing, mail client choice).
 
 ## Using the Makefile
 
@@ -96,7 +107,7 @@ make install       # brew bundle + stow + mise install
 make stow          # symlink dotfiles only
 make update        # update brew, mise, mas (and rustup if present)
 make configure     # apply macOS settings (MACOS_PROFILE=personal|work)
-make lint          # shellcheck + markdownlint
+make lint          # shellcheck + markdownlint-cli2
 make test          # full BATS suite
 make audit         # drift report: installed vs Brewfile/mise config
 ```
@@ -420,8 +431,10 @@ The repository includes a test suite using BATS (Bash Automated Testing System):
 
 ```bash
 # Install BATS (required for testing)
-brew install bats-core  # macOS
-sudo apt-get install bats  # Ubuntu/Debian
+mise install                # cross-platform: bats is in mise/.config/mise/config.toml
+brew install bats-core      # macOS/Homebrew-on-Linux, alternative
+sudo pacman -S bats         # Arch/Omarchy, alternative
+sudo apt-get install bats   # Ubuntu/Debian, alternative
 
 # Run all tests
 ./_test/run_tests.sh

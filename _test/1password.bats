@@ -398,8 +398,12 @@ EOF
   cd "$TEST_DIR"
   cp "${BATS_TEST_DIRNAME}/../setup-ssh-from-1password.sh" .
 
-  # Remove op from PATH completely
-  export PATH="/usr/bin:/bin"
+  # Remove op from PATH completely, even on hosts where it's genuinely
+  # installed system-wide (e.g. Arch's 1password-cli package puts it in
+  # /usr/bin, so PATH="/usr/bin:/bin" alone would not exclude it there).
+  local isolated_path
+  isolated_path="$(path_excluding op)"
+  export PATH="$isolated_path"
 
   run ./setup-ssh-from-1password.sh --profile personal --dry-run
 

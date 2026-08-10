@@ -29,7 +29,15 @@ ripgrep = "latest"
 starship = "latest"
 yq = "latest"
 bun = "latest"
+"aqua:nushell/nushell" = "latest" # not in mise's curated registry under a short name
 "github:mufeedvh/code2prompt" = "latest"
+
+# Linting and testing (lefthook hooks, make lint, make test)
+bats = "latest"
+markdownlint-cli2 = "latest"
+pipx = "latest" # yamllint's pipx: backend needs this installed explicitly
+shellcheck = "latest"
+yamllint = "latest"
 
 # Python tooling
 ruff = "latest"
@@ -54,3 +62,4 @@ tflint = "latest"
 # Containers and security
 lazydocker = "latest"
 trivy = "latest"
+go = "1.26.5"

@@ -106,5 +106,7 @@ if [ -f "$HOME/.bashrc.local" ]; then
 fi
 
 # BEGIN superterm
-eval "$(superterm shell-init bash)"
+if command -v superterm >/dev/null 2>&1; then
+  eval "$(superterm shell-init bash)"
+fi
 # END superterm
