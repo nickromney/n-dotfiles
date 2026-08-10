@@ -16,6 +16,12 @@ setup() {
   # Set up test environment
   export HOME="$TEST_HOME"
   export DOTFILES_DIR="$BATS_TEST_DIRNAME/.."
+
+  # zshrc/bashrc honour $XDG_CACHE_HOME when set, so without this override
+  # a real value inherited from the outer shell (common in dev environments)
+  # makes tested configs write cache files outside $TEST_HOME entirely —
+  # both escaping test isolation and leaking into the real cache dir.
+  export XDG_CACHE_HOME="$TEST_HOME/.cache"
 }
 
 teardown() {
@@ -278,8 +284,12 @@ EOF
   run grep -c '_cache_init fzf' "$DOTFILES_DIR/zsh/.zshrc"
   [ "$output" = "1" ]
 
+  # mise is deliberately NOT cached: mise activate's output bakes in a
+  # literal PATH snapshot from generation time, so caching it would freeze
+  # PATH to whatever it was on first run (see the dedicated regression test
+  # "zshrc: does not cache mise activate output to a file").
   run grep -c '_cache_init mise' "$DOTFILES_DIR/zsh/.zshrc"
-  [ "$output" = "1" ]
+  [ "$output" = "0" ]
 }
 
 @test "zshrc: startup time under 125ms" {
@@ -369,6 +379,16 @@ EOF
   [ -n "$zsh_shims_index" ]
   [ -n "$zsh_brew_index" ]
   [ "$zsh_shims_index" -lt "$zsh_brew_index" ]
+}
+
+@test "zshrc: does not cache mise activate output to a file" {
+  # mise activate's output bakes in a literal `export PATH='...'` snapshot
+  # of the PATH at generation time, so caching it (like starship/direnv/etc)
+  # would freeze PATH to whatever it was on first run instead of
+  # recomputing it fresh each shell.
+  run zsh -c "source $DOTFILES_DIR/zsh/.zshrc 2>&1"
+  [ "$status" -eq 0 ]
+  [ ! -f "$XDG_CACHE_HOME/zsh-init/mise.zsh" ]
 }
 
 @test "both configs: set EDITOR to nvim" {

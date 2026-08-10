@@ -43,6 +43,12 @@ window-management bindings remain available.
 
 ## First application on Omarchy
 
+`../bootstrap-omarchy.sh --dry-run` mechanizes the mechanical parts of this
+walkthrough (pacman base packages, stow, keyd symlink/enable, the hyper.conf
+include, `mise install`). This section documents the same steps by hand, plus
+the parts that stay manual either way: 1Password sign-in, git SSH signing,
+and mail client choice.
+
 Use a second terminal or a TTY while changing keyboard input. `keyd` has a
 panic sequence of **Backspace + Escape + Enter** if a bad mapping traps the
 keyboard.
@@ -53,18 +59,10 @@ the mise tools, adds the Hyprland include, and configures keyd without
 replacing Omarchy's generated files:
 
 ```bash
-./setup-omarchy.sh --dry-run
-./setup-omarchy.sh
-```
-
-The default stow set intentionally omits `git` because the tracked Git config
-points at the macOS 1Password SSH signer. Configure a Linux signer, then opt
-in explicitly with `--with-git` or run `./stow.sh git` yourself.
-
-For a manual setup, keep Omarchy's package manager as the system-package owner:
-
-```bash
-sudo pacman -S --needed git stow keyd mise
+# Omarchy is Arch-based; keep its package manager as the system-package owner.
+# No Homebrew/Brewfile on this path: mise (also in pacman's extra repo) owns
+# the cross-platform CLI tool layer instead.
+sudo pacman -S --needed git stow keyd mise zsh zsh-autosuggestions zsh-syntax-highlighting
 
 git clone https://github.com/nickromney/n-dotfiles.git \
   ~/Developer/personal/n-dotfiles
@@ -85,6 +83,15 @@ sudo ln -s "$HOME/.config/keyd/default.conf" /etc/keyd/n-dotfiles.conf
 sudo keyd check /etc/keyd/n-dotfiles.conf
 sudo systemctl enable --now keyd
 sudo keyd reload
+
+# CLI tools and runtimes declared in mise/.config/mise/config.toml, now
+# reachable at ~/.config/mise/config.toml via the stow above. This also
+# provides shellcheck, bats, markdownlint-cli2, and yamllint — required for
+# this repo's own `make lint` / `make test` and lefthook git hooks.
+mise install
+
+# Optional: install this repo's lefthook git hooks (pre-commit/pre-push).
+make hooks
 ```
 
 Add the personal Hyprland include once to `~/.config/hypr/bindings.conf`:
@@ -142,19 +149,21 @@ If you want Omarchy-only Git values without changing this checkout, omit the
 `git` package from the Stow command and maintain a separate `~/.gitconfig`
 there instead.
 
-If you stow this repository's `git` package, disable SSH signing until a Linux
-signer is installed; the tracked config currently contains the macOS
-1Password signer path. This intentionally edits the stowed source file, so
-review the resulting diff:
+`git/.gitconfig`'s SSH signing works out of the box once you stow the `git`
+package: `gpg.ssh.program` points at a portable shim
+(`git/.local/bin/op-ssh-sign`, itself stowed to `~/.local/bin/`) that
+resolves the right 1Password binary for whichever platform it runs on — no
+per-machine editing needed. Signing itself still needs 1Password's CLI and
+SSH agent set up (sign in, then Settings > Developer > enable "Integrate
+with 1Password CLI" and "Use the SSH agent"); check readiness any time with:
 
 ```bash
-git config --file "$HOME/Developer/personal/n-dotfiles/git/.gitconfig" \
-  commit.gpgsign false
-git -C "$HOME/Developer/personal/n-dotfiles" diff -- git/.gitconfig
+scripts/check-1password-dev-tools.sh
 ```
 
-You can enable signing later with the Linux 1Password signer or a local SSH
-signing key. Git authentication and commit signing are independent decisions.
+It reports exactly what's missing (not signed in, SSH agent not reachable,
+etc.) and the fix for each. Git authentication and commit signing are
+independent decisions.
 
 To move existing repositories, push committed work from the Mac and clone it
 on Omarchy:
@@ -176,17 +185,13 @@ rsync -a --info=progress2 --exclude '.git/' \
 
 ## Optional 1Password / SSH Git setup
 
-The tracked Git config also contains the existing SSH-signing preference and
-GitHub credential helper, but its 1Password signer path is macOS-specific. On
-Omarchy either install 1Password and set its Linux signer path, or leave
-signing disabled until the signer is present:
+The tracked Git config's SSH-signing and GitHub credential helper are
+already portable (see above) — the only remaining step is finishing
+1Password's own setup (sign in; enable the CLI and SSH agent integrations in
+Settings > Developer), which `scripts/check-1password-dev-tools.sh` verifies.
+If you'd rather defer signing until then, disable it temporarily:
 
 ```bash
-# Option A: 1Password's Linux signer (verify the path on the installed build)
-git config --file "$HOME/Developer/personal/n-dotfiles/git/.gitconfig" \
-  gpg.ssh.program /opt/1Password/op-ssh-sign
-
-# Option B: temporary setup until signing is ready
 git config --file "$HOME/Developer/personal/n-dotfiles/git/.gitconfig" \
   commit.gpgsign false
 ```

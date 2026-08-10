@@ -18,6 +18,52 @@ setup_mocks() {
   mkdir -p "$MOCK_CALLS_DIR"
 }
 
+# Build a PATH string equivalent to the current $PATH but with the given
+# command names excluded. Tests that want to simulate a command being
+# genuinely absent can't just set PATH="/usr/bin:/bin" — on some real hosts
+# (e.g. Arch with 1password-cli or zsh installed system-wide) the command
+# actually lives there, so that PATH doesn't exclude it at all. Use this
+# instead: PATH="$(path_excluding op zsh)"
+#
+# Only rebuilds (via symlinks) the specific PATH directories that actually
+# contain one of the excluded names; every other directory is reused as-is.
+# Within a directory that needs filtering, symlink everything in one `cp -s`
+# call rather than forking `ln` per file — real bin directories can hold
+# thousands of entries (e.g. 2700+ in /usr/bin on a full Arch install), and
+# a per-file `ln` loop there takes ~30s and is slow enough to make bats'
+# own tmpdir cleanup choke.
+path_excluding() {
+  local -a exclude=("$@")
+  local -a new_dirs=()
+  local dir name filtered has_excluded
+
+  IFS=':' read -ra _path_excluding_dirs <<<"$PATH"
+  for dir in "${_path_excluding_dirs[@]}"; do
+    [[ -d "$dir" ]] || continue
+
+    has_excluded=false
+    for name in "${exclude[@]}"; do
+      [[ -e "$dir/$name" ]] && has_excluded=true && break
+    done
+
+    if [[ "$has_excluded" == "false" ]]; then
+      new_dirs+=("$dir")
+      continue
+    fi
+
+    filtered="$BATS_TEST_TMPDIR/path_excluding_$RANDOM"
+    mkdir -p "$filtered"
+    cp -s "$dir"/* "$filtered"/ 2>/dev/null
+    for name in "${exclude[@]}"; do
+      rm -f "$filtered/$name"
+    done
+    new_dirs+=("$filtered")
+  done
+
+  local IFS=:
+  echo "${new_dirs[*]}"
+}
+
 # Create a mock command that records its calls
 mock_command() {
   local cmd="$1"

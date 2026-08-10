@@ -77,6 +77,20 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
       eval "$(/usr/local/bin/brew shellenv)"
     fi
   fi
+elif [[ -x "$HOME/.linuxbrew/bin/brew" ]]; then
+  BREW_PREFIX="$HOME/.linuxbrew"
+  if [[ "$_ZSH_COMMAND_MODE" == "true" ]]; then
+    export PATH="$BREW_PREFIX/bin:$BREW_PREFIX/sbin:$PATH"
+  else
+    eval "$("$BREW_PREFIX/bin/brew" shellenv)"
+  fi
+elif [[ -x "/home/linuxbrew/.linuxbrew/bin/brew" ]]; then
+  BREW_PREFIX="/home/linuxbrew/.linuxbrew"
+  if [[ "$_ZSH_COMMAND_MODE" == "true" ]]; then
+    export PATH="$BREW_PREFIX/bin:$BREW_PREFIX/sbin:$PATH"
+  else
+    eval "$("$BREW_PREFIX/bin/brew" shellenv)"
+  fi
 fi
 
 #
@@ -284,9 +298,20 @@ fi
 #
 # 8. Plugins
 #
-if [[ "$_ZSH_COMMAND_MODE" != "true" && -n "$BREW_PREFIX" ]]; then
-  ZSH_AUTOSUGGESTIONS="$BREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
-  ZSH_SYNTAX_HIGHLIGHTING="$BREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+if [[ "$_ZSH_COMMAND_MODE" != "true" ]]; then
+  if [[ -n "$BREW_PREFIX" ]]; then
+    # macOS Homebrew or Homebrew-on-Linux (Brewfile.posix's documented
+    # generic-Linux route) — same layout either way.
+    ZSH_AUTOSUGGESTIONS="$BREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
+    ZSH_SYNTAX_HIGHLIGHTING="$BREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+  else
+    # Arch/Omarchy pacman packages (no Brewfile on that path — see
+    # omarchy/README.md). Not covered: apt-installed zsh plugins on
+    # Debian/Ubuntu without Homebrew, which use a different layout again;
+    # this repo's documented Linux path is Homebrew-on-Linux, not raw apt.
+    ZSH_AUTOSUGGESTIONS="/usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh"
+    ZSH_SYNTAX_HIGHLIGHTING="/usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+  fi
 
   [ -f "$ZSH_AUTOSUGGESTIONS" ] && source "$ZSH_AUTOSUGGESTIONS"
   [ -f "$ZSH_SYNTAX_HIGHLIGHTING" ] && source "$ZSH_SYNTAX_HIGHLIGHTING"
@@ -542,8 +567,14 @@ fi
 #
 # 17. mise (polyglot runtime manager)
 #
+# Not run through _cache_init: mise activate's output bakes in a literal
+# `export PATH='...'` snapshot of the PATH at generation time, so caching it
+# would freeze PATH to whatever it was on first run instead of recomputing
+# it fresh each shell (matching bash/.bashrc, which already evals this
+# uncached). mise itself is a fast native binary, so this isn't a
+# performance concern the way shell-completion generators are.
 if command -v mise >/dev/null 2>&1; then
-  _cache_init mise "mise activate zsh"
+  eval "$(mise activate zsh)"
 fi
 
 #
@@ -664,5 +695,7 @@ if command -v aerospace >/dev/null 2>&1; then
 fi
 
 # BEGIN superterm
-eval "$(superterm shell-init zsh)"
+if command -v superterm >/dev/null 2>&1; then
+  eval "$(superterm shell-init zsh)"
+fi
 # END superterm

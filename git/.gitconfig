@@ -62,7 +62,9 @@
   format = ssh
 
 [gpg "ssh"]
-  program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
+  # Portable shim (git/.local/bin/op-ssh-sign) picks the right 1Password
+  # install path for macOS or Linux, so this one line works on both.
+  program = ~/.local/bin/op-ssh-sign
 
 [init]
   defaultBranch = main

@@ -19,6 +19,10 @@ repo does not implement:
 2. `stow` — dotfile symlinks via `./stow.sh`.
 3. `mise install` — CLI tools and runtimes from `mise/.config/mise/config.toml` (stowed to `~/.config/mise/`).
 
+Arch/Omarchy skips layer 1 entirely: pacman (including its `mise` package)
+owns system packages instead of Homebrew, so only `./stow.sh` and
+`mise install` apply there. See [omarchy/README.md](omarchy/README.md).
+
 AI CLIs (claude, codex, opencode, copilot) are deliberately unmanaged;
 their native installers own updates.
 
@@ -33,7 +37,8 @@ their native installers own updates.
 ## Preferred Commands
 
 - `./stow.sh --list` and `./stow.sh --dry-run`
-- `./bootstrap.sh --dry-run --no-input --skip-1password`
+- `./bootstrap.sh --dry-run --no-input --skip-1password` (macOS)
+- `./bootstrap-omarchy.sh --dry-run --no-input` (Arch/Omarchy)
 - `./setup-personal-mac.sh --dry-run --no-input`
 - `make help`
 - `./_test/run_tests.sh`

@@ -90,7 +90,7 @@ print_next_steps() {
 ensure_macos() {
   if [[ "$OSTYPE" != "darwin"* ]]; then
     error "This bootstrap script is designed for macOS only"
-    error "On Linux: make linux-install (or ./setup-omarchy.sh on Omarchy/Arch)"
+    error "On Linux: make linux-install (or ./bootstrap-omarchy.sh on Omarchy/Arch)"
     exit 1
   fi
 }

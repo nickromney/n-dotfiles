@@ -33,8 +33,8 @@ EOF
   local script
   scripts=(
     "bootstrap.sh"
+    "bootstrap-omarchy.sh"
     "stow.sh"
-    "setup-omarchy.sh"
     "setup-personal-mac.sh"
     "setup-ssh-from-1password.sh"
     "setup-gitconfig-from-1password.sh"
@@ -44,6 +44,7 @@ EOF
     "scripts/audit-installed.sh"
     "scripts/sync-private-harness-assets.sh"
     "scripts/build-browser-tools.sh"
+    "scripts/check-1password-dev-tools.sh"
     "slicer-mac/check-slicer-version.sh"
     "slicer-mac/install-slicer-mac.sh"
     "slicer-mac/remove-slicer-mac.sh"
