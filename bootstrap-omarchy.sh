@@ -135,11 +135,15 @@ run_stow_if_needed() {
   local -a stow_args=()
   [[ "$DRY_RUN" == "true" ]] && stow_args+=("--dry-run")
 
+  # A conflict in one package (e.g. real files already at ~/.config/nvim)
+  # must not block unrelated later steps like keyd/hypr/mise — stow.sh
+  # itself already continues past a failed package to the rest of the
+  # list, so mirror that here rather than aborting the whole bootstrap.
   # shellcheck disable=SC2086 # STOW_PACKAGES is an intentionally unquoted word list
   if ! "$BOOTSTRAP_DIR/stow.sh" "${stow_args[@]}" $STOW_PACKAGES; then
-    error "Stow reported conflicts. Existing real files are in the way."
+    error "Stow reported conflicts on one or more packages. Existing real files are in the way."
     error "Review them, then re-run './stow.sh' (or './stow.sh --adopt' to pull them into the repo — check 'git diff' afterwards)."
-    exit 1
+    error "Continuing with the rest of bootstrap; packages that failed to stow are simply not linked yet."
   fi
 }
 
