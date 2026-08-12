@@ -99,7 +99,7 @@ Homebrew, but it is not part of the Arch/Omarchy path.
 For Omarchy/Arch, keep Omarchy's system packages and Super-key defaults, then
 layer selected Stow packages and the separate Caps-Lock Hyper bindings on top.
 There's no Brewfile on this path — `./bootstrap-omarchy.sh --dry-run`
-mechanizes the pacman + stow + keyd + mise sequence; see
+mechanizes the pacman + stow + Zsh login shell + keyd + mise sequence; see
 [omarchy/README.md](omarchy/README.md) for the full walkthrough and the parts
 that stay manual (1Password sign-in, git SSH signing, mail client choice).
 

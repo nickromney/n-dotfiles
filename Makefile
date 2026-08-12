@@ -68,7 +68,7 @@ help: ## Show this help message
 		echo "  make configure            Apply macOS settings (MACOS_PROFILE=personal)"; \
 	else \
 		echo "  make linux-install        Linux: stow dotfiles + install mise tools"; \
-		echo "  make omarchy-setup        Arch/Omarchy: packages + dotfiles + keyd"; \
+		echo "  make omarchy-setup        Arch/Omarchy: packages + dotfiles + Zsh + keyd"; \
 	fi
 	@echo "  make stow                 Symlink dotfiles only (all a work machine needs)"
 	@echo "  Arch/Omarchy              No Brewfile: pacman + ./stow.sh + mise install (see omarchy/README.md)"

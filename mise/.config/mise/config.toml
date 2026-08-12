@@ -27,6 +27,7 @@ lazygit = "latest"
 lefthook = "latest"
 ripgrep = "latest"
 starship = "latest"
+zoxide = "latest"
 yq = "latest"
 bun = "latest"
 "aqua:nushell/nushell" = "latest" # not in mise's curated registry under a short name
