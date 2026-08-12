@@ -5,9 +5,10 @@
 # the Brewfile layer entirely and uses pacman for system packages instead.
 #   1. pacman   — git, stow, keyd, mise, zsh + zsh plugins (system packages)
 #   2. stow     — symlink dotfiles into $HOME (stow.sh)
-#   3. keyd     — Caps Lock as Hyper modifier (see omarchy/README.md)
-#   4. hypr     — include this repo's hyper.conf in ~/.config/hypr/bindings.conf
-#   5. mise install — CLI tools and runtimes (mise/.config/mise/config.toml)
+#   3. login shell — make the stowed zsh/.zshrc the interactive default
+#   4. keyd     — Caps Lock as Hyper modifier (see omarchy/README.md)
+#   5. hypr     — include this repo's hyper.conf in ~/.config/hypr/bindings.conf
+#   6. mise install — CLI tools and runtimes (mise/.config/mise/config.toml)
 #
 # See omarchy/README.md for the full manual walkthrough and the parts this
 # script deliberately leaves to you (1Password sign-in, git SSH signing,
@@ -18,15 +19,19 @@ set -euo pipefail
 BOOTSTRAP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OMARCHY_INSTALL_DIR="${OMARCHY_INSTALL_DIR:-$HOME/.local/share/omarchy}"
 ZSH_PLUGIN_DIR="${ZSH_PLUGIN_DIR:-/usr/share/zsh/plugins}"
+SHELLS_FILE="${SHELLS_FILE:-/etc/shells}"
+KEYD_LINK="${KEYD_LINK:-/etc/keyd/n-dotfiles.conf}"
 
 DRY_RUN="${DRY_RUN:-false}"
 NO_INPUT="${NO_INPUT:-false}"
 SKIP_PACMAN=false
 SKIP_STOW=false
+SKIP_SHELL=false
 SKIP_KEYD=false
 SKIP_HYPR=false
 SKIP_MISE=false
-STOW_PACKAGES="git zsh nvim tmux mise codex claude agents omarchy"
+STOW_PACKAGES="git zsh tmux mise codex claude agents omarchy"
+STOW_PACKAGE_ARGS=()
 
 usage() {
   local exit_code=${1:-0}
@@ -35,14 +40,15 @@ usage() {
 Usage: $0 [options]
 
 Bootstrap a fresh Omarchy (Arch Linux) host: pacman base packages, stowed
-dotfiles, keyd's Hyper-key remap, the Hyprland hyper.conf include, and
-mise-managed CLI tools and runtimes.
+dotfiles, Zsh as the login shell, keyd's Hyper-key remap, the Hyprland
+hyper.conf include, and mise-managed CLI tools and runtimes.
 
 Options:
   -d, --dry-run           Show what would happen without making changes
       --no-input          Disable prompts; pass --noconfirm to pacman
-      --skip-pacman        Skip installing git/stow/keyd/mise via pacman
+      --skip-pacman        Skip installing the pacman base packages
       --skip-stow          Skip stowing dotfiles
+      --skip-shell         Keep the account's current login shell
       --skip-keyd          Skip keyd symlink/enable/reload
       --skip-hypr          Skip adding the hyper.conf include to bindings.conf
       --skip-mise          Skip running mise install
@@ -54,7 +60,7 @@ Examples:
   $0 --dry-run
   $0 --dry-run --no-input
   $0 --skip-keyd --skip-hypr
-  $0 --packages "git zsh nvim"
+  $0 --packages "git zsh tmux"
 EOF
 
   exit "$exit_code"
@@ -88,7 +94,7 @@ run_cmd() {
 print_next_steps() {
   echo
   echo "Next steps:"
-  echo "1. Restart your terminal to load new shell configurations"
+  echo "1. Log out and back in if the login shell changed; Ghostty will then start Zsh"
   echo "2. 1Password: sign in to the app, then Settings > Developer >"
   echo "   enable 'Integrate with 1Password CLI' and 'Use the SSH agent'"
   echo "3. Run: ./setup-ssh-from-1password.sh --dry-run"
@@ -125,6 +131,23 @@ run_pacman_if_needed() {
   run_cmd sudo pacman "${pacman_args[@]}" git stow keyd mise zsh zsh-autosuggestions zsh-syntax-highlighting
 }
 
+load_and_validate_stow_packages() {
+  read -r -a STOW_PACKAGE_ARGS <<<"$STOW_PACKAGES"
+  if [[ ${#STOW_PACKAGE_ARGS[@]} -eq 0 ]]; then
+    error "--packages requires at least one package"
+    exit 1
+  fi
+
+  local available pkg
+  available="$($BOOTSTRAP_DIR/stow.sh --list)"
+  for pkg in "${STOW_PACKAGE_ARGS[@]}"; do
+    if ! grep -qxF "$pkg" <<<"$available"; then
+      error "Unknown stow package: $pkg (use './stow.sh --list' to see packages)"
+      exit 1
+    fi
+  done
+}
+
 run_stow_if_needed() {
   if [[ "$SKIP_STOW" == "true" ]]; then
     info "Skipping stow"
@@ -139,8 +162,7 @@ run_stow_if_needed() {
   # must not block unrelated later steps like keyd/hypr/mise — stow.sh
   # itself already continues past a failed package to the rest of the
   # list, so mirror that here rather than aborting the whole bootstrap.
-  # shellcheck disable=SC2086 # STOW_PACKAGES is an intentionally unquoted word list
-  if ! "$BOOTSTRAP_DIR/stow.sh" "${stow_args[@]}" $STOW_PACKAGES; then
+  if ! "$BOOTSTRAP_DIR/stow.sh" "${stow_args[@]}" "${STOW_PACKAGE_ARGS[@]}"; then
     error "Stow reported conflicts on one or more packages. Existing real files are in the way."
     error "Review them, then re-run './stow.sh' (or './stow.sh --adopt' to pull them into the repo — check 'git diff' afterwards)."
     error "Continuing with the rest of bootstrap; packages that failed to stow are simply not linked yet."
@@ -180,7 +202,7 @@ check_stowed_binaries() {
   )
 
   local pkg binary any_missing=false
-  for pkg in $STOW_PACKAGES; do
+  for pkg in "${STOW_PACKAGE_ARGS[@]}"; do
     binary="${package_binary[$pkg]:-}"
     [[ -z "$binary" ]] && continue
     if ! command_exists "$binary"; then
@@ -194,15 +216,19 @@ check_stowed_binaries() {
   fi
 }
 
+stow_package_requested() {
+  local wanted="$1" pkg
+  for pkg in "${STOW_PACKAGE_ARGS[@]}"; do
+    [[ "$pkg" == "$wanted" ]] && return 0
+  done
+  return 1
+}
+
 # zsh/.zshrc sources these plugins directly by file path rather than via a
 # binary, so check_stowed_binaries' PATH check can't see this dependency —
 # check the actual plugin files zsh/.zshrc expects instead.
 check_zsh_plugins() {
-  local zsh_requested=false pkg
-  for pkg in $STOW_PACKAGES; do
-    [[ "$pkg" == "zsh" ]] && zsh_requested=true
-  done
-  [[ "$zsh_requested" == "false" ]] && return 0
+  stow_package_requested zsh || return 0
 
   local -A plugin_path=(
     [zsh-autosuggestions]="$ZSH_PLUGIN_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh"
@@ -223,6 +249,57 @@ check_zsh_plugins() {
   fi
 }
 
+set_zsh_login_shell_if_needed() {
+  if [[ "$SKIP_SHELL" == "true" ]]; then
+    info "Skipping login shell setup"
+    return 0
+  fi
+
+  if ! stow_package_requested zsh; then
+    info "Skipping login shell setup because the zsh Stow package was not requested"
+    return 0
+  fi
+
+  local zsh_path current_user passwd_entry current_shell active_zshrc expected_zshrc
+  if ! zsh_path="$(command -v zsh)" || ! zsh_path="$(readlink -f "$zsh_path")"; then
+    info "WARN zsh is not on PATH; cannot set it as the login shell"
+    return 0
+  fi
+
+  if [[ ! -r "$SHELLS_FILE" ]] || ! grep -qxF "$zsh_path" "$SHELLS_FILE"; then
+    info "WARN $zsh_path is not listed in $SHELLS_FILE; refusing to set it as the login shell"
+    return 0
+  fi
+
+  expected_zshrc="$(readlink -f "$BOOTSTRAP_DIR/zsh/.zshrc")"
+  active_zshrc="$(readlink -f "$HOME/.zshrc" 2>/dev/null || true)"
+  if [[ "$DRY_RUN" != "true" && "$active_zshrc" != "$expected_zshrc" ]]; then
+    info "WARN $HOME/.zshrc is not linked to this repository; refusing to change the login shell"
+    info "Resolve the zsh Stow conflict and re-run the bootstrap."
+    return 0
+  fi
+
+  current_user="${USER:-$(id -un)}"
+  passwd_entry="$(getent passwd "$current_user" 2>/dev/null || true)"
+  if [[ -z "$passwd_entry" ]]; then
+    info "WARN could not read the account record for $current_user; refusing to change the login shell"
+    return 0
+  fi
+  current_shell="${passwd_entry##*:}"
+  if [[ -e "$current_shell" ]]; then
+    current_shell="$(readlink -f "$current_shell")"
+  fi
+
+  if [[ "$current_shell" == "$zsh_path" ]]; then
+    info "Zsh is already the login shell for $current_user"
+    return 0
+  fi
+
+  info "Setting Zsh as the login shell for $current_user..."
+  run_cmd sudo chsh -s "$zsh_path" "$current_user"
+  info "Log out and back in for Ghostty and other new terminals to use Zsh."
+}
+
 run_keyd_if_needed() {
   if [[ "$SKIP_KEYD" == "true" ]]; then
     info "Skipping keyd setup"
@@ -230,11 +307,19 @@ run_keyd_if_needed() {
   fi
 
   local keyd_source="$HOME/.config/keyd/default.conf"
-  local keyd_link="/etc/keyd/n-dotfiles.conf"
+  local keyd_link="$KEYD_LINK"
 
-  if [[ ! -f "$keyd_source" ]]; then
+  if [[ ! -f "$keyd_source" ]] && ! { [[ "$DRY_RUN" == "true" ]] && stow_package_requested omarchy; }; then
     info "$keyd_source not found (stow the omarchy package first); skipping keyd setup"
     return 0
+  fi
+
+  if [[ -e "$keyd_link" || -L "$keyd_link" ]]; then
+    if [[ "$(readlink -f "$keyd_link" 2>/dev/null || true)" != "$(readlink -f "$keyd_source" 2>/dev/null || true)" ]]; then
+      info "WARN $keyd_link already exists but does not point to $keyd_source"
+      info "Refusing to replace or activate an unexpected system keyd config."
+      return 0
+    fi
   fi
 
   info "Setting up keyd (Caps Lock as Hyper modifier)..."
@@ -243,7 +328,7 @@ run_keyd_if_needed() {
 
   run_cmd sudo install -d /etc/keyd
 
-  if [[ -e "$keyd_link" ]]; then
+  if [[ -e "$keyd_link" || -L "$keyd_link" ]]; then
     info "$keyd_link already present; leaving it as-is"
   else
     run_cmd sudo ln -s "$keyd_source" "$keyd_link"
@@ -261,10 +346,16 @@ run_hypr_include_if_needed() {
   fi
 
   local bindings="$HOME/.config/hypr/bindings.conf"
+  local hyper_config="$HOME/.config/hypr/hyper.conf"
   local include_line="source = ~/.config/hypr/hyper.conf"
 
   if [[ ! -f "$bindings" ]]; then
     info "$bindings not found (Hyprland not set up yet?); skipping hyper.conf include"
+    return 0
+  fi
+
+  if [[ ! -f "$hyper_config" ]] && ! { [[ "$DRY_RUN" == "true" ]] && stow_package_requested omarchy; }; then
+    info "$hyper_config not found (stow the omarchy package first); skipping hyper.conf include"
     return 0
   fi
 
@@ -283,6 +374,7 @@ run_hypr_include_if_needed() {
 
   if command_exists hyprctl; then
     run_cmd hyprctl reload
+    run_cmd hyprctl configerrors
   fi
 }
 
@@ -333,6 +425,10 @@ parse_args() {
         SKIP_STOW=true
         shift
         ;;
+      --skip-shell)
+        SKIP_SHELL=true
+        shift
+        ;;
       --skip-keyd)
         SKIP_KEYD=true
         shift
@@ -372,6 +468,7 @@ parse_args() {
 main() {
   parse_args "$@"
   ensure_omarchy
+  load_and_validate_stow_packages
 
   info "Starting n-dotfiles Omarchy bootstrap process..."
   if [[ "$DRY_RUN" == "true" ]]; then
@@ -385,6 +482,7 @@ main() {
   run_stow_if_needed
   check_stowed_binaries
   check_zsh_plugins
+  set_zsh_login_shell_if_needed
   run_keyd_if_needed
   run_hypr_include_if_needed
   run_mise_if_needed

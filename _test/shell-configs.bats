@@ -150,6 +150,35 @@ EOF
   [ "$status" -eq 0 ]
 }
 
+@test "zshrc: does not execute codex while starting a shell" {
+  local marker="$TEST_HOME/codex-called"
+  cat >"$MOCK_BIN_DIR/codex" <<EOF
+#!/usr/bin/env bash
+touch "$marker"
+EOF
+  chmod +x "$MOCK_BIN_DIR/codex"
+
+  run env \
+    HOME="$TEST_HOME" \
+    XDG_CACHE_HOME="$XDG_CACHE_HOME" \
+    PATH="$MOCK_BIN_DIR:/usr/bin:/bin" \
+    zsh -c "source $DOTFILES_DIR/zsh/.zshrc"
+
+  [ "$status" -eq 0 ]
+  [ ! -e "$marker" ]
+}
+
+@test "zoxide: cross-platform shell dependency is managed by mise only" {
+  run grep -Eq '^zoxide = "[^"]+"' "$DOTFILES_DIR/mise/.config/mise/config.toml"
+  [ "$status" -eq 0 ]
+
+  run grep -Eq '^brew "zoxide"' "$DOTFILES_DIR/Brewfile"
+  [ "$status" -ne 0 ]
+
+  run grep -Eq '^brew "zoxide"' "$DOTFILES_DIR/Brewfile.posix"
+  [ "$status" -ne 0 ]
+}
+
 @test "zshrc: PATH deduplication works" {
   # Create a PATH with duplicates
   export PATH="/usr/bin:/usr/local/bin:/usr/bin:/opt/homebrew/bin:/usr/local/bin"

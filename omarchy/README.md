@@ -44,10 +44,10 @@ window-management bindings remain available.
 ## First application on Omarchy
 
 `../bootstrap-omarchy.sh --dry-run` mechanizes the mechanical parts of this
-walkthrough (pacman base packages, stow, keyd symlink/enable, the hyper.conf
-include, `mise install`). This section documents the same steps by hand, plus
-the parts that stay manual either way: 1Password sign-in, git SSH signing,
-and mail client choice.
+walkthrough (pacman base packages, stow, Zsh as the login shell, keyd
+symlink/enable, the hyper.conf include, `mise install`). This section documents
+the same steps by hand, plus the parts that stay manual either way: 1Password
+sign-in, git SSH signing, and mail client choice.
 
 Use a second terminal or a TTY while changing keyboard input. `keyd` has a
 panic sequence of **Backspace + Escape + Enter** if a bad mapping traps the
@@ -72,9 +72,9 @@ cd ~/Developer/personal/n-dotfiles
 # Authenticate with GitHub later before pushing private repositories.
 
 # Preview first. Select packages rather than importing every Mac-only tree.
-./stow.sh --dry-run git zsh nvim tmux mise codex claude agents omarchy
-./stow.sh git zsh nvim tmux mise codex claude agents omarchy
-mise install
+./stow.sh --dry-run git zsh tmux mise codex claude agents omarchy
+./stow.sh git zsh tmux mise codex claude agents omarchy
+sudo chsh -s /usr/bin/zsh "$USER"
 
 # keyd loads system configs, so expose the stowed file under a new name rather
 # than replacing any existing /etc/keyd/default.conf.
@@ -86,13 +86,26 @@ sudo keyd reload
 
 # CLI tools and runtimes declared in mise/.config/mise/config.toml, now
 # reachable at ~/.config/mise/config.toml via the stow above. This also
-# provides shellcheck, bats, markdownlint-cli2, and yamllint — required for
-# this repo's own `make lint` / `make test` and lefthook git hooks.
+# provides zoxide (and therefore the `o` navigation alias), shellcheck, bats,
+# markdownlint-cli2, and yamllint — required for this repo's own `make lint` /
+# `make test` and lefthook git hooks.
 mise install
 
 # Optional: install this repo's lefthook git hooks (pre-commit/pre-push).
 make hooks
 ```
+
+Log out and back in after changing the login shell. Ghostty and other new
+terminals then start Zsh and load the stowed `~/.zshrc`; no Ghostty or Omarchy
+default file needs to be replaced. Re-running the bootstrap detects that Zsh
+is already selected. Use `--skip-shell` when preserving the existing login
+shell is intentional.
+
+The default Omarchy package set deliberately leaves out the `nvim` Stow tree:
+Omarchy owns `~/.config/nvim`, and layering this repository's separate Neovim
+distribution into that directory produces conflicts and makes update ownership
+unclear. Stow `nvim` explicitly only when intentionally replacing Omarchy's
+Neovim configuration.
 
 Add the personal Hyprland include once to `~/.config/hypr/bindings.conf`:
 
