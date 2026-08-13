@@ -42,6 +42,7 @@ yamllint = "latest"
 
 # Python tooling
 ruff = "latest"
+uv = "latest"
 
 # Kubernetes
 helm = "latest"
