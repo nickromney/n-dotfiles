@@ -53,7 +53,16 @@ setopt HIST_IGNORE_SPACE
 #
 export EDITOR="nvim"
 export SUDO_EDITOR="$EDITOR"
-export LANG="en_GB.UTF-8"
+# Only export a locale that actually exists. macOS ships every locale
+# precompiled, so this was safe there for years; glibc only has what locale-gen
+# generated, and naming an absent locale makes Perl-backed tools (shasum among
+# them) print a 14-line warning to stderr on every call. bootstrap-omarchy.sh
+# generates it; this guard keeps a not-yet-bootstrapped host quiet.
+# The $LANG test short-circuits the subshell once the system locale is set.
+if [[ "$LANG" != "en_GB.UTF-8" ]] &&
+  locale -a 2>/dev/null | grep -qiE '^en_GB\.utf-?8$'; then
+  export LANG="en_GB.UTF-8"
+fi
 export WORDCHARS="" # Specify word boundaries for command line navigation
 _ZSH_COMMAND_MODE=false
 [[ -o interactive && -n "${ZSH_EXECUTION_STRING:-}" ]] && _ZSH_COMMAND_MODE=true
