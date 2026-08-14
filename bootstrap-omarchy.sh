@@ -21,10 +21,15 @@ OMARCHY_INSTALL_DIR="${OMARCHY_INSTALL_DIR:-$HOME/.local/share/omarchy}"
 ZSH_PLUGIN_DIR="${ZSH_PLUGIN_DIR:-/usr/share/zsh/plugins}"
 SHELLS_FILE="${SHELLS_FILE:-/etc/shells}"
 KEYD_LINK="${KEYD_LINK:-/etc/keyd/n-dotfiles.conf}"
+LOCALE_LANG="${LOCALE_LANG:-en_GB.UTF-8}"
+# glibc reports the generated locale as "en_GB.utf8"; macOS reports
+# "en_GB.UTF-8". Match either spelling rather than assuming one.
+LOCALE_PRESENT_PATTERN="${LOCALE_PRESENT_PATTERN:-^en_GB\\.utf-?8$}"
 
 DRY_RUN="${DRY_RUN:-false}"
 NO_INPUT="${NO_INPUT:-false}"
 SKIP_PACMAN=false
+SKIP_LOCALE=false
 SKIP_STOW=false
 SKIP_SHELL=false
 SKIP_KEYD=false
@@ -47,6 +52,7 @@ Options:
   -d, --dry-run           Show what would happen without making changes
       --no-input          Disable prompts; pass --noconfirm to pacman
       --skip-pacman        Skip installing the pacman base packages
+      --skip-locale        Skip generating the system locale
       --skip-stow          Skip stowing dotfiles
       --skip-shell         Keep the account's current login shell
       --skip-keyd          Skip keyd symlink/enable/reload
@@ -146,6 +152,28 @@ load_and_validate_stow_packages() {
       exit 1
     fi
   done
+}
+
+run_locale_if_needed() {
+  if [[ "$SKIP_LOCALE" == "true" ]]; then
+    info "Skipping locale generation"
+    return 0
+  fi
+
+  # zsh/.zshrc exports LANG, and on macOS that is enough because every locale
+  # ships precompiled. glibc only has what locale-gen generated, so the same
+  # export on a fresh Arch host names a locale that does not exist. Perl then
+  # prints a 14-line warning to stderr on every invocation of any Perl-backed
+  # tool, shasum included, which is easy to mistake for a broken command.
+  if locale -a 2>/dev/null | grep -qiE "$LOCALE_PRESENT_PATTERN"; then
+    info "Locale $LOCALE_LANG already generated"
+    return 0
+  fi
+
+  info "Generating $LOCALE_LANG and setting it as the system locale..."
+  run_cmd sudo sed -i "s/^#${LOCALE_LANG} UTF-8/${LOCALE_LANG} UTF-8/" /etc/locale.gen
+  run_cmd sudo locale-gen
+  run_cmd sudo localectl set-locale "LANG=${LOCALE_LANG}"
 }
 
 run_stow_if_needed() {
@@ -421,6 +449,10 @@ parse_args() {
         SKIP_PACMAN=true
         shift
         ;;
+      --skip-locale)
+        SKIP_LOCALE=true
+        shift
+        ;;
       --skip-stow)
         SKIP_STOW=true
         shift
@@ -479,6 +511,7 @@ main() {
   run_cmd mkdir -p "$HOME/Developer/personal"
 
   run_pacman_if_needed
+  run_locale_if_needed
   run_stow_if_needed
   check_stowed_binaries
   check_zsh_plugins
