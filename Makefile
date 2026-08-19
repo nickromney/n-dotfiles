@@ -36,7 +36,9 @@ NC :=
 endif
 
 BREW_WITH_POLICY := ./scripts/brew-with-policy.sh
+BREW_BUNDLE_INSTALL := ./scripts/brew-bundle-install.sh
 BREW_UPDATE := ./scripts/brew-update.sh
+AUDIO_PRIORITY_BAR_INSTALL := ./scripts/install-audio-priority-bar.sh
 
 HOST_OS := $(shell uname -s)
 BREWFILE := $(if $(filter Darwin,$(HOST_OS)),Brewfile,Brewfile.posix)
@@ -45,9 +47,9 @@ BREWFILE := $(if $(filter Darwin,$(HOST_OS)),Brewfile,Brewfile.posix)
 MACOS_PROFILE ?= personal
 
 ifeq ($(HOST_OS),Darwin)
-INSTALL_TARGETS := brewfile-install stow mise-install
+INSTALL_TARGETS := brewfile-install audio-priority-bar-install stow-install mise-install
 else
-INSTALL_TARGETS := stow mise-install
+INSTALL_TARGETS := stow-install mise-install
 endif
 
 # Default target
@@ -86,11 +88,23 @@ brewfile-install: ## Install packages from the Brewfile (Brewfile.posix on Linux
 		exit 1; \
 	fi
 	@echo "$(BLUE)Installing via brew bundle: $(BREWFILE)$(NC)"
-	@$(BREW_WITH_POLICY) bundle --file="$(BREWFILE)"
+	@$(BREW_BUNDLE_INSTALL) "$(BREWFILE)"
+
+.PHONY: audio-priority-bar-install
+audio-priority-bar-install: ## Install the pinned AudioPriorityBar release on macOS
+	@if [ "$(HOST_OS)" != "Darwin" ]; then \
+		echo "$(RED)AudioPriorityBar is macOS-only$(NC)"; \
+		exit 1; \
+	fi
+	@$(AUDIO_PRIORITY_BAR_INSTALL)
 
 .PHONY: stow
 stow: ## Symlink dotfiles into the home directory
 	@./stow.sh
+
+.PHONY: stow-install
+stow-install: ## Symlink dotfiles, preserving unmanaged conflicts in a backup
+	@./stow.sh --backup-conflicts
 
 .PHONY: mise-install
 mise-install: ## Install CLI tools and runtimes declared in mise config
@@ -109,7 +123,7 @@ linux-install: ## Install Linux dotfiles and mise tools without Homebrew
 		echo "$(RED)linux-install is for Linux; use make install on macOS$(NC)"; \
 		exit 1; \
 	fi
-	@$(MAKE) stow mise-install
+	@$(MAKE) stow-install mise-install
 
 .PHONY: omarchy-setup
 omarchy-setup: ## Run the idempotent Arch/Omarchy setup flow
@@ -122,7 +136,7 @@ personal-setup: ## Full personal Mac setup (bootstrap + macOS settings + SSH)
 ##@ Update
 
 .PHONY: update
-update: ## Update brew packages, mise tools, and Mac App Store apps
+update: ## Update installed brew packages, mise tools, and Mac App Store apps
 	@if [ "$(HOST_OS)" = "Darwin" ]; then \
 		$(BREW_UPDATE) update-all; \
 	fi
@@ -181,7 +195,7 @@ lint: ## Run linters (shellcheck, markdownlint)
 	@./_test/shellcheck.sh
 	@echo "$(YELLOW)Running markdownlint...$(NC)"
 	@if command -v markdownlint-cli2 >/dev/null 2>&1; then \
-		find . -name "*.md" -not -path "./_test/*" -not -path "./.git/*" -exec markdownlint-cli2 {} + ; \
+		git ls-files -z -- "*.md" | xargs -0 markdownlint-cli2; \
 	else \
 		echo "  markdownlint-cli2 not available"; \
 	fi

@@ -60,8 +60,10 @@ for path_entry in "${paths[@]}"; do
   fi
 done
 
-# De-duplicate PATH and remove empty entries
-PATH=$(echo "$PATH" | awk -v RS=: '!a[$0]++' | grep -v '^$' | paste -sd: -)
+# De-duplicate PATH and keep Arkade as a fallback behind mise and system tools.
+ARKADE_BIN="$HOME/.arkade/bin"
+PATH=$(echo "$PATH" | awk -v RS=: -v arkade="$ARKADE_BIN" '$0 != arkade && !a[$0]++' | grep -v '^$' | paste -sd: -)
+[[ -d "$ARKADE_BIN" ]] && PATH="$PATH:$ARKADE_BIN"
 export PATH
 
 #

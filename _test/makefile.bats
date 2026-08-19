@@ -27,9 +27,25 @@ setup() {
 #!/usr/bin/env bash
 if [[ "$1" == "bundle" ]]; then
   shift
+  if [[ "$1" == "list" && "$2" == "--cask" ]]; then
+    printf '%s\n' brave-browser alfred ghostty
+    exit 0
+  fi
+  if [[ "$1" == "list" && "$2" == "--formula" ]]; then
+    printf '%s\n' fzf mise tmux azure/functions/azure-functions-core-tools@4
+    exit 0
+  fi
   printf "%s\n" "$@" > "${TEST_DIR}/brew-bundle-args.txt"
-  printf "%s\t%s\n" "${HOMEBREW_NO_REQUIRE_TAP_TRUST:-}" "${HOMEBREW_NO_ENV_HINTS:-}" > "${TEST_DIR}/brew-policy-env.txt"
+  printf "%s\t%s\t%s\t%s\n" "${HOMEBREW_NO_REQUIRE_TAP_TRUST:-}" "${HOMEBREW_NO_ENV_HINTS:-}" "${HOMEBREW_BUNDLE_CASK_SKIP:-}" "${HOMEBREW_BUNDLE_BREW_SKIP:-}" > "${TEST_DIR}/brew-policy-env.txt"
   echo "brew bundle called"
+  exit 0
+fi
+if [[ "$1" == "list" && "$2" == "--cask" ]]; then
+  printf '%s\n' brave-browser alfred
+  exit 0
+fi
+if [[ "$1" == "list" && "$2" == "--formula" ]]; then
+  printf '%s\n' fzf mise azure-functions-core-tools@4
   exit 0
 fi
 echo "brew $*"
@@ -61,12 +77,20 @@ EOF
   touch _macos/personal.yaml _macos/work.yaml
 
   mkdir -p scripts
-  for script in brew-with-policy.sh brew-update.sh; do
+  for script in brew-bundle-install.sh brew-with-policy.sh brew-update.sh install-audio-priority-bar.sh; do
     if [ -f "$REPO_ROOT/scripts/$script" ]; then
       cp "$REPO_ROOT/scripts/$script" scripts/
       chmod +x "scripts/$script"
     fi
   done
+
+  # Keep the Makefile test hermetic on macOS: the real installer downloads a
+  # pinned release, while this suite only needs to verify target wiring.
+  cat > scripts/install-audio-priority-bar.sh <<'EOF'
+#!/usr/bin/env bash
+echo "audio-priority-bar installer called"
+EOF
+  chmod +x scripts/install-audio-priority-bar.sh
 
   # Copy the Makefile
   cp "$REPO_ROOT/Makefile" .
@@ -109,7 +133,7 @@ teardown() {
   else
     [[ "$output" != *"brew bundle called"* ]]
   fi
-  [[ "$output" == *"stow.sh called with:"* ]]
+  [[ "$output" == *"stow.sh called with: --backup-conflicts"* ]]
   [[ "$output" == *"mise install"* ]]
 }
 
@@ -128,10 +152,34 @@ teardown() {
   [ "$status" -eq 0 ]
 }
 
+@test "make brewfile-install installs only missing formulae and casks" {
+  run make brewfile-install
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Using brave-browser (installed)"* ]]
+  [[ "$output" == *"Using alfred"* ]]
+  [[ "$output" == *"Using fzf (installed)"* ]]
+  [[ "$output" == *"Using azure/functions/azure-functions-core-tools@4 (installed)"* ]]
+  run awk -F '\t' '$3 ~ /(^| )brave-browser( |$)/ && $3 ~ /(^| )alfred( |$)/ { found = 1 } END { exit found ? 0 : 1 }' "$TEST_DIR/brew-policy-env.txt"
+  [ "$status" -eq 0 ]
+  run awk -F '\t' '$4 ~ /(^| )fzf( |$)/ && $4 ~ /(^| )mise( |$)/ { found = 1 } END { exit found ? 0 : 1 }' "$TEST_DIR/brew-policy-env.txt"
+  [ "$status" -eq 0 ]
+  run awk -F '\t' '$4 ~ /(^| )azure\/functions\/azure-functions-core-tools@4( |$)/ { found = 1 } END { exit found ? 0 : 1 }' "$TEST_DIR/brew-policy-env.txt"
+  [ "$status" -eq 0 ]
+}
+
+@test "Homebrew update upgrades installed formulae and casks explicitly" {
+  run scripts/brew-update.sh update-all
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"brew upgrade --formula"* ]]
+  [[ "$output" == *"brew upgrade --cask"* ]]
+  [[ "$output" != *"Pearcleaner"* ]]
+}
+
 @test "make stow calls stow.sh" {
   run make stow
   [ "$status" -eq 0 ]
   [[ "$output" == *"stow.sh called with:"* ]]
+  [[ "$output" != *"--backup-conflicts"* ]]
 }
 
 @test "make mise-install runs mise install" {

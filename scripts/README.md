@@ -43,14 +43,15 @@ states.
 
 ## sync-private-harness-assets
 
-Link selected private harness assets from the optional sibling
+Reconcile selected private harness assets from the optional sibling
 `../harnesses-private` repo into the global, Claude, and Codex harness views.
-The script links individual skill directories only, skips cleanly when the
-private repo is absent, and discovers provider-grouped catalogs such as
+The script links individual skill directories, skips cleanly when the private
+repo is absent, removes stale private links, and discovers provider-grouped catalogs such as
 `mattpocock/skills/tdd`, `joshpigford/skills/example`, and
 `agents/skills/use-platform`. If a provider has `load/*.txt` manifests, only
 listed skills are exposed. Supported manifests are `load/global.txt`,
-`load/claude.txt`, and `load/codex.txt`.
+`load/claude.txt`, and `load/codex.txt`. Duplicate loaded skill names are
+namespaced as `<provider>-<skill>` in the flat harness roots.
 
 Run from the `n-dotfiles` repo root. The default private source is
 `../harnesses-private`; pass `--private-root <path>` for another location.
@@ -109,4 +110,24 @@ npm dependency footprint where package metadata is local.
 ./scripts/audit-installed.sh
 ./scripts/audit-installed.sh --out-base /tmp/n-dotfiles-audit
 make audit-installed
+```
+
+## install-audio-priority-bar
+
+Install the pinned universal macOS release of Tobi's AudioPriorityBar into
+`~/Applications`. The script verifies the release archive's SHA-256 and is
+idempotent; `make install` runs it automatically on macOS.
+
+```bash
+./scripts/install-audio-priority-bar.sh --dry-run
+./scripts/install-audio-priority-bar.sh
+```
+
+The installer also runs `configure-audio-priority-bar.sh`, which merges the
+stable preferences from the `audio-priority-bar` Stow package into the app's
+UserDefaults domain without replacing its volatile device cache.
+
+```bash
+./scripts/configure-audio-priority-bar.sh --dry-run
+./scripts/configure-audio-priority-bar.sh
 ```

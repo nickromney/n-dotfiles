@@ -47,8 +47,10 @@ bats _test/makefile.bats --verbose-run
 ## Test Structure
 
 - `bootstrap.bats` - CLI contract and dry-run behavior of `bootstrap.sh`
+- `audio-priority-bar-config.bats` - stable preference merge and installer integration
 - `cli-contracts.bats` - `--help`/`--dry-run` contracts for user-facing scripts, including `stow.sh`
 - `makefile.bats` - Makefile targets (install, stow, mise-install, update, configure)
+- `stow.bats` - conflict preflight, recoverable backups, and Stow transaction behavior
 - `setup-personal-mac.bats` - Orchestration flow of `setup-personal-mac.sh`
 - `macos.bats` - macOS defaults logic (`_macos/macos.sh`)
 - `shell-configs.bats` - bash/zsh startup behavior and PATH ordering

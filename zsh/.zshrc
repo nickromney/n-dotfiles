@@ -137,8 +137,11 @@ _cache_init() {
 
 _dedupe_path() {
   typeset -gaU path
+  local arkade_bin="$HOME/.arkade/bin"
   path=(${(s/:/)PATH})
   path=(${(M)path:#?*})
+  path=("${(@)path:#$arkade_bin}")
+  [[ -d "$arkade_bin" ]] && path+=("$arkade_bin")
   export PATH
 }
 
