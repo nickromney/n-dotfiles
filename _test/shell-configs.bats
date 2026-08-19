@@ -410,6 +410,42 @@ EOF
   [ "$zsh_shims_index" -lt "$zsh_brew_index" ]
 }
 
+@test "both configs: prefer mise and keep Arkade as the final PATH fallback" {
+  mkdir -p "$HOME/.local/share/mise/shims" "$HOME/.arkade/bin"
+  printf '%s\n' '#!/usr/bin/env bash' > "$HOME/.local/share/mise/shims/gh"
+  printf '%s\n' '#!/usr/bin/env bash' > "$HOME/.arkade/bin/gh"
+  chmod +x "$HOME/.local/share/mise/shims/gh" "$HOME/.arkade/bin/gh"
+  local inherited_path="$HOME/.arkade/bin:/opt/homebrew/bin:/usr/bin:/bin"
+
+  result=$(bash -c "
+    export PATH='$inherited_path'
+    source $DOTFILES_DIR/bash/.bashrc 2>/dev/null
+    printf '%s\n%s\n' \$PATH \$(command -v gh)
+  ")
+  local bash_path="${result%%$'\n'*}"
+  local bash_gh="${result#*$'\n'}"
+  [ "${bash_path##*:}" = "$HOME/.arkade/bin" ]
+  [ "$bash_gh" = "$HOME/.local/share/mise/shims/gh" ]
+
+  result=$(zsh -c "
+    export PATH='$inherited_path'
+    source $DOTFILES_DIR/zsh/.zshrc 2>/dev/null
+    printf '%s\n%s\n' \$PATH \$(command -v gh)
+  ")
+  local zsh_path="${result%%$'\n'*}"
+  local zsh_gh="${result#*$'\n'}"
+  [ "${zsh_path##*:}" = "$HOME/.arkade/bin" ]
+  [ "$zsh_gh" = "$HOME/.local/share/mise/shims/gh" ]
+}
+
+@test "gitconfig: GitHub credential helper resolves gh portably from PATH" {
+  run git config --file "$DOTFILES_DIR/git/.gitconfig" --get-all credential.https://github.com.helper
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'!gh auth git-credential'* ]]
+  [[ "$output" != *'/Users/'* ]]
+}
+
 @test "zshrc: does not cache mise activate output to a file" {
   # mise activate's output bakes in a literal `export PATH='...'` snapshot
   # of the PATH at generation time, so caching it (like starship/direnv/etc)

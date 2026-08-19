@@ -145,7 +145,7 @@ load_and_validate_stow_packages() {
   fi
 
   local available pkg
-  available="$($BOOTSTRAP_DIR/stow.sh --list)"
+  available="$("$BOOTSTRAP_DIR/stow.sh" --list)"
   for pkg in "${STOW_PACKAGE_ARGS[@]}"; do
     if ! grep -qxF "$pkg" <<<"$available"; then
       error "Unknown stow package: $pkg (use './stow.sh --list' to see packages)"
@@ -190,7 +190,13 @@ run_stow_if_needed() {
   # must not block unrelated later steps like keyd/hypr/mise — stow.sh
   # itself already continues past a failed package to the rest of the
   # list, so mirror that here rather than aborting the whole bootstrap.
-  if ! "$BOOTSTRAP_DIR/stow.sh" "${stow_args[@]}" "${STOW_PACKAGE_ARGS[@]}"; then
+  local stow_status=0
+  if [[ ${#stow_args[@]} -gt 0 ]]; then
+    "$BOOTSTRAP_DIR/stow.sh" "${stow_args[@]}" "${STOW_PACKAGE_ARGS[@]}" || stow_status=$?
+  else
+    "$BOOTSTRAP_DIR/stow.sh" "${STOW_PACKAGE_ARGS[@]}" || stow_status=$?
+  fi
+  if [[ "$stow_status" -ne 0 ]]; then
     error "Stow reported conflicts on one or more packages. Existing real files are in the way."
     error "Review them, then re-run './stow.sh' (or './stow.sh --adopt' to pull them into the repo — check 'git diff' afterwards)."
     error "Continuing with the rest of bootstrap; packages that failed to stow are simply not linked yet."
@@ -207,32 +213,22 @@ check_stowed_binaries() {
   echo
   info "Checking that stowed packages have their tool installed..."
 
-  # Packages with no corresponding binary (meta/skill packages, or where the
-  # binary name doesn't match the package name in an obvious way) are
-  # intentionally absent from this table and skipped.
-  local -A package_binary=(
-    [aerospace]=aerospace
-    [aws]=aws
-    [bash]=bash
-    [bat]=bat
-    [gh]=gh
-    [ghostty]=ghostty
-    [git]=git
-    [kitty]=kitty
-    [mise]=mise
-    [nushell]=nu
-    [nvim]=nvim
-    [prettier]=prettier
-    [starship]=starship
-    [tmux]=tmux
-    [yazi]=yazi
-    [zsh]=zsh
-  )
-
   local pkg binary any_missing=false
   for pkg in "${STOW_PACKAGE_ARGS[@]}"; do
-    binary="${package_binary[$pkg]:-}"
-    [[ -z "$binary" ]] && continue
+    # Packages with no corresponding binary (meta/skill packages, or where
+    # the binary name is not obvious) are intentionally skipped. A case keeps
+    # this entrypoint compatible with macOS's stock Bash 3 as well as Arch.
+    case "$pkg" in
+      aerospace | aws | bash | bat | gh | ghostty | git | kitty | mise | nvim | prettier | starship | tmux | yazi | zsh)
+        binary=$pkg
+        ;;
+      nushell)
+        binary=nu
+        ;;
+      *)
+        continue
+        ;;
+    esac
     if ! command_exists "$binary"; then
       info "  WARN $pkg: config stowed, but '$binary' is not on PATH"
       any_missing=true
@@ -258,14 +254,9 @@ stow_package_requested() {
 check_zsh_plugins() {
   stow_package_requested zsh || return 0
 
-  local -A plugin_path=(
-    [zsh-autosuggestions]="$ZSH_PLUGIN_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh"
-    [zsh-syntax-highlighting]="$ZSH_PLUGIN_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
-  )
-
   local plugin plugin_file any_missing=false
-  for plugin in "${!plugin_path[@]}"; do
-    plugin_file="${plugin_path[$plugin]}"
+  for plugin in zsh-autosuggestions zsh-syntax-highlighting; do
+    plugin_file="$ZSH_PLUGIN_DIR/$plugin/$plugin.zsh"
     if [[ ! -f "$plugin_file" ]]; then
       info "  WARN $plugin: zsh is stowed, but $plugin_file is missing (pacman -S $plugin)"
       any_missing=true

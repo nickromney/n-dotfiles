@@ -71,24 +71,36 @@ esac
 }
 
 @test "check-1password-dev-tools: finds the SSH agent socket at a candidate path" {
-  mkdir -p "$TEST_TMP_DIR/dot1password"
+  local gitconfig="$TEST_TMP_DIR/gitconfig"
+  mock_op_signed_in
+  git config --file "$gitconfig" gpg.ssh.program "$FAKE_SIGNER"
+  mkdir -p "$TEST_TMP_DIR/.1password"
   python3 -c "
 import socket, sys
 s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 s.bind(sys.argv[1])
-" "$TEST_TMP_DIR/dot1password/agent.sock"
+" "$TEST_TMP_DIR/.1password/agent.sock"
 
-  run env HOME="$TEST_TMP_DIR" PATH="$MOCK_BIN_DIR:/usr/bin:/bin" "$CHECK_SCRIPT" --signer-path "$FAKE_SIGNER"
+  run env HOME="$TEST_TMP_DIR" SSH_AUTH_SOCK="" PATH="$MOCK_BIN_DIR:/usr/bin:/bin" \
+    "$CHECK_SCRIPT" --signer-path "$FAKE_SIGNER" --wrapper-path "$FAKE_SIGNER" \
+    --gitconfig "$gitconfig"
 
-  [[ "$output" == *"OK   1Password SSH agent socket found: $TEST_TMP_DIR/dot1password/agent.sock"* ]] || [[ "$output" == *"agent.sock"* ]]
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"OK   1Password SSH agent socket found: $TEST_TMP_DIR/.1password/agent.sock"* ]]
 }
 
 @test "check-1password-dev-tools: reports missing SSH agent socket" {
   local empty_home
+  local gitconfig="$TEST_TMP_DIR/gitconfig"
   empty_home="$(mktemp -d)"
+  mock_op_signed_in
+  git config --file "$gitconfig" gpg.ssh.program "$FAKE_SIGNER"
 
-  run env HOME="$empty_home" XDG_RUNTIME_DIR="$empty_home/run" PATH="$MOCK_BIN_DIR:/usr/bin:/bin" "$CHECK_SCRIPT" --signer-path "$FAKE_SIGNER"
+  run env HOME="$empty_home" XDG_RUNTIME_DIR="$empty_home/run" SSH_AUTH_SOCK="" \
+    PATH="$MOCK_BIN_DIR:/usr/bin:/bin" "$CHECK_SCRIPT" \
+    --signer-path "$FAKE_SIGNER" --wrapper-path "$FAKE_SIGNER" --gitconfig "$gitconfig"
 
+  [ "$status" -gt 0 ]
   [[ "$output" == *"FAIL 1Password SSH agent socket not found"* ]]
 
   rm -rf "$empty_home"

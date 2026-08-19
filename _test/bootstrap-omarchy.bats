@@ -16,6 +16,10 @@ setup() {
   mock_command "mise" 0 ""
   mock_command "hyprctl" 0 ""
   # shellcheck disable=SC2016 # Expanded by the generated mock at runtime.
+  mock_command_with_script "uname" '[[ "${1:-}" == "-s" ]] && echo Linux'
+  # shellcheck disable=SC2016 # Expanded by the generated mock at runtime.
+  mock_command_with_script "locale" '[[ "${1:-}" == "-a" ]] && echo en_GB.utf8'
+  # shellcheck disable=SC2016 # Expanded by the generated mock at runtime.
   mock_command_with_script "getent" 'echo "${2:-nick}:x:1000:1000::/home/test:/usr/bin/bash"'
   mock_stow
 }
@@ -94,6 +98,8 @@ teardown() {
 }
 
 @test "bootstrap-omarchy: sets zsh as the login shell through the public flow" {
+  local zsh_path
+  zsh_path="$(readlink -f "$(command -v zsh)")"
   ln -s "$REPO_ROOT/zsh/.zshrc" "$TEST_HOME/.zshrc"
 
   run env \
@@ -104,12 +110,14 @@ teardown() {
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"Setting Zsh as the login shell"* ]]
-  assert_mock_called sudo "chsh -s /usr/bin/zsh"
+  assert_mock_called sudo "chsh -s $zsh_path"
 }
 
 @test "bootstrap-omarchy: leaves an existing zsh login shell unchanged" {
+  local zsh_path
+  zsh_path="$(readlink -f "$(command -v zsh)")"
   # shellcheck disable=SC2016 # Expanded by the generated mock at runtime.
-  mock_command_with_script "getent" 'echo "${2:-nick}:x:1000:1000::/home/test:/usr/bin/zsh"'
+  mock_command_with_script "getent" "echo \"\${2:-nick}:x:1000:1000::/home/test:$zsh_path\""
   ln -s "$REPO_ROOT/zsh/.zshrc" "$TEST_HOME/.zshrc"
 
   run env \
