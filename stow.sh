@@ -40,6 +40,7 @@ esac
 
 DRY_RUN=false
 ADOPT=false
+RESTOW=false
 BACKUP_CONFLICTS=false
 BACKUP_DIR=""
 ACTIVE_BACKUP_ROOT=""
@@ -52,12 +53,13 @@ usage() {
   cat <<EOF
 Usage: $0 [options] [package ...]
 
-Symlink dotfile packages into \$HOME using GNU Stow (restow mode).
+Symlink dotfile packages into \$HOME using GNU Stow.
 With no package arguments, all packages are stowed.
 
 Options:
   -d, --dry-run   Show what would change without making changes
   -a, --adopt     Adopt pre-existing files into the repo (review with git diff!)
+  -R, --restow    Explicitly prune stale links and recreate managed links
       --backup-conflicts
                   Back up pre-existing targets, then stow the repo versions
       --backup-dir PATH
@@ -69,6 +71,7 @@ Examples:
   $0
   $0 --dry-run
   $0 zsh git
+  $0 --restow zsh
   $0 --adopt mise
   $0 --backup-conflicts zsh mise
 EOF
@@ -91,6 +94,10 @@ parse_args() {
         ;;
       -a | --adopt)
         ADOPT=true
+        shift
+        ;;
+      -R | --restow)
+        RESTOW=true
         shift
         ;;
       --backup-conflicts)
@@ -126,26 +133,30 @@ parse_args() {
 
 backup_conflicting_targets() {
   local -a dirs=("$@")
-  local dir source relative target link_target backup_target
+  local dir plan line relative target backup_target
   local backup_root=$BACKUP_DIR
+  local -a plan_opts=(
+    "--dir=$STOW_SH_DIR"
+    "--target=$HOME"
+    "--verbose=2"
+    "--stow"
+    "--adopt"
+    "--no"
+  )
 
   for dir in "${dirs[@]}"; do
     [[ -d "$STOW_SH_DIR/$dir" ]] || continue
 
-    while IFS= read -r -d '' source; do
-      relative=${source#"$STOW_SH_DIR/$dir/"}
-      target="$HOME/$relative"
-      [[ -e "$target" || -L "$target" ]] || continue
+    if ! plan=$(stow_package "$dir" "${plan_opts[@]}" 2>&1); then
+      printf '%s\n' "$plan" >&2
+      return 1
+    fi
 
-      # Relative links resolving to the source are already Stow-managed. GNU
-      # Stow rejects equivalent absolute links, so normalize those via backup.
-      if [[ "$source" -ef "$target" ]]; then
-        if [[ ! -L "$target" ]]; then
-          continue
-        fi
-        link_target=$(readlink "$target")
-        [[ "$link_target" == /* ]] || continue
-      fi
+    while IFS= read -r line; do
+      [[ "$line" == "MV: "* ]] || continue
+      relative=${line#"MV: "}
+      relative=${relative%% -> *}
+      target="$HOME/$relative"
 
       if [[ -z "$backup_root" ]]; then
         backup_root="${XDG_STATE_HOME:-$HOME/.local/state}/n-dotfiles/stow-backups/$(date +%Y%m%d-%H%M%S)-$$"
@@ -161,7 +172,7 @@ backup_conflicting_targets() {
       mv "$target" "$backup_target" || return 1
       BACKED_UP_RELATIVE_PATHS+=("$relative")
       echo "Backed up $relative to $backup_target"
-    done < <(find "$STOW_SH_DIR/$dir" \( -type f -o -type l \) -print0)
+    done <<<"$plan"
   done
 }
 
@@ -250,8 +261,12 @@ main() {
     "--dir=$STOW_SH_DIR"
     "--target=$HOME"
     "--verbose=1"
-    "-R"
   )
+  if [[ "$RESTOW" == "true" ]]; then
+    stow_opts+=("--restow")
+  else
+    stow_opts+=("--stow")
+  fi
   [[ "$ADOPT" == "true" ]] && stow_opts+=("--adopt")
   [[ "$DRY_RUN" == "true" ]] && stow_opts+=("--no")
 

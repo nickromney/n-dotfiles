@@ -14,6 +14,30 @@ teardown() {
   rm -rf "$TEST_ROOT"
 }
 
+@test "stow is idempotent without unlinking correct links" {
+  printf '%s\n' 'repository zsh config' > "$TEST_REPO/zsh/.zshrc"
+
+  run env HOME="$TEST_HOME" "$TEST_REPO/stow.sh" zsh
+  [ "$status" -eq 0 ]
+  [ -L "$TEST_HOME/.zshrc" ]
+
+  run env HOME="$TEST_HOME" "$TEST_REPO/stow.sh" zsh
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"UNLINK:"* ]]
+  [[ "$output" != *"LINK:"* ]]
+}
+
+@test "stow restow mode remains explicit" {
+  printf '%s\n' 'repository zsh config' > "$TEST_REPO/zsh/.zshrc"
+  env HOME="$TEST_HOME" "$TEST_REPO/stow.sh" zsh >/dev/null
+
+  run env HOME="$TEST_HOME" "$TEST_REPO/stow.sh" --restow zsh
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"UNLINK: .zshrc"* ]]
+  [[ "$output" == *"LINK: .zshrc"* ]]
+}
+
 @test "stow list exposes macOS packages only on Darwin" {
   local mock_bin="$TEST_ROOT/bin"
   mkdir -p "$mock_bin"
@@ -69,6 +93,23 @@ teardown() {
   run find "$state_dir/n-dotfiles/stow-backups" -type f -name .zshrc -exec cat {} \;
   [ "$status" -eq 0 ]
   [ "$output" = "previous local zsh config" ]
+}
+
+@test "stow backup mode leaves package-local ignored files untouched" {
+  mkdir -p "$TEST_REPO/codex/.codex/rules" "$TEST_HOME/.codex"
+  printf '%s\n' 'config\.toml' > "$TEST_REPO/codex/.stow-local-ignore"
+  printf '%s\n' 'repository placeholder' > "$TEST_REPO/codex/.codex/config.toml"
+  printf '%s\n' 'repository rule' > "$TEST_REPO/codex/.codex/rules/default.rules"
+  printf '%s\n' 'live machine config' > "$TEST_HOME/.codex/config.toml"
+  local backup_dir="$TEST_ROOT/backups"
+
+  run env HOME="$TEST_HOME" \
+    "$TEST_REPO/stow.sh" --backup-conflicts --backup-dir "$backup_dir" codex
+
+  [ "$status" -eq 0 ]
+  [ "$(cat "$TEST_HOME/.codex/config.toml")" = "live machine config" ]
+  [ ! -e "$backup_dir/.codex/config.toml" ]
+  [ -L "$TEST_HOME/.codex/rules" ]
 }
 
 @test "stow rejects dry-run recovery without moving a conflict" {
