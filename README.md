@@ -70,6 +70,11 @@ make install    # host-appropriate package layer + stow + mise (idempotent)
 make update     # update brew, mise, and Mac App Store packages
 ```
 
+If an older unmanaged dotfile conflicts with a tracked Stow package,
+`make install` moves the old file under
+`${XDG_STATE_HOME:-~/.local/state}/n-dotfiles/stow-backups/` before linking the
+repository version. The backup path is printed during installation.
+
 ### Stow-only machine (e.g. work)
 
 The work machine gets dotfiles only — no package management:
@@ -84,6 +89,10 @@ cd n-dotfiles
 
 `./stow.sh --adopt` pulls pre-existing real files into the repo if you
 want to keep them — review with `git diff` afterwards.
+`./stow.sh --backup-conflicts` instead preserves those files in a separate
+backup and keeps the repository version authoritative. Plain `./stow.sh` and
+`make stow` remain conservative and fail before changing anything when a
+conflict exists.
 
 ### Linux
 
@@ -147,6 +156,18 @@ mise use -g foo@latest # add + install a global tool in one step
 
 Add a `cask`/`brew`/`mas` line to the [Brewfile](Brewfile) and run
 `make install` (or `brew bundle --file Brewfile`).
+
+AudioPriorityBar is the one exception: upstream currently publishes a GitHub
+release rather than a Homebrew cask. Its pinned universal release and
+SHA-256 are managed by
+[`scripts/install-audio-priority-bar.sh`](scripts/install-audio-priority-bar.sh)
+and run automatically by `make install` on macOS. Use `--dry-run` to preview
+the install.
+
+The `audio-priority-bar` Stow package links the stable priority configuration
+to `~/.config/audio-priority-bar/preferences.plist`. The installer merges
+those keys into the app's `com.example.AudioPriorityBar` UserDefaults domain
+on every run while preserving its timestamped `knownDevices` cache.
 
 To find drift in either direction, run `make audit` — it reports
 Brewfile entries missing from the machine and installed packages

@@ -44,6 +44,8 @@ EOF
     "scripts/audit-installed.sh"
     "scripts/sync-private-harness-assets.sh"
     "scripts/build-browser-tools.sh"
+    "scripts/install-audio-priority-bar.sh"
+    "scripts/configure-audio-priority-bar.sh"
     "scripts/check-1password-dev-tools.sh"
     "slicer-mac/check-slicer-version.sh"
     "slicer-mac/install-slicer-mac.sh"
@@ -116,6 +118,10 @@ EOF
   [[ "$output" == *"git"* ]]
   [[ "$output" == *"mise"* ]]
   [[ "$output" != *"vscode"* ]]
+  [[ "$output" != *"factory"* ]]
+  if [[ "$(uname -s)" == "Darwin" ]]; then
+    [[ "$output" == *"audio-priority-bar"* ]]
+  fi
 }
 
 @test "stow: rejects unknown packages" {

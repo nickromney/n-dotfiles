@@ -61,12 +61,20 @@ EOF
   touch _macos/personal.yaml _macos/work.yaml
 
   mkdir -p scripts
-  for script in brew-with-policy.sh brew-update.sh; do
+  for script in brew-with-policy.sh brew-update.sh install-audio-priority-bar.sh; do
     if [ -f "$REPO_ROOT/scripts/$script" ]; then
       cp "$REPO_ROOT/scripts/$script" scripts/
       chmod +x "scripts/$script"
     fi
   done
+
+  # Keep the Makefile test hermetic on macOS: the real installer downloads a
+  # pinned release, while this suite only needs to verify target wiring.
+  cat > scripts/install-audio-priority-bar.sh <<'EOF'
+#!/usr/bin/env bash
+echo "audio-priority-bar installer called"
+EOF
+  chmod +x scripts/install-audio-priority-bar.sh
 
   # Copy the Makefile
   cp "$REPO_ROOT/Makefile" .
@@ -109,7 +117,7 @@ teardown() {
   else
     [[ "$output" != *"brew bundle called"* ]]
   fi
-  [[ "$output" == *"stow.sh called with:"* ]]
+  [[ "$output" == *"stow.sh called with: --backup-conflicts"* ]]
   [[ "$output" == *"mise install"* ]]
 }
 
@@ -132,6 +140,7 @@ teardown() {
   run make stow
   [ "$status" -eq 0 ]
   [[ "$output" == *"stow.sh called with:"* ]]
+  [[ "$output" != *"--backup-conflicts"* ]]
 }
 
 @test "make mise-install runs mise install" {

@@ -9,16 +9,23 @@
 # Prune drift with: brew bundle cleanup --file Brewfile
 
 # Taps
-tap "FelixKratz/formulae" # borders
-tap "nikitabobko/tap" # aerospace
-tap "noahgorstein/tap" # jqp
+tap "azure/functions", trusted: { formula: "azure-functions-core-tools@4" }
+tap "dicklesworthstone/tap", trusted: { formula: "ubs" }
+tap "FelixKratz/formulae", trusted: { formula: "borders" } # borders
+tap "goreleaser/tap", trusted: { cask: "goreleaser" }
+tap "modem-dev/tap", trusted: { formula: "hunk" }
+tap "nikitabobko/tap", trusted: { cask: "aerospace" } # aerospace
+tap "noahgorstein/tap", trusted: { formula: "jqp" } # jqp
+tap "steipete/tap", trusted: { cask: "codexbar" }
 
 # Formulae
 brew "ast-grep"
 brew "bat"
 brew "borders"
 brew "bpytop"
-brew "docker"
+brew "docker", link: true
+brew "azure/functions/azure-functions-core-tools@4"
+brew "dicklesworthstone/tap/ubs"
 brew "eza"
 brew "fx"
 brew "fzf"
@@ -30,6 +37,7 @@ brew "hyperfine"
 brew "jqp"
 brew "mas"
 brew "mise"
+brew "modem-dev/tap/hunk"
 brew "ncdu"
 brew "neovim"
 brew "openssh"
@@ -37,7 +45,6 @@ brew "ranger"
 brew "sk"
 brew "sshs"
 brew "stow"
-brew "the_silver_searcher"
 brew "tmux"
 brew "visidata"
 brew "wget"
@@ -52,8 +59,9 @@ cask "1password-cli"
 cask "aerospace"
 cask "alfred"
 cask "brave-browser"
-cask "claude"
+cask "steipete/tap/codexbar"
 cask "font-jetbrains-mono-nerd-font"
+cask "goreleaser/tap/goreleaser"
 cask "ghostty"
 cask "microsoft-teams"
 cask "netnewswire"

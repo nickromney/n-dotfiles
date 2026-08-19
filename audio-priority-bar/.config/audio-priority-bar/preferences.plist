@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>currentMode</key>
+	<string>speaker</string>
+	<key>customMode</key>
+	<false/>
+	<key>hiddenMics</key>
+	<array>
+		<string>MSLoopbackDriverDevice_UID</string>
+	</array>
+	<key>hiddenSpeakers</key>
+	<array>
+		<string>AppleUSBAudioEngine:Samson Technologies:Samson Q2U Microphone:2120000:2,1</string>
+	</array>
+	<key>inputPriorities</key>
+	<array>
+		<string>AppleUSBAudioEngine:Samson Technologies:Samson Q2U Microphone:2120000:2,1</string>
+		<string>AppleUSBAudioEngine:Unknown Manufacturer:HD Pro Webcam C920:0FEA3EAF:3</string>
+		<string>AppleUSBAudioEngine:Focusrite:Vocaster Two USB:V2UPRVX2500E08:1,2</string>
+	</array>
+	<key>speakerPriorities</key>
+	<array>
+		<string>AppleUSBAudioEngine:Focusrite:Vocaster Two USB:V2UPRVX2500E08:1,2</string>
+		<string>26CD3066-0000-0000-011F-0103803C2278</string>
+		<string>BuiltInSpeakerDevice</string>
+		<string>MSLoopbackDriverDevice_UID</string>
+	</array>
+</dict>
+</plist>

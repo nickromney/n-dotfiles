@@ -110,3 +110,23 @@ npm dependency footprint where package metadata is local.
 ./scripts/audit-installed.sh --out-base /tmp/n-dotfiles-audit
 make audit-installed
 ```
+
+## install-audio-priority-bar
+
+Install the pinned universal macOS release of Tobi's AudioPriorityBar into
+`~/Applications`. The script verifies the release archive's SHA-256 and is
+idempotent; `make install` runs it automatically on macOS.
+
+```bash
+./scripts/install-audio-priority-bar.sh --dry-run
+./scripts/install-audio-priority-bar.sh
+```
+
+The installer also runs `configure-audio-priority-bar.sh`, which merges the
+stable preferences from the `audio-priority-bar` Stow package into the app's
+UserDefaults domain without replacing its volatile device cache.
+
+```bash
+./scripts/configure-audio-priority-bar.sh --dry-run
+./scripts/configure-audio-priority-bar.sh
+```
