@@ -36,6 +36,7 @@ NC :=
 endif
 
 BREW_WITH_POLICY := ./scripts/brew-with-policy.sh
+BREW_BUNDLE_INSTALL := ./scripts/brew-bundle-install.sh
 BREW_UPDATE := ./scripts/brew-update.sh
 AUDIO_PRIORITY_BAR_INSTALL := ./scripts/install-audio-priority-bar.sh
 
@@ -87,7 +88,7 @@ brewfile-install: ## Install packages from the Brewfile (Brewfile.posix on Linux
 		exit 1; \
 	fi
 	@echo "$(BLUE)Installing via brew bundle: $(BREWFILE)$(NC)"
-	@$(BREW_WITH_POLICY) bundle install --no-upgrade --file="$(BREWFILE)"
+	@$(BREW_BUNDLE_INSTALL) "$(BREWFILE)"
 
 .PHONY: audio-priority-bar-install
 audio-priority-bar-install: ## Install the pinned AudioPriorityBar release on macOS
@@ -135,7 +136,7 @@ personal-setup: ## Full personal Mac setup (bootstrap + macOS settings + SSH)
 ##@ Update
 
 .PHONY: update
-update: ## Update brew packages, mise tools, and Mac App Store apps
+update: ## Update installed brew packages, mise tools, and Mac App Store apps
 	@if [ "$(HOST_OS)" = "Darwin" ]; then \
 		$(BREW_UPDATE) update-all; \
 	fi

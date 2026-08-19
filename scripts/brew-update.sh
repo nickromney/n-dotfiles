@@ -34,15 +34,13 @@ context="${1:-}"
 case "$context" in
   package-manager)
     require_brew=true
-    heading="Updating Homebrew packages and casks..."
-    cask_warning="  Warning: brew upgrade --cask failed"
+    heading="Updating installed Homebrew formulae and casks..."
     success="\342\234\223 Homebrew updated"
     trailing_blank=false
     ;;
   update-all)
     require_brew=false
-    heading="Updating Homebrew..."
-    cask_warning="  Warning: brew cask upgrade failed (some casks may have issues)"
+    heading="Updating installed Homebrew formulae and casks..."
     success="\342\234\223 Homebrew update completed"
     trailing_blank=true
     ;;
@@ -66,8 +64,8 @@ fi
 
 print_color "${blue}${heading}${nc}"
 "$brew_with_policy" update || print_color "${yellow}  Warning: brew update failed${nc}"
-"$brew_with_policy" upgrade || print_color "${yellow}  Warning: brew upgrade failed${nc}"
-"$brew_with_policy" upgrade --cask || print_color "${yellow}${cask_warning}${nc}"
+"$brew_with_policy" upgrade --formula || print_color "${yellow}  Warning: brew formula upgrade failed${nc}"
+"$brew_with_policy" upgrade --cask || print_color "${yellow}  Warning: brew cask upgrade failed${nc}"
 "$brew_with_policy" cleanup || print_color "${yellow}  Warning: brew cleanup failed${nc}"
 print_color "${green}${success}${nc}"
 

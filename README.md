@@ -175,8 +175,12 @@ missing from the Brewfile.
 
 ## Harness Assets
 
-Private harness assets are synced from the optional sibling
+Private harness assets are reconciled from the optional sibling
 `../harnesses-private` repo into the global, Claude, and Codex skill roots.
+Only skills selected by provider load manifests are exposed. When two loaded
+providers use the same skill directory name, the sync uses a deterministic
+`<provider>-<skill>` destination name for both skills. Stale private links are
+removed during reconciliation.
 Run this from the `n-dotfiles` repo root:
 
 ```bash

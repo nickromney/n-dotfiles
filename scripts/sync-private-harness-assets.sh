@@ -12,7 +12,7 @@ usage() {
   cat <<'EOF'
 Usage: scripts/sync-private-harness-assets.sh [options] [--dry-run|--execute]
 
-Link selected private harness assets into the public harness views. The default
+Reconcile selected private harness assets into the public harness views. The default
 private source is the optional sibling repo ../harnesses-private. If that repo
 is absent, the script exits successfully without changing anything.
 
@@ -28,7 +28,7 @@ If a provider has load manifests, only listed skills are exposed:
 
 Options:
       --dry-run             Show planned links without changing files
-      --execute             Create missing links
+      --execute             Reconcile links
   -h, --help                Show this help message
       --private-root <path> Private harness repository path
 
@@ -126,14 +126,17 @@ link_skill() {
   local source_path="$1"
   local dest_dir="$2"
   local private_abs="$3"
-  local name
+  local name="$4"
   local dest_path
   local target
   local existing_target
 
-  name="$(basename "$source_path")"
   dest_path="$dest_dir/$name"
   target="$(relative_private_skill_target "$source_path" "$private_abs")"
+
+  if [[ -n "${DESIRED_LINKS_FILE:-}" ]]; then
+    printf '%s\n' "$dest_path" >>"$DESIRED_LINKS_FILE"
+  fi
 
   if [[ -L "$dest_path" ]]; then
     existing_target="$(readlink "$dest_path")"
@@ -197,6 +200,44 @@ skill_is_loaded_for_view() {
   return 1
 }
 
+build_loaded_skill_index() {
+  local index_file="$1"
+  local view="$2"
+  shift 2
+
+  local catalog_dir
+  local provider_dir
+  local source_path
+  local skill_name
+
+  : >"$index_file"
+
+  for catalog_dir in "$@"; do
+    [[ -d "$catalog_dir" ]] || continue
+    for provider_dir in "$catalog_dir"/*; do
+      [[ -d "$provider_dir" ]] || continue
+      [[ -d "$provider_dir/skills" ]] || continue
+
+      for source_path in "$provider_dir/skills"/*; do
+        [[ -e "$source_path" || -L "$source_path" ]] || continue
+        [[ -f "$source_path/SKILL.md" ]] || continue
+        skill_name="$(basename "$source_path")"
+        if skill_is_loaded_for_view "$provider_dir" "$skill_name" "$view"; then
+          printf '%s\t%s\n' "$skill_name" "$(basename "$provider_dir")" >>"$index_file"
+        fi
+      done
+    done
+  done
+}
+
+skill_name_has_loaded_collision() {
+  local skill_name="$1"
+
+  awk -F '\t' -v wanted="$skill_name" \
+    '$1 == wanted { providers[$2] = 1 } END { count = 0; for (provider in providers) count++; exit !(count > 1) }' \
+    "$LOADED_SKILL_INDEX_FILE"
+}
+
 link_skills_from_provider_dir() {
   local provider_dir="$1"
   local skills_dir
@@ -205,11 +246,14 @@ link_skills_from_provider_dir() {
   local view="$4"
   local source_path
   local skill_name
+  local provider_name
+  local destination_name
   local found=false
 
   skills_dir="$provider_dir/skills"
   [[ -d "$skills_dir" ]] || return 0
   mkdir -p "$dest_dir"
+  provider_name="$(basename "$provider_dir")"
 
   for source_path in "$skills_dir"/*; do
     [[ -e "$source_path" || -L "$source_path" ]] || continue
@@ -219,12 +263,82 @@ link_skills_from_provider_dir() {
       continue
     fi
     found=true
-    link_skill "$(absolute_path "$source_path")" "$dest_dir" "$private_abs"
+    destination_name="$skill_name"
+    if skill_name_has_loaded_collision "$skill_name"; then
+      destination_name="${provider_name}-${skill_name}"
+      info "namespaced collision $skill_name as $destination_name"
+    fi
+    link_skill "$(absolute_path "$source_path")" "$dest_dir" "$private_abs" "$destination_name"
   done
 
   if [[ "$found" != "true" ]]; then
     info "no loaded skills found in $skills_dir for $view"
   fi
+}
+
+resolve_link_target() {
+  local link_path="$1"
+  local target
+
+  target="$(readlink "$link_path")"
+  if [[ "$target" = /* ]]; then
+    printf '%s\n' "$target"
+    return 0
+  fi
+
+  (
+    cd "$(dirname "$link_path")"
+    cd "$(dirname "$target")"
+    printf '%s/%s\n' "$(pwd)" "$(basename "$target")"
+  )
+}
+
+prune_stale_private_links() {
+  local dest_dir="$1"
+  local private_abs="$2"
+  local dest_path
+  local source_path
+
+  [[ -d "$dest_dir" ]] || return 0
+
+  for dest_path in "$dest_dir"/*; do
+    [[ -L "$dest_path" ]] || continue
+    source_path="$(resolve_link_target "$dest_path")" || continue
+    case "$source_path" in
+      "$private_abs"/*)
+        if ! grep -Fqx "$dest_path" "$DESIRED_LINKS_FILE"; then
+          if [[ "$DRY_RUN" == "true" ]]; then
+            info "would remove stale $dest_path"
+          else
+            rm "$dest_path"
+            info "removed stale $dest_path"
+          fi
+        fi
+        ;;
+    esac
+  done
+}
+
+sync_view() {
+  local dest_dir="$1"
+  local private_abs="$2"
+  local view="$3"
+  shift 3
+
+  DESIRED_LINKS_FILE="$(mktemp "${TMPDIR:-/tmp}/sync-private-skills.XXXXXX")"
+  LOADED_SKILL_INDEX_FILE="$(mktemp "${TMPDIR:-/tmp}/sync-private-index.XXXXXX")"
+
+  build_loaded_skill_index "$LOADED_SKILL_INDEX_FILE" "$view" "$@"
+
+  local catalog_dir
+  for catalog_dir in "$@"; do
+    link_grouped_skills_from "$catalog_dir" "$dest_dir" "$private_abs" "$view"
+  done
+
+  prune_stale_private_links "$dest_dir" "$private_abs"
+  rm -f "$DESIRED_LINKS_FILE" "$LOADED_SKILL_INDEX_FILE"
+  DESIRED_LINKS_FILE=""
+  LOADED_SKILL_INDEX_FILE=""
 }
 
 link_grouped_skills_from() {
@@ -266,11 +380,9 @@ main() {
 
   private_abs="$(absolute_path "$PRIVATE_ROOT")"
 
-  link_grouped_skills_from "$private_abs" "$agents_skills" "$private_abs" "global"
-  link_grouped_skills_from "$private_abs" "$claude_skills" "$private_abs" "claude"
-  link_grouped_skills_from "$private_abs" "$codex_skills" "$private_abs" "codex"
-  link_grouped_skills_from "$private_abs/claude" "$claude_skills" "$private_abs" "claude"
-  link_grouped_skills_from "$private_abs/codex" "$codex_skills" "$private_abs" "codex"
+  sync_view "$agents_skills" "$private_abs" "global" "$private_abs"
+  sync_view "$claude_skills" "$private_abs" "claude" "$private_abs" "$private_abs/claude"
+  sync_view "$codex_skills" "$private_abs" "codex" "$private_abs" "$private_abs/codex"
 }
 
 main "$@"
