@@ -14,6 +14,34 @@ teardown() {
   rm -rf "$TEST_ROOT"
 }
 
+@test "stow list exposes macOS packages only on Darwin" {
+  local mock_bin="$TEST_ROOT/bin"
+  mkdir -p "$mock_bin"
+  printf '%s\n' '#!/usr/bin/env bash' 'echo Darwin' >"$mock_bin/uname"
+  chmod +x "$mock_bin/uname"
+
+  run env PATH="$mock_bin:$PATH" "$TEST_REPO/stow.sh" --list
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"aerospace"* ]]
+  [[ "$output" == *"audio-priority-bar"* ]]
+  [[ "$output" != *"omarchy"* ]]
+}
+
+@test "stow list excludes macOS packages on Linux" {
+  local mock_bin="$TEST_ROOT/bin"
+  mkdir -p "$mock_bin"
+  printf '%s\n' '#!/usr/bin/env bash' 'echo Linux' >"$mock_bin/uname"
+  chmod +x "$mock_bin/uname"
+
+  run env PATH="$mock_bin:$PATH" "$TEST_REPO/stow.sh" --list
+
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"aerospace"* ]]
+  [[ "$output" != *"audio-priority-bar"* ]]
+  [[ "$output" == *"omarchy"* ]]
+}
+
 @test "stow backup mode preserves an unmanaged dotfile before replacing it" {
   printf '%s\n' 'repository zsh config' > "$TEST_REPO/zsh/.zshrc"
   printf '%s\n' 'previous local zsh config' > "$TEST_HOME/.zshrc"

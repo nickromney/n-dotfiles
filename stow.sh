@@ -10,7 +10,6 @@ STOW_SH_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Each directory is a GNU Stow package targeting $HOME.
 STOW_DIRS=(
-  aerospace
   agents
   aws
   bash
@@ -35,7 +34,7 @@ STOW_DIRS=(
 # Keep host-specific app and desktop configuration off the other platform.
 # In particular, a Mac sync must never touch Omarchy's Hyprland/keyd paths.
 case "$(uname -s)" in
-  Darwin) STOW_DIRS+=(audio-priority-bar) ;;
+  Darwin) STOW_DIRS+=(aerospace audio-priority-bar) ;;
   Linux) STOW_DIRS+=(omarchy) ;;
 esac
 
