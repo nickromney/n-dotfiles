@@ -194,7 +194,7 @@ lint: ## Run linters (shellcheck, markdownlint)
 	@./_test/shellcheck.sh
 	@echo "$(YELLOW)Running markdownlint...$(NC)"
 	@if command -v markdownlint-cli2 >/dev/null 2>&1; then \
-		find . -name "*.md" -not -path "./_test/*" -not -path "./.git/*" -exec markdownlint-cli2 {} + ; \
+		git ls-files -z -- "*.md" | xargs -0 markdownlint-cli2; \
 	else \
 		echo "  markdownlint-cli2 not available"; \
 	fi

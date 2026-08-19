@@ -75,11 +75,15 @@ esac
   mock_op_signed_in
   git config --file "$gitconfig" gpg.ssh.program "$FAKE_SIGNER"
   mkdir -p "$TEST_TMP_DIR/.1password"
-  python3 -c "
+  if [[ -n "${SSH_AUTH_SOCK:-}" && -S "$SSH_AUTH_SOCK" ]]; then
+    ln -s "$SSH_AUTH_SOCK" "$TEST_TMP_DIR/.1password/agent.sock"
+  else
+    python3 -c "
 import socket, sys
 s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 s.bind(sys.argv[1])
 " "$TEST_TMP_DIR/.1password/agent.sock"
+  fi
 
   run env HOME="$TEST_TMP_DIR" SSH_AUTH_SOCK="" PATH="$MOCK_BIN_DIR:/usr/bin:/bin" \
     "$CHECK_SCRIPT" --signer-path "$FAKE_SIGNER" --wrapper-path "$FAKE_SIGNER" \
