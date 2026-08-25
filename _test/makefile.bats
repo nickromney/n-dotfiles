@@ -77,7 +77,7 @@ EOF
   touch _macos/personal.yaml _macos/work.yaml
 
   mkdir -p scripts
-  for script in brew-bundle-install.sh brew-with-policy.sh brew-update.sh install-audio-priority-bar.sh; do
+  for script in brew-bundle-install.sh brew-with-policy.sh brew-update.sh install-audio-priority-bar.sh audit-system-tools.sh; do
     if [ -f "$REPO_ROOT/scripts/$script" ]; then
       cp "$REPO_ROOT/scripts/$script" scripts/
       chmod +x "scripts/$script"
@@ -188,7 +188,7 @@ teardown() {
   [[ "$output" =~ "mise install" ]]
 }
 
-@test "make update uses the shared Homebrew update module and mise upgrade" {
+@test "make update uses the shared Homebrew update module and checks mise pins" {
   cat > scripts/brew-update.sh <<'EOF'
 #!/usr/bin/env bash
 printf "%s\n" "$1" >> "$TEST_DIR/brew-update-calls.txt"
@@ -213,7 +213,7 @@ EOF
   else
     [[ "$output" != *"shared Homebrew update module: update-all"* ]]
   fi
-  [[ "$output" =~ "mise upgrade" ]]
+  [[ "$output" =~ "mise outdated" ]]
 
   if [[ "$EXPECTED_BREWFILE" == "Brewfile" ]]; then
     run grep -qx "update-all" "$TEST_DIR/brew-update-calls.txt"
@@ -221,6 +221,24 @@ EOF
   else
     [ ! -f "$TEST_DIR/brew-update-calls.txt" ]
   fi
+}
+
+@test "make audit runs both package drift and deep system audits" {
+  cat > scripts/audit-installed.sh <<'EOF'
+#!/usr/bin/env bash
+echo "package drift audit called"
+EOF
+  chmod +x scripts/audit-installed.sh
+  cat > scripts/audit-system-tools.sh <<'EOF'
+#!/usr/bin/env bash
+echo "deep system audit called"
+EOF
+  chmod +x scripts/audit-system-tools.sh
+
+  run make audit
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"package drift audit called"* ]]
+  [[ "$output" == *"deep system audit called"* ]]
 }
 
 @test "make configure defaults to personal macOS profile" {

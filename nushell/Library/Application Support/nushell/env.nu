@@ -15,7 +15,6 @@ let additional_paths = [
     $"($env.HOME)/.local/bin"
     $"($env.HOME)/.cargo/bin"
     $"($env.HOME)/.tfenv/bin"
-    "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"  # VSCode CLI
 ]
 
 $env.PATH = ($env.PATH

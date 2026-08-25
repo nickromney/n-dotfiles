@@ -61,13 +61,16 @@ EOF
   [ "$(plutil -extract knownDevices raw -o - "$IMPORTED_PLIST")" = "Y2FjaGU=" ]
 }
 
-@test "AudioPriorityBar installer reapplies preferences when the pinned app is already installed" {
+@test "AudioPriorityBar installer builds the local checkout and reapplies preferences" {
   local app_dir="$TEST_ROOT/Applications"
+  local source_dir="$TEST_ROOT/source"
   local configure_log="$TEST_ROOT/configure.log"
-  mkdir -p "$app_dir/AudioPriorityBar.app"
-  printf '%s\n' \
-    'v1.2.1 f29f23d8cfcb90765aa5716983254d8aa6ac3c725de87b3aed8614eef0873bc0' \
-    > "$app_dir/.AudioPriorityBar.release"
+  mkdir -p "$source_dir/dist/AudioPriorityBar.app"
+  cat > "$source_dir/build.sh" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+  chmod +x "$source_dir/build.sh"
   cat > "$TEST_ROOT/configure" <<EOF
 #!/usr/bin/env bash
 printf '%s\n' "configured \$*" > "$configure_log"
@@ -75,11 +78,47 @@ EOF
   chmod +x "$TEST_ROOT/configure"
 
   run env \
+    HOME="$TEST_ROOT" \
     AUDIO_PRIORITY_BAR_APP_DIR="$app_dir" \
+    AUDIO_PRIORITY_BAR_SOURCE_DIR="$source_dir" \
     AUDIO_PRIORITY_BAR_CONFIGURE_SCRIPT="$TEST_ROOT/configure" \
     "$REPO_ROOT/scripts/install-audio-priority-bar.sh"
 
   [ "$status" -eq 0 ]
   [ "$(cat "$configure_log")" = "configured " ]
-  [[ "$output" == *"already installed"* ]]
+  [[ "$output" == *"Installed local AudioPriorityBar"* ]]
+  [ -f "$TEST_ROOT/Library/LaunchAgents/com.example.AudioPriorityBar.plist" ]
+}
+
+@test "AudioPriorityBar installer defaults to the sibling personal checkout" {
+  cat > "$TEST_ROOT/configure" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+  chmod +x "$TEST_ROOT/configure"
+
+  run env HOME="$TEST_ROOT" \
+    AUDIO_PRIORITY_BAR_CONFIGURE_SCRIPT="$TEST_ROOT/configure" \
+    "$REPO_ROOT/scripts/install-audio-priority-bar.sh" --dry-run
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"$TEST_ROOT/Developer/personal/AudioPriorityBar"* ]]
+}
+
+@test "AudioPriorityBar installer skips cleanly when the source checkout is absent" {
+  cat > "$TEST_ROOT/configure" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+  chmod +x "$TEST_ROOT/configure"
+
+  run env \
+    HOME="$TEST_ROOT" \
+    AUDIO_PRIORITY_BAR_CONFIGURE_SCRIPT="$TEST_ROOT/configure" \
+    "$REPO_ROOT/scripts/install-audio-priority-bar.sh"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"source checkout not found"* ]]
+  [[ "$output" == *"Skipping AudioPriorityBar build/install"* ]]
+  [ ! -e "$TEST_ROOT/Library/LaunchAgents/com.example.AudioPriorityBar.plist" ]
 }

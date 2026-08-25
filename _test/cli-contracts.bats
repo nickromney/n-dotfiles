@@ -42,6 +42,7 @@ EOF
     "scripts/audit.sh"
     "scripts/audit-harness-guides.sh"
     "scripts/audit-installed.sh"
+    "scripts/audit-system-tools.sh"
     "scripts/sync-private-harness-assets.sh"
     "scripts/build-browser-tools.sh"
     "scripts/install-audio-priority-bar.sh"

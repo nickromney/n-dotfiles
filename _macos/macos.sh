@@ -6,6 +6,7 @@ MODE="show"
 CONFIG_FILE=""
 DRY_RUN=false
 NO_INPUT="${NO_INPUT:-false}"
+JETBRAINSIDE="${JETBRAINSIDE:-RubyMine}"
 # shellcheck disable=SC2034  # VERBOSE is reserved for future use
 VERBOSE=false
 
@@ -109,7 +110,7 @@ show_applications() {
   # Check for specific apps we might need
   echo
   info "Checking for common applications:"
-  local apps=("Google Chrome" "1Password 7" "Visual Studio Code" "iTerm")
+  local apps=("Google Chrome" "1Password 7" "$JETBRAINSIDE" "iTerm")
   for app in "${apps[@]}"; do
     if [[ -d "/Applications/$app.app" ]]; then
       success "$app is installed"
@@ -454,6 +455,7 @@ apply_dock_settings() {
         for ((i=0; i<apps_count; i++)); do
           local app_path
           app_path=$(yq ".$section.apps[$i]" "$config_file")
+          app_path="${app_path//\$\{JETBRAINSIDE\}/$JETBRAINSIDE}"
           if [[ -e "$app_path" ]]; then
             # Check if app is already in dock
             if echo "$current_dock_apps" | grep -qF "$app_path"; then

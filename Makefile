@@ -40,6 +40,9 @@ BREW_BUNDLE_INSTALL := ./scripts/brew-bundle-install.sh
 BREW_UPDATE := ./scripts/brew-update.sh
 AUDIO_PRIORITY_BAR_INSTALL := ./scripts/install-audio-priority-bar.sh
 
+# Select the managed JetBrains IDE once for install, update, and app setup.
+export JETBRAINSIDE ?= RubyMine
+
 HOST_OS := $(shell uname -s)
 BREWFILE := $(if $(filter Darwin,$(HOST_OS)),Brewfile,Brewfile.posix)
 
@@ -74,7 +77,7 @@ help: ## Show this help message
 	fi
 	@echo "  make stow                 Symlink dotfiles only (all a work machine needs)"
 	@echo "  Arch/Omarchy              No Brewfile: pacman + ./stow.sh + mise install (see omarchy/README.md)"
-	@echo "  make update               Update brew, mise, and mas-managed tools"
+	@echo "  make update               Update brew/mas and check pinned mise tools"
 
 ##@ Install
 
@@ -91,7 +94,7 @@ brewfile-install: ## Install packages from the Brewfile (Brewfile.posix on Linux
 	@$(BREW_BUNDLE_INSTALL) "$(BREWFILE)"
 
 .PHONY: audio-priority-bar-install
-audio-priority-bar-install: ## Install the pinned AudioPriorityBar release on macOS
+audio-priority-bar-install: ## Build and install AudioPriorityBar from its local checkout
 	@if [ "$(HOST_OS)" != "Darwin" ]; then \
 		echo "$(RED)AudioPriorityBar is macOS-only$(NC)"; \
 		exit 1; \
@@ -112,6 +115,17 @@ mise-install: ## Install CLI tools and runtimes declared in mise config
 		echo "$(BLUE)Installing tools and runtimes via mise...$(NC)"; \
 		mise install; \
 		echo "$(GREEN)✓ mise tools installed$(NC)"; \
+	else \
+		echo "$(RED)mise not found; install it with the host package manager first$(NC)"; \
+		 exit 1; \
+	fi
+
+.PHONY: mise-bump
+mise-bump: ## Upgrade mise tools and deliberately bump pinned versions
+	@if command -v mise >/dev/null 2>&1; then \
+		echo "$(BLUE)Bumping pinned mise tools to newer releases...$(NC)"; \
+		mise upgrade --bump; \
+		echo "$(GREEN)✓ mise pins bumped$(NC)"; \
 	else \
 		echo "$(RED)mise not found; install it with the host package manager first$(NC)"; \
 		exit 1; \
@@ -136,14 +150,14 @@ personal-setup: ## Full personal Mac setup (bootstrap + macOS settings + SSH)
 ##@ Update
 
 .PHONY: update
-update: ## Update installed brew packages, mise tools, and Mac App Store apps
+update: ## Update brew/mas tools and check pinned mise versions
 	@if [ "$(HOST_OS)" = "Darwin" ]; then \
 		$(BREW_UPDATE) update-all; \
 	fi
 	@if command -v mise >/dev/null 2>&1; then \
-		echo "$(BLUE)Updating mise tools and runtimes...$(NC)"; \
-		mise upgrade || echo "$(YELLOW)  Warning: mise upgrade failed$(NC)"; \
-		echo "$(GREEN)✓ mise upgrade attempted$(NC)"; \
+		echo "$(BLUE)Checking pinned mise tools for available updates...$(NC)"; \
+		mise outdated || echo "$(YELLOW)  Warning: mise outdated check failed$(NC)"; \
+		echo "$(GREEN)✓ mise outdated check attempted$(NC)"; \
 		echo ""; \
 	fi
 	@if [ "$(HOST_OS)" = "Darwin" ] && command -v mas >/dev/null 2>&1; then \
@@ -158,7 +172,7 @@ update: ## Update installed brew packages, mise tools, and Mac App Store apps
 		echo "$(GREEN)✓ Rust updated$(NC)"; \
 		echo ""; \
 	fi
-	@echo "$(GREEN)✓ All package managers and tools updated$(NC)"
+	@echo "$(GREEN)✓ Package managers updated; pinned mise tools checked$(NC)"
 
 ##@ macOS Configuration
 
@@ -229,13 +243,16 @@ test-macos: ## Run macOS configuration tests only
 audit-installed: ## Audit installed packages vs Brewfile and mise config
 	@./scripts/audit-installed.sh
 
+.PHONY: audit-system-tools
+audit-system-tools: ## Deep, report-only audit of Homebrew, mise, PATH, and apps
+	@./scripts/audit-system-tools.sh
+
 .PHONY: audit-local-git
 audit-local-git: ## Fast local-only audit for repos under ~/Developer/personal
 	@./scripts/audit-local-git-repos.sh --execute
 
 .PHONY: audit
-audit: ## Alias for audit-installed
-	@./scripts/audit.sh
+audit: audit-installed audit-system-tools ## Run package drift and deep system audits
 
 ##@ Linux/Lima Validation
 

@@ -112,11 +112,23 @@ npm dependency footprint where package metadata is local.
 make audit-installed
 ```
 
+## audit-system-tools
+
+Create a report-only deep inventory of Homebrew formulae/casks, mise status,
+PATH directories and shadowing, application bundles, and curated overlapping
+CLI candidates. It never removes anything.
+
+```bash
+./scripts/audit-system-tools.sh
+./scripts/audit-system-tools.sh --out-dir /tmp/n-dotfiles-system-audit
+```
+
 ## install-audio-priority-bar
 
-Install the pinned universal macOS release of Tobi's AudioPriorityBar into
-`~/Applications`. The script verifies the release archive's SHA-256 and is
-idempotent; `make install` runs it automatically on macOS.
+Build the universal macOS app from the sibling AudioPriorityBar checkout and
+install it into `~/Applications`. The script also installs a per-user launch
+agent so the app starts after login; `make install` runs it automatically on
+macOS. Set `AUDIO_PRIORITY_BAR_SOURCE_DIR` to use another checkout.
 
 ```bash
 ./scripts/install-audio-priority-bar.sh --dry-run

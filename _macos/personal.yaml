@@ -49,7 +49,7 @@ dock:
     - "/Applications/Ghostty.app"
 
     # IDE/Development (Y workspace)
-    - "/Applications/Visual Studio Code.app"
+    - "/Applications/${JETBRAINSIDE}.app"
 
     # Browsers (I workspace)
     - "/Applications/Brave Browser.app"
