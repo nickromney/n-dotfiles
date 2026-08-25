@@ -42,7 +42,7 @@ dock:
     - "/Applications/Ghostty.app"
 
     # IDE/Development
-    - "/Applications/Visual Studio Code.app"
+    - "/Applications/${JETBRAINSIDE}.app"
 
     # Browsers
     - "/Applications/Google Chrome.app"

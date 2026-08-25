@@ -17,7 +17,7 @@ def --env "update-env" [] {
 }
 export-env {
   
-  'set,PATH,/opt/homebrew/bin:/Users/nickromney/.local/bin:/Users/nickromney/.cargo/bin:/Applications/Visual Studio Code.app/Contents/Resources/app/bin:/Applications/kitty.app/Contents/MacOS:/opt/homebrew/sbin:/Users/nickromney/slicer-mac:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/opt/pkg/env/active/bin:/opt/pmk/env/global/bin:/Applications/Ghostty.app/Contents/MacOS
+  'set,PATH,/opt/homebrew/bin:/Users/nickromney/.local/bin:/Users/nickromney/.cargo/bin:/Applications/kitty.app/Contents/MacOS:/opt/homebrew/sbin:/Users/nickromney/slicer-mac:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/opt/pkg/env/active/bin:/opt/pmk/env/global/bin:/Applications/Ghostty.app/Contents/MacOS
 hide,MISE_SHELL,
 hide,__MISE_DIFF,
 hide,__MISE_DIFF,' | parse vars | update-env
@@ -58,4 +58,3 @@ def --env mise_hook [] {
     | parse vars
     | update-env
 }
-

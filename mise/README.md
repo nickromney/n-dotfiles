@@ -20,6 +20,11 @@ and Linux, which is what makes the POSIX/Lima path cheap to keep.
 
 ```bash
 mise install    # install everything declared here
-mise upgrade    # update to latest versions
+mise outdated   # check whether pinned tools have newer releases
+mise upgrade --bump  # deliberately update pins and install newer releases
 mise ls         # show what is installed and active
 ```
+
+Tool versions are intentionally pinned in `config.toml`. Use `mise-bump` (or
+`mise upgrade --bump`) as a deliberate maintenance action rather than allowing
+routine updates to silently change the toolchain.

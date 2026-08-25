@@ -8,6 +8,9 @@
 # Apply with: brew bundle --file Brewfile
 # Prune drift with: brew bundle cleanup --file Brewfile
 
+# Override with JETBRAINSIDE=WebStorm (or another supported Homebrew cask).
+jetbrains_ide = ENV.fetch("JETBRAINSIDE", "RubyMine").downcase
+
 # Taps
 tap "azure/functions", trusted: { formula: "azure-functions-core-tools@4" }
 tap "dicklesworthstone/tap", trusted: { formula: "ubs" }
@@ -67,6 +70,7 @@ cask "microsoft-teams"
 cask "netnewswire"
 cask "obsidian"
 cask "pearcleaner"
+cask jetbrains_ide
 cask "spotify"
 
 # Mac App Store

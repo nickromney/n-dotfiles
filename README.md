@@ -123,7 +123,7 @@ make update        # update brew, mise, mas (and rustup if present)
 make configure     # apply macOS settings (MACOS_PROFILE=personal|work)
 make lint          # shellcheck + markdownlint-cli2
 make test          # full BATS suite
-make audit         # drift report: installed vs Brewfile/mise config
+make audit         # package drift plus deep Homebrew/mise/PATH/app audit
 ```
 
 > **Note:** Mac App Store installs require you to sign in via the App
@@ -138,8 +138,8 @@ Add one line to [mise/.config/mise/config.toml](mise/.config/mise/config.toml):
 
 ```toml
 [tools]
-kubectl = "latest"                        # short name from `mise registry`
-"github:cilium/hubble" = "latest"         # or any GitHub release directly
+kubectl = "1.36.4"                         # short name from `mise registry`
+"github:cilium/hubble" = "1.19.4"          # or any GitHub release directly
 ```
 
 Then run `mise install`. The same entry works on macOS and Linux.
@@ -148,7 +148,8 @@ Useful commands:
 ```bash
 mise registry <name>   # check whether a tool has a short name
 mise ls                # what is installed/active
-mise upgrade           # update everything to latest
+mise outdated          # check pinned tools for newer releases
+mise upgrade --bump    # deliberately update pins and install newer releases
 mise use -g foo@latest # add + install a global tool in one step
 ```
 
@@ -157,19 +158,20 @@ mise use -g foo@latest # add + install a global tool in one step
 Add a `cask`/`brew`/`mas` line to the [Brewfile](Brewfile) and run
 `make install` (or `brew bundle --file Brewfile`).
 
-AudioPriorityBar is the one exception: upstream currently publishes a GitHub
-release rather than a Homebrew cask. Its pinned universal release and
-SHA-256 are managed by
-[`scripts/install-audio-priority-bar.sh`](scripts/install-audio-priority-bar.sh)
-and run automatically by `make install` on macOS. Use `--dry-run` to preview
-the install.
+AudioPriorityBar owns its own build, installation, release, and notarisation
+workflow in the sibling
+[`~/Developer/personal/AudioPriorityBar`](../AudioPriorityBar) checkout. Use
+that repository's `make dev`, `make install`, or release workflow. This repo
+only stows the stable preference configuration and provides
+`scripts/configure-audio-priority-bar.sh` for applying it.
 
 The `audio-priority-bar` Stow package links the stable priority configuration
 to `~/.config/audio-priority-bar/preferences.plist`. The installer merges
 those keys into the app's `com.example.AudioPriorityBar` UserDefaults domain
 on every run while preserving its timestamped `knownDevices` cache.
 
-To find drift in either direction, run `make audit` — it reports
+To find drift in either direction, run `make audit` — it reports package drift
+and a deeper Homebrew/mise/PATH/application inventory. It reports
 Brewfile entries missing from the machine and installed packages
 missing from the Brewfile.
 

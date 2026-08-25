@@ -601,7 +601,8 @@ if command -v aerospace >/dev/null 2>&1; then
   _AERO_WS_MAP=(
     com.mitchellh.ghostty            T
     net.kovidgoyal.kitty             T
-    com.microsoft.VSCode             Y
+    com.jetbrains.rubymine           Y
+    com.jetbrains.webstorm           Y
     com.todesktop.230313mzl4w4u92    Y
     com.openai.codex                 Y
     com.axosoft.gitkraken            Y

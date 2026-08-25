@@ -58,7 +58,7 @@ alt-shift-equal = 'resize smart +100'
 # A huge stretch for mnemonics, but works with CapsLock as Hyper, plus right hand Qwerty.
 # W = Work (Chrome)
 # T = Terminal (Ghostty, Kitty)
-# Y = YDE (VSCode, Cursor, Codex)
+# Y = YDE (RubyMine, Cursor, Codex)
 # U = Utilities (Finder, Preview, Snagit, Docker Desktop, balenaEtcher, iMazing, Bloom)
 # I = Internet (browsers - Brave, Safari, Firefox)
 # O = Office (Excel, Word, PowerPoint, OneNote)
@@ -116,7 +116,7 @@ if.app-id = 'net.kovidgoyal.kitty'
 run = 'move-node-to-workspace T'
 
 [[on-window-detected]]
-if.app-id = 'com.microsoft.VSCode'
+if.app-id = 'com.jetbrains.*'
 run = 'move-node-to-workspace Y'
 
 [[on-window-detected]]

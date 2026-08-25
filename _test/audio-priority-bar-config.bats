@@ -60,26 +60,3 @@ EOF
   [ "$(plutil -extract inputPriorities.1 raw -o - "$IMPORTED_PLIST")" = "webcam" ]
   [ "$(plutil -extract knownDevices raw -o - "$IMPORTED_PLIST")" = "Y2FjaGU=" ]
 }
-
-@test "AudioPriorityBar installer reapplies preferences when the pinned app is already installed" {
-  local app_dir="$TEST_ROOT/Applications"
-  local configure_log="$TEST_ROOT/configure.log"
-  mkdir -p "$app_dir/AudioPriorityBar.app"
-  printf '%s\n' \
-    'v1.2.1 f29f23d8cfcb90765aa5716983254d8aa6ac3c725de87b3aed8614eef0873bc0' \
-    > "$app_dir/.AudioPriorityBar.release"
-  cat > "$TEST_ROOT/configure" <<EOF
-#!/usr/bin/env bash
-printf '%s\n' "configured \$*" > "$configure_log"
-EOF
-  chmod +x "$TEST_ROOT/configure"
-
-  run env \
-    AUDIO_PRIORITY_BAR_APP_DIR="$app_dir" \
-    AUDIO_PRIORITY_BAR_CONFIGURE_SCRIPT="$TEST_ROOT/configure" \
-    "$REPO_ROOT/scripts/install-audio-priority-bar.sh"
-
-  [ "$status" -eq 0 ]
-  [ "$(cat "$configure_log")" = "configured " ]
-  [[ "$output" == *"already installed"* ]]
-}
