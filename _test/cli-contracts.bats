@@ -45,7 +45,6 @@ EOF
     "scripts/audit-system-tools.sh"
     "scripts/sync-private-harness-assets.sh"
     "scripts/build-browser-tools.sh"
-    "scripts/install-audio-priority-bar.sh"
     "scripts/configure-audio-priority-bar.sh"
     "scripts/check-1password-dev-tools.sh"
     "slicer-mac/check-slicer-version.sh"

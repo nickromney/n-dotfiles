@@ -38,7 +38,6 @@ endif
 BREW_WITH_POLICY := ./scripts/brew-with-policy.sh
 BREW_BUNDLE_INSTALL := ./scripts/brew-bundle-install.sh
 BREW_UPDATE := ./scripts/brew-update.sh
-AUDIO_PRIORITY_BAR_INSTALL := ./scripts/install-audio-priority-bar.sh
 
 # Select the managed JetBrains IDE once for install, update, and app setup.
 export JETBRAINSIDE ?= RubyMine
@@ -50,7 +49,7 @@ BREWFILE := $(if $(filter Darwin,$(HOST_OS)),Brewfile,Brewfile.posix)
 MACOS_PROFILE ?= personal
 
 ifeq ($(HOST_OS),Darwin)
-INSTALL_TARGETS := brewfile-install audio-priority-bar-install stow-install mise-install
+INSTALL_TARGETS := brewfile-install stow-install mise-install
 else
 INSTALL_TARGETS := stow-install mise-install
 endif
@@ -92,14 +91,6 @@ brewfile-install: ## Install packages from the Brewfile (Brewfile.posix on Linux
 	fi
 	@echo "$(BLUE)Installing via brew bundle: $(BREWFILE)$(NC)"
 	@$(BREW_BUNDLE_INSTALL) "$(BREWFILE)"
-
-.PHONY: audio-priority-bar-install
-audio-priority-bar-install: ## Build and install AudioPriorityBar from its local checkout
-	@if [ "$(HOST_OS)" != "Darwin" ]; then \
-		echo "$(RED)AudioPriorityBar is macOS-only$(NC)"; \
-		exit 1; \
-	fi
-	@$(AUDIO_PRIORITY_BAR_INSTALL)
 
 .PHONY: stow
 stow: ## Symlink dotfiles into the home directory

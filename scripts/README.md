@@ -123,21 +123,12 @@ CLI candidates. It never removes anything.
 ./scripts/audit-system-tools.sh --out-dir /tmp/n-dotfiles-system-audit
 ```
 
-## install-audio-priority-bar
+## configure-audio-priority-bar
 
-Build the universal macOS app from the sibling AudioPriorityBar checkout and
-install it into `~/Applications`. The script also installs a per-user launch
-agent so the app starts after login; `make install` runs it automatically on
-macOS. Set `AUDIO_PRIORITY_BAR_SOURCE_DIR` to use another checkout.
-
-```bash
-./scripts/install-audio-priority-bar.sh --dry-run
-./scripts/install-audio-priority-bar.sh
-```
-
-The installer also runs `configure-audio-priority-bar.sh`, which merges the
-stable preferences from the `audio-priority-bar` Stow package into the app's
-UserDefaults domain without replacing its volatile device cache.
+Apply the stable preferences from the `audio-priority-bar` Stow package into
+the app's UserDefaults domain without replacing its volatile device cache.
+AudioPriorityBar's sibling repository owns building, installation, release,
+and notarisation.
 
 ```bash
 ./scripts/configure-audio-priority-bar.sh --dry-run

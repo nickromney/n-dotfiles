@@ -77,20 +77,12 @@ EOF
   touch _macos/personal.yaml _macos/work.yaml
 
   mkdir -p scripts
-  for script in brew-bundle-install.sh brew-with-policy.sh brew-update.sh install-audio-priority-bar.sh audit-system-tools.sh; do
+  for script in brew-bundle-install.sh brew-with-policy.sh brew-update.sh audit-system-tools.sh; do
     if [ -f "$REPO_ROOT/scripts/$script" ]; then
       cp "$REPO_ROOT/scripts/$script" scripts/
       chmod +x "scripts/$script"
     fi
   done
-
-  # Keep the Makefile test hermetic on macOS: the real installer downloads a
-  # pinned release, while this suite only needs to verify target wiring.
-  cat > scripts/install-audio-priority-bar.sh <<'EOF'
-#!/usr/bin/env bash
-echo "audio-priority-bar installer called"
-EOF
-  chmod +x scripts/install-audio-priority-bar.sh
 
   # Copy the Makefile
   cp "$REPO_ROOT/Makefile" .

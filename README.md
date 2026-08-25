@@ -158,14 +158,12 @@ mise use -g foo@latest # add + install a global tool in one step
 Add a `cask`/`brew`/`mas` line to the [Brewfile](Brewfile) and run
 `make install` (or `brew bundle --file Brewfile`).
 
-AudioPriorityBar is the one exception: it is installed from the sibling local
-checkout rather than a Homebrew cask. The installer builds
-`~/Developer/personal/AudioPriorityBar` and manages its per-user login agent
-through
-[`scripts/install-audio-priority-bar.sh`](scripts/install-audio-priority-bar.sh)
-and runs automatically by `make install` on macOS. Use `--dry-run` to preview
-the install. Override the source with `AUDIO_PRIORITY_BAR_SOURCE_DIR` when
-needed.
+AudioPriorityBar owns its own build, installation, release, and notarisation
+workflow in the sibling
+[`~/Developer/personal/AudioPriorityBar`](../AudioPriorityBar) checkout. Use
+that repository's `make dev`, `make install`, or release workflow. This repo
+only stows the stable preference configuration and provides
+`scripts/configure-audio-priority-bar.sh` for applying it.
 
 The `audio-priority-bar` Stow package links the stable priority configuration
 to `~/.config/audio-priority-bar/preferences.plist`. The installer merges
