@@ -1,0 +1,282 @@
+#!/usr/bin/env bash
+# Reversible border backend switcher for AeroSpace.
+
+set -euo pipefail
+
+export LC_ALL=C
+
+LABEL="com.nickromney.n-borders"
+USER_HOME="${N_BORDERS_HOME:-$HOME}"
+USER_ID="${N_BORDERS_UID:-$(id -u)}"
+SOURCE_FILE="${N_BORDERS_SOURCE:-$USER_HOME/.local/share/n-borders/borders.swift}"
+DAEMON="${N_BORDERS_BINARY:-$USER_HOME/.local/bin/n-borders-daemon}"
+PLIST="${N_BORDERS_PLIST:-$USER_HOME/Library/LaunchAgents/$LABEL.plist}"
+JANKY_BINARY="${N_BORDERS_JANKY_BINARY:-/opt/homebrew/bin/borders}"
+SWIFTC_CMD="${N_BORDERS_SWIFTC:-swiftc}"
+LAUNCHCTL_CMD="${N_BORDERS_LAUNCHCTL:-launchctl}"
+PGREP_CMD="${N_BORDERS_PGREP:-pgrep}"
+PKILL_CMD="${N_BORDERS_PKILL:-pkill}"
+SLEEP_CMD="${N_BORDERS_SLEEP:-sleep}"
+NOHUP_CMD="${N_BORDERS_NOHUP:-nohup}"
+DRY_RUN=false
+
+usage() {
+  local exit_code="${1:-0}"
+  cat <<'EOF'
+Usage: n-borders <on|off|status|reconcile> [--dry-run]
+
+Switch the AeroSpace border backend. JankyBorders is an optional fallback.
+
+Commands:
+  on          Build/start the native focused-window ring, then stop JankyBorders
+  off         Restore JankyBorders when installed, then unload/remove the native ring
+  status      Report the selected backend and running processes
+  reconcile   Make the running processes match the installed LaunchAgent state
+
+Options:
+  --dry-run   Show state changes without building, launching, or removing files
+  -h, --help  Show this help message
+
+Examples:
+  n-borders on
+  n-borders off
+  n-borders status
+
+The native ring uses a single click-through CAShapeLayer and a high-contrast
+yellow stroke. It has no Accessibility or Input Monitoring permission needs.
+EOF
+  exit "$exit_code"
+}
+
+die() {
+  echo "Error: $*" >&2
+  exit 1
+}
+
+say() {
+  printf '%s\n' "$*"
+}
+
+run_or_print() {
+  local description="$1"
+  shift
+  if [[ "$DRY_RUN" == "true" ]]; then
+    say "Would $description"
+  else
+    "$@"
+  fi
+}
+
+require_command() {
+  command -v "$1" >/dev/null 2>&1 || die "Required command not found: $1"
+}
+
+native_target() {
+  printf 'gui/%s/%s' "$USER_ID" "$LABEL"
+}
+
+native_loaded() {
+  "$LAUNCHCTL_CMD" print "$(native_target)" >/dev/null 2>&1
+}
+
+native_running() {
+  native_loaded && "$PGREP_CMD" -x "$(basename "$DAEMON")" >/dev/null 2>&1
+}
+
+janky_running() {
+  "$PGREP_CMD" -x borders >/dev/null 2>&1
+}
+
+build_native() {
+  [[ -f "$SOURCE_FILE" ]] || die "Native border source not found: $SOURCE_FILE"
+  require_command "$SWIFTC_CMD"
+
+  if [[ -x "$DAEMON" && "$DAEMON" -nt "$SOURCE_FILE" ]]; then
+    return 0
+  fi
+
+  if [[ "$DRY_RUN" == "true" ]]; then
+    say "Would build $DAEMON from $SOURCE_FILE"
+    return 0
+  fi
+
+  mkdir -p "$(dirname "$DAEMON")" "$USER_HOME/Library/Caches/n-borders/module-cache"
+  env \
+    CLANG_MODULE_CACHE_PATH="$USER_HOME/Library/Caches/n-borders/module-cache" \
+    SWIFT_MODULECACHE_PATH="$USER_HOME/Library/Caches/n-borders/module-cache" \
+    "$SWIFTC_CMD" -O -F /System/Library/PrivateFrameworks \
+    -framework SkyLight -o "$DAEMON" "$SOURCE_FILE"
+  chmod 755 "$DAEMON"
+  say "Built native border daemon"
+}
+
+write_plist() {
+  local launch_agents tmp_file
+  launch_agents="$(dirname "$PLIST")"
+  if [[ "$DRY_RUN" == "true" ]]; then
+    say "Would install LaunchAgent $PLIST"
+    return 0
+  fi
+
+  mkdir -p "$launch_agents"
+  tmp_file="$(mktemp "$launch_agents/.n-borders.XXXXXX")"
+  cat >"$tmp_file" <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.nickromney.n-borders</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/sh</string>
+    <string>-c</string>
+    <string>exec "$HOME/.local/bin/n-borders-daemon"</string>
+  </array>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+</dict>
+</plist>
+EOF
+  mv "$tmp_file" "$PLIST"
+}
+
+start_native() {
+  if [[ "$DRY_RUN" == "true" ]]; then
+    say "Would bootstrap $LABEL"
+    return 0
+  fi
+
+  "$LAUNCHCTL_CMD" enable "$(native_target)" >/dev/null 2>&1 || true
+  if native_running; then
+    "$LAUNCHCTL_CMD" kickstart -k "$(native_target)" >/dev/null 2>&1 || true
+  else
+    # A crashed daemon can leave its label loaded. Remove that stale label
+    # before bootstrap, otherwise launchctl rejects the replacement.
+    native_loaded && "$LAUNCHCTL_CMD" bootout "$(native_target)" >/dev/null 2>&1 || true
+    "$LAUNCHCTL_CMD" bootstrap "gui/$USER_ID" "$PLIST"
+  fi
+
+  for _ in {1..20}; do
+    native_running && return 0
+    "$SLEEP_CMD" 0.1
+  done
+  die "Native border LaunchAgent did not start: $LABEL"
+}
+
+stop_native() {
+  if [[ "$DRY_RUN" == "true" ]]; then
+    say "Would unload $LABEL and remove $PLIST"
+    return 0
+  fi
+
+  "$LAUNCHCTL_CMD" bootout "$(native_target)" >/dev/null 2>&1 || true
+  rm -f "$PLIST"
+}
+
+start_janky() {
+  if janky_running; then
+    return 0
+  fi
+  if [[ ! -x "$JANKY_BINARY" ]]; then
+    say "JankyBorders fallback unavailable: $JANKY_BINARY"
+    return 0
+  fi
+  if [[ "$DRY_RUN" == "true" ]]; then
+    say "Would start JankyBorders"
+    return 0
+  fi
+
+  "$NOHUP_CMD" "$JANKY_BINARY" \
+    active_color=0xfff5f543 inactive_color=0xff3b8eea width=8.0 \
+    >/tmp/n-borders-janky.log 2>&1 &
+  for _ in {1..20}; do
+    janky_running && return 0
+    "$SLEEP_CMD" 0.1
+  done
+  die "JankyBorders did not start"
+}
+
+stop_janky() {
+  if ! janky_running; then
+    return 0
+  fi
+  if [[ "$DRY_RUN" == "true" ]]; then
+    say "Would stop JankyBorders"
+    return 0
+  fi
+  "$PKILL_CMD" -x borders || true
+}
+
+turn_on() {
+  build_native
+  write_plist
+  start_native
+  stop_janky
+  say "n-borders is on (high-contrast yellow focused-window ring)"
+}
+
+turn_off() {
+  start_janky
+  stop_native
+  if janky_running; then
+    say "JankyBorders is restored"
+  else
+    say "n-borders is off (no fallback border backend is running)"
+  fi
+}
+
+reconcile() {
+  if [[ -e "$PLIST" ]]; then
+    build_native
+    start_native
+    stop_janky
+    say "n-borders reconciled: native backend"
+  else
+    start_janky
+    stop_native
+    if janky_running; then
+      say "n-borders reconciled: JankyBorders fallback"
+    else
+      say "n-borders reconciled: no border backend"
+    fi
+  fi
+}
+
+status() {
+  local selected="JankyBorders fallback"
+  [[ -e "$PLIST" ]] && selected="native n-borders"
+  say "Selected backend: $selected"
+  if native_running; then say "Native daemon: running"; else say "Native daemon: stopped"; fi
+  if janky_running; then say "JankyBorders: running"; else say "JankyBorders: stopped"; fi
+}
+
+COMMAND=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    on | off | status | reconcile)
+      [[ -z "$COMMAND" ]] || die "Only one command may be supplied"
+      COMMAND="$1"
+      shift
+      ;;
+    --dry-run)
+      DRY_RUN=true
+      shift
+      ;;
+    -h | --help)
+      usage 0
+      ;;
+    *)
+      die "Unknown command: $1 (use --help)"
+      ;;
+  esac
+done
+
+[[ -n "$COMMAND" ]] || usage 1
+[[ "$COMMAND" == "status" || "$DRY_RUN" == "true" || "$USER_ID" =~ ^[0-9]+$ ]] || die "A valid GUI user id is required"
+
+case "$COMMAND" in
+  on) turn_on ;;
+  off) turn_off ;;
+  status) status ;;
+  reconcile) reconcile ;;
+esac

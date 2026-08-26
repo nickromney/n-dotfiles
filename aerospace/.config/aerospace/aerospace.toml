@@ -10,9 +10,13 @@ persistent-workspaces = ['W', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']']
 # after-login-command = []
 # after-startup-command = []
 after-startup-command = [
-'exec-and-forget sleep 2 && /opt/homebrew/bin/borders active_color=0xfff5f543 inactive_color=0xff3b8eea width=8.0'
+'exec-and-forget sleep 2 && $HOME/.local/bin/n-borders reconcile'
 ]
 start-at-login = true
+
+# The native border daemon hides immediately on workspace changes, then lets
+# SkyLight settle the new focused window before drawing its ring.
+exec-on-workspace-change = ['/bin/bash', '-c', 'touch /tmp/n-borders-ws-switch']
 
 enable-normalization-flatten-containers = true
 enable-normalization-opposite-orientation-for-nested-containers = true

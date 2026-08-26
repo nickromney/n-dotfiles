@@ -34,7 +34,7 @@ STOW_DIRS=(
 # Keep host-specific app and desktop configuration off the other platform.
 # In particular, a Mac sync must never touch Omarchy's Hyprland/keyd paths.
 case "$(uname -s)" in
-  Darwin) STOW_DIRS+=(aerospace audio-priority-bar) ;;
+  Darwin) STOW_DIRS+=(aerospace audio-priority-bar macos-borders) ;;
   Linux) STOW_DIRS+=(omarchy) ;;
 esac
 

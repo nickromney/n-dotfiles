@@ -238,6 +238,10 @@ audit-installed: ## Audit installed packages vs Brewfile and mise config
 audit-system-tools: ## Deep, report-only audit of Homebrew, mise, PATH, and apps
 	@./scripts/audit-system-tools.sh
 
+.PHONY: memory-report
+memory-report: ## Sample macOS app process families by physical memory footprint
+	@./scripts/macos-memory-report.sh
+
 .PHONY: audit-local-git
 audit-local-git: ## Fast local-only audit for repos under ~/Developer/personal
 	@./scripts/audit-local-git-repos.sh --execute

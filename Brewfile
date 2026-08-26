@@ -14,17 +14,14 @@ jetbrains_ide = ENV.fetch("JETBRAINSIDE", "RubyMine").downcase
 # Taps
 tap "azure/functions", trusted: { formula: "azure-functions-core-tools@4" }
 tap "dicklesworthstone/tap", trusted: { formula: "ubs" }
-tap "FelixKratz/formulae", trusted: { formula: "borders" } # borders
 tap "goreleaser/tap", trusted: { cask: "goreleaser" }
 tap "modem-dev/tap", trusted: { formula: "hunk" }
 tap "nikitabobko/tap", trusted: { cask: "aerospace" } # aerospace
 tap "noahgorstein/tap", trusted: { formula: "jqp" } # jqp
-tap "steipete/tap", trusted: { cask: "codexbar" }
 
 # Formulae
 brew "ast-grep"
 brew "bat"
-brew "borders"
 brew "bpytop"
 brew "docker", link: true
 brew "azure/functions/azure-functions-core-tools@4"
@@ -62,7 +59,6 @@ cask "1password-cli"
 cask "aerospace"
 cask "alfred"
 cask "brave-browser"
-cask "steipete/tap/codexbar"
 cask "font-jetbrains-mono-nerd-font"
 cask "goreleaser/tap/goreleaser"
 cask "ghostty"
