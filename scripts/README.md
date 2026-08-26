@@ -134,3 +134,68 @@ and notarisation.
 ./scripts/configure-audio-priority-bar.sh --dry-run
 ./scripts/configure-audio-priority-bar.sh
 ```
+
+## macos-memory-report
+
+Measure related macOS app process families with physical footprint as the
+primary metric and RSS as a secondary diagnostic. The default report covers
+AeroSpace, borders, n-borders, Bartender, Homerow, Superkey, AudioPriorityBar,
+Pearcleaner, Bloom, Chops, Clearly, Spokenly, Wispr Flow, Brave, Google Chrome,
+Docker Desktop, Silo, Ghostty, and RubyMine. It never quits or changes an app.
+
+```bash
+./scripts/macos-memory-report.sh
+./scripts/macos-memory-report.sh --count 12 --interval 300
+./scripts/macos-memory-report.sh --format tsv > /tmp/mac-memory.tsv
+```
+
+Repeated samples expose growth that a one-shot Activity Monitor reading can
+miss. `Peak sum MiB` is an upper bound because each process may have reached
+its lifetime peak at a different time.
+
+For a repeatable comparison, keep the same tabs/project open, let startup
+settle, then capture an idle plateau, the same representative task, and a
+post-task plateau:
+
+```bash
+./scripts/macos-memory-report.sh --format tsv --count 12 --interval 5 \
+  > /tmp/memory-trial.tsv
+```
+
+Use separate trial files for dictation (the same spoken passage in Spokenly
+and Wispr Flow), Brave (the same tabs before and after the opt-in policy), and
+Silo/Ghostty/RubyMine (the same project, file, terminal command, and build).
+Compare `footprint_mib` first, then CPU and reload/latency observations.
+
+## n-borders
+
+The macOS Stow package includes a focused-window border backend adapted from
+omacosy. It uses a single WindowServer-rasterized ring, with an opaque bright
+yellow stroke for high-contrast colour-blind accessibility. The switch is
+reversible and can use an existing JankyBorders installation as an optional
+fallback:
+
+```bash
+$HOME/.local/bin/n-borders on
+$HOME/.local/bin/n-borders off
+$HOME/.local/bin/n-borders status
+```
+
+`off` restores JankyBorders when it is installed, then unloads the native
+daemon. Without JankyBorders, it simply leaves both backends stopped.
+`reconcile` is called by AeroSpace at startup so the selected backend survives
+login.
+
+## configure-brave-memory
+
+Brave supports Chromium's soft `TotalMemoryLimitMb` policy on macOS. This is
+opt-in because exceeding the threshold discards inactive tabs and they may
+reload after restart:
+
+```bash
+./scripts/configure-brave-memory.sh on --limit 2048
+./scripts/configure-brave-memory.sh status
+./scripts/configure-brave-memory.sh off
+```
+
+Use `--dry-run` to preview a change. The policy is not applied by setup.
