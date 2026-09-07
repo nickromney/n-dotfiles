@@ -251,3 +251,39 @@ EOF
   run make invalid_target
   [ "$status" -ne 0 ]
 }
+
+@test "Homebrew upgrade accepts Enter and prevents automatic app quitting" {
+  run bash -c 'printf "\n\n" | scripts/brew-update.sh update-all'
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"[Y/n]"* ]]
+  [[ "$output" == *"brew upgrade --formula --yes"* ]]
+  [[ "$output" == *"brew upgrade --cask --no-quit --yes"* ]]
+}
+
+@test "Homebrew upgrade respects no and EOF" {
+  run bash -c 'printf "n\n" | scripts/brew-update.sh update-all'
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"--yes"* ]]
+}
+
+@test "Homebrew dry run only previews upgrades" {
+  run scripts/brew-update.sh update-all --dry-run
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"--dry-run"* ]]
+  [[ "$output" != *"brew update"* ]]
+  [[ "$output" != *"brew cleanup"* ]]
+  [[ "$output" != *"--yes"* ]]
+  [[ "$output" != *"[Y/n]"* ]]
+}
+
+@test "Homebrew no-input explicitly approves upgrades" {
+  run scripts/brew-update.sh update-all --no-input
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"brew upgrade --cask --no-quit --yes"* ]]
+  [[ "$output" != *"[Y/n]"* ]]
+}
+
+@test "Homebrew update rejects unknown options" {
+  run scripts/brew-update.sh update-all --unknown
+  [ "$status" -eq 2 ]
+}

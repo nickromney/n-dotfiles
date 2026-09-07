@@ -3,9 +3,15 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: scripts/brew-update.sh <package-manager|update-all>
+Usage: scripts/brew-update.sh <package-manager|update-all> [--dry-run|--no-input]
 
 Runs the repository's Homebrew update sequence for a Makefile update context.
+
+Options:
+  --dry-run   Preview upgrades without changing machine state
+  --no-input  Upgrade without prompting
+
+Interactive upgrades default to yes. Running cask apps are not quit automatically.
 
 Contexts:
   package-manager  Required Homebrew update for `make brew update`
@@ -54,6 +60,40 @@ case "$context" in
     ;;
 esac
 
+shift
+dry_run=false
+no_input=false
+for arg in "$@"; do
+  case "$arg" in
+    --dry-run) dry_run=true ;;
+    --no-input) no_input=true ;;
+    *) usage >&2; exit 2 ;;
+  esac
+done
+
+upgrade_packages() {
+  local answer
+  HOMEBREW_NO_AUTO_UPDATE=1 "$brew_with_policy" upgrade "$@" --dry-run || return
+  if [[ "$dry_run" == "true" ]]; then
+    return 0
+  fi
+  if [[ "$no_input" != "true" ]]; then
+    while true; do
+      printf 'Do you want to proceed with the upgrade? [Y/n] '
+      if ! IFS= read -r answer; then
+        printf '\nSkipping upgrade: no input. Use --no-input to approve unattended upgrades.\n'
+        return 0
+      fi
+      case "$answer" in
+        "" | y | Y | yes | YES) break ;;
+        n | N | no | NO) return 0 ;;
+        *) printf 'Please answer yes or no.\n' ;;
+      esac
+    done
+  fi
+  "$brew_with_policy" upgrade "$@" --yes
+}
+
 if ! command -v brew >/dev/null 2>&1; then
   if [[ "$require_brew" == "true" ]]; then
     print_color "${red}Homebrew is not installed${nc}"
@@ -63,11 +103,15 @@ if ! command -v brew >/dev/null 2>&1; then
 fi
 
 print_color "${blue}${heading}${nc}"
-"$brew_with_policy" update || print_color "${yellow}  Warning: brew update failed${nc}"
-"$brew_with_policy" upgrade --formula || print_color "${yellow}  Warning: brew formula upgrade failed${nc}"
-"$brew_with_policy" upgrade --cask || print_color "${yellow}  Warning: brew cask upgrade failed${nc}"
-"$brew_with_policy" cleanup || print_color "${yellow}  Warning: brew cleanup failed${nc}"
-print_color "${green}${success}${nc}"
+if [[ "$dry_run" != "true" ]]; then
+  "$brew_with_policy" update || print_color "${yellow}  Warning: brew update failed${nc}"
+fi
+upgrade_packages --formula || print_color "${yellow}  Warning: brew formula upgrade failed${nc}"
+upgrade_packages --cask --no-quit || print_color "${yellow}  Warning: brew cask upgrade failed${nc}"
+if [[ "$dry_run" != "true" ]]; then
+  "$brew_with_policy" cleanup || print_color "${yellow}  Warning: brew cleanup failed${nc}"
+  print_color "${green}${success}${nc}"
+fi
 
 if [[ "$trailing_blank" == "true" ]]; then
   echo ""
