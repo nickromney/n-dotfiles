@@ -195,6 +195,25 @@ EOF
   [ "$count" -eq 1 ]
 }
 
+@test "both configs: add the Silo CLI directory when installed" {
+  local silo_bin="$HOME/Library/Application Support/com.silo.desktop/bin"
+  mkdir -p "$silo_bin"
+
+  result=$(bash -c "
+    export PATH='/usr/bin:/bin'
+    source '$DOTFILES_DIR/bash/.bashrc' 2>/dev/null
+    echo \$PATH
+  ")
+  [[ ":$result:" == *":$silo_bin:"* ]]
+
+  result=$(zsh -c "
+    export PATH='/usr/bin:/bin'
+    source '$DOTFILES_DIR/zsh/.zshrc' 2>/dev/null
+    echo \$PATH
+  ")
+  [[ ":$result:" == *":$silo_bin:"* ]]
+}
+
 @test "zshrc: PATH has no trailing colon" {
   result=$(/bin/zsh -c "
     export PATH='/usr/bin:/usr/local/bin'

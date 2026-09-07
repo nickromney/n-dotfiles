@@ -403,6 +403,7 @@ The ZSH configuration automatically adds tool directories to PATH if they exist:
 - `$HOME/.local/bin` - Local user binaries
 - `$HOME/.cargo/bin` - Rust/Cargo binaries
 - `$HOME/.local/share/mise/shims` - mise-managed tools (non-interactive shells)
+- `$HOME/Library/Application Support/com.silo.desktop/bin` - Silo CLI (macOS)
 - `$HOME/.lmstudio/bin` - LM Studio CLI
 
 Each directory is only added if it exists, preventing errors on partial installations. Interactive zsh shells also run `mise activate`, which keeps tool versions in sync per directory.
