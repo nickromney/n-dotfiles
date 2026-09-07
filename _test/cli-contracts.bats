@@ -61,6 +61,13 @@ EOF
   done
 }
 
+@test "sync-private-harness-assets: keeps private skills out of global and Codex" {
+  run "$REPO_ROOT/scripts/sync-private-harness-assets.sh" --help
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"global and Codex views are intentionally kept free of private skills"* ]]
+}
+
 @test "restart-slicer-mac: execute restarts tray and daemon as the current user" {
   write_mock_slicer_mac
 

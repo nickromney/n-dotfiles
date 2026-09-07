@@ -44,13 +44,15 @@ states.
 ## sync-private-harness-assets
 
 Reconcile selected private harness assets from the optional sibling
-`../harnesses-private` repo into the global, Claude, and Codex harness views.
+`../harnesses-private` repo into the Claude harness view. The global and Codex
+views are intentionally kept free of private skills; stale private links in
+those views are removed during reconciliation.
 The script links individual skill directories, skips cleanly when the private
 repo is absent, removes stale private links, and discovers provider-grouped catalogs such as
 `mattpocock/skills/tdd`, `joshpigford/skills/example`, and
 `agents/skills/use-platform`. If a provider has `load/*.txt` manifests, only
-listed skills are exposed. Supported manifests are `load/global.txt`,
-`load/claude.txt`, and `load/codex.txt`. Duplicate loaded skill names are
+listed skills are exposed. Supported manifests are `load/global.txt` and
+`load/claude.txt`. Duplicate loaded skill names are
 namespaced as `<provider>-<skill>` in the flat harness roots.
 
 Run from the `n-dotfiles` repo root. The default private source is

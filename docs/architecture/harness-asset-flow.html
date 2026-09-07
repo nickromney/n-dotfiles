@@ -33,7 +33,7 @@ flowchart LR
   Public[public Harness Repository] --> Shared[Shared Asset Source]
   Private[Optional Private Source] --> Sync[sync-private-harness-assets.sh]
   Shared --> Views[Harness Views]
-  Sync --> Views
+  Sync --> PrivateViews[Claude Harness View]
   Views --> Claude[Claude Code discovery route]
   Views --> Codex[Codex discovery route]
   Views --> Global[Global Skill Root / Chops View]
@@ -53,7 +53,7 @@ flowchart LR
 
         <article class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <h2 class="text-lg font-semibold">Harness View</h2>
-          <p class="mt-2 text-sm text-slate-600"><code>agents/.agents/skills</code>, <code>claude/.claude/skills</code>, and <code>codex/.codex/skills</code> expose assets to Agent Harnesses.</p>
+          <p class="mt-2 text-sm text-slate-600"><code>claude/.claude/skills</code> exposes selected private assets. The global and Codex views intentionally receive no private skills.</p>
         </article>
       </section>
 
@@ -62,7 +62,7 @@ flowchart LR
         <div class="mt-4 grid gap-4 md:grid-cols-2">
           <div class="rounded-md border border-slate-200 p-4">
             <p class="text-xs uppercase tracking-wider text-slate-500">sync-private-harness-assets.sh</p>
-            <p class="mt-2 text-sm text-slate-600">Interface: <code>--dry-run</code>, <code>--execute</code>, and <code>--private-root</code>. Implementation links selected private skills, detects conflicts, and respects provider load manifests.</p>
+            <p class="mt-2 text-sm text-slate-600">Interface: <code>--dry-run</code>, <code>--execute</code>, and <code>--private-root</code>. Implementation links selected Claude skills, removes stale private global/Codex links, detects conflicts, and respects provider load manifests.</p>
           </div>
           <div class="rounded-md border border-slate-200 p-4">
             <p class="text-xs uppercase tracking-wider text-slate-500">audit-harness-guides.sh</p>

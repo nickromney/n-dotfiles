@@ -12,19 +12,24 @@ usage() {
   cat <<'EOF'
 Usage: scripts/sync-private-harness-assets.sh [options] [--dry-run|--execute]
 
-Reconcile selected private harness assets into the public harness views. The default
-private source is the optional sibling repo ../harnesses-private. If that repo
-is absent, the script exits successfully without changing anything.
+Reconcile selected private harness assets into the Claude harness view. The
+global and Codex views are intentionally kept free of private skills. The
+default private source is the optional sibling repo ../harnesses-private. If
+that repo is absent, the script exits successfully without changing anything.
 
 Skill sources are discovered one provider level deep, for example:
   ../harnesses-private/mattpocock/skills/tdd
   ../harnesses-private/joshpigford/skills/example
   ../harnesses-private/agents/skills/use-platform
 
-If a provider has load manifests, only listed skills are exposed:
+If a provider has load manifests, only listed skills are exposed to the Claude
+view:
   <provider>/load/global.txt
   <provider>/load/claude.txt
-  <provider>/load/codex.txt
+
+Private skills previously linked into the global or Codex views are removed
+during reconciliation. Built-in or other non-private Codex skills are left
+untouched.
 
 Options:
       --dry-run             Show planned links without changing files
@@ -380,9 +385,13 @@ main() {
 
   private_abs="$(absolute_path "$PRIVATE_ROOT")"
 
-  sync_view "$agents_skills" "$private_abs" "global" "$private_abs"
+  # Codex also discovers the shared ~/.agents/skills route, so keep the global
+  # view empty as well as the direct Codex view.
+  sync_view "$agents_skills" "$private_abs" "global"
   sync_view "$claude_skills" "$private_abs" "claude" "$private_abs" "$private_abs/claude"
-  sync_view "$codex_skills" "$private_abs" "codex" "$private_abs" "$private_abs/codex"
+  # Keep private skills out of Codex. Passing no catalogs still reconciles and
+  # removes links created by older versions of this script.
+  sync_view "$codex_skills" "$private_abs" "codex"
 }
 
 main "$@"
