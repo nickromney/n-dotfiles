@@ -29,6 +29,7 @@ print_color() {
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 brew_with_policy="${script_dir}/brew-with-policy.sh"
+brew_trust="${script_dir}/brew-trust.sh"
 
 green='\033[0;32m'
 yellow='\033[1;33m'
@@ -104,6 +105,7 @@ fi
 
 print_color "${blue}${heading}${nc}"
 if [[ "$dry_run" != "true" ]]; then
+  "$brew_trust" || print_color "${yellow}  Warning: Homebrew trust setup failed${nc}"
   "$brew_with_policy" update || print_color "${yellow}  Warning: brew update failed${nc}"
 fi
 upgrade_packages --formula || print_color "${yellow}  Warning: brew formula upgrade failed${nc}"

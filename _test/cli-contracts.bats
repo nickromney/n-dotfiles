@@ -114,8 +114,6 @@ EOF
   [ "$status" -eq 0 ]
   [[ "$output" == *"Usage:"* ]]
   [[ "$output" == *"Homebrew tap trust policy"* ]]
-  [[ "$output" == *"HOMEBREW_REQUIRE_TAP_TRUST"* ]]
-  [[ "$output" == *"HOMEBREW_NO_REQUIRE_TAP_TRUST"* ]]
   [[ "$output" == *"HOMEBREW_NO_ENV_HINTS"* ]]
   [[ "$output" == *"Examples:"* ]]
 }

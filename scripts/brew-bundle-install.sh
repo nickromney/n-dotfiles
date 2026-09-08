@@ -23,6 +23,9 @@ fi
 brewfile=$1
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 brew_with_policy="$script_dir/brew-with-policy.sh"
+brew_trust="$script_dir/brew-trust.sh"
+
+"$brew_trust"
 
 declared_casks=$("$brew_with_policy" bundle list --cask --file="$brewfile")
 installed_casks=$("$brew_with_policy" list --cask)
