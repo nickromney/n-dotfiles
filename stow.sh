@@ -18,12 +18,14 @@ STOW_DIRS=(
   codex
   gh
   ghostty
+  herdr
   git
   kitty
   mise
   nushell
   nvim
   prettier
+  silo
   ssh
   starship
   tmux

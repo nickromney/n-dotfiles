@@ -1,0 +1,26 @@
+# Herdr configuration
+#
+# Herdr is a terminal workspace manager, so Ghostty remains the source of
+# truth for the font and terminal ANSI palette.
+
+onboarding = false
+
+[theme]
+# Follow Ghostty's ANSI palette, including the Dimmed Monokai palette.
+name = "terminal"
+
+[terminal]
+# New tabs follow the current pane's directory within the current space.
+new_cwd = "follow"
+
+[ui]
+# Keep status distinguishable without requiring colour perception.
+status_indicators = "symbols"
+show_agent_labels_on_pane_borders = true
+hide_tab_bar_when_single_tab = false
+
+[ui.toast]
+delivery = "system"
+
+[experimental]
+pane_history = true

@@ -1,0 +1,135 @@
+{
+  "state": {
+    "activeThemeId": "high-contrast-dark",
+    "activeWorkspaceId": "ws_7822e510-6aec-420b-8c63-6f2d21a51709",
+    "agentProfiles": [],
+    "agentState": {
+      "term_1e89c853-57c9-4770-8f6b-b5af3cae41ba": {
+        "activity": "none",
+        "isAgent": false,
+        "lastLiveAt": "2026-09-07T21:21:23.547Z",
+        "needsAttention": false,
+        "workingSource": null,
+        "workspaceId": "ws_8cf31524-44d6-4a46-b931-2567fe12c214"
+      },
+      "term_30587721-34c1-4050-b590-937282119153": {
+        "activity": "none",
+        "isAgent": false,
+        "lastLiveAt": "2026-09-08T10:03:52.261Z",
+        "needsAttention": false,
+        "workingSource": null,
+        "workspaceId": "ws_7822e510-6aec-420b-8c63-6f2d21a51709"
+      },
+      "term_53bf892e-4a55-46aa-b38a-ceae63976eb5": {
+        "activity": "none",
+        "isAgent": false,
+        "lastLiveAt": "2026-09-07T20:14:18.067Z",
+        "needsAttention": false,
+        "workingSource": null,
+        "workspaceId": "ws_cf71281d-8b26-45cf-b608-e43b41a615bd"
+      },
+      "term_739d5539-6b85-4e87-9a4c-87b9e060c2aa": {
+        "activity": "none",
+        "isAgent": false,
+        "lastLiveAt": "2026-09-07T20:16:31.807Z",
+        "needsAttention": false,
+        "workingSource": null,
+        "workspaceId": "ws_6ec167f2-219d-420d-9a01-ec30398f1acd"
+      }
+    },
+    "editorSettings": {
+      "breadcrumbs": true,
+      "formatOnPaste": false,
+      "formatOnSave": false,
+      "formatOnType": false,
+      "insertSpaces": true,
+      "minimap": false,
+      "renderLineHighlight": "gutter",
+      "renderWhitespace": "selection",
+      "smoothScrolling": true,
+      "tabSize": 2,
+      "wordWrap": false
+    },
+    "globalActiveSidePanelTabs": {},
+    "globalActiveTabEnabled": false,
+    "globalExtensionState": {
+      "core.extensions": {
+        "hasVisitedExtensionsPage": true
+      },
+      "core.navigator": {
+        "activeView": "workspaces",
+        "navigatorArrangement": "stacked",
+        "navigatorDisabledViews": [],
+        "navigatorGroupColorIntensity": 1,
+        "navigatorStackedCollapsed": [],
+        "navigatorViewOrder": []
+      }
+    },
+    "globalPanelLayout": {
+      "leftPanelCollapsed": false,
+      "rightPanelCollapsed": false,
+      "sideDockTrees": {
+        "left": {
+          "id": "left",
+          "type": "pane"
+        },
+        "right": {
+          "id": "right",
+          "type": "pane"
+        }
+      },
+      "sidePanelLocations": {},
+      "sidePanelOrder": {},
+      "sidePanelVisibility": {},
+      "smallScreenCollapsed": {
+        "left": true,
+        "right": true
+      }
+    },
+    "globalPanelLayoutEnabled": false,
+    "groups": {},
+    "panelOrder": [
+      "ws_b8a24bb0-2aec-4523-a894-4b77c8ecf9a3",
+      "ws_8cf31524-44d6-4a46-b931-2567fe12c214",
+      "ws_6ec167f2-219d-420d-9a01-ec30398f1acd",
+      "ws_cf71281d-8b26-45cf-b608-e43b41a615bd",
+      "ws_6862e852-59a9-4139-ab51-b98faee67cb8",
+      "ws_afb8a987-e8bf-4019-9045-92a38bfeb6ec",
+      "ws_7822e510-6aec-420b-8c63-6f2d21a51709",
+      "ws_da770547-57f8-4349-8160-918e81381f54",
+      "ws_a4fe04ca-3a64-42a3-9bbc-5f71f2dfda4c",
+      "ws_6e1560fb-ac2c-4f25-aee7-02b61a79cac9"
+    ],
+    "sharedColumnWidthsEnabled": false,
+    "smallScreenModeEnabled": false,
+    "smallScreenPeekWidthLeftPx": 472,
+    "smallScreenPeekWidthRightPx": 540,
+    "smallScreenThresholdPx": 1440,
+    "terminalSettings": {
+      "breadcrumbs": true,
+      "copyOnSelect": false,
+      "cursorStyle": "block",
+      "fastScrollSensitivity": 5,
+      "fontFamily": "Monaco",
+      "fontSizeOffset": 0,
+      "hideAgentStatusGlyphs": true,
+      "pasteOnRightClick": false,
+      "scrollSensitivity": 3,
+      "shell": "",
+      "shellArgs": "-l"
+    },
+    "uiFontSize": 18,
+    "workspaceOrder": [
+      "ws_b8a24bb0-2aec-4523-a894-4b77c8ecf9a3",
+      "ws_8cf31524-44d6-4a46-b931-2567fe12c214",
+      "ws_6ec167f2-219d-420d-9a01-ec30398f1acd",
+      "ws_cf71281d-8b26-45cf-b608-e43b41a615bd",
+      "ws_6862e852-59a9-4139-ab51-b98faee67cb8",
+      "ws_afb8a987-e8bf-4019-9045-92a38bfeb6ec",
+      "ws_7822e510-6aec-420b-8c63-6f2d21a51709",
+      "ws_da770547-57f8-4349-8160-918e81381f54",
+      "ws_a4fe04ca-3a64-42a3-9bbc-5f71f2dfda4c",
+      "ws_6e1560fb-ac2c-4f25-aee7-02b61a79cac9"
+    ]
+  }
+}

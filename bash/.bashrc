@@ -48,6 +48,7 @@ paths=(
   "$HOME/.local/bin"
   "$HOME/.cargo/bin"
   "$HOME/.local/share/mise/shims"
+  "$HOME/Library/Application Support/com.silo.desktop/bin"
   "$HOME/.lmstudio/bin"
   "$HOME/.omlx/bin"
   "$HOME/.ollama/bin"

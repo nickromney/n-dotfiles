@@ -77,7 +77,7 @@ EOF
   touch _macos/personal.yaml _macos/work.yaml
 
   mkdir -p scripts
-  for script in brew-bundle-install.sh brew-with-policy.sh brew-update.sh audit-system-tools.sh; do
+  for script in brew-bundle-install.sh brew-with-policy.sh brew-trust.sh brew-update.sh audit-system-tools.sh; do
     if [ -f "$REPO_ROOT/scripts/$script" ]; then
       cp "$REPO_ROOT/scripts/$script" scripts/
       chmod +x "scripts/$script"
@@ -140,7 +140,7 @@ teardown() {
 @test "make brewfile-install applies Homebrew tap trust policy to brew bundle" {
   run make brewfile-install
   [ "$status" -eq 0 ]
-  run awk -F '\t' '$1 == "1" && $2 == "1" { found = 1 } END { exit found ? 0 : 1 }' "$TEST_DIR/brew-policy-env.txt"
+  run awk -F '\t' '$1 == "" && $2 == "1" { found = 1 } END { exit found ? 0 : 1 }' "$TEST_DIR/brew-policy-env.txt"
   [ "$status" -eq 0 ]
 }
 
@@ -250,4 +250,40 @@ EOF
 @test "make with invalid target fails" {
   run make invalid_target
   [ "$status" -ne 0 ]
+}
+
+@test "Homebrew upgrade accepts Enter and prevents automatic app quitting" {
+  run bash -c 'printf "\n\n" | scripts/brew-update.sh update-all'
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"[Y/n]"* ]]
+  [[ "$output" == *"brew upgrade --formula --yes"* ]]
+  [[ "$output" == *"brew upgrade --cask --no-quit --yes"* ]]
+}
+
+@test "Homebrew upgrade respects no and EOF" {
+  run bash -c 'printf "n\n" | scripts/brew-update.sh update-all'
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"--yes"* ]]
+}
+
+@test "Homebrew dry run only previews upgrades" {
+  run scripts/brew-update.sh update-all --dry-run
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"--dry-run"* ]]
+  [[ "$output" != *"brew update"* ]]
+  [[ "$output" != *"brew cleanup"* ]]
+  [[ "$output" != *"--yes"* ]]
+  [[ "$output" != *"[Y/n]"* ]]
+}
+
+@test "Homebrew no-input explicitly approves upgrades" {
+  run scripts/brew-update.sh update-all --no-input
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"brew upgrade --cask --no-quit --yes"* ]]
+  [[ "$output" != *"[Y/n]"* ]]
+}
+
+@test "Homebrew update rejects unknown options" {
+  run scripts/brew-update.sh update-all --unknown
+  [ "$status" -eq 2 ]
 }

@@ -1,0 +1,31 @@
+{
+  "version": 2,
+  "name": "Dimmed Monokai",
+  "base": "dark",
+  "colorScheme": "dark",
+  "vars": {
+    "--silo-color-bg-hover": "#2a2d32",
+    "--silo-color-bg-active": "#3a3d43",
+    "--silo-color-button-text": "#b9bcba",
+    "--silo-color-text-hi": "#fdffb9",
+    "--silo-color-text": "#b9bcba",
+    "--silo-color-text-lo": "#888987",
+    "--silo-color-input-text": "#b9bcba",
+    "--silo-color-toolbar-text": "#b9bcba",
+    "--silo-color-toolbar-text-disabled": "#888987",
+    "--silo-color-content-text": "#b9bcba",
+    "--silo-content-text": "#b9bcba",
+    "--silo-content-editor-text-dim": "#888987",
+    "--silo-content-editor-text-faint": "#578fa4",
+    "--silo-content-tab-tray-text": "#888987",
+    "--silo-content-tab-text-inactive": "#888987",
+    "--silo-content-tab-text": "#888987",
+    "--silo-content-tab-text-active": "#fdffb9",
+    "--silo-statusbar-text": "#b9bcba",
+    "--silo-tab-text-active": "#fdffb9",
+    "--silo-tab-text": "#888987",
+    "--silo-tab-bg-hover": "#2a2d32",
+    "--silo-notify-text": "#b9bcba",
+    "--silo-notify-text-hi": "#fdffb9"
+  }
+}
