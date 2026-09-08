@@ -83,7 +83,7 @@ use_logical_path = false
 format = '[$path]($style) [$read_only]($read_only_style)'
 style = 'fg:85 bold'
 disabled = false
-read_only = ''
+read_only = '🔒'
 read_only_style = 'red'
 truncation_symbol = '.../'
 home_symbol = '~'
@@ -160,7 +160,7 @@ disabled = false
 format = "$symbol "
 symbols.Ubuntu = ""
 symbols.Windows = ""
-symbols.Macos = ""
+symbols.Macos = ""
 symbols.Debian = " "
 symbols.Unknown = " "
 
@@ -174,7 +174,7 @@ format = " [$duration]($style)"
 [nodejs]
 format = 'running [$symbol($version )]($style)'
 version_format = 'v${raw}'
-symbol = '󰎙 '
+symbol = 'node '
 style = 'bold green'
 disabled = false
 not_capable_style = 'bold red'
