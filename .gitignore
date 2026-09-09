@@ -28,6 +28,9 @@ zsh/.zcompdump
 # Local reference repos
 _reference/
 
+# Silo runtime state is machine-local and rewritten by the app.
+silo/.config/silo/app-state.json
+
 # JSM-managed skills are installed locally and may include paid content.
 # Already tracked skills remain tracked; new local installs stay out of git.
 skills/.SKILLS_MANAGED_BY_JSM

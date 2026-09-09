@@ -57,7 +57,7 @@ let EVENT_FRONT_CHANGE: UInt32 = 1508
 // styling from ~/.config/n-borders/borders.conf (width, radius, per-app
 // radius overrides)
 struct Conf {
-    var width: CGFloat = 4
+    var width: CGFloat = 5
     var radius: CGFloat = 10
     // ring offset from the window edge: 0 = inner edge flush with the
     // frame, positive = breathing room, negative = overlap (hides the
@@ -132,6 +132,26 @@ func focusedWindowFrame() -> (CGRect, String)? {
     lastFullScanAt = now
     guard let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements],
         kCGNullWindowID) as? [[String: Any]] else { return nil }
+
+    // Full-screen apps can expose a toolbar, palette, or other layer-0 child
+    // window in front of their real surface. Prefer the full-screen surface
+    // before the normal front-to-back selection, otherwise the ring can land
+    // on a narrow strip near the top of the display.
+    for w in list {
+        guard (w["kCGWindowLayer"] as? Int) == 0,
+            (w["kCGWindowOwnerPID"] as? pid_t) == pid,
+            let b = w["kCGWindowBounds"] as? [String: Any],
+            let x = b["X"] as? CGFloat, let y = b["Y"] as? CGFloat,
+            let wd = b["Width"] as? CGFloat, let h = b["Height"] as? CGFloat,
+            wd > 60, h > 60
+        else { continue }
+        let rect = CGRect(x: x, y: y, width: wd, height: h)
+        guard isFullscreen(rect) else { continue }
+        let wid = (w["kCGWindowNumber"] as? Int).map(UInt32.init) ?? 0
+        lastWid = wid
+        return (rect, name)
+    }
+
     for w in list { // front-to-back
         guard (w["kCGWindowLayer"] as? Int) == 0,
             (w["kCGWindowOwnerPID"] as? pid_t) == pid,
@@ -529,6 +549,14 @@ watch("/tmp/n-borders-ws-switch", create: true) {
     syncShroud(nil) // the next tick re-covers if the target is fullscreen too
 }
 
+watch(confFile.path, create: false) {
+    conf = loadConf()
+    shape.strokeColor = loadColor()
+    shape.lineWidth = conf.width
+    lastFrame = .zero
+    tick()
+}
+
 // --- SkyLight notifications ---------------------------------------------
 
 let cid = SLSMainConnectionID()
@@ -555,6 +583,11 @@ func rebuildSubscriptions() {
 let slsCallback: NotifyProc = { event, _, _, _ in
     if event == EVENT_WINDOW_CREATE || event == EVENT_WINDOW_DESTROY {
         rebuildSubscriptions()
+    }
+    if event == EVENT_FRONT_CHANGE {
+        // Do not reuse a child-window frame across an app/full-screen
+        // transition. The next tick must inspect the complete window list.
+        lastFullScanAt = .distantPast
     }
     noteStat(event: true)
     kickTick()

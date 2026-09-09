@@ -173,7 +173,7 @@ Compare `footprint_mib` first, then CPU and reload/latency observations.
 
 The macOS Stow package includes a focused-window border backend adapted from
 omacosy. It uses a single WindowServer-rasterized ring, with an opaque bright
-yellow stroke for high-contrast colour-blind accessibility. The switch is
+yellow 5px stroke for high-contrast colour-blind accessibility. The switch is
 reversible and can use an existing JankyBorders installation as an optional
 fallback:
 
@@ -187,6 +187,9 @@ $HOME/.local/bin/n-borders status
 daemon. Without JankyBorders, it simply leaves both backends stopped.
 `reconcile` is called by AeroSpace at startup so the selected backend survives
 login.
+
+The proposed menu-bar conversion and ring-light mode are documented in
+[`docs/plans/n-borders-menubar-ring-light.md`](../docs/plans/n-borders-menubar-ring-light.md).
 
 ## configure-brave-memory
 

@@ -1,23 +1,21 @@
 # Silo configuration
 
-This Stow tree manages two files under `~/.config/silo`:
+This Stow tree manages one durable file under `~/.config/silo`:
 
-- `app-state.json` — Silo's preference store. It holds the terminal font,
-  the active theme, editor and terminal settings, and workspace ordering. It
-  also accumulates machine-local churn (active workspace, per-terminal agent
-  state), so expect noisy diffs.
 - `themes/620a047e-a81b-4f4a-a238-ace13966c729.json` — a custom **Dimmed
   Monokai** theme derived from the Ghostty theme in
   `ghostty/.config/ghostty/config`. Stowing it makes it available in Silo's
   theme picker.
 
-Workspace definitions (`~/.config/silo/workspaces/`), installed extensions,
-terminal buffers, and the session registry are machine-local and deliberately
-not managed here.
+Silo's `~/.config/silo/app-state.json`, workspace definitions, installed
+extensions, terminal buffers, and session registry are machine-local and
+deliberately not managed here. The state file is ignored by Git because Silo
+rewrites it while running.
 
 ## Font
 
-`terminalSettings.fontFamily` in `app-state.json` should be set to `Monaco`.
+`terminalSettings.fontFamily` in Silo's local `app-state.json` should be set to
+`Monaco`.
 
 This is a constraint of Silo, not a preference. Silo is a Tauri app, so its
 terminal renders in a WKWebView, and it sizes its character grid by canvas
@@ -64,5 +62,5 @@ colour-blind modes.
 ./stow.sh silo
 ```
 
-Silo rewrites `app-state.json` as it runs. Quit Silo before restowing, and
-check `git diff` before committing.
+Silo rewrites its local `app-state.json` as it runs. The file is intentionally
+not tracked; quit Silo before restowing the durable theme file if necessary.
