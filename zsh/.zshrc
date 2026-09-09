@@ -456,6 +456,7 @@ fi
 if command -v git >/dev/null 2>&1; then
   alias gs='git status'
   alias gc='git commit'
+  alias gsm='git switch main && git pull'
   alias gmain='git switch main && git pull'
 
   # Only add lazygit alias if it's available
