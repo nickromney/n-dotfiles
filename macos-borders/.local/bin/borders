@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+# Control the standalone Borders menu-bar app for AeroSpace.
+
+set -euo pipefail
+export LC_ALL=C
+
+APP_HOME="${BORDERS_APP_HOME:-$HOME/Applications/Borders.app}"
+APP_BINARY="${BORDERS_BINARY:-$APP_HOME/Contents/MacOS/borders}"
+JANKY_BINARY="${BORDERS_JANKY_BINARY:-/opt/homebrew/bin/borders}"
+PGREP_CMD="${BORDERS_PGREP:-pgrep}"
+PKILL_CMD="${BORDERS_PKILL:-pkill}"
+OPEN_CMD="${BORDERS_OPEN:-open}"
+SLEEP_CMD="${BORDERS_SLEEP:-sleep}"
+DRY_RUN=false
+
+usage() {
+  local exit_code="${1:-0}"
+  cat <<'EOF'
+Usage: borders <on|off|status|reconcile> [--dry-run]
+
+Control the standalone Borders menu-bar app. JankyBorders is an optional fallback.
+
+Commands:
+  on          Launch Borders and select the focused-window renderer
+  off         Turn Borders off and restore JankyBorders when installed
+  status      Report the active renderer
+  reconcile   Reload the app's Stow-managed configuration
+
+Options:
+  --dry-run   Show state changes without launching or stopping anything
+  -h, --help  Show this help message
+
+Examples:
+  borders on
+  borders off
+  borders status
+EOF
+  exit "$exit_code"
+}
+
+die() { echo "Error: $*" >&2; exit 1; }
+say() { printf '%s\n' "$*"; }
+
+app_running() { [[ -S /tmp/borders.sock ]]; }
+janky_running() { [[ -x "$JANKY_BINARY" ]] && "$PGREP_CMD" -af "$JANKY_BINARY" >/dev/null 2>&1; }
+
+start_app() {
+  [[ -x "$APP_BINARY" ]] || die "Borders.app not found: $APP_BINARY (run make install in the borders repo)"
+  if [[ "$DRY_RUN" == true ]]; then say "Would launch $APP_HOME"; return; fi
+  if ! app_running; then "$OPEN_CMD" -n "$APP_HOME" >/dev/null; fi
+  for _ in {1..40}; do
+    [[ -S /tmp/borders.sock ]] && return
+    "$SLEEP_CMD" 0.1
+  done
+  die "Borders did not create its control socket"
+}
+
+send() {
+  [[ "$DRY_RUN" == true ]] && { say "Would send: $1"; return; }
+  "$APP_BINARY" "$1"
+}
+
+stop_janky() {
+  if ! janky_running; then return; fi
+  [[ "$DRY_RUN" == true ]] && { say "Would stop JankyBorders"; return; }
+  # The standalone app and JankyBorders both use a `borders` executable name.
+  # Match the Homebrew path so stopping the fallback cannot kill our app too.
+  "$PKILL_CMD" -f "$JANKY_BINARY" || true
+}
+
+start_janky() {
+  if janky_running || [[ ! -x "$JANKY_BINARY" ]]; then return; fi
+  [[ "$DRY_RUN" == true ]] && { say "Would start JankyBorders"; return; }
+  nohup "$JANKY_BINARY" active_color=0xfff5f543 inactive_color=0xff3b8eea width=5.0 \
+    >/tmp/borders-janky.log 2>&1 &
+}
+
+COMMAND=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    on|off|status|reconcile)
+      [[ -z "$COMMAND" ]] || die "Only one command may be supplied"
+      COMMAND="$1"
+      shift
+      ;;
+    --dry-run) DRY_RUN=true; shift ;;
+    -h|--help) usage 0 ;;
+    *) die "Unknown command: $1 (use --help)" ;;
+  esac
+done
+
+case "$COMMAND" in
+  on)
+    start_app
+    send on
+    stop_janky
+    say "Borders is on (focused-window ring)"
+    ;;
+  off)
+    start_app
+    send off
+    start_janky
+    say "Borders is off"
+    ;;
+  reconcile)
+    start_app
+    send reconcile
+    say "Borders reconciled"
+    ;;
+  status)
+    if [[ -S /tmp/borders.sock ]]; then send status; else say "Borders: stopped"; fi
+    if janky_running; then say "JankyBorders: running"; else say "JankyBorders: stopped"; fi
+    ;;
+  *) usage 1 ;;
+esac

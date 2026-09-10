@@ -141,7 +141,7 @@ and notarisation.
 
 Measure related macOS app process families with physical footprint as the
 primary metric and RSS as a secondary diagnostic. The default report covers
-AeroSpace, borders, n-borders, Bartender, Homerow, Superkey, AudioPriorityBar,
+AeroSpace, Borders, Bartender, Homerow, Superkey, AudioPriorityBar,
 Pearcleaner, Bloom, Chops, Clearly, Spokenly, Wispr Flow, Brave, Google Chrome,
 Docker Desktop, Silo, Ghostty, and RubyMine. It never quits or changes an app.
 
@@ -169,27 +169,34 @@ and Wispr Flow), Brave (the same tabs before and after the opt-in policy), and
 Silo/Ghostty/RubyMine (the same project, file, terminal command, and build).
 Compare `footprint_mib` first, then CPU and reload/latency observations.
 
-## n-borders
+## Borders
 
-The macOS Stow package includes a focused-window border backend adapted from
-omacosy. It uses a single WindowServer-rasterized ring, with an opaque bright
-yellow 5px stroke for high-contrast colour-blind accessibility. The switch is
-reversible and can use an existing JankyBorders installation as an optional
-fallback:
+The `macos-borders` Stow package provides the default configuration and a small
+CLI wrapper for the standalone `Borders.app`. It uses a single
+WindowServer-rasterized ring, with an opaque bright yellow 5px stroke for
+high-contrast colour-blind accessibility. The wrapper can use an existing
+JankyBorders installation as an optional fallback:
 
 ```bash
-$HOME/.local/bin/n-borders on
-$HOME/.local/bin/n-borders off
-$HOME/.local/bin/n-borders status
+$HOME/.local/bin/borders on
+$HOME/.local/bin/borders off
+$HOME/.local/bin/borders status
 ```
 
-`off` restores JankyBorders when it is installed, then unloads the native
-daemon. Without JankyBorders, it simply leaves both backends stopped.
-`reconcile` is called by AeroSpace at startup so the selected backend survives
-login.
+`off` hides the standalone app's overlays and starts JankyBorders when it is
+installed. `reconcile` asks the app to reload its Stow-managed configuration.
+The wrapper never builds the app itself.
 
-The proposed menu-bar conversion and ring-light mode are documented in
-[`docs/plans/n-borders-menubar-ring-light.md`](../docs/plans/n-borders-menubar-ring-light.md).
+The standalone checkout owns the app source, build, and release workflow. The
+n-dotfiles bootstrap and `make install` flows run
+`scripts/install-borders.sh`, which calls `make install` in
+`~/Developer/personal/borders` when that checkout is present and otherwise
+skip it.
+
+The former Homebrew borders formula came from felixkratz/formulae. If that
+retired tap is still installed, make update offers to remove it with a
+non-force brew untap; an installed legacy formula is left for explicit
+cleanup.
 
 ## configure-brave-memory
 

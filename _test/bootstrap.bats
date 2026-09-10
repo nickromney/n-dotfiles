@@ -52,6 +52,21 @@ teardown() {
   [[ "$output" == *"brew install --cask 1password-cli"* ]]
 }
 
+@test "bootstrap: dry-run previews installation of a local Borders checkout" {
+  local borders_repo="$TEST_HOME/Developer/personal/borders"
+  mkdir -p "$borders_repo"
+  touch "$borders_repo/Makefile"
+
+  run env \
+    HOME="$TEST_HOME" \
+    OSTYPE="darwin22" \
+    PATH="$MOCK_BIN_DIR:/usr/bin:/bin" \
+    "$BOOTSTRAP_SCRIPT" --dry-run --no-input --skip-1password --skip-brewfile --skip-stow --skip-mise
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Would execute: make -C $borders_repo install"* ]]
+}
+
 @test "bootstrap: conflicting 1Password flags fail fast" {
   run env \
     HOME="$TEST_HOME" \

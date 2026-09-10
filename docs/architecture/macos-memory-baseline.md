@@ -33,6 +33,9 @@ For an application comparison:
 
 Snapshot taken on 2026-08-25 on a 16 GiB Mac with mixed everyday workloads.
 The system compressor held 6.1 GiB, so memory contention was already material.
+The in-tree `n-borders` implementation described by this historical snapshot
+has since moved to the standalone sibling `Borders` project; the old name is
+retained below only to keep the recorded measurements accurate.
 
 | Process family | Processes | Physical footprint | Interpretation |
 |---|---:|---:|---|
@@ -81,7 +84,7 @@ so the uninstall remained reversible.
 | omacosy idea | Decision | Evidence / boundary |
 |---|---|---|
 | Physical-footprint process-family profiling | Adopt | `scripts/macos-memory-report.sh`; physical footprint is primary, RSS is diagnostic |
-| Single native focused-window border daemon | Adopt | `n-borders` is ~11 MiB versus JankyBorders at ~129 MiB |
+| Single native focused-window border daemon | Adopt | The former `n-borders` implementation is ~11 MiB versus JankyBorders at ~129 MiB |
 | Native publisher-driven bar model | Borrow selectively | Apply the event-driven, warm-model, off-main-thread design to AudioPriorityBar and future bar work |
 | Karabiner Super/Omarchy bindings | Reject | Superkey + Homerow are ~58 MiB in the latest sample and preserve the existing AeroSpace model |
 | Omarchy package/bootstrap layer | Reject | This repository's macOS Brewfile/Stow/mise layers already own the machine |
@@ -102,7 +105,7 @@ bindings do not need to be adopted.
 
 ### Adopt the focused-window border backend
 
-The installed JankyBorders family measured about 129 MiB. The adapted
+The installed JankyBorders family measured about 129 MiB. The former adapted
 `n-borders` daemon measured 10.3 MiB across three post-reboot samples. It draws
 one click-through `CAShapeLayer` ring for the focused window rather than
 retaining a bitmap per window, recovering roughly 119 MiB on this machine.

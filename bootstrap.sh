@@ -19,6 +19,7 @@ INSTALL_1PASSWORD=false
 SKIP_1PASSWORD=false
 SKIP_BREWFILE=false
 SKIP_STOW=false
+SKIP_BORDERS=false
 SKIP_MISE=false
 
 usage() {
@@ -28,7 +29,8 @@ usage() {
 Usage: $0 [options]
 
 Bootstrap a fresh macOS host: Homebrew, Brewfile packages, stowed
-dotfiles, and mise-managed CLI tools and runtimes.
+dotfiles, an optional local Borders checkout, and mise-managed CLI tools
+and runtimes.
 
 Options:
   -d, --dry-run           Show what would happen without making changes
@@ -37,6 +39,7 @@ Options:
       --skip-1password    Skip 1Password installation
       --skip-brewfile     Skip applying ./Brewfile even if it exists
       --skip-stow         Skip stowing dotfiles
+      --skip-borders      Skip installing the local Borders checkout
       --skip-mise         Skip running mise install
   -h, --help              Show this help message
 
@@ -173,6 +176,17 @@ run_mise_if_needed() {
   mise install
 }
 
+run_borders_if_needed() {
+  if [[ "$SKIP_BORDERS" == "true" ]]; then
+    info "Skipping Borders installation"
+    return 0
+  fi
+
+  local -a borders_args=()
+  [[ "$DRY_RUN" == "true" ]] && borders_args+=(--dry-run)
+  "$BOOTSTRAP_DIR/scripts/install-borders.sh" "${borders_args[@]}"
+}
+
 should_install_1password() {
   if [[ "$SKIP_1PASSWORD" == "true" ]]; then
     info "Skipping 1Password installation"
@@ -230,6 +244,10 @@ parse_args() {
         SKIP_STOW=true
         shift
         ;;
+      --skip-borders)
+        SKIP_BORDERS=true
+        shift
+        ;;
       --skip-mise)
         SKIP_MISE=true
         shift
@@ -266,6 +284,7 @@ main() {
   ensure_brew_on_path
   run_brewfile_if_needed
   run_stow_if_needed
+  run_borders_if_needed
   run_mise_if_needed
   install_1password_if_requested
 
