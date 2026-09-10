@@ -37,6 +37,7 @@ cat <<'OUT'
   10     1  10240  1.5 01:00 /Applications/AeroSpace.app/Contents/MacOS/AeroSpace
   11    10   1024  0.0 00:59 /bin/bash -c sleep 2 && /opt/homebrew/bin/borders width=8
   12    11  20480  0.5 00:58 /opt/homebrew/bin/borders width=8
+  13     1  30720  0.4 00:58 /Users/test/Applications/Borders.app/Contents/MacOS/borders
   20     1 102400  2.0 00:30 /Applications/Wispr Flow.app/Contents/MacOS/Wispr Flow
   21    20  51200  3.0 00:29 /Applications/Wispr Flow.app/Contents/Frameworks/Wispr Flow Helper.app/Contents/MacOS/Wispr Flow Helper
 OUT
@@ -51,6 +52,7 @@ for arg in "$@"; do
     10) current=10485760; peak=12582912; name=AeroSpace ;;
     11) current=1048576; peak=1048576; name=bash ;;
     12) current=20971520; peak=31457280; name=borders ;;
+    13) current=31457280; peak=41943040; name=borders ;;
     20) current=104857600; peak=125829120; name='Wispr Flow' ;;
     21) current=52428800; peak=62914560; name='Wispr Flow Helper' ;;
     *) continue ;;
@@ -91,7 +93,7 @@ run_report() {
 
   [ "$status" -eq 0 ]
   [[ "$output" == *$'AeroSpace\t1\t10.0\t10.0\t12.0\t1.5'* ]]
-  [[ "$output" == *$'borders\t2\t21.0\t21.0\t31.0\t0.5'* ]]
+  [[ "$output" == *$'borders\t3\t51.0\t51.0\t71.0\t0.9'* ]]
   [[ "$output" == *$'Wispr Flow\t2\t150.0\t150.0\t180.0\t5.0'* ]]
   [[ "$output" == *'# system_memory_gib=16.0 free_percent=42 compressor_mib=1024.0'* ]]
 }

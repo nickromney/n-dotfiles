@@ -42,7 +42,7 @@ Options:
       --no-default-groups    Profile only groups supplied with --group
 
 Default groups:
-  AeroSpace, borders, n-borders, Bartender, Homerow, Superkey, AudioPriorityBar,
+  AeroSpace, borders, Bartender, Homerow, Superkey, AudioPriorityBar,
   Pearcleaner, Bloom, Chops, Clearly, Spokenly, Wispr Flow, Brave,
   Google Chrome, Docker Desktop, Silo, Ghostty, and RubyMine.
 
@@ -143,7 +143,6 @@ if [[ "$USE_DEFAULT_GROUPS" == "true" ]]; then
   LABELS=(
     "AeroSpace"
     "borders"
-    "n-borders"
     "Bartender"
     "Homerow"
     "Superkey"
@@ -164,8 +163,7 @@ if [[ "$USE_DEFAULT_GROUPS" == "true" ]]; then
   )
   PATTERNS=(
     "/Applications/AeroSpace[.]app/"
-    "(^|[[:space:]])(/opt/homebrew/bin/)?borders([[:space:]]|$)"
-    "/[.]local/bin/n-borders-daemon([[:space:]]|$)"
+    "/Applications/Borders[.]app/|(^|[[:space:]])(/opt/homebrew/bin/)?borders([[:space:]]|$)"
     "/Applications/Bartender 6[.]app/"
     "/Applications/Homerow[.]app/"
     "/Applications/Superkey[.]app/"

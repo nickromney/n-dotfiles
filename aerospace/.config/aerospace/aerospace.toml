@@ -7,16 +7,12 @@ config-version = 2
 # explicitly to preserve that behavior under config v2.
 persistent-workspaces = ['W', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']']
 
-# after-login-command = []
-# after-startup-command = []
+# Borders owns its WindowServer event subscriptions; AeroSpace only needs to
+# start the installed app and select focused-window mode once at login.
 after-startup-command = [
-'exec-and-forget sleep 2 && $HOME/.local/bin/n-borders reconcile'
+'exec-and-forget sleep 2 && test -x "$HOME/Applications/Borders.app/Contents/MacOS/borders" && "$HOME/.local/bin/borders" on'
 ]
 start-at-login = true
-
-# The native border daemon hides immediately on workspace changes, then lets
-# SkyLight settle the new focused window before drawing its ring.
-exec-on-workspace-change = ['/bin/bash', '-c', 'touch /tmp/n-borders-ws-switch']
 
 enable-normalization-flatten-containers = true
 enable-normalization-opposite-orientation-for-nested-containers = true

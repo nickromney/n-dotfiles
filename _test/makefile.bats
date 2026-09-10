@@ -10,6 +10,7 @@ setup() {
   export REPO_ROOT="$repo_root"
   TEST_DIR="$(mktemp -d)"
   export TEST_DIR
+  export BORDERS_REPO="$TEST_DIR/missing-borders"
 
   # Create a minimal test environment
   cd "$TEST_DIR" || return 1
@@ -25,6 +26,17 @@ setup() {
 
   cat > "$TEST_DIR/mocks/brew" <<'EOF'
 #!/usr/bin/env bash
+if [[ "$1" == "tap" && "$#" -eq 1 ]]; then
+  if [[ -n "${MOCK_BREW_TAPS:-}" ]]; then
+    printf '%s\n' "$MOCK_BREW_TAPS"
+  fi
+  exit 0
+fi
+if [[ "$1" == "untap" ]]; then
+  printf '%s\n' "$*" > "$TEST_DIR/brew-untap.args"
+  echo "brew $*"
+  exit 0
+fi
 if [[ "$1" == "bundle" ]]; then
   shift
   if [[ "$1" == "list" && "$2" == "--cask" ]]; then
@@ -77,7 +89,7 @@ EOF
   touch _macos/personal.yaml _macos/work.yaml
 
   mkdir -p scripts
-  for script in brew-bundle-install.sh brew-with-policy.sh brew-trust.sh brew-update.sh audit-system-tools.sh; do
+  for script in brew-bundle-install.sh brew-with-policy.sh brew-trust.sh brew-update.sh audit-system-tools.sh install-borders.sh; do
     if [ -f "$REPO_ROOT/scripts/$script" ]; then
       cp "$REPO_ROOT/scripts/$script" scripts/
       chmod +x "scripts/$script"
@@ -117,7 +129,7 @@ teardown() {
   [[ "$output" != *$'\033['* ]]
 }
 
-@test "make install runs brew bundle, stow, and mise install" {
+@test "make install runs brew bundle, stow, optional Borders install, and mise install" {
   run make install
   [ "$status" -eq 0 ]
   if [[ "$EXPECTED_BREWFILE" == "Brewfile" ]]; then
@@ -126,7 +138,28 @@ teardown() {
     [[ "$output" != *"brew bundle called"* ]]
   fi
   [[ "$output" == *"stow.sh called with: --backup-conflicts"* ]]
+  if [[ "$EXPECTED_BREWFILE" == "Brewfile" ]]; then
+    [[ "$output" == *"Skipping Borders installation"* ]]
+  else
+    [[ "$output" != *"Skipping Borders installation"* ]]
+  fi
   [[ "$output" == *"mise install"* ]]
+}
+
+@test "make borders-install installs the local checkout when present" {
+  mkdir -p "$BORDERS_REPO"
+  touch "$BORDERS_REPO/Makefile"
+  cat > "$TEST_DIR/mocks/borders-make" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" > "$TEST_DIR/borders-make.args"
+EOF
+  chmod +x "$TEST_DIR/mocks/borders-make"
+
+  run env BORDERS_MAKE_CMD="$TEST_DIR/mocks/borders-make" make borders-install
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Installing Borders from $BORDERS_REPO"* ]]
+  [ "$(cat "$TEST_DIR/borders-make.args")" = "-C $BORDERS_REPO install" ]
 }
 
 @test "make brewfile-install selects the OS-appropriate Brewfile" {
@@ -165,6 +198,28 @@ teardown() {
   [[ "$output" == *"brew upgrade --formula"* ]]
   [[ "$output" == *"brew upgrade --cask"* ]]
   [[ "$output" != *"Pearcleaner"* ]]
+}
+
+@test "Homebrew update offers to retire the old Borders tap" {
+  run bash -c 'printf "\n\n\n" | env MOCK_BREW_TAPS=felixkratz/formulae scripts/brew-update.sh update-all'
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Retired Borders tap felixkratz/formulae is installed"* ]]
+  [[ "$output" == *"brew untap felixkratz/formulae"* ]]
+  [[ "$output" == *"Removed retired Homebrew tap felixkratz/formulae"* ]]
+}
+
+@test "Homebrew update dry-run reports the old Borders tap without removing it" {
+  run env MOCK_BREW_TAPS=felixkratz/formulae scripts/brew-update.sh update-all --dry-run
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Would offer to untap retired Homebrew tap felixkratz/formulae"* ]]
+  [[ "$output" != *"brew untap felixkratz/formulae"* ]]
+}
+
+@test "Homebrew no-input does not remove the old Borders tap" {
+  run env MOCK_BREW_TAPS=felixkratz/formulae scripts/brew-update.sh update-all --no-input
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"confirmation required"* ]]
+  [ ! -f "$TEST_DIR/brew-untap.args" ]
 }
 
 @test "make stow calls stow.sh" {

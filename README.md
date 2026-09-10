@@ -47,7 +47,7 @@ cd ~/Developer/personal
 git clone https://github.com/nickromney/n-dotfiles.git
 cd n-dotfiles
 
-# Preview, then run: Homebrew + Brewfile + stow + mise
+# Preview, then run: Homebrew + Brewfile + stow + optional Borders + mise
 ./bootstrap.sh --dry-run --no-input --skip-1password
 ./bootstrap.sh
 
@@ -164,6 +164,12 @@ workflow in the sibling
 that repository's `make dev`, `make install`, or release workflow. This repo
 only stows the stable preference configuration and provides
 `scripts/configure-audio-priority-bar.sh` for applying it.
+
+Borders likewise owns its app source, build, and release workflow in the
+optional sibling [`~/Developer/personal/borders`](../borders) checkout. The
+macOS bootstrap and `make install` flows automatically run its `make install`
+when that checkout is present, and skip it when it is absent. This repo only
+stows the stable configuration and the `borders` command wrapper.
 
 The `audio-priority-bar` Stow package links the stable priority configuration
 to `~/.config/audio-priority-bar/preferences.plist`. The installer merges

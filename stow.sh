@@ -206,6 +206,107 @@ stow_package() {
   stow "${options[@]}" "$dir"
 }
 
+legacy_n_borders_link_is_managed() {
+  local path="$1"
+  local target
+
+  [[ -L "$path" ]] || return 1
+  target="$(readlink "$path" 2>/dev/null || true)"
+  case "$target" in
+    */macos-borders/.config/n-borders | \
+      */macos-borders/.config/n-borders/* | \
+      */macos-borders/.local/bin/n-borders | \
+      */macos-borders/.local/share/n-borders | \
+      */macos-borders/.local/share/n-borders/*)
+      return 0
+      ;;
+  esac
+  return 1
+}
+
+legacy_n_borders_plist_is_managed() {
+  local plist="$1"
+
+  [[ -f "$plist" ]] || return 1
+  grep -Fq '<key>Label</key><string>com.nickromney.n-borders</string>' "$plist" \
+    && grep -Fq '.local/bin/n-borders-daemon' "$plist"
+}
+
+remove_legacy_n_borders() {
+  local -a legacy_paths=(
+    "$HOME/.config/n-borders"
+    "$HOME/.config/n-borders/borders.conf"
+    "$HOME/.local/bin/n-borders"
+    "$HOME/.local/share/n-borders"
+    "$HOME/.local/share/n-borders/LICENSE.omacosy"
+    "$HOME/.local/share/n-borders/borders.swift"
+  )
+  local legacy_plist="$HOME/Library/LaunchAgents/com.nickromney.n-borders.plist"
+  local legacy_daemon="$HOME/.local/bin/n-borders-daemon"
+  local launchctl_cmd="${STOW_LAUNCHCTL_CMD:-launchctl}"
+  local user_id="${STOW_UID:-$(id -u)}"
+  local path
+  local -a managed_paths=()
+  local plist_managed=false
+  local daemon_managed=false
+
+  [[ "$(uname -s)" == "Darwin" ]] || return 0
+
+  for path in "${legacy_paths[@]}"; do
+    if legacy_n_borders_link_is_managed "$path"; then
+      managed_paths+=("$path")
+    fi
+  done
+
+  if legacy_n_borders_plist_is_managed "$legacy_plist"; then
+    plist_managed=true
+  fi
+
+  if [[ -f "$legacy_daemon" && ! -L "$legacy_daemon" ]]; then
+    daemon_managed=true
+  elif legacy_n_borders_link_is_managed "$legacy_daemon"; then
+    daemon_managed=true
+  fi
+
+  if [[ ${#managed_paths[@]} -eq 0 && "$plist_managed" != "true" && "$daemon_managed" != "true" ]]; then
+    return 0
+  fi
+
+  echo "Removing legacy n-borders integration"
+
+  if [[ "$plist_managed" == "true" ]]; then
+    if [[ "$DRY_RUN" == "true" ]]; then
+      echo "Would unload gui/$user_id/com.nickromney.n-borders"
+      echo "Would remove $legacy_plist"
+    else
+      if command -v "$launchctl_cmd" >/dev/null 2>&1; then
+        "$launchctl_cmd" bootout "gui/$user_id/com.nickromney.n-borders" >/dev/null 2>&1 || true
+      fi
+      rm -f "$legacy_plist"
+    fi
+  fi
+
+  for path in "${managed_paths[@]}"; do
+    if [[ "$DRY_RUN" == "true" ]]; then
+      echo "Would remove $path"
+    else
+      rm -f "$path"
+    fi
+  done
+
+  if [[ "$daemon_managed" == "true" ]]; then
+    if [[ "$DRY_RUN" == "true" ]]; then
+      echo "Would remove $legacy_daemon"
+    else
+      rm -f "$legacy_daemon"
+    fi
+  fi
+
+  if [[ "$DRY_RUN" != "true" ]]; then
+    rmdir "$HOME/.config/n-borders" "$HOME/.local/share/n-borders" 2>/dev/null || true
+  fi
+}
+
 validate_requested_dirs() {
   local dir known
   for dir in "${REQUESTED_DIRS[@]}"; do
@@ -303,6 +404,9 @@ main() {
 
     if stow_package "$dir" "${stow_opts[@]}"; then
       echo "Stowed $dir"
+      if [[ "$dir" == "macos-borders" ]]; then
+        remove_legacy_n_borders
+      fi
     else
       error "Failed to stow $dir"
       failed=1

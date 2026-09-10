@@ -44,7 +44,9 @@ EOF
     "scripts/audit-installed.sh"
     "scripts/audit-system-tools.sh"
     "scripts/macos-memory-report.sh"
-    "macos-borders/.local/bin/n-borders"
+    "scripts/install-borders.sh"
+    "scripts/brew-update.sh"
+    "macos-borders/.local/bin/borders"
     "scripts/configure-brave-memory.sh"
     "scripts/sync-private-harness-assets.sh"
     "scripts/build-browser-tools.sh"
@@ -137,6 +139,31 @@ EOF
 
   [ "$status" -eq 1 ]
   [[ "$output" == *"Unknown stow package: no-such-package"* ]]
+}
+
+@test "install-borders: skips an absent sibling checkout" {
+  run env \
+    HOME="$TEST_TMP_DIR/home" \
+    BORDERS_REPO="$TEST_TMP_DIR/missing-borders" \
+    "$REPO_ROOT/scripts/install-borders.sh"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"checkout not found"* ]]
+}
+
+@test "install-borders: dry-run previews the sibling install" {
+  local borders_repo="$TEST_TMP_DIR/borders"
+  mkdir -p "$borders_repo"
+  touch "$borders_repo/Makefile"
+
+  run env \
+    BORDERS_REPO="$borders_repo" \
+    "$REPO_ROOT/scripts/install-borders.sh" --dry-run
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Would execute:"* ]]
+  [[ "$output" == *"$borders_repo"* ]]
+  [[ "$output" == *"install"* ]]
 }
 
 @test "build-browser-tools: dry-run prints the planned build commands" {

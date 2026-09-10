@@ -153,3 +153,72 @@ teardown() {
   [ "$(cat "$TEST_HOME/.zshrc")" = "unmanaged zsh config" ]
   [ ! -e "$backup_dir/.zshrc" ]
 }
+
+@test "stow removes the legacy n-borders integration after stowing macos-borders" {
+  local mock_bin="$TEST_ROOT/bin"
+  local launchctl_log="$TEST_ROOT/launchctl.log"
+  mkdir -p \
+    "$mock_bin" \
+    "$TEST_REPO/macos-borders/.config/borders" \
+    "$TEST_REPO/macos-borders/.local/bin" \
+    "$TEST_HOME/.config/n-borders" \
+    "$TEST_HOME/.local/bin" \
+    "$TEST_HOME/.local/share/n-borders" \
+    "$TEST_HOME/Library/LaunchAgents"
+  printf '%s\n' '# config' > "$TEST_REPO/macos-borders/.config/borders/borders.conf"
+  printf '%s\n' '#!/usr/bin/env bash' > "$TEST_REPO/macos-borders/.local/bin/borders"
+  chmod +x "$TEST_REPO/macos-borders/.local/bin/borders"
+
+  ln -s "$TEST_REPO/macos-borders/.config/n-borders/borders.conf" \
+    "$TEST_HOME/.config/n-borders/borders.conf"
+  ln -s "$TEST_REPO/macos-borders/.local/bin/n-borders" \
+    "$TEST_HOME/.local/bin/n-borders"
+  ln -s "$TEST_REPO/macos-borders/.local/share/n-borders/borders.swift" \
+    "$TEST_HOME/.local/share/n-borders/borders.swift"
+  printf '%s\n' 'old daemon' > "$TEST_HOME/.local/bin/n-borders-daemon"
+  cat > "$TEST_HOME/Library/LaunchAgents/com.nickromney.n-borders.plist" <<'EOF'
+<key>Label</key><string>com.nickromney.n-borders</string>
+<string>$HOME/.local/bin/n-borders-daemon</string>
+EOF
+  cat > "$mock_bin/uname" <<'EOF'
+#!/usr/bin/env bash
+echo Darwin
+EOF
+  cat > "$mock_bin/launchctl" <<EOF
+#!/usr/bin/env bash
+printf '%s\n' "\$*" > "$launchctl_log"
+EOF
+  chmod +x "$mock_bin/uname" "$mock_bin/launchctl"
+
+  run env \
+    HOME="$TEST_HOME" \
+    PATH="$mock_bin:$PATH" \
+    STOW_LAUNCHCTL_CMD="$mock_bin/launchctl" \
+    STOW_UID=501 \
+    "$TEST_REPO/stow.sh" --dry-run macos-borders
+
+  [ "$status" -eq 0 ]
+  [ -L "$TEST_HOME/.config/n-borders/borders.conf" ]
+  [ -f "$TEST_HOME/.local/bin/n-borders-daemon" ]
+  [ -f "$TEST_HOME/Library/LaunchAgents/com.nickromney.n-borders.plist" ]
+  [[ "$output" == *"Would remove $TEST_HOME/.local/bin/n-borders"* ]]
+  [[ "$output" == *"Would unload gui/501/com.nickromney.n-borders"* ]]
+
+  run env \
+    HOME="$TEST_HOME" \
+    PATH="$mock_bin:$PATH" \
+    STOW_LAUNCHCTL_CMD="$mock_bin/launchctl" \
+    STOW_UID=501 \
+    "$TEST_REPO/stow.sh" macos-borders
+
+  [ "$status" -eq 0 ]
+  [ -L "$TEST_HOME/.config/borders" ]
+  [ -f "$TEST_HOME/.config/borders/borders.conf" ]
+  [ -L "$TEST_HOME/.local/bin/borders" ]
+  [ ! -e "$TEST_HOME/.config/n-borders/borders.conf" ]
+  [ ! -e "$TEST_HOME/.local/bin/n-borders" ]
+  [ ! -e "$TEST_HOME/.local/share/n-borders/borders.swift" ]
+  [ ! -e "$TEST_HOME/.local/bin/n-borders-daemon" ]
+  [ ! -e "$TEST_HOME/Library/LaunchAgents/com.nickromney.n-borders.plist" ]
+  [ "$(cat "$launchctl_log")" = "bootout gui/501/com.nickromney.n-borders" ]
+}

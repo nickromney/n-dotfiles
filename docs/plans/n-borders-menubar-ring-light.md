@@ -1,6 +1,6 @@
-# n-borders menu-bar and ring-light plan
+# Borders menu-bar and ring-light plan
 
-Status: proposed
+Status: shipped
 
 ## Repository boundary
 
@@ -20,41 +20,39 @@ machine that does not use these dotfiles.
 
 ## What exists today
 
-`macos-borders/.local/share/n-borders/borders.swift` is a small AppKit
-executable launched by a user `LaunchAgent`. It owns a click-through overlay
-window with one `CAShapeLayer`, listens to WindowServer notifications, and
-draws the focused-window ring without Accessibility or camera permissions.
-The shell entrypoint remains useful for automation and recovery:
+The original `Borders.app` is a small AppKit menu-bar application. It owns a
+click-through overlay window with one `CAShapeLayer`, listens to WindowServer
+notifications, and draws the focused-window ring without Accessibility or
+camera permissions. The shell entrypoint remains useful for automation and
+recovery:
 
 ```text
-n-borders on|off|status|reconcile
+borders on|off|status|reconcile
 ```
 
 The current `borders.conf` should remain the Stow-managed default configuration.
 The menu-bar UI must not write through that symlink into the repository when a
 slider is moved.
 
-## Recommended menu-bar conversion
+## Shipped menu-bar conversion
 
-The standalone project should contain a small native `N-Borders.app`, following
+The standalone project contains the native `Borders.app`, following
 the same pattern as `AudioPriorityBar`:
 
 1. Set `LSUIElement=true` and use one `NSStatusItem` with a compact state
    icon and an accessible label.
-2. Move the overlay/event code behind a `BorderEngine` object owned by the
+2. The overlay/event code lives behind a `BorderEngine` object owned by the
    app. This avoids a second helper process and keeps the current one-process,
    low-memory design.
-3. Keep the CLI as a thin control client. It can communicate with the app
-   over a local Unix socket, or use a small preference/state file plus a
-   wake-up signal. A socket is preferable for immediate mode changes and
-   status reporting.
-4. Add menu actions for `Focused window`, `Ring light`, `Off`, display
+3. The CLI is a thin control client. It communicates with the app over a
+   local Unix socket for immediate mode changes and status reporting.
+4. The menu provides actions for `Focused window`, `Ring light`, `Off`, display
    selection, and `Open configuration`/`Reload`.
-5. Use an app-owned preferences plist for live UI state. The Stow config stays
+5. The app uses an app-owned preferences plist for live UI state. The Stow config stays
    the portable baseline; the menu bar stores machine-local overrides such as
    the last mode, selected display, width, colour, and brightness.
-6. Use `SMAppService.mainApp` for login launch if the app bundle becomes the
-   owner of startup. During migration, the existing LaunchAgent should be
+6. The app uses `SMAppService.mainApp` for login launch when the installed
+   bundle owns startup. During migration, the existing LaunchAgent is
    disabled before the app starts, so two overlay engines cannot fight.
 
 Adding an `NSStatusItem` directly to the current raw daemon is technically
@@ -126,16 +124,16 @@ appear in screen capture.
 
 ## Implementation order
 
-1. Create the standalone `n-borders` project and move the focused-ring source
-   into it.
-2. Add a proper `N-Borders.app` target with the `AudioPriorityBar` status-item
-   pattern and preserve the existing CLI commands.
+1. Create the standalone `borders` project and move the focused-ring source
+   into it. **Done.**
+2. Add a proper `Borders.app` target with the `AudioPriorityBar` status-item
+   pattern and preserve the existing CLI commands. **Done.**
 3. Add preferences/state separation so Stow owns defaults and the app owns
-   runtime overrides.
+   runtime overrides. **Done.**
 4. Add ring-light display geometry with fixed test fixtures for single,
-   multi-display, and notched displays.
-5. Add the width, brightness, and colour controls.
+   multi-display, and notched displays. **Done.**
+5. Add the width, brightness, and colour controls. **Done.**
 6. Add the small n-dotfiles integration layer once the app's install contract
-   is stable.
+   is stable. **Done.**
 7. Replace the old LaunchAgent startup path only after the app and CLI agree
-   on one running engine.
+   on one running engine. **Done.**

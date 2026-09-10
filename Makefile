@@ -38,6 +38,7 @@ endif
 BREW_WITH_POLICY := ./scripts/brew-with-policy.sh
 BREW_BUNDLE_INSTALL := ./scripts/brew-bundle-install.sh
 BREW_UPDATE := ./scripts/brew-update.sh
+BORDERS_INSTALL := ./scripts/install-borders.sh
 
 # Select the managed JetBrains IDE once for install, update, and app setup.
 export JETBRAINSIDE ?= RubyMine
@@ -49,7 +50,7 @@ BREWFILE := $(if $(filter Darwin,$(HOST_OS)),Brewfile,Brewfile.posix)
 MACOS_PROFILE ?= personal
 
 ifeq ($(HOST_OS),Darwin)
-INSTALL_TARGETS := brewfile-install stow-install mise-install
+INSTALL_TARGETS := brewfile-install stow-install borders-install mise-install
 else
 INSTALL_TARGETS := stow-install mise-install
 endif
@@ -99,6 +100,10 @@ stow: ## Symlink dotfiles into the home directory
 .PHONY: stow-install
 stow-install: ## Symlink dotfiles, preserving unmanaged conflicts in a backup
 	@./stow.sh --backup-conflicts
+
+.PHONY: borders-install
+borders-install: ## Install the local Borders checkout when it exists
+	@$(BORDERS_INSTALL)
 
 .PHONY: mise-install
 mise-install: ## Install CLI tools and runtimes declared in mise config
