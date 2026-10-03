@@ -109,7 +109,7 @@ borders-install: ## Install the local Borders checkout when it exists
 mise-install: ## Install CLI tools and runtimes declared in mise config
 	@if command -v mise >/dev/null 2>&1; then \
 		echo "$(BLUE)Installing tools and runtimes via mise...$(NC)"; \
-		mise install; \
+		mise install || exit $$?; \
 		echo "$(GREEN)✓ mise tools installed$(NC)"; \
 	else \
 		echo "$(RED)mise not found; install it with the host package manager first$(NC)"; \
@@ -120,7 +120,7 @@ mise-install: ## Install CLI tools and runtimes declared in mise config
 mise-bump: ## Upgrade mise tools and deliberately bump pinned versions
 	@if command -v mise >/dev/null 2>&1; then \
 		echo "$(BLUE)Bumping pinned mise tools to newer releases...$(NC)"; \
-		mise upgrade --bump; \
+		mise upgrade --bump || exit $$?; \
 		echo "$(GREEN)✓ mise pins bumped$(NC)"; \
 	else \
 		echo "$(RED)mise not found; install it with the host package manager first$(NC)"; \
@@ -158,13 +158,13 @@ update: ## Update brew/mas tools and check pinned mise versions
 	fi
 	@if [ "$(HOST_OS)" = "Darwin" ] && command -v mas >/dev/null 2>&1; then \
 		echo "$(BLUE)Updating Mac App Store apps...$(NC)"; \
-		mas upgrade; \
+		mas upgrade || exit $$?; \
 		echo "$(GREEN)✓ Mac App Store apps updated$(NC)"; \
 		echo ""; \
 	fi
 	@if [ "$(HOST_OS)" = "Darwin" ] && command -v rustup >/dev/null 2>&1; then \
 		echo "$(BLUE)Updating Rust toolchain...$(NC)"; \
-		rustup update; \
+		rustup update || exit $$?; \
 		echo "$(GREEN)✓ Rust updated$(NC)"; \
 		echo ""; \
 	fi

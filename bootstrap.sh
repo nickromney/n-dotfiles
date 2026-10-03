@@ -141,7 +141,13 @@ run_brewfile_if_needed() {
   fi
 
   info "Installing Brewfile packages..."
-  run_cmd brew bundle --file "$BOOTSTRAP_DIR/Brewfile"
+  if [[ "$SKIP_1PASSWORD" == "true" ]]; then
+    local cask_skip="${HOMEBREW_BUNDLE_CASK_SKIP:-}"
+    cask_skip="${cask_skip:+$cask_skip }1password 1password-cli"
+    run_cmd env HOMEBREW_BUNDLE_CASK_SKIP="$cask_skip" brew bundle --file "$BOOTSTRAP_DIR/Brewfile"
+  else
+    run_cmd brew bundle --file "$BOOTSTRAP_DIR/Brewfile"
+  fi
 }
 
 run_stow_if_needed() {

@@ -25,6 +25,8 @@ setup() {
 
   # Mock killall to prevent actual service restarts during tests
   mock_command "killall" 0 ""
+  mock_command "activateSettings" 0 ""
+  export MACOS_ACTIVATE_SETTINGS_CMD="$MOCK_BIN_DIR/activateSettings"
 
   # Create mock /etc/shells
   mkdir -p "$TEST_TEMP_DIR/etc"
@@ -60,7 +62,7 @@ teardown() {
 }
 
 @test "macos.sh skips the accessibility prompt when --no-input is set" {
-  if ! command -v yq >/dev/null 2>&1; then
+  if ! builtin command -v yq >/dev/null 2>&1; then
     skip "yq is required for config-driven macOS tests"
   fi
 
@@ -351,9 +353,11 @@ EOF
 }
 
 @test "accepts yaml config files from script directory" {
-  # Create a yaml file in the script's directory
+  # Exercise script-relative resolution in an isolated copy of the script.
   local script_dir
-  script_dir="$(dirname "$MACOS_SCRIPT")"
+  script_dir="$TEST_TEMP_DIR/script"
+  mkdir -p "$script_dir"
+  cp "$MACOS_SCRIPT" "$script_dir/macos.sh"
   cat > "$script_dir/test-config.yaml" << 'EOF'
 system:
   show_hidden_files: true
@@ -386,11 +390,8 @@ esac
 
   # Run from a different directory with just the filename
   cd "$TEST_TEMP_DIR"
-  run "$MACOS_SCRIPT" test-config.yaml
+  run "$script_dir/macos.sh" test-config.yaml
   [ "$status" -eq 0 ]
-
-  # Clean up
-  rm -f "$script_dir/test-config.yaml"
 }
 
 @test "accepts yaml config files" {

@@ -1,0 +1,5 @@
+# AWS configuration, credentials, and runtime caches belong to each machine.
+^/\.aws/(config|credentials|cli|sso|login)(/|$)
+README.*
+.*\.example
+\.DS_Store

@@ -7,6 +7,7 @@ CONFIG_FILE=""
 DRY_RUN=false
 NO_INPUT="${NO_INPUT:-false}"
 JETBRAINSIDE="${JETBRAINSIDE:-RubyMine}"
+MACOS_ACTIVATE_SETTINGS_CMD="${MACOS_ACTIVATE_SETTINGS_CMD:-/System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings}"
 # shellcheck disable=SC2034  # VERBOSE is reserved for future use
 VERBOSE=false
 
@@ -99,7 +100,7 @@ show_applications() {
     while IFS= read -r app; do
       if [[ -n "$app" ]]; then
         echo "  - $(basename "$app" .app)"
-        ((app_count++))
+        ((app_count += 1))
       fi
     done < <(find /Applications -maxdepth 1 -name "*.app" 2>/dev/null | sort)
     info "Total: $app_count applications"
@@ -217,8 +218,8 @@ apply_config() {
     killall Finder 2>/dev/null || true
 
     # Activate settings using private framework (needed for scroll direction changes)
-    if [[ -x "/System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings" ]]; then
-      /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u 2>/dev/null || true
+    if [[ -x "$MACOS_ACTIVATE_SETTINGS_CMD" ]]; then
+      "$MACOS_ACTIVATE_SETTINGS_CMD" -u 2>/dev/null || true
     fi
 
     success "Configuration applied. Some changes may still require logout or restart."
@@ -295,8 +296,9 @@ apply_system_settings() {
       if [[ "$current" == "$value" ]]; then
         success "Reduce transparency: already set to $value"
       else
-        # Try to set it
-        if defaults write com.apple.universalaccess reduceTransparency "$value" 2>/dev/null; then
+        if [[ "$DRY_RUN" == "true" ]]; then
+          warning "[DRY RUN] Would change Reduce transparency from '$current' to '$value'"
+        elif defaults write com.apple.universalaccess reduceTransparency "$value" 2>/dev/null; then
           success "Reduce transparency: changed from '$current' to '$value'"
         else
           # Failed due to permissions - offer to open System Settings

@@ -19,6 +19,11 @@ case "$*" in
   "list --formula") printf '%s\n' fd git old-tool ;;
   "list --cask") printf '%s\n' brave-browser old-app ;;
   "leaves") printf '%s\n' fd old-tool ;;
+  "bundle list --formula"*) printf '%s\n' git ;;
+  "bundle list --cask"*)
+    [[ "$*" == *Brewfile.posix* ]] && exit 0
+    printf '%s\n' brave-browser "${JETBRAINSIDE:-RubyMine}" | tr '[:upper:]' '[:lower:]'
+    ;;
   *) exit 1 ;;
 esac
 EOF
@@ -70,7 +75,10 @@ EOF
 
 @test "audit-system-tools expands the selected JetBrains cask" {
   write_mock_brew
+  printf '#!/bin/sh\nprintf "Darwin\\n"\n' >"$TEST_TMP_DIR/bin/uname"
+  chmod +x "$TEST_TMP_DIR/bin/uname"
   run env \
+    PATH="$TEST_TMP_DIR/bin:$PATH" \
     JETBRAINSIDE=WebStorm \
     AUDIT_BREW_CMD="$TEST_TMP_DIR/bin/brew" \
     AUDIT_MISE_CMD="$TEST_TMP_DIR/bin/missing-mise" \

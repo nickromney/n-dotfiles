@@ -6,6 +6,9 @@
 
 set -euo pipefail
 
+# Keep private work configuration and backups private from creation time.
+umask 077
+
 # Default values
 DRY_RUN="${DRY_RUN:-false}"
 
@@ -50,6 +53,24 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# Private includes and backups must stay outside this public checkout, even
+# when the work directory has been redirected through a symlink.
+git_setup_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+if [[ "$DRY_RUN" != "true" && -f "$git_setup_root/stow.sh" ]]; then
+  git_parent="$HOME/Developer/work"
+  while [[ ! -d "$git_parent" ]]; do
+    git_parent="$(dirname "$git_parent")"
+  done
+  git_physical_parent="$(cd "$git_parent" && pwd -P)"
+  case "$git_physical_parent" in
+    "$git_setup_root" | "$git_setup_root"/*)
+      error "Refusing to write private Git configuration into the dotfiles checkout"
+      error "Use a work directory outside the checkout before running setup."
+      exit 1
+      ;;
+  esac
+fi
+
 # Check if op is installed
 if ! command -v op >/dev/null 2>&1; then
   error "1Password CLI (op) is not installed"
@@ -69,7 +90,6 @@ fi
 # Configuration
 readonly VAULT="${VAULT:-Private}" # Vault name is now configurable, defaults to "Private"
 readonly WORK_DIR="$HOME/Developer/work"
-readonly GIT_CONFIG_FILE="$WORK_DIR/.gitconfig_include"
 declare BACKUP_DIR
 BACKUP_DIR="$WORK_DIR/backups/$(date +%Y%m%d-%H%M%S)"
 readonly BACKUP_DIR
@@ -148,6 +168,11 @@ if [ "$DRY_RUN" = true ]; then
   exit 0
 fi
 
+if ! command -v jq >/dev/null 2>&1; then
+  error "jq is required to decode 1Password fields safely (run mise install jq)"
+  exit 1
+fi
+
 # Ensure work directory exists
 if [ ! -d "$WORK_DIR" ]; then
   info "Creating work directory: $WORK_DIR"
@@ -184,37 +209,27 @@ for config_mapping in "${GIT_CONFIGS[@]}"; do
 
   info "Downloading '$op_name'..."
 
-  # Try to get the config from 1Password Secure Note
-  # Try notesPlain first (Secure Notes), then notes (older format)
-  if op item get "$op_name" --vault="$VAULT" --fields notesPlain 2>/dev/null >"$WORK_DIR/$local_name" ||
-     op item get "$op_name" --vault="$VAULT" --fields notes 2>/dev/null >"$WORK_DIR/$local_name"; then
-    # Check if file has content
-    if [ -s "$WORK_DIR/$local_name" ]; then
-      # Remove surrounding quotes and fix escaped quotes (1Password CLI adds them)
-      # First remove outer quotes from entire file, then fix doubled quotes
-      # Detect platform for sed in-place editing
-      if [[ "$(uname)" == "Darwin" ]]; then
-        sed -i '' 's/^"//; s/"$//; s/""/"/g' "$WORK_DIR/$local_name"
-      else
-        sed -i 's/^"//; s/"$//; s/""/"/g' "$WORK_DIR/$local_name"
-      fi
-      chmod 644 "$WORK_DIR/$local_name"
-      successful_configs+=("$local_name")
-
-      # Verify it's valid Git config syntax
-      if git config --file="$WORK_DIR/$local_name" --list >/dev/null 2>&1; then
+  staged_config=$(mktemp "$WORK_DIR/.gitconfig-download.XXXXXX")
+  downloaded=false
+  for field in notesPlain notes; do
+    if op item get "$op_name" --vault="$VAULT" --fields "$field" --format json 2>/dev/null |
+      jq -erj '.value | select(type == "string" and length > 0)' >"$staged_config" 2>/dev/null; then
+      if git config --file="$staged_config" --list >/dev/null 2>&1; then
+        chmod 600 "$staged_config"
+        mv -f "$staged_config" "$WORK_DIR/$local_name"
+        successful_configs+=("$local_name")
         success "Downloaded and validated $local_name"
-      else
-        warning "$local_name downloaded but may have syntax issues"
+        downloaded=true
+        break
       fi
-    else
-      failed_configs+=("$op_name → $local_name")
-      rm -f "$WORK_DIR/$local_name" # Remove empty file if created
+      warning "$local_name has invalid Git config syntax; existing file preserved"
     fi
-  else
-    failed_configs+=("$op_name → $local_name")
-    rm -f "$WORK_DIR/$local_name" # Remove empty file if created
+  done
+  if [[ "$downloaded" != "true" ]]; then
+    failed_configs+=("$op_name → $local_name (existing file preserved)")
+    rm -f "$staged_config"
   fi
+
 done
 
 # Step 3: Verify main .gitconfig has the includeIf directive
@@ -249,20 +264,8 @@ if [ ${#successful_configs[@]} -gt 0 ]; then
     echo "  • $config"
   done
 
-  # Show what was configured
-  if [ -f "$GIT_CONFIG_FILE" ]; then
-    echo
-    info "Configuration applied:"
-    # Show URL rewrites
-    git config --file="$GIT_CONFIG_FILE" --get-regexp "url\..*\.insteadof" 2>/dev/null | while read -r key value; do
-      echo "  • URL rewrite: $value → ${key#url.}"
-    done
-    # Show user overrides
-    if git config --file="$GIT_CONFIG_FILE" user.email >/dev/null 2>&1; then
-      email=$(git config --file="$GIT_CONFIG_FILE" user.email)
-      echo "  • Work email: $email"
-    fi
-  fi
+  info "Private Git configuration validated; contents are omitted from output."
+
 fi
 
 if [ ${#failed_configs[@]} -gt 0 ]; then
@@ -298,5 +301,9 @@ echo "  git config user.email  # Should show work email"
 echo "  git remote -v          # Should use work SSH aliases"
 
 echo
-success "Git config setup complete!"
 echo "Backups saved to: $BACKUP_DIR"
+if [[ ${#failed_configs[@]} -gt 0 ]]; then
+  error "Git config setup incomplete; existing files were preserved where downloads failed"
+  exit 1
+fi
+success "Git config setup complete!"

@@ -159,7 +159,7 @@ if [[ "$USE_DEFAULT_GROUPS" == "true" ]]; then
     "Silo"
     "Ghostty"
     "RubyMine"
-    "${LABELS[@]}"
+    ${LABELS[@]+"${LABELS[@]}"}
   )
   PATTERNS=(
     "/Applications/AeroSpace[.]app/"
@@ -180,7 +180,7 @@ if [[ "$USE_DEFAULT_GROUPS" == "true" ]]; then
     "/Applications/Silo[.]app/"
     "/Applications/Ghostty[.]app/"
     "/Applications/RubyMine[.]app/|/Caches/JetBrains/RubyMine[^/]*/semantic-search/"
-    "${PATTERNS[@]}"
+    ${PATTERNS[@]+"${PATTERNS[@]}"}
   )
 fi
 

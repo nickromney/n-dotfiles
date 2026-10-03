@@ -200,9 +200,11 @@ stow_package() {
   shift
   local -a options=("$@")
 
-  # Keep Omarchy's shared ~/.config tree as real directories. Without this,
-  # Stow can fold a fresh ~/.config into a single package symlink.
-  [[ "$dir" == "omarchy" ]] && options+=("--no-folding")
+  # Keep machine-local state outside the repository. Folding ~/.aws would
+  # redirect future credential/cache writes into this package.
+  case "$dir" in
+    aws | gh | nushell | ssh | omarchy) options+=("--no-folding") ;;
+  esac
   stow "${options[@]}" "$dir"
 }
 
@@ -262,7 +264,9 @@ remove_legacy_n_borders() {
     plist_managed=true
   fi
 
-  if [[ -f "$legacy_daemon" && ! -L "$legacy_daemon" ]]; then
+  # The compiled daemon has no Stow link provenance. Only a LaunchAgent with
+  # our label and daemon command proves ownership of an ordinary file.
+  if [[ "$plist_managed" == "true" && -f "$legacy_daemon" && ! -L "$legacy_daemon" ]]; then
     daemon_managed=true
   elif legacy_n_borders_link_is_managed "$legacy_daemon"; then
     daemon_managed=true
@@ -286,7 +290,7 @@ remove_legacy_n_borders() {
     fi
   fi
 
-  for path in "${managed_paths[@]}"; do
+  for path in ${managed_paths[@]+"${managed_paths[@]}"}; do
     if [[ "$DRY_RUN" == "true" ]]; then
       echo "Would remove $path"
     else
@@ -317,6 +321,27 @@ validate_requested_dirs() {
     if [[ "$known" != "true" ]]; then
       error "Unknown stow package: $dir (use --list to see packages)"
       exit 1
+    fi
+  done
+}
+
+validate_runtime_roots() {
+  local dir relative target source
+  for dir in "$@"; do
+    case "$dir" in
+      aws) relative=.aws ;;
+      gh) relative=.config/gh ;;
+      nushell) relative='Library/Application Support/nushell' ;;
+      ssh) relative=.ssh ;;
+      *) continue ;;
+    esac
+    target="$HOME/$relative"
+    source="$STOW_SH_DIR/$dir/$relative"
+    [[ -d "$target" && -d "$source" ]] || continue
+    if [[ "$(cd "$target" && pwd -P)" == "$(cd "$source" && pwd -P)" ]]; then
+      error "$relative routes machine-local state into the repository."
+      error "Preserve its local contents in a real HOME directory before stowing $dir."
+      return 1
     fi
   done
 }
@@ -352,6 +377,8 @@ main() {
     validate_requested_dirs
     dirs=("${REQUESTED_DIRS[@]}")
   fi
+
+  validate_runtime_roots "${dirs[@]}" || return 1
 
   if [[ "$BACKUP_CONFLICTS" == "true" ]]; then
     if ! backup_conflicting_targets "${dirs[@]}"; then

@@ -438,13 +438,13 @@ write_excludes() {
 
   : >"$excludes_file"
 
-  for exclude in "${EXCLUDE_REPOS[@]}"; do
+  for exclude in ${EXCLUDE_REPOS[@]+"${EXCLUDE_REPOS[@]}"}; do
     if key="$(normalize_repo_key "$exclude")"; then
       printf '%s\n' "$key" >>"$excludes_file"
     fi
   done
 
-  for file in "${EXCLUDE_FILES[@]}"; do
+  for file in ${EXCLUDE_FILES[@]+"${EXCLUDE_FILES[@]}"}; do
     if [[ ! -f "$file" ]]; then
       error "Exclude file not found: $file"
       exit 1

@@ -125,6 +125,26 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# Legacy Stow directory folding must not route machine-local SSH material
+# into the public checkout. File-level atomic writes cannot protect that route.
+ssh_setup_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+if [[ "$DRY_RUN" != "true" && -f "$ssh_setup_root/stow.sh" ]]; then
+  for ssh_destination in "$HOME/.ssh" "$HOME/.ssh/config.d"; do
+    ssh_parent="$ssh_destination"
+    while [[ ! -d "$ssh_parent" ]]; do
+      ssh_parent="$(dirname "$ssh_parent")"
+    done
+    ssh_physical_parent="$(cd "$ssh_parent" && pwd -P)"
+    case "$ssh_physical_parent" in
+      "$ssh_setup_root" | "$ssh_setup_root"/*)
+        error "Refusing to write SSH material into the dotfiles checkout through $ssh_destination"
+        error "Migrate the folded directory to a real home directory before running setup."
+        exit 1
+        ;;
+    esac
+  done
+fi
+
 # Check if op is installed
 if ! command -v op >/dev/null 2>&1; then
   error "1Password CLI (op) is not installed"
@@ -277,31 +297,61 @@ info "Will download ${#SSH_CONFIG_FRAGMENTS[@]} SSH config fragment(s) for this 
 info "Will download ${#SSH_KEYS[@]} SSH key(s) for this profile"
 echo
 
-sanitize_downloaded_note() {
-  local file="$1"
-
-  if [[ "$(uname)" == "Darwin" ]]; then
-    sed -i '' 's/^"//; s/"$//; s/""/"/g' "$file"
+ssh_example_path() {
+  local relative="$1"
+  if [[ -f "$SSH_DIR/$relative" ]]; then
+    printf '%s\n' "$SSH_DIR/$relative"
+  elif [[ -f "$ssh_setup_root/stow.sh" && -f "$ssh_setup_root/ssh/.ssh/$relative" ]]; then
+    printf '%s\n' "$ssh_setup_root/ssh/.ssh/$relative"
   else
-    sed -i 's/^"//; s/"$//; s/""/"/g' "$file"
+    return 1
   fi
 }
 
 download_secure_note() {
-  local item_name="$1"
-  local item_vault="$2"
-  local destination="$3"
+  local item_name="$1" item_vault="$2" destination="$3"
+  local staged field
+  staged=$(mktemp "${destination}.download.XXXXXX") || return 1
 
-  if op item get "$item_name" --vault="$item_vault" --fields notesPlain 2>/dev/null >"$destination" ||
-     op item get "$item_name" --vault="$item_vault" --fields notes 2>/dev/null >"$destination"; then
-    if [[ -s "$destination" ]]; then
-      sanitize_downloaded_note "$destination"
-      chmod 600 "$destination"
+  for field in notesPlain notes; do
+    if op item get "$item_name" --vault="$item_vault" --fields "$field" --format json 2>/dev/null |
+      jq -erj '.value | select(type == "string" and length > 0)' >"$staged" 2>/dev/null; then
+      if chmod 600 "$staged" && mv -f "$staged" "$destination"; then
+        return 0
+      fi
+    fi
+  done
+  rm -f "$staged"
+  return 1
+}
+
+# Stage key material beside the destination; failed reads never truncate it.
+download_key_field() {
+  local item_name="$1" item_vault="$2" field="$3" destination="$4" mode="$5"
+  local staged field_id
+  staged=$(mktemp "${destination}.download.XXXXXX") || return 1
+  case "$field" in
+    "private key") field_id=private_key ;;
+    "public key") field_id=public_key ;;
+  esac
+
+  if { op item get "$item_name" --vault="$item_vault" --fields "$field" --format json 2>/dev/null |
+      jq -erj '.value | select(type == "string" and length > 0)' >"$staged" 2>/dev/null && [[ -s "$staged" ]]; } ||
+    { op item get "$item_name" --vault="$item_vault" --format json 2>/dev/null |
+      jq -erj --arg id "$field_id" '([.fields[]? | select(.id == $id).value][0] // .[$id]) | select(type == "string" and length > 0)' >"$staged" 2>/dev/null && [[ -s "$staged" ]]; }; then
+    # OpenSSH rejects private key files missing their final line terminator.
+    # Preserve existing key bytes; normalize only a missing terminal newline.
+    if [[ -n "$(tail -c 1 "$staged")" ]]; then
+      if ! printf '\n' >>"$staged"; then
+        rm -f "$staged"
+        return 1
+      fi
+    fi
+    if chmod "$mode" "$staged" && mv -f "$staged" "$destination"; then
       return 0
     fi
   fi
-
-  rm -f "$destination"
+  rm -f "$staged"
   return 1
 }
 
@@ -435,6 +485,11 @@ if [[ "$UNSAFE_MODE" == "true" ]]; then
   fi
 fi
 
+if ! command -v jq >/dev/null 2>&1; then
+  error "jq is required to decode 1Password fields safely (run mise install jq)"
+  exit 1
+fi
+
 # Create backup directory
 mkdir -p "$SSH_DIR" "$SSH_CONFIG_DIR"
 mkdir -p "$BACKUP_DIR"
@@ -466,19 +521,24 @@ done
 
 # Step 2: Setup base SSH config (from 1Password or example)
 info "Setting up base SSH config..."
+base_config_failed=false
 if download_secure_note "$SSH_CONFIG_BASE_ITEM_NAME" "$SSH_CONFIG_VAULT" "$SSH_DIR/config"; then
   success "Base SSH config downloaded from 1Password and permissions set"
 else
   warning "Base SSH config not found in 1Password"
 
   # Check for config.example as fallback
-  if [ -f "$SSH_DIR/config.example" ]; then
+  if [[ -e "$SSH_DIR/config" || -L "$SSH_DIR/config" ]]; then
+    warning "Keeping the existing base SSH config after the download failed"
+    base_config_failed=true
+  elif base_template=$(ssh_example_path config.example); then
     info "Using config.example as template..."
-    cp "$SSH_DIR/config.example" "$SSH_DIR/config"
+    cp "$base_template" "$SSH_DIR/config"
     chmod 600 "$SSH_DIR/config"
     success "Base SSH config created from example template"
     echo "  Note: Ensure it includes both 'Include ~/.ssh/config.d/*.conf' and 'Include ~/.ssh/config.d/*/*.conf'"
   else
+    base_config_failed=true
     warning "No config.example found either"
     echo "  To add base SSH config to 1Password:"
     echo "  1. Create a Secure Note in 1Password called '~/.ssh/config'"
@@ -515,8 +575,10 @@ for fragment_mapping in "${SSH_CONFIG_FRAGMENTS[@]}"; do
     continue
   fi
 
-  if [[ -f "$SSH_CONFIG_DIR/${local_name}.example" ]]; then
-    cp "$SSH_CONFIG_DIR/${local_name}.example" "$SSH_CONFIG_DIR/$local_name"
+  if [[ -e "$SSH_CONFIG_DIR/$local_name" || -L "$SSH_CONFIG_DIR/$local_name" ]]; then
+    failed_fragments+=("$op_name → $local_name (existing file preserved)")
+  elif fragment_template=$(ssh_example_path "config.d/${local_name}.example"); then
+    cp "$fragment_template" "$SSH_CONFIG_DIR/$local_name"
     chmod 600 "$SSH_CONFIG_DIR/$local_name"
     successful_fragments+=("$local_name (from example)")
     warning "Used ${local_name}.example as fallback"
@@ -567,74 +629,30 @@ for key_mapping in "${SSH_KEYS[@]}"; do
     fi
   fi
 
-  # In UNSAFE mode, download private keys
   if [[ "$UNSAFE_MODE" == "true" ]]; then
-    # Try as an SSH Key item type (the proper way)
-    if op item get "$op_name" --vault="$item_vault" --fields "private key" 2>/dev/null >"$SSH_DIR/$local_name" && [ -s "$SSH_DIR/$local_name" ]; then
-      chmod 600 "$SSH_DIR/$local_name"
+    if download_key_field "$op_name" "$item_vault" "private key" "$SSH_DIR/$local_name" 600; then
       successful_keys+=("$local_name (private)")
-
-      # Try to get the public key
-      if op item get "$op_name" --vault="$item_vault" --fields "public key" 2>/dev/null >"$SSH_DIR/${local_name}.pub" && [ -s "$SSH_DIR/${local_name}.pub" ]; then
-        chmod 644 "$SSH_DIR/${local_name}.pub"
-        successful_keys+=("$local_name (public)")
-      else
-        # Generate public key from private if not stored
-        if command -v ssh-keygen >/dev/null 2>&1; then
-          if ssh-keygen -y -f "$SSH_DIR/$local_name" >"$SSH_DIR/${local_name}.pub" 2>/dev/null; then
-            chmod 644 "$SSH_DIR/${local_name}.pub"
-            info "Generated public key for $local_name"
-            successful_keys+=("$local_name (public - generated)")
-          fi
-        fi
-      fi
     else
-      # Alternative: Try with different field names or as JSON
-      if op item get "$op_name" --vault="$item_vault" --format json 2>/dev/null |
-        jq -r '.fields[] | select(.id == "private_key").value' >"$SSH_DIR/$local_name" 2>/dev/null &&
-        [ -s "$SSH_DIR/$local_name" ]; then
-        chmod 600 "$SSH_DIR/$local_name"
-        successful_keys+=("$local_name (private)")
-
-        # Get public key
-        if op item get "$op_name" --vault="$item_vault" --format json 2>/dev/null |
-          jq -r '.fields[] | select(.id == "public_key").value' >"$SSH_DIR/${local_name}.pub" 2>/dev/null &&
-          [ -s "$SSH_DIR/${local_name}.pub" ]; then
-          chmod 644 "$SSH_DIR/${local_name}.pub"
-          successful_keys+=("$local_name (public)")
-        fi
-      else
-        failed_keys+=("$op_name → $local_name")
-        rm -f "$SSH_DIR/$local_name" # Remove empty file if created
-      fi
-    fi
-  else
-    # SAFE MODE: Only download public keys
-    if op item get "$op_name" --vault="$item_vault" --fields "public key" 2>/dev/null >"$SSH_DIR/${local_name}.pub" && [ -s "$SSH_DIR/${local_name}.pub" ]; then
-      chmod 644 "$SSH_DIR/${local_name}.pub"
-      successful_keys+=("$local_name (public only)")
-    else
-      # Alternative: Try with JSON format
-      if op item get "$op_name" --vault="$item_vault" --format json 2>/dev/null |
-        jq -r '.fields[] | select(.id == "public_key").value' >"$SSH_DIR/${local_name}.pub" 2>/dev/null &&
-        [ -s "$SSH_DIR/${local_name}.pub" ]; then
-        chmod 644 "$SSH_DIR/${local_name}.pub"
-        successful_keys+=("$local_name (public only)")
-      else
-        # Try to extract from the SSH key item itself
-        if op item get "$op_name" --vault="$item_vault" --format json 2>/dev/null |
-          jq -r '.public_key // empty' >"$SSH_DIR/${local_name}.pub" 2>/dev/null &&
-          [ -s "$SSH_DIR/${local_name}.pub" ]; then
-          chmod 644 "$SSH_DIR/${local_name}.pub"
-          successful_keys+=("$local_name (public only)")
-        else
-          warning "Could not retrieve public key for $op_name"
-          failed_keys+=("$op_name → ${local_name}.pub")
-          rm -f "$SSH_DIR/${local_name}.pub" # Remove empty file if created
-        fi
-      fi
+      failed_keys+=("$op_name → $local_name (existing file preserved)")
+      continue
     fi
   fi
+
+  if download_key_field "$op_name" "$item_vault" "public key" "$SSH_DIR/${local_name}.pub" 644; then
+    successful_keys+=("$local_name (public)")
+  elif [[ "$UNSAFE_MODE" == "true" ]] && command -v ssh-keygen >/dev/null 2>&1; then
+    staged_public=$(mktemp "$SSH_DIR/${local_name}.pub.download.XXXXXX")
+    if ssh-keygen -y -f "$SSH_DIR/$local_name" >"$staged_public" 2>/dev/null &&
+      [[ -s "$staged_public" ]] && chmod 644 "$staged_public" && mv -f "$staged_public" "$SSH_DIR/${local_name}.pub"; then
+      successful_keys+=("$local_name (public - generated)")
+    else
+      rm -f "$staged_public"
+      failed_keys+=("$op_name → ${local_name}.pub (existing file preserved)")
+    fi
+  else
+    failed_keys+=("$op_name → ${local_name}.pub (existing file preserved)")
+  fi
+
 done
 
 # Step 5: Verify SSH agent access
@@ -721,5 +739,9 @@ echo "  ssh -T git@github-work-2025-client-1"
 echo "  ssh -T git@ado-work-2025-client-2"
 
 echo
-success "SSH setup complete!"
 echo "Backups saved to: $BACKUP_DIR"
+if [[ "$base_config_failed" == "true" || ${#failed_fragments[@]} -gt 0 || ${#failed_keys[@]} -gt 0 ]]; then
+  error "SSH setup incomplete; existing files were preserved where downloads failed"
+  exit 1
+fi
+success "SSH setup complete!"

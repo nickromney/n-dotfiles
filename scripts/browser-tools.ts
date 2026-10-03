@@ -8,8 +8,8 @@
  * directly via the DevTools protocol without pulling in a large MCP server.
  */
 import { Command } from 'commander';
-import { execSync, spawn } from 'node:child_process';
-import { writeFile } from 'node:fs/promises';
+import { execFileSync, execSync, spawn } from 'node:child_process';
+import { mkdir, writeFile } from 'node:fs/promises';
 import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
@@ -76,10 +76,10 @@ program
       }
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
-    execSync(`mkdir -p "${profileDir}"`);
+    await mkdir(profileDir, { recursive: true, mode: 0o700 });
     if (profile) {
       const source = `${path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome')}/`;
-      execSync(`rsync -a --delete "${source}" "${profileDir}/"`, { stdio: 'ignore' });
+      execFileSync('rsync', ['-a', '--', source, `${profileDir}/`], { stdio: 'ignore' });
     }
 
     spawn(chromePath, [`--remote-debugging-port=${port}`, `--user-data-dir=${profileDir}`, '--no-first-run', '--disable-popup-blocking'], {

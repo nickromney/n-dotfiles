@@ -85,7 +85,11 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-[[ -f "$REPO_ROOT/Brewfile" ]] || die "Brewfile not found under $REPO_ROOT"
+BREWFILE="$REPO_ROOT/Brewfile"
+if [[ "$(uname -s)" != "Darwin" ]]; then
+  BREWFILE="$REPO_ROOT/Brewfile.posix"
+fi
+[[ -f "$BREWFILE" ]] || die "Brewfile not found: $BREWFILE"
 [[ -f "$REPO_ROOT/mise/.config/mise/config.toml" ]] || die "mise config not found under $REPO_ROOT"
 
 if [[ -z "$OUT_DIR" ]]; then
@@ -109,17 +113,11 @@ classify_path() {
 }
 
 manifest_formulae() {
-  awk -F'"' '/^[[:space:]]*brew[[:space:]]+"/{name=$2; sub(/^.*\//, "", name); print name}' \
-    "$REPO_ROOT/Brewfile" | sort -u
+  "$BREW_CMD" bundle list --formula --file="$BREWFILE" | sed '/^$/d; s|.*/||' | sort -u
 }
 
 manifest_casks() {
-  {
-    awk -F'"' '/^[[:space:]]*cask[[:space:]]+"/{print $2}' "$REPO_ROOT/Brewfile"
-    if grep -qE '^[[:space:]]*cask[[:space:]]+jetbrains_ide' "$REPO_ROOT/Brewfile"; then
-      printf '%s\n' "${JETBRAINSIDE:-RubyMine}" | tr '[:upper:]' '[:lower:]'
-    fi
-  } | sed 's|.*/||' | sort -u
+  "$BREW_CMD" bundle list --cask --file="$BREWFILE" | sed '/^$/d; s|.*/||' | sort -u
 }
 
 write_brew_reports() {
@@ -130,13 +128,13 @@ write_brew_reports() {
   printf 'kind\tname\treason\n' >"$OUT_DIR/brew-cask-candidates.tsv"
   printf 'kind\tname\treason\n' >"$OUT_DIR/brew-declared-missing.tsv"
 
-  declared_formulae="$(manifest_formulae)"
-  declared_casks="$(manifest_casks)"
-
   if ! command_available "$BREW_CMD"; then
     printf 'brew not found on PATH\n' >"$OUT_DIR/brew-status.txt"
     return 0
   fi
+
+  declared_formulae="$(manifest_formulae)"
+  declared_casks="$(manifest_casks)"
 
   if ! installed_formulae="$("$BREW_CMD" list --formula 2>>"$brew_error")"; then
     printf 'brew formula inventory failed\n' >>"$OUT_DIR/brew-status.txt"

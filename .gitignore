@@ -22,6 +22,22 @@ Thumbs.db
 _audit/
 .generated/
 
+# Machine-local credentials and configuration never belong in public dotfiles.
+.env
+.env.*
+!.env.example
+!.env.*.example
+.claude/settings.local.json
+aws/.aws/config
+aws/.aws/credentials
+aws/.aws/cli/
+aws/.aws/sso/
+aws/.aws/login/
+gh/.config/gh/hosts.yml
+ssh/.ssh/**
+!ssh/.ssh/**/
+!ssh/.ssh/**/*.example
+
 # Zsh completion cache (regenerated per machine)
 zsh/.zcompdump
 

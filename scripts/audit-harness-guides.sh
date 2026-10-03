@@ -267,7 +267,7 @@ skill_refs_for_guides() {
     return 0
   fi
 
-  grep -Eho 'skills/[A-Za-z0-9._/-]+' "$@" 2>/dev/null \
+  grep -Eho 'skills/[A-Za-z0-9._/-]+/SKILL\.md' "$@" 2>/dev/null \
     | sed 's#[).,;:]*$##' \
     | sort -u \
     | while IFS= read -r ref; do
@@ -303,7 +303,10 @@ scan_repo() {
   local total_words total_lines guide skill_ref_count missing_ref_count skills_count state notes
 
   name="$(basename "$dir")"
-  mapfile -t guides < <(guide_files_for_repo "$dir")
+  guides=()
+  while IFS= read -r guide; do
+    guides+=("$guide")
+  done < <(guide_files_for_repo "$dir")
   guide_count="${#guides[@]}"
   skills_count="$(repo_skill_count "$dir")"
   largest_guide="-"
@@ -314,7 +317,7 @@ scan_repo() {
   total_lines=0
 
   guide_paths=()
-  for guide in "${guides[@]}"; do
+  for guide in ${guides[@]+"${guides[@]}"}; do
     local path lines words bytes
     path="$dir/$guide"
     lines="$(count_lines "$path")"

@@ -1,0 +1,5 @@
+# Command history is machine-local even if it remains in an old source checkout.
+history\.sqlite3(-shm|-wal)?
+history\.txt
+README.*
+\.DS_Store

@@ -1,0 +1,5 @@
+# SSH is configured from 1Password; this package contains reference templates.
+# Never expose an adopted config, key, host database, or backup through Stow.
+^/\.ssh
+README.*
+\.DS_Store

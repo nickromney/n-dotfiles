@@ -298,7 +298,7 @@ aws configure set credential_process "$HOME/.aws/aws-1password --username tfcli"
 
 This approach:
 
-- Never stores AWS credentials on disk
+- The helper does not write fetched credentials to disk. AWS CLI role and login flows can cache credentials locally; keep `~/.aws` machine-local. See [AWS credential caching](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html).
 - Fetches credentials from 1Password when needed
 - Works seamlessly with AWS CLI and SDKs
 - Supports multiple AWS accounts/profiles
@@ -377,12 +377,12 @@ This approach:
 
 ### Security Benefits
 
-- **No secrets in version control**: All sensitive data stays in 1Password
-- **Encrypted at rest**: 1Password handles all encryption
-- **Audit trail**: 1Password logs all access to credentials
+- **Secret sources**: Credentials are fetched from 1Password. Unsafe SSH mode exports private keys and creates local backups; keep those files out of Git.
+- **Encryption boundary**: 1Password protects its stored items. Downloaded keys, configs, and backups rely on host disk encryption and file permissions.
+- **Audit visibility**: This repo does not implement a credential access log. [1Password usage reports](https://support.1password.com/reports/) depend on the account plan, permissions, and supported clients.
 - **Easy rotation**: Update credentials in one place
 - **Team sharing**: Safely share vaults with team members
-- **MFA protection**: Additional security with 1Password's MFA
+- **MFA protection**: Enable [1Password two-factor authentication](https://support.1password.com/two-factor-authentication/) for account sign-in. It does not require a new second factor for every CLI credential read.
 
 ## Package Manager Setup
 
