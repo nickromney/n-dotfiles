@@ -1,0 +1,4 @@
+# Authentication is local, even when gh falls back to plaintext token storage.
+^/\.config/gh/hosts\.yml$
+README.*
+\.DS_Store

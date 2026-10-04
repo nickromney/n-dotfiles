@@ -10,7 +10,7 @@ referenced_repo_skills() {
 
   for guide in AGENTS.md CLAUDE.md GEMINI.md; do
     if [ -f "$DOTFILES_DIR/$guide" ]; then
-      grep -Eho 'skills/[A-Za-z0-9._/-]+' "$DOTFILES_DIR/$guide" 2>/dev/null \
+      grep -Eho 'skills/[A-Za-z0-9._/-]+/SKILL\.md' "$DOTFILES_DIR/$guide" 2>/dev/null \
         | sed 's#[).,;:]*$##'
     fi
   done | sort -u

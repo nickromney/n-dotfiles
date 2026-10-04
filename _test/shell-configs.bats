@@ -33,6 +33,20 @@ teardown() {
   rm -rf "$MOCK_BIN_DIR"
 }
 
+mock_mise_activation() {
+  mkdir -p "$HOME/.local/bin"
+  # Keep the synthetic shim PATH independent of the host's selected mise tools.
+  # The user-bin bootstrap selects this mock after Homebrew changes PATH.
+  cat > "$HOME/.local/bin/mise" <<'EOF'
+#!/bin/sh
+case "$1 $2" in
+  'activate bash'|'activate zsh') exit 0 ;;
+  *) exit 1 ;;
+esac
+EOF
+  chmod +x "$HOME/.local/bin/mise"
+}
+
 # ============================================================================
 # Bash Tests
 # ============================================================================
@@ -287,22 +301,45 @@ EOF
 }
 
 @test "zshrc: starship only initialized when starship exists" {
-  # Clear any existing cache
-  rm -rf "$HOME/.cache/zsh-init"
+  local zsh_bin tool
+  zsh_bin="$(command -v zsh)"
+  # Keep optional host tools and mise shims outside this command fixture.
+  for tool in cat chmod date dirname grep head id ln locale mkdir mktemp mv rm sed sort tr uname wc; do
+    ln -s "$(command -v "$tool")" "$MOCK_BIN_DIR/$tool"
+  done
+  mkdir -p "$HOME/.linuxbrew/bin"
+  cat > "$HOME/.linuxbrew/bin/brew" <<'EOF'
+#!/bin/sh
+if [ "$1" = shellenv ]; then
+  printf 'export PATH="%s"\n' "$MOCK_BIN_DIR"
+fi
+EOF
+  chmod +x "$HOME/.linuxbrew/bin/brew"
 
-  # Test that zshrc can be sourced without errors regardless of starship
-  run zsh -c "
-    source $DOTFILES_DIR/zsh/.zshrc 2>&1
-  "
+  # shellcheck disable=SC2016 # The child Zsh expands its config argument and marker.
+  run env PATH="$MOCK_BIN_DIR" "$zsh_bin" -f -c \
+    'OSTYPE=linux-gnu; source "$1"; print -r -- "${STARSHIP_FIXTURE_INITIALIZED:-absent}"' \
+    zsh "$DOTFILES_DIR/zsh/.zshrc"
   [ "$status" -eq 0 ]
+  [ "$output" = absent ]
+  [ ! -e "$XDG_CACHE_HOME/zsh-init/starship.zsh" ]
 
-  # Verify the cache mechanism works - if starship is available (real one),
-  # a cache file should be created. If not available, no cache file.
-  # Note: We can't easily mock starship because homebrew shellenv overrides PATH.
-  if command -v starship >/dev/null 2>&1; then
-    # Starship is installed - verify cache was created
-    [ -f "$HOME/.cache/zsh-init/starship.zsh" ]
-  fi
+  # The config's user-bin bootstrap must find Starship after brew changes PATH.
+  mkdir -p "$HOME/.local/bin"
+  cat > "$HOME/.local/bin/starship" <<'EOF'
+#!/bin/sh
+[ "$1 $2" = 'init zsh' ] || exit 1
+printf 'export STARSHIP_FIXTURE_INITIALIZED=initialized\n'
+EOF
+  chmod +x "$HOME/.local/bin/starship"
+
+  # shellcheck disable=SC2016 # The child Zsh expands its config argument and marker.
+  run env PATH="$MOCK_BIN_DIR" "$zsh_bin" -f -c \
+    'OSTYPE=linux-gnu; source "$1"; print -r -- "${STARSHIP_FIXTURE_INITIALIZED:-absent}"' \
+    zsh "$DOTFILES_DIR/zsh/.zshrc"
+  [ "$status" -eq 0 ]
+  [ "$output" = initialized ]
+  [ -f "$XDG_CACHE_HOME/zsh-init/starship.zsh" ]
 }
 
 # ============================================================================
@@ -401,6 +438,7 @@ EOF
 
 @test "both configs: add mise shims to PATH before Homebrew path" {
   mkdir -p "$HOME/.local/share/mise/shims"
+  mock_mise_activation
 
   # Test bash
   result=$(bash -c "
@@ -431,6 +469,7 @@ EOF
 
 @test "both configs: prefer mise and keep Arkade as the final PATH fallback" {
   mkdir -p "$HOME/.local/share/mise/shims" "$HOME/.arkade/bin"
+  mock_mise_activation
   printf '%s\n' '#!/usr/bin/env bash' > "$HOME/.local/share/mise/shims/gh"
   printf '%s\n' '#!/usr/bin/env bash' > "$HOME/.arkade/bin/gh"
   chmod +x "$HOME/.local/share/mise/shims/gh" "$HOME/.arkade/bin/gh"
@@ -439,7 +478,7 @@ EOF
   result=$(bash -c "
     export PATH='$inherited_path'
     source $DOTFILES_DIR/bash/.bashrc 2>/dev/null
-    printf '%s\n%s\n' \$PATH \$(command -v gh)
+    printf '%s\n%s\n' \"\$PATH\" \"\$(command -v gh)\"
   ")
   local bash_path="${result%%$'\n'*}"
   local bash_gh="${result#*$'\n'}"
@@ -449,7 +488,7 @@ EOF
   result=$(zsh -c "
     export PATH='$inherited_path'
     source $DOTFILES_DIR/zsh/.zshrc 2>/dev/null
-    printf '%s\n%s\n' \$PATH \$(command -v gh)
+    printf '%s\n%s\n' \"\$PATH\" \"\$(command -v gh)\"
   ")
   local zsh_path="${result%%$'\n'*}"
   local zsh_gh="${result#*$'\n'}"

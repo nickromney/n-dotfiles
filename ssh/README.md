@@ -183,7 +183,7 @@ git clone ssh://git@gitea-work-2025-client-2:2222/OWNER/REPO.git
 
 - Keys use generic names (`client_1`) instead of actual client names
 - Year-based versioning for rotating keys (`2024`, `2025`)
-- All sensitive data encrypted in 1Password
+- Secrets stored in 1Password use its encryption. Unsafe mode exports private keys to disk; file permissions do not encrypt those copies or their backups.
 - Automatic backups created before any changes
 - Proper permissions set (600 for private keys, 644 for public)
 

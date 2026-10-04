@@ -36,30 +36,16 @@ check_file() {
 
     echo -e "${YELLOW}Checking $name...${NC}"
     if [[ ${#shellcheck_args[@]} -gt 0 ]]; then
-        shellcheck "${shellcheck_args[@]}" "$file" 2>&1 | tee /tmp/shellcheck_output.txt || shellcheck_status=$?
+        shellcheck -x "${shellcheck_args[@]}" "$file" 2>&1 || shellcheck_status=$?
     else
-        shellcheck "$file" 2>&1 | tee /tmp/shellcheck_output.txt || shellcheck_status=$?
+        shellcheck -x "$file" 2>&1 || shellcheck_status=$?
     fi
 
     if [[ $shellcheck_status -eq 0 ]]; then
         echo -e "  ${GREEN}✓ No issues found${NC}"
     else
-        local error_count
-        local warning_count
-        local info_count
-        error_count=$(grep -c "error" /tmp/shellcheck_output.txt || true)
-        warning_count=$(grep -c "warning" /tmp/shellcheck_output.txt || true)
-        info_count=$(grep -c "info" /tmp/shellcheck_output.txt || true)
-
-        if [[ $error_count -gt 0 ]]; then
-            echo -e "  ${RED}✗ Found $error_count errors${NC}"
-            any_failed=true
-        elif [[ $warning_count -gt 0 ]]; then
-            echo -e "  ${YELLOW}⚠ Found $warning_count warnings${NC}"
-            any_failed=true
-        else
-            echo -e "  ${YELLOW}ℹ Found $info_count info messages${NC}"
-        fi
+        echo -e "  ${RED}✗ shellcheck exited with status $shellcheck_status${NC}"
+        any_failed=true
     fi
     echo
 }

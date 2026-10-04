@@ -60,3 +60,28 @@ EOF
   [ "$(plutil -extract inputPriorities.1 raw -o - "$IMPORTED_PLIST")" = "webcam" ]
   [ "$(plutil -extract knownDevices raw -o - "$IMPORTED_PLIST")" = "Y2FjaGU=" ]
 }
+
+@test "AudioPriorityBar portable defaults preserve machine-local device selections" {
+  cat > "$LIVE_PLIST" <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>inputPriorities</key><array><string>local-microphone</string></array>
+  <key>speakerPriorities</key><array><string>local-speaker</string></array>
+  <key>hiddenMics</key><array><string>local-hidden-microphone</string></array>
+  <key>hiddenSpeakers</key><array><string>local-hidden-speaker</string></array>
+  <key>knownDevices</key><data>Y2FjaGU=</data>
+</dict></plist>
+EOF
+
+  run env PATH="$TEST_BIN:/usr/bin:/bin" \
+    "$REPO_ROOT/scripts/configure-audio-priority-bar.sh" \
+    --config "$REPO_ROOT/audio-priority-bar/.config/audio-priority-bar/preferences.plist"
+
+  [ "$status" -eq 0 ]
+  [ "$(plutil -extract inputPriorities.0 raw -o - "$IMPORTED_PLIST")" = "local-microphone" ]
+  [ "$(plutil -extract speakerPriorities.0 raw -o - "$IMPORTED_PLIST")" = "local-speaker" ]
+  [ "$(plutil -extract hiddenMics.0 raw -o - "$IMPORTED_PLIST")" = "local-hidden-microphone" ]
+  [ "$(plutil -extract hiddenSpeakers.0 raw -o - "$IMPORTED_PLIST")" = "local-hidden-speaker" ]
+  [ "$(plutil -extract knownDevices raw -o - "$IMPORTED_PLIST")" = "Y2FjaGU=" ]
+}

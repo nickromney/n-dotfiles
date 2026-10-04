@@ -21,7 +21,7 @@ if hook_skip_requested; then
 fi
 
 shell_files=()
-for file in "${HOOK_ARGS[@]}"; do
+for file in ${HOOK_ARGS[@]+"${HOOK_ARGS[@]}"}; do
   case "${file}" in
     *.sh|*.bash|*.bats)
       [[ -f "${file}" ]] && shell_files+=("${file}")

@@ -77,16 +77,20 @@ if command -v brew >/dev/null 2>&1; then
   echo
 
   echo "Finding installed packages not managed by the Brewfile..."
+  # Let Homebrew evaluate Ruby expressions and tap-qualified entries instead
+  # of trying to parse the Brewfile DSL with text matching.
+  declared_formulae="$(brew bundle list --formula --file="$BREWFILE")"
+  declared_casks="$(brew bundle list --cask --file="$BREWFILE")"
   {
     echo "# brew formulae (leaves) not in $BREWFILE"
     comm -23 \
       <(brew leaves | sort) \
-      <(awk -F'"' '/^brew /{print $2}' "$BREWFILE" | awk -F'/' '{print $NF}' | sort)
+      <(printf '%s\n' "$declared_formulae" | sed '/^$/d; s|.*/||' | sort -u)
     echo
     echo "# brew casks not in $BREWFILE"
     comm -23 \
       <(brew list --cask 2>/dev/null | sort) \
-      <(awk -F'"' '/^cask /{print $2}' "$BREWFILE" | sort)
+      <(printf '%s\n' "$declared_casks" | sed '/^$/d; s|.*/||' | sort -u)
   } >"$out_dir/brew-unmanaged.txt"
   cat "$out_dir/brew-unmanaged.txt"
   echo

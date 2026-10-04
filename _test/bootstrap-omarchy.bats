@@ -15,6 +15,10 @@ setup() {
   mock_command "sudo" 0 ""
   mock_command "mise" 0 ""
   mock_command "hyprctl" 0 ""
+  # Bootstrap's developer-tool check must not reach the host's credential
+  # tools or start an op daemon holding Bats' output pipe open.
+  mock_command "op" 1 ""
+  mock_command "ssh-add" 1 ""
   # shellcheck disable=SC2016 # Expanded by the generated mock at runtime.
   mock_command_with_script "uname" '[[ "${1:-}" == "-s" ]] && echo Linux'
   # shellcheck disable=SC2016 # Expanded by the generated mock at runtime.

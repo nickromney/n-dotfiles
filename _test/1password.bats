@@ -70,7 +70,7 @@ if [[ "$1" == "item" ]] && [[ "$2" == "get" ]]; then
   case "$item_name" in
     "~/.ssh/config")
       if [[ "$@" == *"--fields"* ]] && [[ "$@" == *"notes"* ]]; then
-        cat <<'CONFIG'
+        jq -Rs '{value: .}' <<'CONFIG'
 Host *
   IdentityAgent "~/.1password/agent.sock"
 Include ~/.ssh/config.d/*.conf
@@ -83,7 +83,7 @@ CONFIG
       ;;
     "~/.ssh/config.d/personal.conf")
       if [[ "$@" == *"--fields"* ]] && [[ "$@" == *"notes"* ]]; then
-        cat <<'CONFIG'
+        jq -Rs '{value: .}' <<'CONFIG'
 Host github.com
   HostName github.com
   User git
@@ -97,7 +97,7 @@ CONFIG
       ;;
     "work .gitconfig_include")
       if [[ "$@" == *"--fields"* ]] && [[ "$@" == *"notes"* ]]; then
-        cat <<'GITCONFIG'
+        jq -Rs '{value: .}' <<'GITCONFIG'
 [url "github-work:OrgName/"]
   insteadOf = git@github.com:OrgName/
   insteadOf = https://github.com/OrgName/
@@ -169,28 +169,21 @@ fi
 
 if [[ "$1" == "item" ]] && [[ "$2" == "get" ]]; then
   if [[ "$3" == "~/.ssh/config" ]] && [[ "$@" == *"--fields notes"* ]]; then
-    echo "Host *"
-    echo "  IdentityAgent ~/.1password/agent.sock"
-    echo "Include ~/.ssh/config.d/*.conf"
-    echo "Include ~/.ssh/config.d/*/*.conf"
+    jq -n '{value: "Host *\n  IdentityAgent ~/.1password/agent.sock\nInclude ~/.ssh/config.d/*.conf\nInclude ~/.ssh/config.d/*/*.conf\n"}'
     exit 0
   fi
 
   if [[ "$3" == "~/.ssh/config.d/personal.conf" ]] && [[ "$@" == *"--fields notes"* ]]; then
-    echo "Host github.com"
-    echo "  HostName github.com"
-    echo "  User git"
-    echo "  IdentityFile ~/.ssh/personal_github_authentication.pub"
-    echo "  IdentitiesOnly yes"
+    jq -n '{value: "Host github.com\n  HostName github.com\n  User git\n  IdentityFile ~/.ssh/personal_github_authentication.pub\n  IdentitiesOnly yes\n"}'
     exit 0
   fi
 
-  if [[ "$@" == *"--fields \"public key\""* ]]; then
-    echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN... test@example.com"
+  if [[ "$@" == *"--fields public key"* ]]; then
+    jq -n '{value: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN... test@example.com\n"}'
     exit 0
   fi
 
-  if [[ "$@" == *"--fields \"private key\""* ]]; then
+  if [[ "$@" == *"--fields private key"* ]]; then
     echo "ERROR: Should not request private key in safe mode!" >&2
     exit 1
   fi
@@ -247,15 +240,13 @@ if [[ "$1" == "account" ]] && [[ "$2" == "list" ]]; then
 fi
 
 if [[ "$1" == "item" ]] && [[ "$2" == "get" ]]; then
-  if [[ "$@" == *"--fields \"private key\""* ]]; then
-    echo "-----BEGIN OPENSSH PRIVATE KEY-----"
-    echo "mock private key content"
-    echo "-----END OPENSSH PRIVATE KEY-----"
+  if [[ "$@" == *"--fields private key"* ]]; then
+    jq -n '{value: "-----BEGIN OPENSSH PRIVATE KEY-----\nmock private key content\n-----END OPENSSH PRIVATE KEY-----\n"}'
     exit 0
   fi
 
-  if [[ "$@" == *"--fields \"public key\""* ]]; then
-    echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN... test@example.com"
+  if [[ "$@" == *"--fields public key"* ]]; then
+    jq -n '{value: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN... test@example.com\n"}'
     exit 0
   fi
 fi
@@ -263,8 +254,7 @@ exit 0
 EOF
   chmod +x "$MOCK_BIN_DIR/op"
 
-  # Simulate user confirming
-  echo "yes" | run ./setup-ssh-from-1password.sh --profile personal --unsafe
+  run ./setup-ssh-from-1password.sh --profile personal --unsafe --yes --no-input
 
   # Check that private keys were requested
   grep -q "private key" "$TEST_DIR/op-calls.log"
@@ -275,6 +265,8 @@ EOF
   cp "${BATS_TEST_DIRNAME}/../setup-ssh-from-1password.sh" .
 
   umask 022
+  printf 'previous private key\n' > "$HOME/.ssh/personal_github_authentication"
+  chmod 644 "$HOME/.ssh/personal_github_authentication"
 
   cat > "$MOCK_BIN_DIR/sleep" <<'EOF'
 #!/bin/bash
@@ -313,32 +305,25 @@ if [[ "$1" == "item" ]] && [[ "$2" == "get" ]]; then
   item_name="$3"
 
   if [[ "$item_name" == "~/.ssh/config" && ( "$field_name" == "notesPlain" || "$field_name" == "notes" ) ]]; then
-    echo "Host *"
-    echo "  IdentityAgent ~/.1password/agent.sock"
-    echo "Include ~/.ssh/config.d/*.conf"
-    echo "Include ~/.ssh/config.d/*/*.conf"
+    jq -n '{value: "Host *\n  IdentityAgent ~/.1password/agent.sock\nInclude ~/.ssh/config.d/*.conf\nInclude ~/.ssh/config.d/*/*.conf\n"}'
     exit 0
   fi
 
   if [[ "$item_name" == "~/.ssh/config.d/personal.conf" && ( "$field_name" == "notesPlain" || "$field_name" == "notes" ) ]]; then
-    echo "Host github.com"
-    echo "  HostName github.com"
-    echo "  User git"
-    echo "  IdentityFile ~/.ssh/personal_github_authentication.pub"
-    echo "  IdentitiesOnly yes"
+    jq -n '{value: "Host github.com\n  HostName github.com\n  User git\n  IdentityFile ~/.ssh/personal_github_authentication.pub\n  IdentitiesOnly yes\n"}'
     exit 0
   fi
 
   if [[ "$field_name" == "private key" ]]; then
-    file_mode "$HOME/.ssh/$item_name" >> "$TEST_DIR/private-key-open-modes.log"
-    echo "-----BEGIN OPENSSH PRIVATE KEY-----"
-    echo "mock private key content"
-    echo "-----END OPENSSH PRIVATE KEY-----"
+    for staged in "$HOME/.ssh/$item_name".download.*; do
+      file_mode "$staged" >> "$TEST_DIR/private-key-open-modes.log"
+    done
+    jq -n '{value: "-----BEGIN OPENSSH PRIVATE KEY-----\nmock private key content\n-----END OPENSSH PRIVATE KEY-----\n"}'
     exit 0
   fi
 
   if [[ "$field_name" == "public key" ]]; then
-    echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN... test@example.com"
+    jq -n '{value: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN... test@example.com\n"}'
     exit 0
   fi
 fi
@@ -348,12 +333,18 @@ exit 1
 EOF
   chmod +x "$MOCK_BIN_DIR/op"
 
-  run ./setup-ssh-from-1password.sh --profile personal --unsafe --yes --no-input
+  run ./setup-ssh-from-1password.sh --profile personal --unsafe --yes --no-input --force
 
   [ "$status" -eq 0 ]
   [ -f "$TEST_DIR/private-key-open-modes.log" ]
   run grep -qx "600" "$TEST_DIR/private-key-open-modes.log"
   [ "$status" -eq 0 ]
+  if stat -c %a "$HOME/.ssh/personal_github_authentication" >/dev/null 2>&1; then
+    mode=$(stat -c %a "$HOME/.ssh/personal_github_authentication")
+  else
+    mode=$(stat -f %Lp "$HOME/.ssh/personal_github_authentication")
+  fi
+  [ "$mode" = 600 ]
 }
 
 @test "SSH setup: help option shows usage" {

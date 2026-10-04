@@ -21,7 +21,7 @@ if hook_skip_requested; then
 fi
 
 yaml_files=()
-for file in "${HOOK_ARGS[@]}"; do
+for file in ${HOOK_ARGS[@]+"${HOOK_ARGS[@]}"}; do
   case "${file}" in
     *.yaml|*.yml)
       [[ -f "${file}" ]] && yaml_files+=("${file}")

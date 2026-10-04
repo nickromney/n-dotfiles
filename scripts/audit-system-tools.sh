@@ -85,7 +85,11 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-[[ -f "$REPO_ROOT/Brewfile" ]] || die "Brewfile not found under $REPO_ROOT"
+BREWFILE="$REPO_ROOT/Brewfile"
+if [[ "$(uname -s)" != "Darwin" ]]; then
+  BREWFILE="$REPO_ROOT/Brewfile.posix"
+fi
+[[ -f "$BREWFILE" ]] || die "Brewfile not found: $BREWFILE"
 [[ -f "$REPO_ROOT/mise/.config/mise/config.toml" ]] || die "mise config not found under $REPO_ROOT"
 
 if [[ -z "$OUT_DIR" ]]; then
@@ -109,17 +113,22 @@ classify_path() {
 }
 
 manifest_formulae() {
-  awk -F'"' '/^[[:space:]]*brew[[:space:]]+"/{name=$2; sub(/^.*\//, "", name); print name}' \
-    "$REPO_ROOT/Brewfile" | sort -u
+  "$BREW_CMD" bundle list --formula --file="$BREWFILE" | sed '/^$/d; s|.*/||' | sort -u
 }
 
 manifest_casks() {
-  {
-    awk -F'"' '/^[[:space:]]*cask[[:space:]]+"/{print $2}' "$REPO_ROOT/Brewfile"
-    if grep -qE '^[[:space:]]*cask[[:space:]]+jetbrains_ide' "$REPO_ROOT/Brewfile"; then
-      printf '%s\n' "${JETBRAINSIDE:-RubyMine}" | tr '[:upper:]' '[:lower:]'
-    fi
-  } | sed 's|.*/||' | sort -u
+  "$BREW_CMD" bundle list --cask --file="$BREWFILE" | sed '/^$/d; s|.*/||' | sort -u
+}
+
+write_brew_difference() {
+  # Explicit filename matching handles an empty lookup file; prefixing keys
+  # keeps numeric-looking names distinct. Scan order remains report order.
+  awk -v kind="$1" -v reason="$2" '
+    FILENAME == ARGV[1] {present["name:" $0]=1; next}
+    length($0) && !("name:" $0 in present) {
+      printf "%s\t%s\t%s\n", kind, $0, reason
+    }
+  ' "$3" "$4"
 }
 
 write_brew_reports() {
@@ -130,13 +139,13 @@ write_brew_reports() {
   printf 'kind\tname\treason\n' >"$OUT_DIR/brew-cask-candidates.tsv"
   printf 'kind\tname\treason\n' >"$OUT_DIR/brew-declared-missing.tsv"
 
-  declared_formulae="$(manifest_formulae)"
-  declared_casks="$(manifest_casks)"
-
   if ! command_available "$BREW_CMD"; then
     printf 'brew not found on PATH\n' >"$OUT_DIR/brew-status.txt"
     return 0
   fi
+
+  declared_formulae="$(manifest_formulae)"
+  declared_casks="$(manifest_casks)"
 
   if ! installed_formulae="$("$BREW_CMD" list --formula 2>>"$brew_error")"; then
     printf 'brew formula inventory failed\n' >>"$OUT_DIR/brew-status.txt"
@@ -157,32 +166,18 @@ write_brew_reports() {
   printf '%s\n' "$declared_formulae" | sed '/^$/d' >"$OUT_DIR/brew-formulae-declared.txt"
   printf '%s\n' "$declared_casks" | sed '/^$/d' >"$OUT_DIR/brew-casks-declared.txt"
 
-  while IFS= read -r name; do
-    [[ -n "$name" ]] || continue
-    if ! grep -Fqx "$name" "$OUT_DIR/brew-formulae-declared.txt"; then
-      printf 'formula\t%s\tunmanaged top-level formula (review before brew uninstall)\n' "$name" >>"$OUT_DIR/brew-leaf-candidates.tsv"
-    fi
-  done <"$OUT_DIR/brew-leaves.txt"
-
-  while IFS= read -r name; do
-    [[ -n "$name" ]] || continue
-    if ! grep -Fqx "$name" "$OUT_DIR/brew-casks-declared.txt"; then
-      printf 'cask\t%s\tinstalled cask absent from Brewfile\n' "$name" >>"$OUT_DIR/brew-cask-candidates.tsv"
-    fi
-  done <"$OUT_DIR/brew-casks-installed.txt"
-
-  while IFS= read -r name; do
-    [[ -n "$name" ]] || continue
-    if ! grep -Fqx "$name" "$OUT_DIR/brew-formulae-installed.txt"; then
-      printf 'formula\t%s\tdeclared formula missing locally\n' "$name" >>"$OUT_DIR/brew-declared-missing.tsv"
-    fi
-  done <"$OUT_DIR/brew-formulae-declared.txt"
-  while IFS= read -r name; do
-    [[ -n "$name" ]] || continue
-    if ! grep -Fqx "$name" "$OUT_DIR/brew-casks-installed.txt"; then
-      printf 'cask\t%s\tdeclared cask missing locally\n' "$name" >>"$OUT_DIR/brew-declared-missing.tsv"
-    fi
-  done <"$OUT_DIR/brew-casks-declared.txt"
+  write_brew_difference formula 'unmanaged top-level formula (review before brew uninstall)' \
+    "$OUT_DIR/brew-formulae-declared.txt" "$OUT_DIR/brew-leaves.txt" \
+    >>"$OUT_DIR/brew-leaf-candidates.tsv"
+  write_brew_difference cask 'installed cask absent from Brewfile' \
+    "$OUT_DIR/brew-casks-declared.txt" "$OUT_DIR/brew-casks-installed.txt" \
+    >>"$OUT_DIR/brew-cask-candidates.tsv"
+  write_brew_difference formula 'declared formula missing locally' \
+    "$OUT_DIR/brew-formulae-installed.txt" "$OUT_DIR/brew-formulae-declared.txt" \
+    >>"$OUT_DIR/brew-declared-missing.tsv"
+  write_brew_difference cask 'declared cask missing locally' \
+    "$OUT_DIR/brew-casks-installed.txt" "$OUT_DIR/brew-casks-declared.txt" \
+    >>"$OUT_DIR/brew-declared-missing.tsv"
 
   if [[ -s "$brew_error" ]]; then
     printf 'brew reported errors; see brew-errors.txt\n' >>"$OUT_DIR/brew-status.txt"
@@ -200,7 +195,6 @@ write_mise_report() {
 }
 
 write_brew_mise_overlap() {
-  local mise_tool brew_formula
   printf 'brew_formula\tmise_tool\treason\n' >"$OUT_DIR/brew-mise-overlap.tsv"
   if [[ ! -s "$OUT_DIR/brew-formulae-installed.txt" ]]; then
     return 0
@@ -218,14 +212,13 @@ write_brew_mise_overlap() {
     }
   ' "$REPO_ROOT/mise/.config/mise/config.toml" | sort -u >"$OUT_DIR/mise-tool-names.txt"
 
-  while IFS= read -r brew_formula; do
-    [[ -n "$brew_formula" ]] || continue
-    if grep -Fqx "$brew_formula" "$OUT_DIR/mise-tool-names.txt"; then
-      mise_tool="$brew_formula"
-      printf '%s\t%s\tSame tool appears in both package-manager surfaces; prefer one owner\n' \
-        "$brew_formula" "$mise_tool" >>"$OUT_DIR/brew-mise-overlap.tsv"
-    fi
-  done <"$OUT_DIR/brew-formulae-installed.txt"
+  awk '
+    FILENAME == ARGV[1] {present["name:" $0]=1; next}
+    length($0) && ("name:" $0 in present) {
+      printf "%s\t%s\tSame tool appears in both package-manager surfaces; prefer one owner\n", $0, $0
+    }
+  ' "$OUT_DIR/mise-tool-names.txt" "$OUT_DIR/brew-formulae-installed.txt" \
+    >>"$OUT_DIR/brew-mise-overlap.tsv"
 }
 
 write_path_reports() {

@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(defaults read:*)",
+      "Bash(readlink:*)",
+      "Bash(markdownlint-cli2:*)",
+      "Bash(command -v:*)",
+      "Bash(bats:*)",
+      "Bash(markdownlint:*)",
+      "Bash(mas search:*)",
+      "Bash(mas info:*)",
+      "Bash(brew info:*)",
+      "Bash(./_test/run_tests.sh:*)",
+      "Bash(mise registry *)",
+      "Bash(mise ls *)",
+      "Bash(mise doctor *)",
+      "Bash(op --version)",
+      "Bash(make lint *)",
+      "Bash(make test *)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

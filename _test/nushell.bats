@@ -5,6 +5,8 @@
 load helpers/mocks
 
 setup() {
+    # Resolve the installed runtime before switching to an isolated HOME.
+    NUSHELL_BIN="$(mise which nu 2>/dev/null || command -v nu)"
     # Store original HOME
     export ORIGINAL_HOME="$HOME"
     export TEST_HOME="$BATS_TEST_TMPDIR/home"
@@ -41,13 +43,12 @@ teardown() {
 }
 
 @test "nushell: config.nu syntax is valid" {
-    run nu --config "$NUSHELL_CONFIG_DIR/config.nu" --env-config "$NUSHELL_CONFIG_DIR/env.nu" -c "exit 0"
-    # Allow exit code 0 or 1 (1 might occur if vendor files don't exist yet)
-    [[ "$status" -eq 0 || "$status" -eq 1 ]]
+    run env PATH=/usr/bin:/bin "$NUSHELL_BIN" --config "$NUSHELL_CONFIG_DIR/config.nu" --env-config "$NUSHELL_CONFIG_DIR/env.nu" -c "exit 0"
+    [[ "$status" -eq 0 ]]
 }
 
 @test "nushell: env.nu syntax is valid" {
-    run nu --env-config "$NUSHELL_CONFIG_DIR/env.nu" -c "exit 0"
+    run env PATH=/usr/bin:/bin "$NUSHELL_BIN" --env-config "$NUSHELL_CONFIG_DIR/env.nu" -c "exit 0"
     [[ "$status" -eq 0 ]]
 }
 

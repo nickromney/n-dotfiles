@@ -80,4 +80,4 @@ aws s3 ls --profile Deployments
 
 - Never commit `config` (only `config.example`)
 - Credentials are fetched from 1Password on each AWS CLI invocation
-- No credentials are stored on disk
+- The helper does not write credentials to disk. AWS CLI can cache assumed-role credentials in `~/.aws/cli/cache` and login/SSO credentials in other `~/.aws` caches; these paths must stay machine-local. See [AWS credential caching](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html).
