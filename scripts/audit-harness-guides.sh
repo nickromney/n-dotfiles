@@ -205,18 +205,6 @@ count_lines() {
   wc -l <"$file" | tr -d ' '
 }
 
-count_words() {
-  local file="$1"
-
-  wc -w <"$file" | tr -d ' '
-}
-
-count_bytes() {
-  local file="$1"
-
-  wc -c <"$file" | tr -d ' '
-}
-
 cleanup() {
   if [[ -n "$TMP_DIR" ]]; then
     rm -rf "$TMP_DIR"
@@ -318,11 +306,10 @@ scan_repo() {
 
   guide_paths=()
   for guide in ${guides[@]+"${guides[@]}"}; do
-    local path lines words bytes
+    local path lines words bytes counts
     path="$dir/$guide"
-    lines="$(count_lines "$path")"
-    words="$(count_words "$path")"
-    bytes="$(count_bytes "$path")"
+    counts="$(wc -l -w -c <"$path")"
+    read -r lines words bytes <<<"$counts"
     total_lines=$((total_lines + lines))
     total_words=$((total_words + words))
     guide_paths+=("$path")
