@@ -1,7 +1,7 @@
 # Performance optimization — 4 October 2026
 
-Status: three isolated optimizations implemented and verified. Final local CI
-and publication checks are pending. The invoked extreme-software-optimization skill requires
+Status: three isolated optimizations implemented and verified. The required local CI gate
+runs at publication; the pull request records its final result. The invoked extreme-software-optimization skill requires
 profile evidence, golden outputs, one lever per commit, and before/after metrics.
 
 ## Goal and constraints
@@ -237,8 +237,7 @@ behavior proofs; it is deferred rather than mixed into these three levers.
 The final source copy, profile and paired JSON are retained beside the preceding
 rounds in the ignored local evidence directory. For the combined comparison use
 `./benchmark.sh baseline` and `./benchmark.sh final` with the Round 1 flags.
-Rollback: revert the single intersection optimization commit, recorded after
-publication.
+Rollback: `git revert 655ca92` on the optimization branch.
 
 ## Final review and limits
 
@@ -255,3 +254,11 @@ costs require a separate parser-equivalence proof before consolidation.
 
 Each runtime lever is independently committed. Revert in reverse order when
 rolling back all optimizations. The audit hardening commit remains separate.
+
+Publication target: [pull request #124](https://github.com/nickromney/n-dotfiles/pull/124)
+on `codex/repository-audit-hardening`. The six new boundary regressions supplement
+the original audit tests. Pre-commit ShellCheck, Markdown formatting, whitespace
+and redacted staged-secret checks pass for each optimization commit.
+
+Commits use the previously established per-command unsigned fallback because
+1Password signing was unavailable. No Git signing configuration was changed.
