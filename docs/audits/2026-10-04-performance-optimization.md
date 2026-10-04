@@ -44,7 +44,7 @@ after implementation; correctness proof remains mandatory even with a high score
 | Opportunity | Impact | Confidence | Effort | Score | Decision |
 | --- | ---: | ---: | ---: | ---: | --- |
 | Batch three guide-file counts into one `wc` call | 4 | 5 | 1 | 20.0 | Implemented: 41.4% lower elapsed time |
-| Batch Brew report membership checks | 5 | 5 | 2 | 12.5 | Profile confirmed; queued |
+| Batch Brew report membership checks | 5 | 5 | 2 | 12.5 | Implemented: 64.2% lower elapsed time |
 | Batch Brew/mise intersection lookup | 3 | 5 | 1 | 15.0 | Separate lever after fresh profile |
 | Batch macOS YAML queries | 4 | 5 | 3 | 6.7 | Deferred: raw YAML and failure-order equivalence unproven |
 | Compile large Zsh completion cache | 3 | 4 | 2 | 6.0 | Rejected: alias parsing and cache freshness change behavior |
@@ -140,8 +140,7 @@ hyperfine --shell=none --warmup 3 --runs 10 --export-json comparison.json \
 sha256sum -c golden_checksums.txt
 ```
 
-Rollback: revert the single guide-count optimization commit on this branch.
-The commit identifier will be recorded after publication.
+Rollback: `git revert 26fe947` on the optimization branch.
 
 ### Candidates rejected or deferred
 
@@ -153,3 +152,48 @@ code was modified.
 Batching macOS YAML reads must preserve raw scalar serialization, multi-document
 behavior, and the timing of errors relative to prior settings operations. That
 proof is incomplete, so no macOS configuration or live defaults were changed.
+
+### Round 2: batch Brew report membership
+
+Four ordered scans use literal string-keyed lookup tables instead of launching
+one `grep` for every package. Explicit filename matching handles an empty first
+file; a key prefix keeps `01` distinct from `1`. The evaluated Brewfile remains
+the source of declared packages, including dynamic and tap-qualified entries.
+
+- Ordering preserved: scan the same already-sorted input files; formula rows
+  still precede cask rows in the combined missing report.
+- Tie-breaking unchanged: normalization and duplicate removal are untouched.
+- Floating-point: N/A; package names remain strings.
+- RNG seeds: N/A.
+- Golden outputs: all 23 durable report/stdout/stderr/status/ordered mock-command
+  artifacts match byte for byte; their SHA-256 oracle passes.
+- Two new public CLI tests pass against baseline and candidate, covering empty
+  lookup files, literal punctuation, numeric-looking names, and output order.
+- Six existing system/manifest tests and ShellCheck pass.
+
+The rebuilt synthetic fixture has 240 installed formulae/leaves, 200 declared
+formulae, 80 installed casks, 60 declared casks, and 160 mise keys. Applications
+and PATH inventories are empty; native package managers are mocked. The profile
+confirms 580 Brew-report `grep` calls consuming 867 ms and 240 intersection
+calls consuming 369 ms. This is repository overhead, not installed-tool latency.
+
+| Metric | Before | After |
+| --- | ---: | ---: |
+| Mean, 10 runs after 3 warmups | 1205.7 ms | 432.1 ms |
+| Sample p50, nearest rank | 1195.7 ms | 427.8 ms |
+| Sample p95/p99, observed maximum | 1302.7 ms | 459.9 ms |
+| Serial runs/s | 0.829 | 2.314 |
+| Native peak child RSS | 2,506,752 bytes | 2,523,136 bytes |
+
+Elapsed time falls 64.2%, or 2.79× faster. The small child RSS increase is
+16 KiB; no aggregate process-tree memory conclusion is drawn.
+Fresh top five costs: intersection `grep` (240 calls, 336 ms), summary `wc`
+(7, 8.3 ms), report `sed` (5, 6.7 ms), batched difference `awk` (4, 6.6 ms),
+and formula-manifest `sort` (1, 5.0 ms). The intersection is now the dominant
+measured opportunity and remains a separate lever.
+
+Durable local evidence: `_audit/performance-2026-10-04/system/` contains the
+fixture, immutable source copies, golden reports/oracle, verifier and paired
+benchmark JSON. The same Hyperfine and checksum commands from Round 1 apply.
+Rollback: revert the single Brew-membership optimization commit, recorded below
+after publication.
