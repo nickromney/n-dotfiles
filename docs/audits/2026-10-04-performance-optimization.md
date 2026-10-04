@@ -1,7 +1,7 @@
 # Performance optimization — 4 October 2026
 
-Status: first measured optimization implemented and verified in the isolated
-audit checkout. Package-audit batching is next. The invoked extreme-software-optimization skill requires
+Status: three isolated optimizations implemented and verified. Final local CI
+and publication checks are pending. The invoked extreme-software-optimization skill requires
 profile evidence, golden outputs, one lever per commit, and before/after metrics.
 
 ## Goal and constraints
@@ -27,10 +27,10 @@ The original checkout, commits, index, and existing dirty files are preserved.
 
 | Surface | Workload | Evidence | State |
 | --- | --- | --- | --- |
-| Shell startup | Full interactive startup and separate command mode; isolated tools/home/cache | Zsh function profile and hyperfine | In progress |
-| macOS setup | Dry-run profiles with mocked operating-system commands | Timed command trace and hyperfine | In progress |
-| Package audits | Synthetic manifests and installed/app inventory | Timed subprocess trace and hyperfine | In progress |
-| Harness-guide audit | Synthetic workspace containing varied guide files | Timed subprocess profile and golden table/TSV reports | In progress |
+| Shell startup | Full interactive startup and separate command mode; isolated tools/home/cache | Zsh function profile and hyperfine | Profiled |
+| macOS setup | Dry-run profiles with mocked operating-system commands | Timed command trace and hyperfine | Profiled |
+| Package audits | Synthetic manifests and installed/app inventory | Timed subprocess trace and hyperfine | Profiled |
+| Harness-guide audit | Synthetic workspace containing varied guide files | Timed subprocess profile and golden table/TSV reports | Profiled |
 
 Full login-shell startup invokes an asynchronous window-layout command, so it
 will not be executed against the live desktop. Existing command-mode startup
@@ -45,9 +45,9 @@ after implementation; correctness proof remains mandatory even with a high score
 | --- | ---: | ---: | ---: | ---: | --- |
 | Batch three guide-file counts into one `wc` call | 4 | 5 | 1 | 20.0 | Implemented: 41.4% lower elapsed time |
 | Batch Brew report membership checks | 5 | 5 | 2 | 12.5 | Implemented: 64.2% lower elapsed time |
-| Batch Brew/mise intersection lookup | 3 | 5 | 1 | 15.0 | Separate lever after fresh profile |
-| Batch macOS YAML queries | 4 | 5 | 3 | 6.7 | Deferred: raw YAML and failure-order equivalence unproven |
-| Compile large Zsh completion cache | 3 | 4 | 2 | 6.0 | Rejected: alias parsing and cache freshness change behavior |
+| Batch Brew/mise intersection lookup | 3 | 5 | 1 | 15.0 | Implemented after fresh profile |
+| Batch macOS YAML queries | 4 | 2 | 5 | 1.6 | Deferred: raw YAML and failure-order equivalence unproven |
+| Compile large Zsh completion cache | 3 | 1 | 5 | 0.6 | Rejected: alias parsing and cache freshness change behavior |
 | Batch live defaults operations | 1 | 1 | 1 | 1.0 | Deferred: mock cost does not prove native API equivalence |
 
 ## Baseline evidence
@@ -195,5 +195,63 @@ measured opportunity and remains a separate lever.
 Durable local evidence: `_audit/performance-2026-10-04/system/` contains the
 fixture, immutable source copies, golden reports/oracle, verifier and paired
 benchmark JSON. The same Hyperfine and checksum commands from Round 1 apply.
-Rollback: revert the single Brew-membership optimization commit, recorded below
-after publication.
+Rollback: `git revert 40e38dd` on the optimization branch.
+
+### Round 3: batch Brew/mise intersection
+
+One string-keyed ordered scan replaces 240 per-formula `grep` calls. It uses
+explicit filename matching and prefixed keys, as the previous difference scan
+does, while preserving the intersection predicate and existing report message.
+
+- Ordering preserved: scan installed formulae in their existing sorted order.
+- Tie-breaking unchanged: normalization, mise parsing and deduplication untouched.
+- Floating-point: N/A; names are strings, including numeric-looking names.
+- RNG seeds: N/A.
+- Golden outputs: the same 23 artifacts and checksum oracle pass after both
+  package changes, including every generated report and ordered mock calls.
+- The overlap regression passes before and after, including `01` versus `1`,
+  literal dots and empty mise declarations. All three new system tests pass.
+- ShellCheck and the optimization diff's whitespace checks pass.
+
+| Metric | After Round 2 | After Round 3 |
+| --- | ---: | ---: |
+| Mean, 10 runs after 3 warmups | 449.6 ms | 88.7 ms |
+| Sample p50, nearest rank | 448.6 ms | 87.5 ms |
+| Sample p95/p99, observed maximum | 453.4 ms | 97.8 ms |
+| Serial runs/s | 2.224 | 11.279 |
+| Native peak child RSS | 2,523,136 bytes | 2,441,216 bytes |
+
+The separate intersection lever cuts elapsed time 80.3%, or 5.07× faster.
+A final baseline-versus-final paired run measures the combined package change:
+1197.0 ms to 80.0 ms, 93.3% lower elapsed time, or 14.96× faster. Its sample
+p50 is 1190.8/80.1 ms, p95/p99 maximum is 1232.4/81.4 ms, and serial throughput
+is 0.835/12.501 runs/s. Differences between paired runs reflect local timing
+variation; the ratios are each computed within their respective run.
+
+Fresh final top five command/function costs are summary `wc` (7 calls, 8.2 ms),
+report `sed` (5, 6.5 ms), difference `awk` (4, 6.2 ms), inventory `sort`
+(3, 4.4 ms), and formula-manifest `sort` (1, 4.3 ms). No per-item membership
+`grep` remains. Further consolidation offers small gains and requires broader
+behavior proofs; it is deferred rather than mixed into these three levers.
+
+The final source copy, profile and paired JSON are retained beside the preceding
+rounds in the ignored local evidence directory. For the combined comparison use
+`./benchmark.sh baseline` and `./benchmark.sh final` with the Round 1 flags.
+Rollback: revert the single intersection optimization commit, recorded after
+publication.
+
+## Final review and limits
+
+Adversarial review of every changed runtime line found no actionable regression.
+Removed counter helpers have no remaining call sites. Empty inputs, exact string
+membership, deterministic row order, native Bash compatibility and counter
+failure propagation were checked against the baseline and regression tests.
+
+This work adds no dependencies and does not modify live configuration. The
+accepted changes optimize audit commands. Shell compilation was rejected;
+macOS YAML batching was downgraded below the implementation threshold because
+serialization and failure timing remain unproven. Remaining guide pipeline
+costs require a separate parser-equivalence proof before consolidation.
+
+Each runtime lever is independently committed. Revert in reverse order when
+rolling back all optimizations. The audit hardening commit remains separate.

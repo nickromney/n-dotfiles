@@ -195,7 +195,6 @@ write_mise_report() {
 }
 
 write_brew_mise_overlap() {
-  local mise_tool brew_formula
   printf 'brew_formula\tmise_tool\treason\n' >"$OUT_DIR/brew-mise-overlap.tsv"
   if [[ ! -s "$OUT_DIR/brew-formulae-installed.txt" ]]; then
     return 0
@@ -213,14 +212,13 @@ write_brew_mise_overlap() {
     }
   ' "$REPO_ROOT/mise/.config/mise/config.toml" | sort -u >"$OUT_DIR/mise-tool-names.txt"
 
-  while IFS= read -r brew_formula; do
-    [[ -n "$brew_formula" ]] || continue
-    if grep -Fqx "$brew_formula" "$OUT_DIR/mise-tool-names.txt"; then
-      mise_tool="$brew_formula"
-      printf '%s\t%s\tSame tool appears in both package-manager surfaces; prefer one owner\n' \
-        "$brew_formula" "$mise_tool" >>"$OUT_DIR/brew-mise-overlap.tsv"
-    fi
-  done <"$OUT_DIR/brew-formulae-installed.txt"
+  awk '
+    FILENAME == ARGV[1] {present["name:" $0]=1; next}
+    length($0) && ("name:" $0 in present) {
+      printf "%s\t%s\tSame tool appears in both package-manager surfaces; prefer one owner\n", $0, $0
+    }
+  ' "$OUT_DIR/mise-tool-names.txt" "$OUT_DIR/brew-formulae-installed.txt" \
+    >>"$OUT_DIR/brew-mise-overlap.tsv"
 }
 
 write_path_reports() {

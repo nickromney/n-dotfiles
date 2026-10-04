@@ -54,3 +54,13 @@ run_audit() {
   [ "$(cut -f2 "$BATS_TEST_TMPDIR/report/brew-leaf-candidates.tsv" | tail -n +2)" = $'1\naXb' ]
   [ "$(cut -f1,2 "$BATS_TEST_TMPDIR/report/brew-declared-missing.tsv" | tail -n +2)" = $'formula\t01\ncask\tmissing-app' ]
 }
+
+@test "system audit: overlap preserves sorted literal names and empty mise maps" {
+  printf '1\n01\naXb\na.b\n' > "$PERF_DATA/formula"
+  printf '[tools]\n"01" = "latest"\n"a.b" = "latest"\n' > "$BATS_TEST_TMPDIR/repo/mise/.config/mise/config.toml"
+  run_audit
+  [ "$(cut -f1,2 "$BATS_TEST_TMPDIR/report/brew-mise-overlap.tsv" | tail -n +2)" = $'01\t01\na.b\ta.b' ]
+  printf '[tools]\n' > "$BATS_TEST_TMPDIR/repo/mise/.config/mise/config.toml"
+  run_audit
+  [ "$(wc -l < "$BATS_TEST_TMPDIR/report/brew-mise-overlap.tsv" | tr -d ' ')" = 1 ]
+}
