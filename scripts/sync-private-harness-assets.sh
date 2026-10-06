@@ -12,8 +12,8 @@ usage() {
   cat <<'EOF'
 Usage: scripts/sync-private-harness-assets.sh [options] [--dry-run|--execute]
 
-Reconcile selected private harness assets into the Claude harness view. The
-global and Codex views are intentionally kept free of private skills. The
+Reconcile selected private harness assets into the Claude harness view, plus
+selected Josh Pigford, Matt Pocock, and JSM skills into the shared global and Codex views. The
 default private source is the optional sibling repo ../harnesses-private. If
 that repo is absent, the script exits successfully without changing anything.
 
@@ -22,14 +22,15 @@ Skill sources are discovered one provider level deep, for example:
   ../harnesses-private/joshpigford/skills/example
   ../harnesses-private/agents/skills/use-platform
 
-If a provider has load manifests, only listed skills are exposed to the Claude
-view:
+If a provider has load manifests, only listed skills are exposed to each view:
   <provider>/load/global.txt
   <provider>/load/claude.txt
+  <provider>/load/codex.txt
 
-Private skills previously linked into the global or Codex views are removed
-during reconciliation. Built-in or other non-private Codex skills are left
-untouched.
+Josh Pigford, Matt Pocock, and JSM skills selected by load manifests are exposed to
+the global and Codex views. Other private providers remain Claude-only. Built-in or other
+non-private Codex skills are left untouched. When loaded providers collide on
+a skill name, each provider receives a provider prefix.
 
 Options:
       --dry-run             Show planned links without changing files
@@ -190,6 +191,17 @@ provider_has_load_manifests() {
   [[ -f "$provider_dir/load/global.txt" || -f "$provider_dir/load/claude.txt" || -f "$provider_dir/load/codex.txt" ]]
 }
 
+provider_matches_filter() {
+  local provider_dir="$1"
+  local provider_filter="$2"
+
+  [[ -z "$provider_filter" ]] && return 0
+  case ",$provider_filter," in
+    *",$(basename "$provider_dir"),"*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 skill_is_loaded_for_view() {
   local provider_dir="$1"
   local skill_name="$2"
@@ -208,7 +220,8 @@ skill_is_loaded_for_view() {
 build_loaded_skill_index() {
   local index_file="$1"
   local view="$2"
-  shift 2
+  local provider_filter="$3"
+  shift 3
 
   local catalog_dir
   local provider_dir
@@ -221,6 +234,7 @@ build_loaded_skill_index() {
     [[ -d "$catalog_dir" ]] || continue
     for provider_dir in "$catalog_dir"/*; do
       [[ -d "$provider_dir" ]] || continue
+      provider_matches_filter "$provider_dir" "$provider_filter" || continue
       [[ -d "$provider_dir/skills" ]] || continue
 
       for source_path in "$provider_dir/skills"/*; do
@@ -328,16 +342,17 @@ sync_view() {
   local dest_dir="$1"
   local private_abs="$2"
   local view="$3"
-  shift 3
+  local provider_filter="$4"
+  shift 4
 
   DESIRED_LINKS_FILE="$(mktemp "${TMPDIR:-/tmp}/sync-private-skills.XXXXXX")"
   LOADED_SKILL_INDEX_FILE="$(mktemp "${TMPDIR:-/tmp}/sync-private-index.XXXXXX")"
 
-  build_loaded_skill_index "$LOADED_SKILL_INDEX_FILE" "$view" "$@"
+  build_loaded_skill_index "$LOADED_SKILL_INDEX_FILE" "$view" "$provider_filter" "$@"
 
   local catalog_dir
   for catalog_dir in "$@"; do
-    link_grouped_skills_from "$catalog_dir" "$dest_dir" "$private_abs" "$view"
+    link_grouped_skills_from "$catalog_dir" "$dest_dir" "$private_abs" "$view" "$provider_filter"
   done
 
   prune_stale_private_links "$dest_dir" "$private_abs"
@@ -351,6 +366,7 @@ link_grouped_skills_from() {
   local dest_dir="$2"
   local private_abs="$3"
   local view="$4"
+  local provider_filter="$5"
   local provider_dir
   local reserved_name
 
@@ -358,6 +374,7 @@ link_grouped_skills_from() {
 
   for provider_dir in "$catalog_dir"/*; do
     [[ -d "$provider_dir" ]] || continue
+    provider_matches_filter "$provider_dir" "$provider_filter" || continue
 
     reserved_name="$(basename "$provider_dir")"
     case "$reserved_name" in
@@ -385,13 +402,11 @@ main() {
 
   private_abs="$(absolute_path "$PRIVATE_ROOT")"
 
-  # Codex also discovers the shared ~/.agents/skills route, so keep the global
-  # view empty as well as the direct Codex view.
-  sync_view "$agents_skills" "$private_abs" "global"
-  sync_view "$claude_skills" "$private_abs" "claude" "$private_abs" "$private_abs/claude"
-  # Keep private skills out of Codex. Passing no catalogs still reconciles and
-  # removes links created by older versions of this script.
-  sync_view "$codex_skills" "$private_abs" "codex"
+  # Codex also discovers the shared ~/.agents/skills route. Expose the
+  # selected Josh Pigford, Matt Pocock, and JSM skills in both views.
+  sync_view "$agents_skills" "$private_abs" "global" "joshpigford,mattpocock,jsm" "$private_abs"
+  sync_view "$claude_skills" "$private_abs" "claude" "" "$private_abs" "$private_abs/claude"
+  sync_view "$codex_skills" "$private_abs" "codex" "joshpigford,mattpocock,jsm" "$private_abs" "$private_abs/codex"
 }
 
 main "$@"
