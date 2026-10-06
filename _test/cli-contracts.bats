@@ -63,11 +63,11 @@ EOF
   done
 }
 
-@test "sync-private-harness-assets: keeps private skills out of global and Codex" {
+@test "sync-private-harness-assets: restores Josh Pigford, Matt Pocock, and JSM global and Codex views" {
   run "$REPO_ROOT/scripts/sync-private-harness-assets.sh" --help
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"global and Codex views are intentionally kept free of private skills"* ]]
+  [[ "$output" == *"Josh Pigford, Matt Pocock, and JSM skills into the shared global and Codex views"* ]]
 }
 
 @test "restart-slicer-mac: execute restarts tray and daemon as the current user" {
@@ -172,4 +172,45 @@ EOF
   [ "$status" -eq 0 ]
   [[ "$output" == *"[dry-run] Would"* ]]
   [[ "$output" == *"$TEST_TMP_DIR/bin/browser-tools"* ]]
+}
+
+@test "sync-private-harness-assets: exposes selected Matt Pocock architecture skill idempotently" {
+  local fixture="$TEST_TMP_DIR/dotfiles"
+  local private="$TEST_TMP_DIR/harnesses-private"
+  mkdir -p "$fixture/scripts" "$private/mattpocock/skills/improve-codebase-architecture" "$private/mattpocock/skills/claude-only" "$private/mattpocock/load"
+  cp "$REPO_ROOT/scripts/sync-private-harness-assets.sh" "$fixture/scripts/"
+  printf '%s\n' '# architecture' > "$private/mattpocock/skills/improve-codebase-architecture/SKILL.md"
+  printf '%s\n' '# claude only' > "$private/mattpocock/skills/claude-only/SKILL.md"
+  printf '%s\n' improve-codebase-architecture > "$private/mattpocock/load/global.txt"
+  printf '%s\n' claude-only > "$private/mattpocock/load/claude.txt"
+
+  run "$fixture/scripts/sync-private-harness-assets.sh" --dry-run
+  [ "$status" -eq 0 ]
+  [ ! -L "$fixture/codex/.codex/skills/improve-codebase-architecture" ]
+
+  run "$fixture/scripts/sync-private-harness-assets.sh" --execute
+  [ "$status" -eq 0 ]
+  [ -f "$fixture/agents/.agents/skills/improve-codebase-architecture/SKILL.md" ]
+  [ -f "$fixture/codex/.codex/skills/improve-codebase-architecture/SKILL.md" ]
+  [ -f "$fixture/claude/.claude/skills/claude-only/SKILL.md" ]
+  [ ! -e "$fixture/codex/.codex/skills/claude-only" ]
+
+  run "$fixture/scripts/sync-private-harness-assets.sh" --execute
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"INFO linked"* ]]
+}
+
+@test "sync-private-harness-assets: exposes only selected JSM skills" {
+  local fixture="$TEST_TMP_DIR/dotfiles"
+  local private="$TEST_TMP_DIR/harnesses-private"
+  mkdir -p "$fixture/scripts" "$private/jsm/skills/extreme-software-optimization" "$private/jsm/skills/unselected" "$private/jsm/load"
+  cp "$REPO_ROOT/scripts/sync-private-harness-assets.sh" "$fixture/scripts/"
+  printf '%s\n' '# selected' > "$private/jsm/skills/extreme-software-optimization/SKILL.md"
+  printf '%s\n' '# unselected' > "$private/jsm/skills/unselected/SKILL.md"
+  printf '%s\n' extreme-software-optimization > "$private/jsm/load/global.txt"
+  run "$fixture/scripts/sync-private-harness-assets.sh" --execute
+  [ "$status" -eq 0 ]
+  [ -f "$fixture/agents/.agents/skills/extreme-software-optimization/SKILL.md" ]
+  [ -f "$fixture/codex/.codex/skills/extreme-software-optimization/SKILL.md" ]
+  [ ! -e "$fixture/codex/.codex/skills/unselected" ]
 }

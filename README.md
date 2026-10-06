@@ -184,12 +184,12 @@ missing from the Brewfile.
 ## Harness Assets
 
 Private harness assets are reconciled from the optional sibling
-`../harnesses-private` repo into the Claude skill root. The global and Codex
-views are intentionally kept free of private skills; stale private links in
-those views are removed during reconciliation. Only skills selected by
-provider load manifests are exposed. When two loaded providers use the same
-skill directory name, the sync uses a deterministic `<provider>-<skill>`
-destination name.
+`../harnesses-private` repo into the Claude skill root. The selected Josh
+Pigford, Matt Pocock, and JSM skills from `load/global.txt` are also exposed through the shared
+global and Codex views; other private providers remain Claude-only. Only
+skills selected by provider load manifests are exposed. When two loaded
+providers use the same skill directory name, each uses a deterministic
+`<provider>-<skill>` destination name.
 Run this from the `n-dotfiles` repo root:
 
 ```bash
