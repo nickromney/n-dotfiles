@@ -536,3 +536,25 @@ mocking framework.
 - [Omer Hamerman / DevOpsToolbox](https://github.com/omerxx/dotfiles) - again, a fan of the YouTube video walkthroughs
 - [Christian Sutter](https://github.com/csutter/punkt) - I used to work with Christian, and learned lots from pair programming with him.
 - [Rob / Tech Craft](https://www.youtube.com/@tech_craft/videos) - Not posted for a while, but excellent videos
+
+## Agent operation and plan status
+
+For the current ownership, action-effect and evidence contracts, use [the operating model](docs/agent-system.md). Its implemented plan covers agent navigation and documentation. Feature proposals below remain proposals until their own acceptance evidence is recorded; dated observations retain their original scope.
+
+## Layer-specific inspection and application
+
+| Requested change | Inspect / preview | Apply boundary |
+| --- | --- | --- |
+| Dotfile selection/conflict | `./stow.sh --list`, `./stow.sh --dry-run`; selected Stow tree | `./stow.sh zsh git` applies only selected packages; conflicts/backups remain explicit |
+| Cross-platform runtime/CLI | `mise/.config/mise/config.toml` | `mise install` affects declared tools; installed versions are observed separately |
+| macOS packages | `Brewfile`, bootstrap dry-run | Homebrew owns casks/fonts/mas/formulae; use the documented setup operation only when requested |
+| Linux packages | `Brewfile.posix` and Linux docs | Linux package layer differs from macOS |
+| Arch/Omarchy | `omarchy/README.md` | pacman owns system packages; Stow/mise remain applicable |
+| Harness exposure | `scripts/sync-private-harness-assets.sh`, private catalogue/load manifests | Source sync, explicit exposure and installed symlink are separate steps |
+
+For preview use `./bootstrap.sh --dry-run --no-input --skip-1password` on macOS.
+A broad `make install` is application, not discovery. Preserve owner edits and
+existing Stow backups; record backup paths and selected packages with the run.
+AI CLI native installers remain their update owners. Privileged/1Password/host
+application acceptance is attended and private; offline fixture tests do not
+certify convergence of the local machine.
