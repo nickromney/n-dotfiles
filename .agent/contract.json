@@ -23,7 +23,54 @@
         "Makefile",
         "pyproject.toml",
         "uv.lock",
-        "_test/audit-setup-safety.bats"
+        "_test/audit-setup-safety.bats",
+        "_macos/README.md",
+        "_macos/macos.sh",
+        "_macos/personal.yaml",
+        "_macos/work.yaml",
+        "_test/1password.bats",
+        "_test/README.md",
+        "_test/audio-priority-bar-config.bats",
+        "_test/audit-browser-safety.bats",
+        "_test/audit-config-privacy.bats",
+        "_test/audit-manifest.bats",
+        "_test/audit-nushell-validation.bats",
+        "_test/audit-runtime-migration.bats",
+        "_test/audit-shell-portability.bats",
+        "_test/audit-system-tools.bats",
+        "_test/audit-validation.bats",
+        "_test/bootstrap-omarchy.bats",
+        "_test/bootstrap.bats",
+        "_test/brave-memory-policy.bats",
+        "_test/check-1password-dev-tools.bats",
+        "_test/cli-contracts.bats",
+        "_test/debug/check-brew.sh",
+        "_test/debug/check-macos-settings.sh",
+        "_test/debug/check-personal-yaml.sh",
+        "_test/debug/check-scroll.sh",
+        "_test/debug/check-work-yaml.sh",
+        "_test/harness-guides.bats",
+        "_test/helpers/mocks.bash",
+        "_test/lima/lima-posix.sh",
+        "_test/lima/run-posix-smoke.sh",
+        "_test/lima/ubuntu-24.04.yaml",
+        "_test/macos-borders.bats",
+        "_test/macos-memory-report.bats",
+        "_test/macos.bats",
+        "_test/makefile.bats",
+        "_test/nushell.bats",
+        "_test/optimization-harness-guides.bats",
+        "_test/optimization-system-tools.bats",
+        "_test/run_macos_tests.sh",
+        "_test/run_tests.sh",
+        "_test/setup-personal-mac.bats",
+        "_test/shell-configs.bats",
+        "_test/shellcheck.sh",
+        "_test/stow.bats",
+        "scripts/hooks/check-staged-shell.sh",
+        "scripts/hooks/check-staged-yaml.sh",
+        "scripts/hooks/lib.sh",
+        "scripts/hooks/run-local-ci.sh"
       ],
       "requires": [],
       "recovery": "Read the failed owner job; repair its source or declared prerequisite, then rerun the full local gate. Fixture acceptance does not authorize cloud/device deployment."
@@ -45,7 +92,17 @@
       ],
       "acceptance_scope": "fixture",
       "inputs": [
-        "_test/audit-setup-safety.bats"
+        "_test/audit-setup-safety.bats",
+        "Makefile",
+        "_macos/README.md",
+        "_macos/macos.sh",
+        "_macos/personal.yaml",
+        "_macos/work.yaml",
+        "lefthook.yml",
+        "pyproject.toml",
+        "uv.lock",
+        "setup-ssh-from-1password.sh",
+        "setup-gitconfig-from-1password.sh"
       ],
       "requires": [],
       "recovery": "Inspect the named source/test and reproduce the failing synthetic case before reusing this lesson."
@@ -60,12 +117,24 @@
         "host",
         "safety"
       ],
-      "summary": "A dotfile audit may discover setup suggestions but must not execute setup or modify the host automatically; exercise disposable configuration fixtures.",
+      "summary": "Dry-run must leave accessibility preferences unchanged; failed credential refresh preserves working SSH/Git files, and successful secret-backed config stays private. Revalidate with disposable HOME and stubbed credential tools.",
       "owner": "_test/audit-setup-safety.bats",
       "basis": [
         {
           "path": "_test/audit-setup-safety.bats",
           "sha256": "007c0910d832962c13a671a1196e76ee98c769418cebba9cead9a577d6c8118d"
+        },
+        {
+          "path": "_macos/macos.sh",
+          "sha256": "0322595adb8818d6dc31f80147e29427feca1449f3bb24b6f06e530a9a368238"
+        },
+        {
+          "path": "setup-ssh-from-1password.sh",
+          "sha256": "0a8a8c626631b4d9a9e1f0b9ecc7c5a934149b735ae0b7854c24bcd4bbae4925"
+        },
+        {
+          "path": "setup-gitconfig-from-1password.sh",
+          "sha256": "f2a0d2ff8c7bd3eee580fb27b4569c1be2255800019bab8a94207dc85ed7e3d2"
         }
       ],
       "verify_action": "verify-lesson"
