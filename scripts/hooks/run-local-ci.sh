@@ -17,12 +17,13 @@ hook_parse_standard_args "$@"
 hook_require_execute_or_preview "would run pre-push local CI gate"
 
 if hook_skip_requested; then
-  hook_print_skip_and_exit
+  hook_fail "skip_requested: verification did not execute"
+  exit 1
 fi
 
 if [[ "${N_DOTFILES_LOCAL_CI_IN_PROGRESS:-}" == "1" ]]; then
-  hook_warn "N_DOTFILES_LOCAL_CI_IN_PROGRESS=1; skipping run-local-ci.sh to avoid recursive local CI"
-  exit 0
+  hook_fail "recursive_gate: verification did not execute"
+  exit 1
 fi
 
 cd "${HOOKS_REPO_ROOT}"

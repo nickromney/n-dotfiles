@@ -70,7 +70,8 @@
         "scripts/hooks/check-staged-shell.sh",
         "scripts/hooks/check-staged-yaml.sh",
         "scripts/hooks/lib.sh",
-        "scripts/hooks/run-local-ci.sh"
+        "scripts/hooks/run-local-ci.sh",
+        "_test/local-gate-refusal.bats"
       ],
       "requires": [],
       "recovery": "Read the failed owner job; repair its source or declared prerequisite, then rerun the full local gate. Fixture acceptance does not authorize cloud/device deployment."
@@ -138,6 +139,28 @@
         }
       ],
       "verify_action": "verify-lesson"
+    },
+    {
+      "id": "full-gate-refusal",
+      "when": [
+        "gate",
+        "skip",
+        "recursive",
+        "verification"
+      ],
+      "summary": "Skipped or recursive full-gate execution is not acceptance. Execute mode refuses those conditions before effects; preview remains read-only. The required fixture job proves both refusals and the preview control.",
+      "owner": "scripts/hooks/run-local-ci.sh",
+      "basis": [
+        {
+          "path": "scripts/hooks/run-local-ci.sh",
+          "sha256": "a916a13c60d4148462a48bf147cc4051124a8f29b6f7cf8e58faef1689cecaf6"
+        },
+        {
+          "path": "_test/local-gate-refusal.bats",
+          "sha256": "70bea28714af003e8d392810ac8335cf573cb11ef61f4464fa131ae8d1087a93"
+        }
+      ],
+      "verify_action": "verify"
     }
   ]
 }

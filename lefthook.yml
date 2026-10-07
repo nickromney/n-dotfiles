@@ -46,3 +46,5 @@ pre-push:
   jobs:
     - name: local-ci
       run: uv run --locked scripts/hooks/run-local-ci.sh --execute
+    - name: gate-refusal-contract
+      run: bats _test/local-gate-refusal.bats
