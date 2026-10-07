@@ -19,20 +19,20 @@ MOCK
 @test "explicit full-gate skip refuses without running producers" {
   run env N_DOTFILES_SKIP_HOOKS=1 N_DOTFILES_LOCAL_CI_IN_PROGRESS=0 "$GATE" --execute
   [ "$status" -ne 0 ]
-  [[ "$output" == *"skip_requested: verification did not execute"* ]]
+  [ "${output#*skip_requested: verification did not execute}" != "$output" ]
   [ ! -e "$PRODUCER_MARKER" ]
 }
 
 @test "recursive full-gate request refuses without running producers" {
   run env N_DOTFILES_SKIP_HOOKS=0 N_DOTFILES_LOCAL_CI_IN_PROGRESS=1 "$GATE" --execute
   [ "$status" -ne 0 ]
-  [[ "$output" == *"recursive_gate: verification did not execute"* ]]
+  [ "${output#*recursive_gate: verification did not execute}" != "$output" ]
   [ ! -e "$PRODUCER_MARKER" ]
 }
 
 @test "explicit preview remains an observation without running producers" {
   run env N_DOTFILES_SKIP_HOOKS=0 N_DOTFILES_LOCAL_CI_IN_PROGRESS=0 "$GATE" --dry-run
   [ "$status" -eq 0 ]
-  [[ "$output" == *"dry-run"* ]]
+  [ "$output" = 'DRY-RUN would run pre-push local CI gate' ]
   [ ! -e "$PRODUCER_MARKER" ]
 }

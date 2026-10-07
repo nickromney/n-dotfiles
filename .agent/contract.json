@@ -15,7 +15,8 @@
       "effects": [
         "read",
         "local_write",
-        "process"
+        "process",
+        "network"
       ],
       "acceptance_scope": "fixture",
       "inputs": [
@@ -89,7 +90,8 @@
       "effects": [
         "read",
         "local_write",
-        "process"
+        "process",
+        "network"
       ],
       "acceptance_scope": "fixture",
       "inputs": [
@@ -153,11 +155,11 @@
       "basis": [
         {
           "path": "scripts/hooks/run-local-ci.sh",
-          "sha256": "a916a13c60d4148462a48bf147cc4051124a8f29b6f7cf8e58faef1689cecaf6"
+          "sha256": "92468326c62478d85a32ef9c4f294653e2e250e089ba8ae3ce4c7f2de425d37e"
         },
         {
           "path": "_test/local-gate-refusal.bats",
-          "sha256": "70bea28714af003e8d392810ac8335cf573cb11ef61f4464fa131ae8d1087a93"
+          "sha256": "d8bad5acbf62d69d97a20ba506150e2441098848e4c49b038543ea8aa1bb17bb"
         }
       ],
       "verify_action": "verify"

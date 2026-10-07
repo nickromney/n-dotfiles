@@ -35,10 +35,8 @@ Running:
   uv run --locked make lint
   uv run --locked make test
 
-Skip only when you have a reason:
-  LEFTHOOK=0 git push
-  N_DOTFILES_SKIP_HOOKS=1 git push
-  git push --no-verify
+Full acceptance requires every configured check.
+Explicit skip and recursive execution requests refuse verification.
 EOF
 
 export N_DOTFILES_LOCAL_CI_IN_PROGRESS=1
