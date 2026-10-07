@@ -31,8 +31,8 @@ cat <<'EOF'
 n-dotfiles pre-push local CI gate
 
 Running:
-  make lint
-  make test
+  uv run --locked make lint
+  uv run --locked make test
 
 Skip only when you have a reason:
   LEFTHOOK=0 git push
@@ -43,10 +43,10 @@ EOF
 export N_DOTFILES_LOCAL_CI_IN_PROGRESS=1
 failed_gate=""
 
-if ! make lint; then
-  failed_gate="make lint"
-elif ! make test; then
-  failed_gate="make test"
+if ! uv run --locked make lint; then
+  failed_gate="uv run --locked make lint"
+elif ! uv run --locked make test; then
+  failed_gate="uv run --locked make test"
 fi
 
 if [[ -n "${failed_gate}" ]]; then

@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "project": "n-dotfiles",
+  "purpose": "Three-owner declarative machine setup and harness exposure.",
+  "actions": [
+    {
+      "id": "verify",
+      "intent": "Execute the complete configured local gate before publishing this repository.",
+      "argv": [
+        "lefthook",
+        "run",
+        "pre-push",
+        "--force"
+      ],
+      "effects": [
+        "read",
+        "local_write",
+        "process"
+      ],
+      "acceptance_scope": "fixture",
+      "inputs": [
+        "lefthook.yml",
+        "Makefile",
+        "pyproject.toml",
+        "uv.lock",
+        "_test/audit-setup-safety.bats"
+      ],
+      "requires": [],
+      "recovery": "Read the failed owner job; repair its source or declared prerequisite, then rerun the full local gate. Fixture acceptance does not authorize cloud/device deployment."
+    },
+    {
+      "id": "verify-lesson",
+      "intent": "Re-evaluate the retained domain decision using its owning regression/contract.",
+      "argv": [
+        "uv",
+        "run",
+        "--locked",
+        "bats",
+        "_test/audit-setup-safety.bats"
+      ],
+      "effects": [
+        "read",
+        "local_write",
+        "process"
+      ],
+      "acceptance_scope": "fixture",
+      "inputs": [
+        "_test/audit-setup-safety.bats"
+      ],
+      "requires": [],
+      "recovery": "Inspect the named source/test and reproduce the failing synthetic case before reusing this lesson."
+    }
+  ],
+  "learning": [
+    {
+      "id": "owner-invariant",
+      "when": [
+        "audit",
+        "setup",
+        "host",
+        "safety"
+      ],
+      "summary": "A dotfile audit may discover setup suggestions but must not execute setup or modify the host automatically; exercise disposable configuration fixtures.",
+      "owner": "_test/audit-setup-safety.bats",
+      "basis": [
+        {
+          "path": "_test/audit-setup-safety.bats",
+          "sha256": "007c0910d832962c13a671a1196e76ee98c769418cebba9cead9a577d6c8118d"
+        }
+      ],
+      "verify_action": "verify-lesson"
+    }
+  ]
+}

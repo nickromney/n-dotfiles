@@ -61,3 +61,9 @@ their native installers own updates.
 
 - Use [skills/use-dotfiles/SKILL.md](skills/use-dotfiles/SKILL.md) for repo-specific workflows and validation guidance.
 - Use [skills/shell-cli-contract-audit/SKILL.md](skills/shell-cli-contract-audit/SKILL.md) when changing setup or maintenance CLIs.
+
+The source-owned `.agent/contract.json` declares existing local verification actions,
+their effects and acceptance scope, and lessons bound to exact source/test bytes.
+Run the full local gate with `lefthook run pre-push --force`; a plain manual run
+can select no files. Remote workflows publish allowed artifacts only. Local
+fixture acceptance does not establish a live cloud, device or deployment state.
