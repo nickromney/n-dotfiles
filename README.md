@@ -502,8 +502,8 @@ make hooks
 LEFTHOOK=0 git commit -m "message"
 git push --no-verify
 
-# Run on-demand GitHub CI
-gh workflow run test.yml
+# Run the pre-push gate manually
+lefthook run pre-push --force
 ```
 
 ### Ubuntu 24.04 Lima smoke test (non-mac/POSIX path)
