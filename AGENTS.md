@@ -1,9 +1,5 @@
 # Agent Guide (n-dotfiles)
 
-For system ownership, action effects, verification scope or a new agent task,
-read [the operating model](docs/agent-system.md). Detailed product plans
-remain at the linked owners; historical observations retain their dates.
-
 Use this file as a map, not a manual.
 
 ## Core Rules
@@ -62,8 +58,10 @@ their native installers own updates.
 - Use [skills/use-dotfiles/SKILL.md](skills/use-dotfiles/SKILL.md) for repo-specific workflows and validation guidance.
 - Use [skills/shell-cli-contract-audit/SKILL.md](skills/shell-cli-contract-audit/SKILL.md) when changing setup or maintenance CLIs.
 
-The source-owned `.agent/contract.json` declares existing local verification actions,
-their effects and acceptance scope, and lessons bound to exact source/test bytes.
-Run the full local gate with `lefthook run pre-push --force`; a plain manual run
-can select no files. No GitHub Actions workflow is active in this checkout. Local
-fixture acceptance does not establish a live cloud, device or deployment state.
+## Verify
+
+- Preview before applying: `./stow.sh --list`, `./stow.sh --dry-run`, and on macOS `./bootstrap.sh --dry-run --no-input --skip-1password`.
+- Checks: `make lint` (shellcheck, markdownlint) and `make test` (`_test/run_tests.sh`); the pre-push gate runs both under `uv run --locked`. Full gate: `lefthook run pre-push --force`, which also runs `bats _test/local-gate-refusal.bats`.
+- `make install` applies Brewfile packages, Stow symlinks and mise tools to the host. Preserve user edits and existing Stow backups.
+- Installed tools and symlinks are observed host state, not proof that every layer converged. Offline fixture tests do not certify the local machine.
+- AI CLIs self-update outside package pins. No GitHub Actions workflow is active.
