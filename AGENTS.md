@@ -58,14 +58,10 @@ their native installers own updates.
 - Use [skills/use-dotfiles/SKILL.md](skills/use-dotfiles/SKILL.md) for repo-specific workflows and validation guidance.
 - Use [skills/shell-cli-contract-audit/SKILL.md](skills/shell-cli-contract-audit/SKILL.md) when changing setup or maintenance CLIs.
 
-## Codex workflow
+## Verify
 
-- Keep this file short, concrete, and repo-specific. Capture layout, commands, conventions, constraints, and done criteria; move repeatable procedures to scoped skills/docs.
-- For each task, state the goal, relevant context/files, constraints, and verification criteria. Plan complex or ambiguous work before editing.
-- Keep one thread per coherent outcome. Read only relevant files; delegate bounded exploration/tests when useful, and use worktrees for parallel work.
-- Verify changes with focused tests and applicable lint, formatting, type checks, builds, and diff review; report checks run or skipped.
-- Prefer least-privilege permissions and dry-runs. Add MCP/tools only when they remove a real repeated loop.
-- Use background or scheduled work for long-running or recurring tasks instead of continuous polling.
-- After a repeated mistake or correction, update this file with the smallest actionable rule that would prevent it.
-
-Reference: [Codex best practices](https://learn.chatgpt.com/guides/best-practices)
+- Preview before applying: `./stow.sh --list`, `./stow.sh --dry-run`, and on macOS `./bootstrap.sh --dry-run --no-input --skip-1password`.
+- Checks: `make lint` (shellcheck, markdownlint) and `make test` (`_test/run_tests.sh`); the pre-push gate runs both under `uv run --locked`. Full gate: `lefthook run pre-push --force`, which also runs `bats _test/local-gate-refusal.bats`.
+- `make install` applies Brewfile packages, Stow symlinks and mise tools to the host. Preserve user edits and existing Stow backups.
+- Installed tools and symlinks are observed host state, not proof that every layer converged. Offline fixture tests do not certify the local machine.
+- AI CLIs self-update outside package pins. No GitHub Actions workflow is active.

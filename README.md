@@ -149,9 +149,13 @@ Useful commands:
 mise registry <name>   # check whether a tool has a short name
 mise ls                # what is installed/active
 mise outdated          # check pinned tools for newer releases
-mise upgrade --bump    # deliberately update pins and install newer releases
-mise use -g foo@latest # add + install a global tool in one step
+mise use <name>@<reviewed-version> # explicitly change a repository pin
+mise use -g go@1.26.8            # example of an explicit global pin
 ```
+
+Before changing pins, check each selected release's publication date and use
+versions published at least seven days ago. Use `mise install` for the repository's existing locked
+versions; avoid unconstrained latest-version installation or upgrade commands.
 
 ### Adding a mac app, font, or formula
 
@@ -497,8 +501,8 @@ make hooks
 LEFTHOOK=0 git commit -m "message"
 git push --no-verify
 
-# Run on-demand GitHub CI
-gh workflow run test.yml
+# Run the pre-push gate manually
+lefthook run pre-push --force
 ```
 
 ### Ubuntu 24.04 Lima smoke test (non-mac/POSIX path)

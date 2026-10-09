@@ -17,12 +17,13 @@ hook_parse_standard_args "$@"
 hook_require_execute_or_preview "would run pre-push local CI gate"
 
 if hook_skip_requested; then
-  hook_print_skip_and_exit
+  hook_fail "skip_requested: verification did not execute"
+  exit 1
 fi
 
 if [[ "${N_DOTFILES_LOCAL_CI_IN_PROGRESS:-}" == "1" ]]; then
-  hook_warn "N_DOTFILES_LOCAL_CI_IN_PROGRESS=1; skipping run-local-ci.sh to avoid recursive local CI"
-  exit 0
+  hook_fail "recursive_gate: verification did not execute"
+  exit 1
 fi
 
 cd "${HOOKS_REPO_ROOT}"
@@ -31,22 +32,20 @@ cat <<'EOF'
 n-dotfiles pre-push local CI gate
 
 Running:
-  make lint
-  make test
+  uv run --locked make lint
+  uv run --locked make test
 
-Skip only when you have a reason:
-  LEFTHOOK=0 git push
-  N_DOTFILES_SKIP_HOOKS=1 git push
-  git push --no-verify
+Full acceptance requires every configured check.
+Explicit skip and recursive execution requests refuse verification.
 EOF
 
 export N_DOTFILES_LOCAL_CI_IN_PROGRESS=1
 failed_gate=""
 
-if ! make lint; then
-  failed_gate="make lint"
-elif ! make test; then
-  failed_gate="make test"
+if ! uv run --locked make lint; then
+  failed_gate="uv run --locked make lint"
+elif ! uv run --locked make test; then
+  failed_gate="uv run --locked make test"
 fi
 
 if [[ -n "${failed_gate}" ]]; then
