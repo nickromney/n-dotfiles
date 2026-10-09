@@ -189,7 +189,7 @@ missing from the Brewfile.
 
 Private harness assets are reconciled from the optional sibling
 `../harnesses-private` repo into the Claude skill root. The selected Josh
-Pigford, Matt Pocock, and JSM skills from `load/global.txt` are also exposed through the shared
+Pigford, Matt Pocock, JSM, and pstack skills from `load/global.txt` are also exposed through the shared
 global and Codex views; other private providers remain Claude-only. Only
 skills selected by provider load manifests are exposed. When two loaded
 providers use the same skill directory name, each uses a deterministic
