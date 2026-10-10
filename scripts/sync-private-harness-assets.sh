@@ -13,7 +13,7 @@ usage() {
 Usage: scripts/sync-private-harness-assets.sh [options] [--dry-run|--execute]
 
 Reconcile selected private harness assets into the Claude harness view, plus
-selected Josh Pigford, Matt Pocock, and JSM skills into the shared global and Codex views. The
+selected Josh Pigford, Matt Pocock, JSM, and pstack skills into the shared global and Codex views. The
 default private source is the optional sibling repo ../harnesses-private. If
 that repo is absent, the script exits successfully without changing anything.
 
@@ -27,7 +27,7 @@ If a provider has load manifests, only listed skills are exposed to each view:
   <provider>/load/claude.txt
   <provider>/load/codex.txt
 
-Josh Pigford, Matt Pocock, and JSM skills selected by load manifests are exposed to
+Josh Pigford, Matt Pocock, JSM, and pstack skills selected by load manifests are exposed to
 the global and Codex views. Other private providers remain Claude-only. Built-in or other
 non-private Codex skills are left untouched. When loaded providers collide on
 a skill name, each provider receives a provider prefix.
@@ -403,10 +403,10 @@ main() {
   private_abs="$(absolute_path "$PRIVATE_ROOT")"
 
   # Codex also discovers the shared ~/.agents/skills route. Expose the
-  # selected Josh Pigford, Matt Pocock, and JSM skills in both views.
-  sync_view "$agents_skills" "$private_abs" "global" "joshpigford,mattpocock,jsm" "$private_abs"
+  # selected Josh Pigford, Matt Pocock, JSM, and pstack skills in both views.
+  sync_view "$agents_skills" "$private_abs" "global" "joshpigford,mattpocock,jsm,pstack" "$private_abs"
   sync_view "$claude_skills" "$private_abs" "claude" "" "$private_abs" "$private_abs/claude"
-  sync_view "$codex_skills" "$private_abs" "codex" "joshpigford,mattpocock,jsm" "$private_abs" "$private_abs/codex"
+  sync_view "$codex_skills" "$private_abs" "codex" "joshpigford,mattpocock,jsm,pstack" "$private_abs" "$private_abs/codex"
 }
 
 main "$@"
