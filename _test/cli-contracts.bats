@@ -66,11 +66,13 @@ EOF
   done
 }
 
-@test "sync-private-harness-assets: restores Josh Pigford, Matt Pocock, JSM, and pstack global and Codex views" {
+@test "sync-private-harness-assets: documents every Nick Romney skill and the selected providers in global and Codex views" {
   run "$REPO_ROOT/scripts/sync-private-harness-assets.sh" --help
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Josh Pigford, Matt Pocock, JSM, and pstack skills into the shared global and Codex views"* ]]
+  [[ "$output" == *"Every nickromney skill is exposed to all three views"* ]]
+  [[ "$output" == *"Josh Pigford, Matt Pocock, JSM, and pstack skills selected by load manifests are exposed to"* ]]
+  [[ "$output" == *"the global and Codex views"* ]]
 }
 
 @test "restart-slicer-mac: execute restarts tray and daemon as the current user" {
