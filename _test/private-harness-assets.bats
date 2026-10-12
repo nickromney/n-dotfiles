@@ -51,3 +51,26 @@ make_skill() {
   [ "$status" -eq 0 ]
   [ -f "$DOTFILES_ROOT/codex/.codex/skills/local-only/SKILL.md" ]
 }
+
+@test "every nickromney skill reaches the Claude, global and Codex views, listed or not" {
+  make_skill nickromney use-platform
+  make_skill nickromney bash-quality
+  make_skill nickromney audit-product-virality
+  mkdir -p "$PRIVATE_ROOT/nickromney/load"
+  printf 'use-platform\n' > "$PRIVATE_ROOT/nickromney/load/global.txt"
+  make_skill everyinc ce-plan
+  mkdir -p "$PRIVATE_ROOT/everyinc/load"
+  printf 'ce-plan\n' > "$PRIVATE_ROOT/everyinc/load/global.txt"
+
+  run bash "$DOTFILES_ROOT/scripts/sync-private-harness-assets.sh" --execute --private-root "$PRIVATE_ROOT"
+  [ "$status" -eq 0 ]
+  for view in agents/.agents/skills claude/.claude/skills codex/.codex/skills; do
+    for skill in use-platform bash-quality audit-product-virality; do
+      [ -f "$DOTFILES_ROOT/$view/$skill/SKILL.md" ] || { echo "$view lacks $skill"; return 1; }
+    done
+  done
+  # Other providers keep their existing reach: Claude only.
+  [ -f "$DOTFILES_ROOT/claude/.claude/skills/ce-plan/SKILL.md" ]
+  [ ! -e "$DOTFILES_ROOT/codex/.codex/skills/ce-plan" ]
+  [ ! -e "$DOTFILES_ROOT/agents/.agents/skills/ce-plan" ]
+}
