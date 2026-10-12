@@ -222,3 +222,25 @@ EOF
   [ ! -e "$TEST_HOME/Library/LaunchAgents/com.nickromney.n-borders.plist" ]
   [ "$(cat "$launchctl_log")" = "bootout gui/501/com.nickromney.n-borders" ]
 }
+
+@test "stow links .terraformrc and creates the shared plugin cache directory" {
+  mkdir -p "$TEST_REPO/terraform"
+  cp "$BATS_TEST_DIRNAME/../terraform/.terraformrc" "$TEST_REPO/terraform/.terraformrc"
+
+  run env HOME="$TEST_HOME" "$TEST_REPO/stow.sh" --dry-run terraform
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Would create $TEST_HOME/.terraform.d/plugin-cache"* ]]
+  [ ! -e "$TEST_HOME/.terraform.d/plugin-cache" ]
+
+  run env HOME="$TEST_HOME" "$TEST_REPO/stow.sh" terraform
+  [ "$status" -eq 0 ]
+  [ -L "$TEST_HOME/.terraformrc" ]
+  [ -d "$TEST_HOME/.terraform.d/plugin-cache" ]
+  # shellcheck disable=SC2016 # the file must hold a literal $HOME, which Terraform expands
+  grep -q '^plugin_cache_dir = "\$HOME/.terraform.d/plugin-cache"$' "$TEST_HOME/.terraformrc"
+
+  touch "$TEST_HOME/.terraform.d/plugin-cache/keep"
+  run env HOME="$TEST_HOME" "$TEST_REPO/stow.sh" terraform
+  [ "$status" -eq 0 ]
+  [ -f "$TEST_HOME/.terraform.d/plugin-cache/keep" ]
+}

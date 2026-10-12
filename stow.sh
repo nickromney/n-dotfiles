@@ -28,6 +28,7 @@ STOW_DIRS=(
   silo
   ssh
   starship
+  terraform
   tmux
   yazi
   zsh
@@ -234,6 +235,20 @@ legacy_n_borders_plist_is_managed() {
     && grep -Fq '.local/bin/n-borders-daemon' "$plist"
 }
 
+# Terraform refuses to start when plugin_cache_dir (set in terraform/.terraformrc) is
+# missing, and stowing the directory itself would put the cache inside this repo.
+ensure_terraform_plugin_cache() {
+  local cache_dir="$HOME/.terraform.d/plugin-cache"
+
+  [[ -d "$cache_dir" ]] && return 0
+  if [[ "$DRY_RUN" == "true" ]]; then
+    echo "Would create $cache_dir"
+    return 0
+  fi
+  mkdir -p "$cache_dir"
+  echo "Created $cache_dir"
+}
+
 remove_legacy_n_borders() {
   local -a legacy_paths=(
     "$HOME/.config/n-borders"
@@ -433,6 +448,9 @@ main() {
       echo "Stowed $dir"
       if [[ "$dir" == "macos-borders" ]]; then
         remove_legacy_n_borders
+      fi
+      if [[ "$dir" == "terraform" ]]; then
+        ensure_terraform_plugin_cache
       fi
     else
       error "Failed to stow $dir"
