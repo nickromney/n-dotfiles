@@ -55,6 +55,8 @@ skills/*
 !skills/use-dotfiles/SKILL.md
 !skills/shell-cli-contract-audit/
 !skills/shell-cli-contract-audit/SKILL.md
+!skills/verify-dotfiles/
+!skills/verify-dotfiles/**
 claude/.claude/skills/.SKILLS_MANAGED_BY_JSM
 claude/.claude/skills/*
 !claude/.claude/skills/.gitkeep
