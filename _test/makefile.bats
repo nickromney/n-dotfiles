@@ -98,6 +98,8 @@ EOF
 
   # Copy the Makefile
   cp "$REPO_ROOT/Makefile" .
+  mkdir -p skills/verify-dotfiles
+  cp "$REPO_ROOT/skills/verify-dotfiles/verify.mk" skills/verify-dotfiles/verify.mk
 }
 
 teardown() {

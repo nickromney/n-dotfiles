@@ -9,6 +9,8 @@ setup() {
   TEST_BIN="$TEST_ROOT/bin"
   mkdir -p "$TEST_BIN"
   cp "$REPO_ROOT/Makefile" "$TEST_ROOT/Makefile"
+  mkdir -p "$TEST_ROOT/skills/verify-dotfiles"
+  cp "$REPO_ROOT/skills/verify-dotfiles/verify.mk" "$TEST_ROOT/skills/verify-dotfiles/verify.mk"
   export PATH="$TEST_BIN:/usr/bin:/bin"
   cd "$TEST_ROOT" || return 1
 }
