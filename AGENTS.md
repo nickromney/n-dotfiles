@@ -57,6 +57,7 @@ their native installers own updates.
 
 - Use [skills/use-dotfiles/SKILL.md](skills/use-dotfiles/SKILL.md) for repo-specific workflows and validation guidance.
 - Use [skills/shell-cli-contract-audit/SKILL.md](skills/shell-cli-contract-audit/SKILL.md) when changing setup or maintenance CLIs.
+- Use [skills/verify-dotfiles/SKILL.md](skills/verify-dotfiles/SKILL.md) to prove Stow behavior in an isolated home.
 
 ## Verify
 

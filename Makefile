@@ -46,6 +46,9 @@ export JETBRAINSIDE ?= RubyMine
 HOST_OS := $(shell uname -s)
 BREWFILE := $(if $(filter Darwin,$(HOST_OS)),Brewfile,Brewfile.posix)
 
+VERIFY_SKILL := skills/verify-dotfiles
+include $(VERIFY_SKILL)/verify.mk
+
 # macOS settings profile for `make configure` (personal or work)
 MACOS_PROFILE ?= personal
 
