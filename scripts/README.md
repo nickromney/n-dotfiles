@@ -1,5 +1,55 @@
 # Scripts
 
+## cleanup-storage
+
+Preview global caches, or explicitly select projects and review workspaces.
+The default is a dry run. `--all` keeps its existing global cache scope.
+
+```bash
+./scripts/cleanup-storage.sh --project-caches ~/Developer/personal --dry-run
+./scripts/cleanup-storage.sh --project-caches ../multi-review/implementation --dry-run
+./scripts/cleanup-storage.sh --project-caches ../multi-review/implementation --execute --no-input
+```
+
+Project discovery works under any directory. It clears only recognized ignored
+caches in Git projects, including Terraform providers/modules, Swift build output,
+uv caches, virtual environments, Node dependencies and common compiler caches.
+Tracked and nonignored untracked files prevent removal of their cache directory.
+Nested Git stores, reports, evidence, Swift build logs and result bundles stay.
+Terraform backend state, environment selection and lockfiles stay.
+Ordinary ignored local data stays. Symlinked roots and cache paths are refused.
+Close builds and tools before execution; later use rebuilds or downloads caches.
+
+To retire temporary checkouts, select a root containing them and a separate
+recovery directory. Reports and other files outside individual checkouts stay.
+
+```bash
+./scripts/cleanup-storage.sh --retire-checkouts /path/to/review-workspace/implementation \
+  --archive-root /path/to/recovery --dry-run
+./scripts/cleanup-storage.sh --retire-checkouts /path/to/review-workspace/implementation \
+  --archive-root /path/to/recovery --execute --no-input
+```
+
+Before removing each checkout, retirement archives its complete Git directory,
+staged and unstaged changes, untracked files, and ignored noncache files.
+Only the previewed disposable caches are omitted. It verifies archive contents,
+permissions and symlinks, then checks that the source has stayed unchanged.
+The recovery directory holds archives and manifests recording their source and
+omitted caches. Allow enough free space for the archive before reclaiming a
+checkout. Linked worktrees and external Git object stores require separate care.
+
+Restore an archive into an empty directory:
+
+```bash
+mkdir /path/to/restored-checkout
+tar -xzf /path/to/recovery/CHECKOUT.tar.gz -C /path/to/restored-checkout
+git -C /path/to/restored-checkout status
+```
+
+Project modes need Python 3.9+ and Git. They cannot be mixed with the global
+targets, `--report`, `--list` or the interactive chooser. Repeat a project flag
+to select separate roots; overlapping roots are rejected before changes.
+
 ## audit-github-repos
 
 Compare a GitHub owner's repositories with local clones, then report upstream
