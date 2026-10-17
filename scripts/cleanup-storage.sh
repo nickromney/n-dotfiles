@@ -10,6 +10,8 @@ MODE=""
 INTERACTIVE=false
 NO_INPUT=false
 ARG_COUNT=$#
+PROJECT_SCOPE=false
+PROJECT_ARGS=()
 
 usage() {
   cat <<'HELP'
@@ -32,13 +34,19 @@ volumes and chat history are excluded from --all. Optional named targets:
 
 Options:
   -d, --dry-run       Preview paths and sizes (default)
-      --execute       Delete; requires --all or --target NAME
+      --execute       Apply an explicit global or project selection
       --all           Clear the defined rebuildable cache set
       --target NAME   Select a catalog target (repeatable; see --list)
       --list          Show every target and its path; do not delete
       --report        Show sizes of major storage directories; do not delete
       --interactive   Show the chooser (also supports piped answers)
       --no-input      Disable chooser; --execute is explicit deletion consent
+      --project-caches ROOT
+                      Discover ignored project caches recursively (repeatable)
+      --retire-checkouts ROOT
+                      Archive and retire standalone checkouts (repeatable)
+      --archive-root PATH
+                      Recovery directory required by --retire-checkouts
   -h, --help          Show this help with examples
 
 Run as your login user, without sudo. HOME and XDG_CACHE_HOME must be absolute.
@@ -54,6 +62,17 @@ Examples:
   scripts/cleanup-storage.sh --dry-run --target factory-data
   scripts/cleanup-storage.sh --execute --target factory-logs
   scripts/cleanup-storage.sh --execute --target huggingface --target omlx-models
+  scripts/cleanup-storage.sh --project-caches ~/Developer/personal --dry-run
+  scripts/cleanup-storage.sh --project-caches /path/to/review-workspace/implementation --execute --no-input
+  scripts/cleanup-storage.sh --retire-checkouts /path/to/review-workspace/implementation --archive-root /path/to/recovery --dry-run
+
+Project scopes need Python 3.9+ and Git. Close tools using selected projects.
+Only ignored rebuildable caches are cleared. Tracked/nonignored untracked paths,
+reports, evidence, Terraform backend metadata/state and nested Git stores stay.
+Retirement preserves complete Git history, staged/unstaged/untracked files and
+ignored noncache data in verified recovery archives before removing checkouts.
+Linked worktrees and external Git object stores must be handled separately.
+Project scopes are separate from --all, --target, --report and --list.
 HELP
 }
 while [[ $# -gt 0 ]]; do
@@ -76,14 +95,19 @@ while [[ $# -gt 0 ]]; do
       TARGETS+=("$2"); shift 2 ;;
     --interactive) INTERACTIVE=true; shift ;;
     --no-input) NO_INPUT=true; shift ;;
+    --project-caches|--retire-checkouts|--archive-root)
+      if [[ $# -lt 2 || -z "$2" || "$2" == -* ]]; then
+        echo "$1 requires a path" >&2; exit 1
+      fi
+      PROJECT_SCOPE=true; PROJECT_ARGS+=("$1" "$2"); shift 2 ;;
     *) echo "Unknown argument: $1" >&2; exit 1 ;;
   esac
 done
-if "$INTERACTIVE" && { "$NO_INPUT" || [[ -n "$MODE" ]] || "$ALL" || "$REPORT" || "$LIST" || [[ ${#TARGETS[@]} -gt 0 ]]; }; then
+if "$INTERACTIVE" && { "$NO_INPUT" || [[ -n "$MODE" ]] || "$ALL" || "$REPORT" || "$LIST" || "$PROJECT_SCOPE" || [[ ${#TARGETS[@]} -gt 0 ]]; }; then
   echo "Use --interactive on its own" >&2; exit 1
 fi
 if [[ $ARG_COUNT -eq 0 && -t 0 && -t 1 ]]; then INTERACTIVE=true; fi
-if { "$REPORT" || "$LIST"; } && { ! "$DRY_RUN" || "$ALL" || [[ ${#TARGETS[@]} -gt 0 ]]; }; then
+if { "$REPORT" || "$LIST"; } && { ! "$DRY_RUN" || "$ALL" || "$PROJECT_SCOPE" || [[ ${#TARGETS[@]} -gt 0 ]]; }; then
   echo "Use --report or --list without cleanup selections or --execute" >&2; exit 1
 fi
 if "$REPORT" && "$LIST"; then
@@ -92,8 +116,11 @@ fi
 if "$ALL" && [[ ${#TARGETS[@]} -gt 0 ]]; then
   echo "Use either --all or --target" >&2; exit 1
 fi
-if ! "$DRY_RUN" && ! "$ALL" && [[ ${#TARGETS[@]} -eq 0 ]]; then
-  echo "--execute requires --all or --target NAME" >&2; exit 1
+if "$PROJECT_SCOPE" && { "$ALL" || [[ ${#TARGETS[@]} -gt 0 ]]; }; then
+  echo "Use project scopes separately from --all or --target" >&2; exit 1
+fi
+if ! "$DRY_RUN" && ! "$ALL" && ! "$PROJECT_SCOPE" && [[ ${#TARGETS[@]} -eq 0 ]]; then
+  echo "--execute requires --all, --target NAME or an explicit project scope" >&2; exit 1
 fi
 if [[ "$(id -u)" -eq 0 ]]; then
   echo "Run as your login user, without sudo" >&2; exit 1
@@ -101,6 +128,12 @@ fi
 CACHE_ROOT="${XDG_CACHE_HOME:-$HOME/.cache}"
 if [[ "$HOME" != /* || "$HOME" == / || "$CACHE_ROOT" != /* || "$CACHE_ROOT" == / ]]; then
   echo "HOME and XDG_CACHE_HOME must be absolute, non-root directories" >&2; exit 1
+fi
+if "$PROJECT_SCOPE"; then
+  command -v python3 >/dev/null 2>&1 || { echo "Project cleanup requires Python 3.9+" >&2; exit 1; }
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  if ! "$DRY_RUN"; then PROJECT_ARGS+=(--execute); fi
+  exec python3 "$script_dir/cleanup_storage_projects.py" "${PROJECT_ARGS[@]}"
 fi
 if [[ "$(uname -s)" == Darwin ]]; then
   APP_CACHE="$HOME/Library/Caches"
