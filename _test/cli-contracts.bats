@@ -46,6 +46,7 @@ EOF
     "scripts/macos-memory-report.sh"
     "scripts/install-borders.sh"
     "scripts/brew-update.sh"
+    "scripts/update-all.sh"
     "scripts/cleanup-lima.sh"
     "scripts/cleanup-storage.sh"
     "scripts/cleanup-mise.sh"

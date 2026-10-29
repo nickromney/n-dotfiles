@@ -67,7 +67,7 @@ Or run the whole personal flow (bootstrap + macOS settings + SSH from
 
 ```bash
 make install    # host-appropriate package layer + stow + mise (idempotent)
-make update     # update brew, mise, and Mac App Store packages
+make update-all # update managed tools and repository dependencies
 ```
 
 If an older unmanaged dotfile conflicts with a tracked Stow package,
@@ -119,7 +119,7 @@ make install       # host-appropriate package layer + stow + mise
 make linux-install  # Linux: stow + mise, no Homebrew
 make omarchy-setup  # Arch/Omarchy: pacman prerequisites + personal layers
 make stow          # symlink dotfiles only
-make update        # update brew, mise, mas (and rustup if present)
+make update-all    # update managed tools and dependencies with the normal cooldown
 make configure     # apply macOS settings (MACOS_PROFILE=personal|work)
 make lint          # shellcheck + markdownlint-cli2
 make test          # full BATS suite
@@ -148,14 +148,92 @@ Useful commands:
 ```bash
 mise registry <name>   # check whether a tool has a short name
 mise ls                # what is installed/active
-mise outdated          # check pinned tools for newer releases
+mise outdated --bump   # check for releases beyond the exact pins
 mise use <name>@<reviewed-version> # explicitly change a repository pin
 mise use -g go@1.26.8            # example of an explicit global pin
 ```
 
-Before changing pins, check each selected release's publication date and use
-versions published at least seven days ago. Use `mise install` for the repository's existing locked
-versions; avoid unconstrained latest-version installation or upgrade commands.
+To update all managed components, use the repeatable maintenance entrypoint:
+
+```bash
+make update-all-preview
+make update-all
+```
+
+For today's latest releases, including major versions, bypass the cooldown for
+one invocation:
+
+```bash
+make update-all-preview NO_COOLDOWN=1
+make update-all NO_COOLDOWN=1 NO_INPUT=1
+```
+
+The entrypoint updates Homebrew formulae and eligible casks, mise pins, the repository's
+Bun and uv dependencies, Mac App Store apps, and Rust toolchains. Use
+`make update-mise NO_COOLDOWN=1 NO_INPUT=1` to run one component.
+The other component targets are `update-brew`, `update-dependencies`,
+`update-mas`, and `update-rust`. Add `DRY_RUN=1` to preview any component.
+For example, retry a Homebrew update that needs a sudo password with
+`make update-brew NO_COOLDOWN=1` in your terminal. It retains old mise versions and skips Homebrew cleanup. A failed
+step produces a nonzero exit status, while independent components still run.
+Self-updating casks retain their native updaters and release channels. The
+entrypoint does not use Homebrew's `--greedy` option: Homebrew receipts can lag
+behind an app's actual version, so a forced replacement can downgrade the app
+or switch it from beta/nightly to stable.
+The mise step checks again for eligible upgrades after installation. The
+dependency step audits both lockfiles and rebuilds the compiled `browser-tools`
+with the new Bun runtime, then checks its help command. If uv cannot restore
+the normal cooldown metadata without changing the updated dependency set, the
+step retains the emergency lockfile and reports a failure for review.
+
+Mise, Bun, and uv use the seven-day cooldown unless `--no-cooldown` is present.
+Homebrew, App Store, and Rust use their native update policies. Homebrew
+previews use cached metadata; refresh it first with
+`./scripts/brew-with-policy.sh update` when needed. AI CLI native installers,
+OS updates, running processes, containers, and binaries built in other projects
+need their own updates or restarts. Updating Go does not rebuild existing Go
+programs. A completed update is not a certificate-revocation audit.
+
+Normal updates keep a seven-day release cooldown. Preview and apply mise pin
+updates with:
+
+```bash
+make mise-bump-preview
+make mise-bump
+```
+
+For an urgent security fix, including a compromised CA intermediate, override
+that cooldown for one invocation. Limit the update to the affected tools when
+possible, and review the upstream advisory and release before applying:
+
+```bash
+make mise-bump-preview MISE_MINIMUM_RELEASE_AGE=0d MISE_BUMP_TOOLS="node bun"
+make mise-bump MISE_MINIMUM_RELEASE_AGE=0d MISE_BUMP_TOOLS="node bun"
+```
+
+These commands can cross major versions. `MISE_BUMP_TOOLS` accepts mise tool
+names or version requests. Exact version requests bypass mise's age filter,
+so check publication dates when selecting explicit versions during normal
+maintenance. `mise outdated --bump` reports all newer releases regardless of
+whether they have passed the cooldown.
+
+Bun and uv also retain their seven-day defaults. Their emergency overrides
+apply only to the command that receives them:
+
+```bash
+(cd scripts && bun update --minimum-release-age 0 --dry-run)
+(cd scripts && bun update --minimum-release-age 0)
+uv lock --upgrade --exclude-newer "0 days"
+```
+
+Scope Bun updates by adding package names, or uv updates with
+`--upgrade-package <package>` instead of `--upgrade`. Review and retain the
+resulting lockfile changes, without editing the default cooldown settings.
+Never bypass TLS certificate verification to fetch a security update. If a CA
+is compromised, use the advisory's trusted recovery route and update the
+relevant trust store or runtime. Reducing release age does not revoke a CA.
+
+Use `mise install` to apply the repository's existing pins.
 
 ### Adding a mac app, font, or formula
 

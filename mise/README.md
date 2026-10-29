@@ -20,11 +20,16 @@ and Linux, which is what makes the POSIX/Lima path cheap to keep.
 
 ```bash
 mise install    # install everything declared here
-mise outdated   # check whether pinned tools have newer releases
-mise upgrade --bump  # deliberately update pins and install newer releases
+mise outdated --bump  # check for releases beyond exact pins
+make mise-bump-preview  # preview updates with a seven-day cooldown
+make mise-bump  # update pins and install releases at least seven days old
 mise ls         # show what is installed and active
 ```
 
-Tool versions are intentionally pinned in `config.toml`. Use `mise-bump` (or
-`mise upgrade --bump`) as a deliberate maintenance action rather than allowing
-routine updates to silently change the toolchain.
+Tool versions are intentionally pinned in `config.toml`. Run these Make targets
+from the repository root. For an urgent security fix, use
+`make mise-bump MISE_MINIMUM_RELEASE_AGE=0d MISE_BUMP_TOOLS="node bun"`.
+Use the same variables with `mise-bump-preview` first. The override applies only
+to that invocation. Exact version requests bypass mise's age filter; review
+publication dates yourself when choosing explicit versions. See the root
+[README](../README.md#adding-a-cli-tool) for the security update procedure.

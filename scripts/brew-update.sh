@@ -3,13 +3,15 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: scripts/brew-update.sh <package-manager|update-all> [--dry-run|--no-input]
+Usage: scripts/brew-update.sh <package-manager|update-all> [--dry-run] [--no-input] [--no-cleanup] [--greedy]
 
 Runs the repository's Homebrew update sequence for a Makefile update context.
 
 Options:
   --dry-run   Preview upgrades without changing machine state
   --no-input  Upgrade without prompting
+  --no-cleanup  Skip automatic formula cleanup and final brew cleanup
+  --greedy    Include casks that normally update themselves
 
 Interactive upgrades default to yes. Running cask apps are not quit automatically.
 If the retired Borders tap is still installed, update offers to untap it.
@@ -33,7 +35,6 @@ brew_with_policy="${script_dir}/brew-with-policy.sh"
 brew_trust="${script_dir}/brew-trust.sh"
 
 green='\033[0;32m'
-yellow='\033[1;33m'
 blue='\033[0;34m'
 red='\033[0;31m'
 nc='\033[0m'
@@ -43,13 +44,13 @@ case "$context" in
   package-manager)
     require_brew=true
     heading="Updating installed Homebrew formulae and casks..."
-    success="\342\234\223 Homebrew updated"
+    success="\342\234\223 Homebrew upgrades completed"
     trailing_blank=false
     ;;
   update-all)
     require_brew=false
     heading="Updating installed Homebrew formulae and casks..."
-    success="\342\234\223 Homebrew update completed"
+    success="\342\234\223 Homebrew upgrades completed"
     trailing_blank=true
     ;;
   -h | --help)
@@ -65,35 +66,57 @@ esac
 shift
 dry_run=false
 no_input=false
+no_cleanup=false
+greedy=false
+failures=0
+upgrades_performed=false
+upgrades_skipped=false
 for arg in "$@"; do
   case "$arg" in
     --dry-run) dry_run=true ;;
     --no-input) no_input=true ;;
+    --no-cleanup) no_cleanup=true ;;
+    --greedy) greedy=true ;;
     *) usage >&2; exit 2 ;;
   esac
 done
 
 upgrade_packages() {
-  local answer
+  local answer candidates arg label
+  local outdated_args=()
+  for arg in "$@"; do
+    case "$arg" in
+      --formula) outdated_args+=(--formula); label=formulae ;;
+      --cask) outdated_args+=(--cask); label=casks ;;
+      --greedy) outdated_args+=(--greedy) ;;
+    esac
+  done
+  candidates="$(HOMEBREW_NO_AUTO_UPDATE=1 "$brew_with_policy" outdated --quiet "${outdated_args[@]}")" || return
+  if [[ -z "$candidates" ]]; then
+    printf 'No Homebrew %s upgrades available.\n' "$label"
+    return 0
+  fi
   HOMEBREW_NO_AUTO_UPDATE=1 "$brew_with_policy" upgrade "$@" --dry-run || return
   if [[ "$dry_run" == "true" ]]; then
     return 0
   fi
   if [[ "$no_input" != "true" ]]; then
     while true; do
-      printf 'Do you want to proceed with the upgrade? [Y/n] '
+      printf 'Upgrade Homebrew %s? [Y/n] ' "$label"
       if ! IFS= read -r answer; then
         printf '\nSkipping upgrade: no input. Use --no-input to approve unattended upgrades.\n'
+        upgrades_skipped=true
         return 0
       fi
       case "$answer" in
         "" | y | Y | yes | YES) break ;;
-        n | N | no | NO) return 0 ;;
+        n | N | no | NO) upgrades_skipped=true; return 0 ;;
         *) printf 'Please answer yes or no.\n' ;;
       esac
     done
   fi
-  "$brew_with_policy" upgrade "$@" --yes
+  "$brew_with_policy" upgrade "$@" --yes || return
+  upgrades_performed=true
 }
 
 # The old Homebrew Borders formula came from this tap. The standalone
@@ -166,17 +189,35 @@ if ! command -v brew >/dev/null 2>&1; then
   exit 0
 fi
 
+if [[ "$no_cleanup" == true ]]; then
+  export HOMEBREW_NO_INSTALL_CLEANUP=1
+fi
+
 print_color "${blue}${heading}${nc}"
 retire_legacy_taps
 if [[ "$dry_run" != "true" ]]; then
-  "$brew_trust" || print_color "${yellow}  Warning: Homebrew trust setup failed${nc}"
-  "$brew_with_policy" update || print_color "${yellow}  Warning: brew update failed${nc}"
+  "$brew_trust" || failures=$((failures + 1))
+  "$brew_with_policy" update || failures=$((failures + 1))
 fi
-upgrade_packages --formula || print_color "${yellow}  Warning: brew formula upgrade failed${nc}"
-upgrade_packages --cask --no-quit || print_color "${yellow}  Warning: brew cask upgrade failed${nc}"
+upgrade_packages --formula || failures=$((failures + 1))
+cask_args=(--cask --no-quit)
+[[ "$greedy" != true ]] || cask_args+=(--greedy)
+upgrade_packages "${cask_args[@]}" || failures=$((failures + 1))
+if [[ "$dry_run" != "true" && "$no_cleanup" != true && "$upgrades_performed" == true ]]; then
+  "$brew_with_policy" cleanup || failures=$((failures + 1))
+fi
+if [[ "$failures" -ne 0 ]]; then
+  printf 'Homebrew update incomplete: %s step(s) failed.\n' "$failures" >&2
+  exit 1
+fi
 if [[ "$dry_run" != "true" ]]; then
-  "$brew_with_policy" cleanup || print_color "${yellow}  Warning: brew cleanup failed${nc}"
-  print_color "${green}${success}${nc}"
+  if [[ "$upgrades_skipped" == true ]]; then
+    print_color "${blue}Homebrew check completed; some upgrades were skipped.${nc}"
+  elif [[ "$upgrades_performed" == true ]]; then
+    print_color "${green}${success}${nc}"
+  else
+    print_color "${green}Homebrew packages already up to date.${nc}"
+  fi
 fi
 
 if [[ "$trailing_blank" == "true" ]]; then
