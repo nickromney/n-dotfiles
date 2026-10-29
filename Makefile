@@ -40,6 +40,10 @@ BREW_BUNDLE_INSTALL := ./scripts/brew-bundle-install.sh
 BREW_UPDATE := ./scripts/brew-update.sh
 BORDERS_INSTALL := ./scripts/install-borders.sh
 
+# Override for one urgent security update without changing the default policy.
+export MISE_MINIMUM_RELEASE_AGE ?= 7d
+export MISE_BUMP_TOOLS ?=
+
 # Select the managed JetBrains IDE once for install, update, and app setup.
 export JETBRAINSIDE ?= RubyMine
 
@@ -80,7 +84,7 @@ help: ## Show this help message
 	fi
 	@echo "  make stow                 Symlink dotfiles only (all a work machine needs)"
 	@echo "  Arch/Omarchy              No Brewfile: pacman + ./stow.sh + mise install (see omarchy/README.md)"
-	@echo "  make update               Update brew/mas and check pinned mise tools"
+	@echo "  make update-all           Update managed tools and dependencies (7-day cooldown)"
 
 ##@ Install
 
@@ -119,12 +123,14 @@ mise-install: ## Install CLI tools and runtimes declared in mise config
 		 exit 1; \
 	fi
 
-.PHONY: mise-bump
-mise-bump: ## Upgrade mise tools and deliberately bump pinned versions
+.PHONY: mise-bump mise-bump-preview
+mise-bump-preview: ## Preview mise pin upgrades with the same cooldown as mise-bump
+mise-bump: ## Upgrade mise pins after a 7-day cooldown (override MISE_MINIMUM_RELEASE_AGE)
+mise-bump mise-bump-preview:
 	@if command -v mise >/dev/null 2>&1; then \
 		echo "$(BLUE)Bumping pinned mise tools to newer releases...$(NC)"; \
-		mise upgrade --bump || exit $$?; \
-		echo "$(GREEN)✓ mise pins bumped$(NC)"; \
+		mise upgrade --bump --minimum-release-age "$$MISE_MINIMUM_RELEASE_AGE" $(if $(filter mise-bump-preview,$@),--dry-run) $$MISE_BUMP_TOOLS || exit $$?; \
+		echo "$(GREEN)✓ mise pin $(if $(filter mise-bump-preview,$@),preview completed,upgrade completed)$(NC)"; \
 	else \
 		echo "$(RED)mise not found; install it with the host package manager first$(NC)"; \
 		exit 1; \
@@ -148,6 +154,23 @@ personal-setup: ## Full personal Mac setup (bootstrap + macOS settings + SSH)
 
 ##@ Update
 
+# Public update controls. UPDATE_FLAGS remains available for script-specific options.
+UPDATE_OPTIONS = $(if $(filter 1,$(NO_COOLDOWN)),--no-cooldown) $(if $(filter 1,$(NO_INPUT)),--no-input) $(if $(filter 1,$(DRY_RUN)),--dry-run)
+
+.PHONY: update-all update-all-preview update-brew update-mise update-dependencies update-mas update-rust
+update-all: ## Update managed tools and dependencies (NO_COOLDOWN=1 bypasses the cooldown)
+update-all-preview: ## Preview all managed updates (NO_COOLDOWN=1 includes today's releases)
+update-all update-all-preview:
+	@./scripts/update-all.sh $(if $(filter update-all-preview,$@),--dry-run) $(UPDATE_OPTIONS) $(UPDATE_FLAGS)
+
+update-brew: ## Update Homebrew packages (DRY_RUN=1 previews)
+update-mise: ## Update mise pins and tools (DRY_RUN=1 previews)
+update-dependencies: ## Update, audit, and rebuild repository dependencies (DRY_RUN=1 previews)
+update-mas: ## Update Mac App Store apps (DRY_RUN=1 previews)
+update-rust: ## Update Rust toolchains (DRY_RUN=1 previews)
+update-brew update-mise update-dependencies update-mas update-rust: update-%:
+	@./scripts/update-all.sh --only $* $(UPDATE_OPTIONS) $(UPDATE_FLAGS)
+
 .PHONY: update
 update: ## Update brew/mas tools and check pinned mise versions
 	@if [ "$(HOST_OS)" = "Darwin" ]; then \
@@ -155,7 +178,7 @@ update: ## Update brew/mas tools and check pinned mise versions
 	fi
 	@if command -v mise >/dev/null 2>&1; then \
 		echo "$(BLUE)Checking pinned mise tools for available updates...$(NC)"; \
-		mise outdated || echo "$(YELLOW)  Warning: mise outdated check failed$(NC)"; \
+		mise outdated --bump || echo "$(YELLOW)  Warning: mise outdated check failed$(NC)"; \
 		echo "$(GREEN)✓ mise outdated check attempted$(NC)"; \
 		echo ""; \
 	fi

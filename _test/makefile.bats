@@ -26,6 +26,18 @@ setup() {
 
   cat > "$TEST_DIR/mocks/brew" <<'EOF'
 #!/usr/bin/env bash
+printf '%s\n' "$*" >> "$TEST_DIR/brew-call-log"
+if [[ "$1" == outdated ]]; then
+  [[ "${MOCK_BREW_OUTDATED_FAIL:-}" != 1 ]] || { echo 'outdated check failed' >&2; exit 42; }
+  [[ "${MOCK_BREW_NO_UPDATES:-}" != 1 ]] || exit 0
+  if [[ "$*" == *--formula* ]]; then
+    [[ "${MOCK_BREW_FORMULA_CURRENT:-}" != 1 ]] || exit 0
+    echo formula-fixture
+  else
+    echo cask-fixture
+  fi
+  exit 0
+fi
 if [[ "$1" == "tap" && "$#" -eq 1 ]]; then
   if [[ -n "${MOCK_BREW_TAPS:-}" ]]; then
     printf '%s\n' "$MOCK_BREW_TAPS"
@@ -237,6 +249,30 @@ EOF
   [[ "$output" =~ "mise install" ]]
 }
 
+@test "mise bumps default to a seven-day cooldown" {
+  run make mise-bump
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"mise upgrade --bump --minimum-release-age 7d"* ]]
+  [[ "$output" != *"--dry-run"* ]]
+}
+
+@test "mise emergency preview scopes tools and overrides age for one invocation" {
+  run make mise-bump-preview MISE_MINIMUM_RELEASE_AGE=0d MISE_BUMP_TOOLS="node bun"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"mise upgrade --bump --minimum-release-age 0d --dry-run node bun"* ]]
+  [[ "$output" != *"upgrade completed"* ]]
+
+  run make mise-bump MISE_MINIMUM_RELEASE_AGE=0d MISE_BUMP_TOOLS="node bun"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"mise upgrade --bump --minimum-release-age 0d node bun"* ]]
+  [[ "$output" != *"--dry-run"* ]]
+
+  run make mise-bump-preview
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"mise upgrade --bump --minimum-release-age 7d --dry-run"* ]]
+  [[ "$output" != *"node bun"* ]]
+}
+
 @test "make update uses the shared Homebrew update module and checks mise pins" {
   cat > scripts/brew-update.sh <<'EOF'
 #!/usr/bin/env bash
@@ -262,7 +298,7 @@ EOF
   else
     [[ "$output" != *"shared Homebrew update module: update-all"* ]]
   fi
-  [[ "$output" =~ "mise outdated" ]]
+  [[ "$output" =~ "mise outdated --bump" ]]
 
   if [[ "$EXPECTED_BREWFILE" == "Brewfile" ]]; then
     run grep -qx "update-all" "$TEST_DIR/brew-update-calls.txt"
@@ -343,4 +379,73 @@ EOF
 @test "Homebrew update rejects unknown options" {
   run scripts/brew-update.sh update-all --unknown
   [ "$status" -eq 2 ]
+}
+
+@test "Makefile exposes the repeatable update and emergency preview" {
+  cat > scripts/update-all.sh <<'EOF'
+#!/usr/bin/env bash
+printf 'update-all args: %s\n' "$*"
+EOF
+  chmod +x scripts/update-all.sh
+
+  run make update-all UPDATE_FLAGS="--no-cooldown --no-input"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"update-all args: --no-cooldown --no-input"* ]]
+
+  run make update-all-preview UPDATE_FLAGS="--no-cooldown"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"update-all args: --dry-run --no-cooldown"* ]]
+}
+
+@test "component Make targets expose cooldown preview and noninteractive controls" {
+  cat > scripts/update-all.sh <<'EOF'
+#!/usr/bin/env bash
+printf 'update-all args: %s\n' "$*"
+EOF
+  chmod +x scripts/update-all.sh
+
+  for component in brew mise dependencies mas rust; do
+    run make "update-$component" NO_COOLDOWN=1 NO_INPUT=1 DRY_RUN=1
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"update-all args: --only $component --no-cooldown --no-input --dry-run"* ]]
+  done
+
+  run make update-brew
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"update-all args: --only brew"* ]]
+  [[ "$output" != *"--no-cooldown"* ]]
+  [[ "$output" != *"--no-input"* ]]
+
+  run make update-all-preview NO_COOLDOWN=1
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"update-all args: --dry-run --no-cooldown"* ]]
+}
+
+@test "Homebrew does not prompt upgrade or clean when no packages are outdated" {
+  run env MOCK_BREW_NO_UPDATES=1 scripts/brew-update.sh update-all
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"No Homebrew formulae upgrades available."* ]]
+  [[ "$output" == *"No Homebrew casks upgrades available."* ]]
+  [[ "$output" == *"Homebrew packages already up to date."* ]]
+  [[ "$output" != *"[Y/n]"* ]]
+  [[ "$output" != *"upgrades completed"* ]]
+  run grep -E '^upgrade |^cleanup$' "$TEST_DIR/brew-call-log"
+  [ "$status" -eq 1 ]
+}
+
+@test "Homebrew prompts only for the group with available upgrades" {
+  run bash -c 'printf "y\n" | env MOCK_BREW_FORMULA_CURRENT=1 scripts/brew-update.sh update-all'
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Upgrade Homebrew casks? [Y/n]"* ]]
+  [[ "$output" != *"Upgrade Homebrew formulae?"* ]]
+  run grep '^upgrade --formula' "$TEST_DIR/brew-call-log"
+  [ "$status" -eq 1 ]
+}
+
+@test "Homebrew cannot report current packages when the outdated check fails" {
+  run env MOCK_BREW_OUTDATED_FAIL=1 scripts/brew-update.sh update-all --no-input
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"outdated check failed"* ]]
+  [[ "$output" != *"packages already up to date"* ]]
+  [[ "$output" != *"upgrades completed"* ]]
 }

@@ -1,5 +1,30 @@
 # Scripts
 
+## update-all
+
+Update the repo-managed toolchain and dependencies with a seven-day cooldown
+for mise, Bun, and uv. The emergency override lasts for one invocation.
+
+```bash
+make update-all-preview
+make update-all-preview NO_COOLDOWN=1
+make update-all NO_COOLDOWN=1 NO_INPUT=1
+make update-dependencies NO_COOLDOWN=1 NO_INPUT=1
+```
+
+Use `make update-mise`, `make update-brew`, `make update-mas`, or
+`make update-rust` to select other components. Add `DRY_RUN=1` for a preview.
+The shell script implements these Make targets; Make is the public entrypoint.
+Self-updating Homebrew casks keep their native updater and release channel.
+Forced greedy replacements are excluded because stale Homebrew receipts can
+cause an app downgrade, including beta/nightly to stable. Homebrew, App Store, and Rust follow their native policies.
+Previews can refresh registry caches, but do not install tools or write pins
+or lockfiles. Homebrew previews use existing metadata. Failed steps produce
+a nonzero exit status; independent steps still run. Dependencies are audited,
+and the compiled browser tool is rebuilt and smoke-tested. Old mise versions and
+Homebrew caches are retained. See the root [README](../README.md#adding-a-cli-tool)
+for coverage and separate OS, AI CLI, and running-process updates.
+
 ## cleanup-storage
 
 Preview global caches, or explicitly select projects and review workspaces.
