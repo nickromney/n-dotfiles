@@ -29,14 +29,19 @@ GIT_ENVIRONMENT = {
 }
 
 
-def git(root, *args):
+def git(root, *args, allow_nonrepository=False):
     env = {key: value for key, value in os.environ.items() if key not in GIT_ENVIRONMENT}
     env["GIT_OPTIONAL_LOCKS"] = "0"
+    if allow_nonrepository:
+        env["LC_ALL"] = "C"
     result = subprocess.run(
         ["git", "-c", "core.fsmonitor=false", "-c", "core.untrackedCache=false",
          "-C", str(root), *args], env=env, stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
+    if (allow_nonrepository and result.returncode == 128 and
+            result.stderr.strip() == b"fatal: not a git repository (or any of the parent directories): .git"):
+        return None
     if result.returncode:
         raise RuntimeError("Git inspection failed for {}: {}".format(
             root, os.fsdecode(result.stderr).strip()))
@@ -166,6 +171,11 @@ def discover_git_roots(root):
         if ".git" in directories or ".git" in files:
             if marker.is_symlink():
                 raise RuntimeError("Symlinked Git directory: " + str(marker))
+            if parent != root and marker.is_dir():
+                output = git(parent, "rev-parse", "--show-toplevel", allow_nonrepository=True)
+                if output is None or Path(os.fsdecode(output).strip()) in parent.parents:
+                    directories[:] = []
+                    continue
             found.append(parent)
         directories[:] = [name for name in directories
                           if name != ".git" and not (parent / name).is_symlink()

@@ -29,6 +29,29 @@ EOF
   chmod +x "$TEST_TMP_DIR/bin/slicer-mac"
 }
 
+prepare_browser_tools_fixture() {
+  local version="$1"
+  local fixture="$TEST_TMP_DIR/browser-tools"
+
+  mkdir -p "$fixture/scripts/node_modules/commander" \
+    "$fixture/scripts/node_modules/puppeteer-core" "$fixture/bin"
+  cp "$REPO_ROOT/scripts/build-browser-tools.sh" "$fixture/scripts/"
+  touch "$fixture/scripts/package.json"
+  cat >"$fixture/bin/bun" <<'EOF'
+#!/usr/bin/env bash
+if [[ "$1" == "--version" ]]; then
+  printf '%s\n' "$MOCK_BUN_VERSION"
+  exit 0
+fi
+printf '%s\n' "$*" >> "$BUN_CALL_LOG"
+EOF
+  chmod +x "$fixture/bin/bun"
+
+  export BROWSER_TOOLS_FIXTURE="$fixture"
+  export MOCK_BUN_VERSION="$version"
+  export BUN_CALL_LOG="$TEST_TMP_DIR/bun-calls.log"
+}
+
 @test "user-facing scripts expose help with examples" {
   local script
   scripts=(
@@ -178,6 +201,91 @@ EOF
   [ "$status" -eq 0 ]
   [[ "$output" == *"[dry-run] Would"* ]]
   [[ "$output" == *"$TEST_TMP_DIR/bin/browser-tools"* ]]
+}
+
+@test "build-browser-tools: rejects vulnerable Bun before installing or compiling" {
+  prepare_browser_tools_fixture "1.4.3"
+
+  run env PATH="$BROWSER_TOOLS_FIXTURE/bin:$PATH" \
+    MOCK_BUN_VERSION="$MOCK_BUN_VERSION" BUN_CALL_LOG="$BUN_CALL_LOG" \
+    "$BROWSER_TOOLS_FIXTURE/scripts/build-browser-tools.sh" --bin-dir "$TEST_TMP_DIR/out"
+
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Bun 1.4.3 is vulnerable"* ]]
+  [ ! -e "$BUN_CALL_LOG" ]
+}
+
+@test "build-browser-tools: rejects the patched version's pre-release before compiling" {
+  prepare_browser_tools_fixture "1.4.4-canary.1"
+
+  run env PATH="$BROWSER_TOOLS_FIXTURE/bin:$PATH" \
+    MOCK_BUN_VERSION="$MOCK_BUN_VERSION" BUN_CALL_LOG="$BUN_CALL_LOG" \
+    "$BROWSER_TOOLS_FIXTURE/scripts/build-browser-tools.sh" --bin-dir "$TEST_TMP_DIR/out"
+
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Bun 1.4.4-canary.1 is a pre-release"* ]]
+  [ ! -e "$BUN_CALL_LOG" ]
+}
+
+@test "build-browser-tools: rejects later Bun pre-releases before installing or compiling" {
+  prepare_browser_tools_fixture "1.5.0-canary.1"
+  rm -rf "$BROWSER_TOOLS_FIXTURE/scripts/node_modules"
+
+  run env PATH="$BROWSER_TOOLS_FIXTURE/bin:$PATH" \
+    MOCK_BUN_VERSION="$MOCK_BUN_VERSION" BUN_CALL_LOG="$BUN_CALL_LOG" \
+    "$BROWSER_TOOLS_FIXTURE/scripts/build-browser-tools.sh" --bin-dir "$TEST_TMP_DIR/out"
+
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Bun 1.5.0-canary.1 is a pre-release"* ]]
+  [ ! -e "$BUN_CALL_LOG" ]
+  [ ! -e "$TEST_TMP_DIR/out" ]
+}
+
+@test "build-browser-tools: rejects malformed Bun versions before compiling" {
+  prepare_browser_tools_fixture "1.4"
+
+  run env PATH="$BROWSER_TOOLS_FIXTURE/bin:$PATH" \
+    MOCK_BUN_VERSION="$MOCK_BUN_VERSION" BUN_CALL_LOG="$BUN_CALL_LOG" \
+    "$BROWSER_TOOLS_FIXTURE/scripts/build-browser-tools.sh" --bin-dir "$TEST_TMP_DIR/out"
+
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Unrecognized Bun version"* ]]
+  [ ! -e "$BUN_CALL_LOG" ]
+}
+
+@test "build-browser-tools: permits Bun 1.4.4 to compile" {
+  prepare_browser_tools_fixture "1.4.4"
+
+  run env PATH="$BROWSER_TOOLS_FIXTURE/bin:$PATH" \
+    MOCK_BUN_VERSION="$MOCK_BUN_VERSION" BUN_CALL_LOG="$BUN_CALL_LOG" \
+    "$BROWSER_TOOLS_FIXTURE/scripts/build-browser-tools.sh" --bin-dir "$TEST_TMP_DIR/out"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Built $TEST_TMP_DIR/out/browser-tools"* ]]
+  run cat "$BUN_CALL_LOG"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"build "*"--compile"* ]]
+}
+
+@test "build-browser-tools: permits a later stable Bun release" {
+  prepare_browser_tools_fixture "1.5.0"
+
+  run env PATH="$BROWSER_TOOLS_FIXTURE/bin:$PATH" \
+    MOCK_BUN_VERSION="$MOCK_BUN_VERSION" BUN_CALL_LOG="$BUN_CALL_LOG" \
+    "$BROWSER_TOOLS_FIXTURE/scripts/build-browser-tools.sh" --bin-dir "$TEST_TMP_DIR/out"
+
+  [ "$status" -eq 0 ]
+  run cat "$BUN_CALL_LOG"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"build "*"--compile"* ]]
+}
+
+@test "build-browser-tools: fails clearly when Bun is missing" {
+  run env PATH="/usr/bin:/bin" \
+    "$REPO_ROOT/scripts/build-browser-tools.sh" --bin-dir "$TEST_TMP_DIR/out"
+
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"bun is required to build browser-tools"* ]]
 }
 
 @test "sync-private-harness-assets: exposes selected Matt Pocock architecture skill idempotently" {

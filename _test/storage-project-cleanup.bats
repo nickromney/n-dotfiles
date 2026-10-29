@@ -179,6 +179,84 @@ restore_archive() {
   [[ "$output" == *"?? local-note.txt"* ]]
 }
 
+@test "discovery skips synthetic Git markers and retains real nested checkouts" {
+  local repo="$TEST_TMP_DIR/projects/outer" fake real
+  new_repo "$repo"
+  fake="$repo/fixture/project-000"
+  put_file "$fake/.git/objects/aa/object" 'synthetic object'
+  put_file "$fake/node_modules/package/index.js" 'fixture data must survive'
+  real="$repo/nested-real"
+  new_repo "$real"
+  ignored_cache "$repo"
+  ignored_cache "$real"
+  run "$SCRIPT" --dry-run --project-caches "$repo" --no-input
+  assert_success
+  [[ "$output" == *"$repo/node_modules"* ]]
+  [[ "$output" == *"$real/node_modules"* ]]
+  [[ "$output" != *"Cache: $fake/node_modules"* ]]
+  [ -f "$fake/.git/objects/aa/object" ]
+  [ -f "$fake/node_modules/package/index.js" ]
+  run "$SCRIPT" --dry-run --project-caches "$fake" --no-input
+  assert_refused
+  run "$SCRIPT" --execute --project-caches "$repo" --no-input
+  assert_success
+  [ ! -e "$repo/node_modules" ]
+  [ ! -e "$real/node_modules" ]
+  [ -f "$fake/.git/objects/aa/object" ]
+  [ -f "$fake/node_modules/package/index.js" ]
+}
+
+@test "discovery retains linked worktrees and refuses malformed Git pointers" {
+  local repo="$TEST_TMP_DIR/projects/outer" worktree="$TEST_TMP_DIR/projects/outer/worktree"
+  new_repo "$repo"
+  git -C "$repo" worktree add -q -b preview "$worktree"
+  ignored_cache "$worktree"
+  run "$SCRIPT" --dry-run --project-caches "$repo" --no-input
+  assert_success
+  [[ "$output" == *"$worktree/node_modules"* ]]
+  put_file "$repo/broken/.git" 'gitdir: /no/such/location'
+  run "$SCRIPT" --execute --project-caches "$repo" --no-input
+  assert_refused
+  [ -f "$worktree/node_modules/package/index.js" ]
+}
+
+@test "discovery preserves standalone non-repository markers and visits valid siblings" {
+  local root="$TEST_TMP_DIR/projects" fake="$TEST_TMP_DIR/projects/gate-tree" repo="$TEST_TMP_DIR/projects/real"
+  mkdir -p "$fake/.git"
+  put_file "$fake/node_modules/package/index.js" 'fixture data must survive'
+  new_repo "$repo"
+  ignored_cache "$repo"
+  run "$SCRIPT" --dry-run --project-caches "$root" --no-input
+  assert_success
+  [[ "$output" == *"$repo/node_modules"* ]]
+  [[ "$output" != *"Cache: $fake/node_modules"* ]]
+  run "$SCRIPT" --dry-run --project-caches "$fake" --no-input
+  assert_refused
+  run "$SCRIPT" --execute --project-caches "$root" --no-input
+  assert_success
+  [ ! -e "$repo/node_modules" ]
+  [ -d "$fake/.git" ]
+  [ -f "$fake/node_modules/package/index.js" ]
+}
+
+@test "discovery does not hide other Git inspection failures" {
+  local root="$TEST_TMP_DIR/projects" repo="$TEST_TMP_DIR/projects/real" blocked="$TEST_TMP_DIR/projects/blocked"
+  new_repo "$repo"
+  ignored_cache "$repo"
+  mkdir -p "$blocked/.git" "$TEST_TMP_DIR/bin"
+  cat > "$TEST_TMP_DIR/bin/git" <<'STUB'
+#!/bin/sh
+case "$*" in *"/blocked"*) echo 'fatal: detected dubious ownership in repository' >&2; exit 128 ;; esac
+exec "$REAL_GIT_BIN" "$@"
+STUB
+  chmod +x "$TEST_TMP_DIR/bin/git"
+  run env PATH="$TEST_TMP_DIR/bin:$PATH" REAL_GIT_BIN="$GIT_BIN" "$SCRIPT" --execute --project-caches "$root" --no-input
+  assert_refused
+  [[ "$output" == *'dubious ownership'* ]]
+  [ -f "$repo/node_modules/package/index.js" ]
+  [ -d "$blocked/.git" ]
+}
+
 @test "a symlink at a project cache path never deletes its external contents" {
   local repo="$TEST_TMP_DIR/projects/app" external="$TEST_TMP_DIR/owner-data"
   new_repo "$repo"

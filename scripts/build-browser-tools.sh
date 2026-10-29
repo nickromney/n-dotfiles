@@ -39,6 +39,35 @@ run_cmd() {
   "$@"
 }
 
+require_patched_bun() {
+  local version major minor patch suffix
+
+  if ! version="$(bun --version 2>/dev/null)"; then
+    error "Unable to read the Bun version. Bun >=1.4.4 is required to build browser-tools."
+    exit 1
+  fi
+
+  if [[ ! "$version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)([-+][0-9A-Za-z.-]+)?$ ]]; then
+    error "Unrecognized Bun version '$version'; Bun >=1.4.4 is required to build browser-tools."
+    exit 1
+  fi
+
+  major=$((10#${BASH_REMATCH[1]}))
+  minor=$((10#${BASH_REMATCH[2]}))
+  patch=$((10#${BASH_REMATCH[3]}))
+  suffix="${BASH_REMATCH[4]:-}"
+
+  if (( major < 1 || (major == 1 && minor < 4) || (major == 1 && minor == 4 && patch < 4) )); then
+    error "Bun $version is vulnerable; Bun >=1.4.4 is required to build browser-tools."
+    exit 1
+  fi
+
+  if [[ "$suffix" == -* ]]; then
+    error "Bun $version is a pre-release; Bun >=1.4.4 is required to build browser-tools."
+    exit 1
+  fi
+}
+
 main() {
   local script_dir
   local repo_root
@@ -85,6 +114,10 @@ main() {
       echo "Install bun: https://bun.sh" >&2
       exit 1
     fi
+  fi
+
+  if [[ "$DRY_RUN" != "true" ]]; then
+    require_patched_bun
   fi
 
   if [[ ! -d "${script_dir}/node_modules/commander" ]] || [[ ! -d "${script_dir}/node_modules/puppeteer-core" ]]; then
