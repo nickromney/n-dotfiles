@@ -138,6 +138,65 @@ EOF
 
 # Tests for setup-ssh-from-1password.sh
 
+@test "SSH setup: preserves existing config and adds profile vault idempotently" {
+  cd "$TEST_DIR"
+  cp "${BATS_TEST_DIRNAME}/../setup-ssh-from-1password.sh" .
+  mkdir -p "$HOME/.config/1Password/ssh" "$HOME/.ssh/config.d"
+  printf 'Host custom\n  HostName custom.example\n' > "$HOME/.ssh/config"
+  printf 'existing fragment\n' > "$HOME/.ssh/config.d/work-2024-client-1.conf"
+  printf 'existing public key\n' > "$HOME/.ssh/work_2024_client_1_aws.pem.pub"
+  printf '[[ssh-keys]]\nvault = "Private"\n' > "$HOME/.config/1Password/ssh/agent.toml"
+
+  run ./setup-ssh-from-1password.sh --profile work-2024-client-1 --dry-run --no-input
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Will preserve existing SSH base config"* ]]
+  run grep -q 'Work 2024 Client 1' "$HOME/.config/1Password/ssh/agent.toml"
+  [ "$status" -ne 0 ]
+
+  run ./setup-ssh-from-1password.sh --profile work-2024-client-1 --no-input
+  [ "$status" -eq 0 ]
+  [ "$(cat "$HOME/.ssh/config")" = $'Host custom\n  HostName custom.example' ]
+  grep -q 'vault = "Private"' "$HOME/.config/1Password/ssh/agent.toml"
+  grep -q 'vault = "Work 2024 Client 1"' "$HOME/.config/1Password/ssh/agent.toml"
+
+  run ./setup-ssh-from-1password.sh --profile work-2024-client-1 --no-input
+  [ "$status" -eq 0 ]
+  [ "$(grep -c 'vault = "Work 2024 Client 1"' "$HOME/.config/1Password/ssh/agent.toml")" -eq 1 ]
+}
+
+@test "SSH setup: new agent config retains default vaults and honors XDG_CONFIG_HOME" {
+  cd "$TEST_DIR"
+  cp "${BATS_TEST_DIRNAME}/../setup-ssh-from-1password.sh" .
+  export XDG_CONFIG_HOME="$TEST_DIR/xdg"
+  mkdir -p "$HOME/.ssh/config.d"
+  printf 'existing\n' > "$HOME/.ssh/config"
+  printf 'existing\n' > "$HOME/.ssh/config.d/work-2024-client-1.conf"
+  printf 'existing\n' > "$HOME/.ssh/work_2024_client_1_aws.pem.pub"
+
+  run ./setup-ssh-from-1password.sh --profile work-2024-client-1 --no-input
+  [ "$status" -eq 0 ]
+  for vault in Private Personal Employee 'Work 2024 Client 1'; do
+    grep -Fq "vault = \"$vault\"" "$XDG_CONFIG_HOME/1Password/ssh/agent.toml"
+  done
+}
+
+@test "SSH setup: client 2 profile exposes the work vault without replacing SSH config" {
+  cd "$TEST_DIR"
+  cp "${BATS_TEST_DIRNAME}/../setup-ssh-from-1password.sh" .
+  mkdir -p "$HOME/.ssh/config.d" "$HOME/.config/1Password/ssh"
+  printf 'Host custom\n  HostName custom.example\n' > "$HOME/.ssh/config"
+  printf 'existing\n' > "$HOME/.ssh/config.d/work-2025-client-2.conf"
+  for key in work_2025_client_2_github work_2025_client_2_gitea work_2025_client_2_ado; do
+    printf 'existing\n' > "$HOME/.ssh/$key.pub"
+  done
+  printf '[[ssh-keys]]\nvault = "Private"\n' > "$HOME/.config/1Password/ssh/agent.toml"
+
+  run ./setup-ssh-from-1password.sh --profile work-2025-client-2 --no-input
+  [ "$status" -eq 0 ]
+  grep -Fq 'vault = "Work 2025 Client 2"' "$HOME/.config/1Password/ssh/agent.toml"
+  [ "$(cat "$HOME/.ssh/config")" = $'Host custom\n  HostName custom.example' ]
+}
+
 @test "SSH setup: dry-run shows available items" {
   cd "$TEST_DIR"
   cp "${BATS_TEST_DIRNAME}/../setup-ssh-from-1password.sh" .
@@ -146,8 +205,8 @@ EOF
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"SSH Config Dry Run"* ]]
-  [[ "$output" == *"Found in 1Password:"* ]]
-  [[ "$output" == *"~/.ssh/config (Secure Note, vault: Private)"* ]]
+  [[ "$output" == *"1Password is not contacted"* ]]
+  [[ "$output" == *"SSH base config"* ]]
   [[ "$output" == *"~/.ssh/config.d/personal.conf"* ]]
   [[ "$output" == *"personal_github_authentication"* ]]
   [[ "$output" == *"No files were modified"* ]]
@@ -396,49 +455,44 @@ EOF
   isolated_path="$(path_excluding op)"
   export PATH="$isolated_path"
 
-  run ./setup-ssh-from-1password.sh --profile personal --dry-run
+  run ./setup-ssh-from-1password.sh --profile personal --no-input
 
   [ "$status" -eq 1 ]
   [[ "$output" == *"1Password CLI (op) is not installed"* ]]
   [[ "$output" == *"brew install --cask 1password-cli"* ]]
 }
 
-@test "SSH setup: handles missing items in dry-run" {
+@test "SSH setup: dry-run never invokes 1Password CLI" {
   cd "$TEST_DIR"
   cp "${BATS_TEST_DIRNAME}/../setup-ssh-from-1password.sh" .
-
-  # Create a mock that reports some items as missing
   cat > "$MOCK_BIN_DIR/op" <<'EOF'
 #!/bin/bash
-if [[ "$1" == "account" ]] && [[ "$2" == "list" ]]; then
-  echo "Account ID: test-account"
-  exit 0
-fi
-
-if [[ "$1" == "item" ]] && [[ "$2" == "get" ]]; then
-  item_name="$3"
-  case "$item_name" in
-    "~/.ssh/config")
-      echo "~/.ssh/config found"
-      exit 0
-      ;;
-    *)
-      echo "ERROR: Item not found: $item_name" >&2
-      exit 1
-      ;;
-  esac
-fi
+printf 'called\n' >> "$TEST_DIR/op-calls.log"
 exit 1
 EOF
   chmod +x "$MOCK_BIN_DIR/op"
 
-  run ./setup-ssh-from-1password.sh --profile personal --dry-run
-
+  run ./setup-ssh-from-1password.sh --profile personal --dry-run --no-input
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Found in 1Password:"* ]]
-  [[ "$output" == *"~/.ssh/config"* ]]
-  [[ "$output" == *"Not found in 1Password:"* ]]
-  [[ "$output" == *"personal_github_authentication"* ]]
+  [[ "$output" == *"1Password is not contacted"* ]]
+  [ ! -e "$TEST_DIR/op-calls.log" ]
+  [ ! -e "$HOME/.config/1Password/ssh/agent.toml" ]
+}
+
+@test "SSH setup: non-interactive run does not attempt sign-in on CLI failure" {
+  cd "$TEST_DIR"
+  cp "${BATS_TEST_DIRNAME}/../setup-ssh-from-1password.sh" .
+  cat > "$MOCK_BIN_DIR/op" <<'EOF'
+#!/bin/bash
+printf '%s\n' "$*" >> "$TEST_DIR/op-calls.log"
+exit 1
+EOF
+  chmod +x "$MOCK_BIN_DIR/op"
+  run ./setup-ssh-from-1password.sh --profile personal --no-input
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"1Password CLI is unavailable or not signed in"* ]]
+  [ "$(cat "$TEST_DIR/op-calls.log")" = "account list" ]
+  [ ! -e "$HOME/.config/1Password/ssh/agent.toml" ]
 }
 
 @test "SSH setup: checks for SSH agent socket in dry-run" {

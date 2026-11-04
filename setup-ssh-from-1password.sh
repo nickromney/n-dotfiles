@@ -41,8 +41,8 @@ usage() {
   echo "Usage: $0 [OPTIONS]"
   echo "Options:"
   echo "  -p, --profile PROFILE   Machine profile (personal, work-2024-client-1, work-2025-client-1, work-2025-client-2)"
-  echo "  -d, --dry-run           Check 1Password items without downloading"
-  echo "  -f, --force             Overwrite existing keys (default: skip existing)"
+  echo "  -d, --dry-run           Preview local changes without contacting 1Password"
+  echo "  -f, --force             Refresh existing SSH config and keys"
   echo "      --no-input          Disable prompts; require --profile and --yes for unsafe mode"
   echo "  -u, --unsafe            Download private keys (DANGEROUS - breaks 1Password SSH Agent model)"
   echo "  -y, --yes               Confirm unsafe private-key download without prompting"
@@ -58,10 +58,10 @@ usage() {
   echo "  - Downloads base SSH config from 1Password"
   echo "  - Downloads a per-profile SSH config fragment from 1Password"
   echo "  - Downloads public keys only (private keys stay in 1Password)"
-  echo "  - Uses 1Password SSH Agent for authentication"
+  echo "  - Adds the profile vault to the 1Password SSH agent configuration"
   echo "  - Prompts for machine profile if not specified"
   echo "  - --no-input requires --profile and skips all prompts"
-  echo "  - Skips existing keys (use --force to overwrite)"
+  echo "  - Preserves existing SSH config and keys (use --force to refresh)"
   echo ""
   echo "Examples:"
   echo "  $0 --profile work-2025-client-2           # Download only Client 2 keys"
@@ -128,7 +128,7 @@ done
 # Legacy Stow directory folding must not route machine-local SSH material
 # into the public checkout. File-level atomic writes cannot protect that route.
 ssh_setup_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-if [[ "$DRY_RUN" != "true" && -f "$ssh_setup_root/stow.sh" ]]; then
+if [[ -f "$ssh_setup_root/stow.sh" ]]; then
   for ssh_destination in "$HOME/.ssh" "$HOME/.ssh/config.d"; do
     ssh_parent="$ssh_destination"
     while [[ ! -d "$ssh_parent" ]]; do
@@ -145,27 +145,12 @@ if [[ "$DRY_RUN" != "true" && -f "$ssh_setup_root/stow.sh" ]]; then
   done
 fi
 
-# Check if op is installed
-if ! command -v op >/dev/null 2>&1; then
-  error "1Password CLI (op) is not installed"
-  error "Install with: brew install --cask 1password-cli"
-  exit 1
-fi
-
-# Check if signed in to 1Password
-if ! op account list >/dev/null 2>&1; then
-  warning "Not signed in to 1Password. Attempting to sign in..."
-  if ! eval "$(op signin)"; then
-    error "Failed to sign in to 1Password"
-    exit 1
-  fi
-fi
-
 # Configuration
 readonly DEFAULT_VAULT="${VAULT:-Private}" # Backward-compatible default
 readonly SSH_CONFIG_VAULT="${SSH_CONFIG_VAULT:-$DEFAULT_VAULT}"
 readonly SSH_DIR="$HOME/.ssh"
 readonly SSH_CONFIG_DIR="$SSH_DIR/config.d"
+readonly AGENT_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/1Password/ssh/agent.toml"
 declare BACKUP_DIR
 BACKUP_DIR="$SSH_DIR/backups/$(date +%Y%m%d-%H%M%S)"
 readonly BACKUP_DIR
@@ -293,8 +278,10 @@ for fragment_mapping in "${ALL_SSH_CONFIG_FRAGMENTS[@]}"; do
 done
 
 info "Machine profile: $MACHINE_PROFILE"
-info "Will download ${#SSH_CONFIG_FRAGMENTS[@]} SSH config fragment(s) for this profile"
-info "Will download ${#SSH_KEYS[@]} SSH key(s) for this profile"
+info "Profile includes ${#SSH_CONFIG_FRAGMENTS[@]} SSH config fragment(s)"
+info "Profile includes ${#SSH_KEYS[@]} SSH key(s)"
+IFS=':' read -r _ _ _ PROFILE_VAULT <<<"${SSH_CONFIG_FRAGMENTS[0]}"
+readonly PROFILE_VAULT
 echo
 
 ssh_example_path() {
@@ -355,86 +342,60 @@ download_key_field() {
   return 1
 }
 
-# Dry run mode - just check what's available
+# Dry runs only inspect local paths; querying 1Password may trigger authentication.
 if [[ "$DRY_RUN" == "true" ]]; then
-  echo
-  echo "========================================="
-  echo "SSH Config Dry Run - Checking 1Password"
-  echo "========================================="
-  echo
-
-  info "Checking for SSH configuration items in 1Password..."
-
-  available_items=()
-  missing_items=()
-
-  # Check base SSH config
-  if op item get "$SSH_CONFIG_BASE_ITEM_NAME" --vault="$SSH_CONFIG_VAULT" >/dev/null 2>&1; then
-    available_items+=("$SSH_CONFIG_BASE_ITEM_NAME (Secure Note, vault: $SSH_CONFIG_VAULT)")
-  else
-    missing_items+=("$SSH_CONFIG_BASE_ITEM_NAME (Secure Note, vault: $SSH_CONFIG_VAULT)")
-  fi
-
-  # Check SSH config fragments
-  for fragment_mapping in "${SSH_CONFIG_FRAGMENTS[@]}"; do
-    IFS=':' read -r fragment_profile op_name local_name item_vault <<<"$fragment_mapping"
-    item_vault="${item_vault:-$DEFAULT_VAULT}"
-
-    if op item get "$op_name" --vault="$item_vault" >/dev/null 2>&1; then
-      available_items+=("$op_name → $local_name (vault: $item_vault)")
+  echo "SSH Config Dry Run - Local Preview"
+  info "1Password is not contacted; item availability is not checked"
+  if [[ -e "$SSH_DIR/config" || -L "$SSH_DIR/config" ]]; then
+    if [[ "$FORCE_OVERWRITE" == "true" ]]; then
+      info "Will refresh existing SSH base config from $SSH_CONFIG_VAULT"
     else
-      missing_items+=("$op_name → $local_name (vault: $item_vault)")
+      info "Will preserve existing SSH base config"
     fi
+  else
+    info "Will download SSH base config from $SSH_CONFIG_VAULT if available"
+  fi
+  for fragment_mapping in "${SSH_CONFIG_FRAGMENTS[@]}"; do
+    IFS=':' read -r _ op_name local_name item_vault <<<"$fragment_mapping"
+    info "SSH fragment: $op_name -> $SSH_CONFIG_DIR/$local_name (vault: $item_vault)"
   done
-
-  # Check SSH Keys
   for key_mapping in "${SSH_KEYS[@]}"; do
     IFS=':' read -r op_name local_name item_vault <<<"$key_mapping"
-    # Use specified vault or fall back to default
-    item_vault="${item_vault:-$DEFAULT_VAULT}"
-
-    if op item get "$op_name" --vault="$item_vault" >/dev/null 2>&1; then
-      available_items+=("$op_name → $local_name (vault: $item_vault)")
-    else
-      missing_items+=("$op_name → $local_name (vault: $item_vault)")
+    info "SSH key: $op_name -> $SSH_DIR/$local_name.pub (vault: $item_vault)"
+    if [[ "$UNSAFE_MODE" == "true" ]]; then
+      warning "Unsafe mode would also download the private key to $SSH_DIR/$local_name"
     fi
   done
-
-  if [ ${#available_items[@]} -gt 0 ]; then
-    success "Found in 1Password:"
-    for item in "${available_items[@]}"; do
-      echo "  ✓ $item"
-    done
-  fi
-
-  if [ ${#missing_items[@]} -gt 0 ]; then
-    echo
-    warning "Not found in 1Password:"
-    for item in "${missing_items[@]}"; do
-      echo "  ✗ $item"
-    done
-    echo
-    echo "To add missing items:"
-    echo "  • Base SSH config: Create a Secure Note named '~/.ssh/config'"
-    echo "  • Per-profile config: Create a Secure Note named '~/.ssh/config.d/<profile>.conf'"
-    echo "  • SSH Keys: Create SSH Key items with exact names shown above"
-    echo "  • Save each item in the vault shown in parentheses"
-  fi
-
-  # Check SSH agent
-  echo
-  info "Checking SSH agent..."
+  info "Will add vault '$PROFILE_VAULT' to $AGENT_CONFIG if needed"
   if [ -S "$HOME/.1password/agent.sock" ]; then
     success "1Password SSH agent socket is available"
   else
     warning "1Password SSH agent socket not found"
     echo "  Enable it in 1Password Settings → Developer → SSH Agent"
   fi
-
-  echo
   success "Dry run complete! No files were modified."
-  echo "Run without --dry-run to actually download and apply configurations."
   exit 0
+fi
+
+# Check if op is installed
+if ! command -v op >/dev/null 2>&1; then
+  error "1Password CLI (op) is not installed"
+  error "Install with: brew install --cask 1password-cli"
+  exit 1
+fi
+
+# Check if signed in to 1Password
+if ! op account list >/dev/null 2>&1; then
+  if [[ "$NO_INPUT" == "true" ]]; then
+    error "1Password CLI is unavailable or not signed in. Enable desktop app integration and authenticate before retrying."
+    exit 1
+  fi
+  warning "Not signed in to 1Password. Attempting to sign in..."
+  if ! signin_output="$(op signin)"; then
+    error "Failed to sign in to 1Password"
+    exit 1
+  fi
+  eval "$signin_output"
 fi
 
 # Unsafe mode warning and confirmation
@@ -490,6 +451,27 @@ if ! command -v jq >/dev/null 2>&1; then
   exit 1
 fi
 
+# Add a profile-scoped section without rewriting user-managed agent settings.
+mkdir -p "$(dirname "$AGENT_CONFIG")"
+if [[ ! -e "$AGENT_CONFIG" && ! -L "$AGENT_CONFIG" ]]; then
+  printf '[[ssh-keys]]\nvault = "Private"\n\n[[ssh-keys]]\nvault = "Personal"\n\n[[ssh-keys]]\nvault = "Employee"\n' >"$AGENT_CONFIG"
+fi
+agent_marker="# n-dotfiles profile: $MACHINE_PROFILE"
+if ! grep -Fqx "$agent_marker" "$AGENT_CONFIG"; then
+  printf '\n%s\n[[ssh-keys]]\nvault = "%s"\n' "$agent_marker" "$PROFILE_VAULT" >>"$AGENT_CONFIG"
+  info "Added vault '$PROFILE_VAULT' to 1Password SSH agent config"
+else
+  if awk -v marker="$agent_marker" -v vault="$PROFILE_VAULT" '
+    $0 == marker { if (getline <= 0 || $0 != "[[ssh-keys]]") exit 1; if (getline <= 0 || $0 != "vault = \"" vault "\"") exit 1; found = 1 }
+    END { if (!found) exit 1 }
+  ' "$AGENT_CONFIG"; then
+    info "1Password SSH agent profile already configured: $MACHINE_PROFILE"
+  else
+    error "The agent entry for $MACHINE_PROFILE was edited; check $AGENT_CONFIG"
+    exit 1
+  fi
+fi
+
 # Create backup directory
 mkdir -p "$SSH_DIR" "$SSH_CONFIG_DIR"
 mkdir -p "$BACKUP_DIR"
@@ -522,7 +504,9 @@ done
 # Step 2: Setup base SSH config (from 1Password or example)
 info "Setting up base SSH config..."
 base_config_failed=false
-if download_secure_note "$SSH_CONFIG_BASE_ITEM_NAME" "$SSH_CONFIG_VAULT" "$SSH_DIR/config"; then
+if [[ "$FORCE_OVERWRITE" == "false" ]] && [[ -e "$SSH_DIR/config" || -L "$SSH_DIR/config" ]]; then
+  info "Keeping existing base SSH config (use --force to refresh)"
+elif download_secure_note "$SSH_CONFIG_BASE_ITEM_NAME" "$SSH_CONFIG_VAULT" "$SSH_DIR/config"; then
   success "Base SSH config downloaded from 1Password and permissions set"
 else
   warning "Base SSH config not found in 1Password"

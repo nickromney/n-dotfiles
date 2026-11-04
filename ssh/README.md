@@ -35,11 +35,19 @@ The setup script manages SSH configuration with security in mind:
 
 ### Default (Safe) Mode
 
-- Downloads base SSH config from 1Password (Secure Note)
-- Downloads one per-profile SSH config fragment from 1Password
+- Downloads the base SSH config and one per-profile fragment when absent
 - Downloads **public keys only** for reference
 - Private keys remain in 1Password
-- Uses 1Password SSH Agent for authentication
+- Adds the selected profile's vault to the 1Password SSH agent configuration
+- Preserves existing SSH config and keys unless `--force` is used
+
+The agent configuration is stored in `~/.config/1Password/ssh/agent.toml`
+(or under `XDG_CONFIG_HOME`). Existing entries are retained. If the file is
+new, the default Private, Personal, and Employee vaults are included alongside
+the selected profile. Each profile adds all SSH keys in its vault. The order of
+entries controls the order in which the agent offers keys, so use host-specific
+`IdentityFile` and `IdentitiesOnly yes` when servers limit authentication attempts.
+After changing the agent configuration, lock and unlock 1Password if necessary.
 
 ### Unsafe Mode (`--unsafe` flag)
 
@@ -73,8 +81,18 @@ The setup script `setup-ssh-from-1password.sh` (in repository root) handles ever
 # Safe mode (default) - base config + per-profile fragment + public keys only
 ./setup-ssh-from-1password.sh --profile personal
 
-# Check what would be downloaded without making changes
+# Preview local changes without contacting 1Password
 ./setup-ssh-from-1password.sh --profile personal --dry-run --no-input
+
+# Add the work profile and its vault to the SSH agent
+./setup-ssh-from-1password.sh --profile work-2024-client-1 --no-input
+
+# On a Client 2 work machine
+./setup-ssh-from-1password.sh --profile work-2025-client-2 --dry-run --no-input
+./setup-ssh-from-1password.sh --profile work-2025-client-2 --no-input
+
+# Refresh existing SSH config and keys from 1Password
+./setup-ssh-from-1password.sh --profile personal --force --no-input
 
 # Unsafe mode - download private keys (requires confirmation)
 ./setup-ssh-from-1password.sh --profile personal --unsafe
@@ -85,6 +103,13 @@ The setup script `setup-ssh-from-1password.sh` (in repository root) handles ever
 # Or automatic during Mac setup
 ./setup-personal-mac.sh  # Includes SSH setup as Step 7 (safe mode)
 ```
+
+Existing base SSH configs are preserved. They must include
+`~/.ssh/config.d/*.conf` and `~/.ssh/config.d/*/*.conf` for profile fragments
+to take effect. If setup reports that a legacy Stow link points into the
+checkout, preview `./scripts/migrate-runtime-roots.sh --dry-run ssh` and use
+`--execute ssh` to move the runtime directory into the home directory with a
+backup. This migration does not modify the base SSH config.
 
 ## 1Password Configuration
 

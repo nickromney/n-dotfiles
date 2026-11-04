@@ -48,6 +48,31 @@ setup() {
   [[ "$output" == *'would copy, verify, back up, and detach'* ]]
 }
 
+@test "SSH migration unfolds config.d and preserves examples and local files" {
+  mkdir -p "$TEST_HOME/.ssh" "$TEST_REPO/ssh/.ssh/config.d/local"
+  cp "$BATS_TEST_DIRNAME/../ssh/.stow-local-ignore" "$TEST_REPO/ssh/"
+  printf 'example\n' > "$TEST_REPO/ssh/.ssh/config.d/work.conf.example"
+  printf 'grouped\n' > "$TEST_REPO/ssh/.ssh/config.d/local/host.conf.example"
+  printf 'local host\n' > "$TEST_REPO/ssh/.ssh/config.d/private.conf"
+  ln -s "$TEST_REPO/ssh/.ssh/config.d" "$TEST_HOME/.ssh/config.d"
+
+  run env HOME="$TEST_HOME" "$TEST_REPO/scripts/migrate-runtime-roots.sh" --dry-run ssh
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'would copy, verify, back up, and detach'* ]]
+  [ -L "$TEST_HOME/.ssh/config.d" ]
+
+  run env HOME="$TEST_HOME" "$TEST_REPO/scripts/migrate-runtime-roots.sh" --execute ssh
+  [ "$status" -eq 0 ]
+  [ ! -L "$TEST_HOME/.ssh/config.d" ]
+  [ ! -L "$TEST_HOME/.ssh/config.d/work.conf.example" ]
+  [ "$(cat "$TEST_HOME/.ssh/config.d/local/host.conf.example")" = 'grouped' ]
+  [ ! -L "$TEST_HOME/.ssh/config.d/private.conf" ]
+  [ "$(cat "$TEST_HOME/.ssh/config.d/private.conf")" = 'local host' ]
+  run env HOME="$TEST_HOME" "$TEST_REPO/stow.sh" ssh
+  [ "$status" -eq 0 ]
+  [ "$(cat "$TEST_HOME/.ssh/config.d/private.conf")" = 'local host' ]
+}
+
 @test "runtime migration preserves GitHub authentication and Nushell history locally" {
   mkdir -p "$TEST_REPO/gh/.config/gh" "$TEST_HOME/.config"
   cp "$BATS_TEST_DIRNAME/../gh/.stow-local-ignore" "$TEST_REPO/gh/"

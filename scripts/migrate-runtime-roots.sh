@@ -77,6 +77,10 @@ try:
         relative, managed = layouts[package]
         target = user_home / relative
         source = repo / package / relative
+        if package == 'ssh' and not target.is_symlink():
+            target = target / 'config.d'
+            source = source / 'config.d'
+            managed = []
         if not source.is_dir() or not target.exists() or target.resolve() != source.resolve():
             print(f'{package}: already machine-local or absent')
             continue

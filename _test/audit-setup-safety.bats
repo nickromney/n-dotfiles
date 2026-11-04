@@ -250,6 +250,25 @@ OP
   [[ "$output" == *"Refusing to write SSH material into the dotfiles checkout"* ]]
 }
 
+@test "SSH dry-run detects a folded config.d without accessing 1Password" {
+  mkdir -p "$AUDIT_DIR/checkout/ssh/.ssh/config.d" "$HOME/.ssh"
+  cp "$BATS_TEST_DIRNAME/../setup-ssh-from-1password.sh" "$AUDIT_DIR/checkout/"
+  cp "$BATS_TEST_DIRNAME/../stow.sh" "$AUDIT_DIR/checkout/"
+  ln -s "$AUDIT_DIR/checkout/ssh/.ssh/config.d" "$HOME/.ssh/config.d"
+  cat > "$AUDIT_DIR/bin/op" <<'OP'
+#!/usr/bin/env bash
+touch "$AUDIT_DIR/password-accessed"
+exit 1
+OP
+  chmod +x "$AUDIT_DIR/bin/op"
+
+  run "$AUDIT_DIR/checkout/setup-ssh-from-1password.sh" --profile personal --dry-run --no-input
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"Refusing to write SSH material into the dotfiles checkout"* ]]
+  [ ! -e "$AUDIT_DIR/password-accessed" ]
+  [ -L "$HOME/.ssh/config.d" ]
+}
+
 @test "work Git setup refuses a checkout directory before accessing 1Password" {
   mkdir -p "$AUDIT_DIR/checkout/work-config" "$HOME/Developer"
   cp "$BATS_TEST_DIRNAME/../setup-gitconfig-from-1password.sh" "$AUDIT_DIR/checkout/"
