@@ -10,6 +10,7 @@ STOW_SH_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Each directory is a GNU Stow package targeting $HOME.
 STOW_DIRS=(
+  1password
   agents
   aws
   bash
@@ -204,7 +205,7 @@ stow_package() {
   # Keep machine-local state outside the repository. Folding ~/.aws would
   # redirect future credential/cache writes into this package.
   case "$dir" in
-    aws | gh | nushell | ssh | omarchy) options+=("--no-folding") ;;
+    1password | aws | gh | nushell | ssh | omarchy) options+=("--no-folding") ;;
   esac
   stow "${options[@]}" "$dir"
 }

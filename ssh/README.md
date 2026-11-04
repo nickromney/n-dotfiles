@@ -38,13 +38,15 @@ The setup script manages SSH configuration with security in mind:
 - Downloads the base SSH config and one per-profile fragment when absent
 - Downloads **public keys only** for reference
 - Private keys remain in 1Password
-- Adds the selected profile's vault to the 1Password SSH agent configuration
+- Uses the shared Stow-managed 1Password SSH agent configuration
 - Preserves existing SSH config and keys unless `--force` is used
 
-The agent configuration is stored in `~/.config/1Password/ssh/agent.toml`
-(or under `XDG_CONFIG_HOME`). Existing entries are retained. If the file is
-new, the default Private, Personal, and Employee vaults are included alongside
-the selected profile. Each profile adds all SSH keys in its vault. The order of
+The `1password` Stow package manages `~/.config/1Password/ssh/agent.toml`
+with the same vault list on each machine. Stow does not overwrite an existing
+agent file unless you explicitly select conflict backup. Setup preserves the
+managed file; without it, setup adds the selected profile's vault to a local
+agent file (under `XDG_CONFIG_HOME` when set). Each vault exposes all its SSH
+keys to the agent. The order of
 entries controls the order in which the agent offers keys, so use host-specific
 `IdentityFile` and `IdentitiesOnly yes` when servers limit authentication attempts.
 After changing the agent configuration, lock and unlock 1Password if necessary.
@@ -231,6 +233,20 @@ eval $(op signin)
 Ensure 1Password SSH Agent is enabled:
 
 - 1Password Settings → Developer → SSH Agent
+
+For commit-signing failures, run this from the affected repository, using the
+path to your dotfiles checkout:
+
+```bash
+path/to/n-dotfiles/scripts/check-1password-dev-tools.sh --diagnose-signing --repo .
+```
+
+This prints the effective Git settings and their source files, the configured
+signing-key fingerprint, the 1Password agent config path, and the keys offered
+by the selected and 1Password agents. It does not contact the 1Password CLI or
+create a commit. A matching fingerprint confirms that the agent offers the key;
+the signer can still require authorization. Authentication keys selected in
+`~/.ssh/config` are separate from Git's `user.signingkey` setting.
 
 ### Testing Connections
 

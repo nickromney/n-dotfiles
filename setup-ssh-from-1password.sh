@@ -366,7 +366,11 @@ if [[ "$DRY_RUN" == "true" ]]; then
       warning "Unsafe mode would also download the private key to $SSH_DIR/$local_name"
     fi
   done
-  info "Will add vault '$PROFILE_VAULT' to $AGENT_CONFIG if needed"
+  if [[ -f "$ssh_setup_root/1password/.config/1Password/ssh/agent.toml" && "$AGENT_CONFIG" -ef "$ssh_setup_root/1password/.config/1Password/ssh/agent.toml" ]]; then
+    info "Will preserve Stow-managed 1Password agent config at $AGENT_CONFIG"
+  else
+    info "Will add vault '$PROFILE_VAULT' to $AGENT_CONFIG if needed"
+  fi
   if [ -S "$HOME/.1password/agent.sock" ]; then
     success "1Password SSH agent socket is available"
   else
@@ -457,7 +461,15 @@ if [[ ! -e "$AGENT_CONFIG" && ! -L "$AGENT_CONFIG" ]]; then
   printf '[[ssh-keys]]\nvault = "Private"\n\n[[ssh-keys]]\nvault = "Personal"\n\n[[ssh-keys]]\nvault = "Employee"\n' >"$AGENT_CONFIG"
 fi
 agent_marker="# n-dotfiles profile: $MACHINE_PROFILE"
-if ! grep -Fqx "$agent_marker" "$AGENT_CONFIG"; then
+managed_agent="$ssh_setup_root/1password/.config/1Password/ssh/agent.toml"
+if [[ -f "$managed_agent" && "$AGENT_CONFIG" -ef "$managed_agent" ]]; then
+  if grep -Fqx "vault = \"$PROFILE_VAULT\"" "$AGENT_CONFIG"; then
+    info "Stow-managed 1Password agent config includes vault '$PROFILE_VAULT'"
+  else
+    error "Stow-managed agent config does not include vault '$PROFILE_VAULT': $managed_agent"
+    exit 1
+  fi
+elif ! grep -Fqx "$agent_marker" "$AGENT_CONFIG"; then
   printf '\n%s\n[[ssh-keys]]\nvault = "%s"\n' "$agent_marker" "$PROFILE_VAULT" >>"$AGENT_CONFIG"
   info "Added vault '$PROFILE_VAULT' to 1Password SSH agent config"
 else

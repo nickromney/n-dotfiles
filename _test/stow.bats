@@ -27,6 +27,17 @@ teardown() {
   [[ "$output" != *"LINK:"* ]]
 }
 
+@test "1Password agent config is stowed without folding its parent directories" {
+  mkdir -p "$TEST_REPO/1password/.config/1Password/ssh"
+  cp "$BATS_TEST_DIRNAME/../1password/.config/1Password/ssh/agent.toml" "$TEST_REPO/1password/.config/1Password/ssh/"
+  run env HOME="$TEST_HOME" "$TEST_REPO/stow.sh" 1password
+  [ "$status" -eq 0 ]
+  [ -L "$TEST_HOME/.config/1Password/ssh/agent.toml" ]
+  [ ! -L "$TEST_HOME/.config/1Password/ssh" ]
+  [ ! -L "$TEST_HOME/.config/1Password" ]
+  grep -Fq 'vault = "Work 2025 Client 2"' "$TEST_HOME/.config/1Password/ssh/agent.toml"
+}
+
 @test "stow restow mode remains explicit" {
   printf '%s\n' 'repository zsh config' > "$TEST_REPO/zsh/.zshrc"
   env HOME="$TEST_HOME" "$TEST_REPO/stow.sh" zsh >/dev/null

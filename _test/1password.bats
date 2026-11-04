@@ -197,6 +197,26 @@ EOF
   [ "$(cat "$HOME/.ssh/config")" = $'Host custom\n  HostName custom.example' ]
 }
 
+@test "SSH setup does not modify the Stow-managed 1Password agent config" {
+  mkdir -p "$TEST_DIR/checkout"
+  cd "$TEST_DIR/checkout"
+  cp "${BATS_TEST_DIRNAME}/../setup-ssh-from-1password.sh" .
+  cp "${BATS_TEST_DIRNAME}/../stow.sh" .
+  mkdir -p "$TEST_DIR/checkout/1password/.config/1Password/ssh" "$HOME/.config/1Password/ssh" "$HOME/.ssh/config.d"
+  cp "${BATS_TEST_DIRNAME}/../1password/.config/1Password/ssh/agent.toml" "$TEST_DIR/checkout/1password/.config/1Password/ssh/agent.toml"
+  cp "$TEST_DIR/checkout/1password/.config/1Password/ssh/agent.toml" "$TEST_DIR/original-agent.toml"
+  ln -s "$TEST_DIR/checkout/1password/.config/1Password/ssh/agent.toml" "$HOME/.config/1Password/ssh/agent.toml"
+  printf 'existing\n' > "$HOME/.ssh/config"
+  printf 'existing\n' > "$HOME/.ssh/config.d/work-2025-client-2.conf"
+  for key in work_2025_client_2_github work_2025_client_2_gitea work_2025_client_2_ado; do
+    printf 'existing\n' > "$HOME/.ssh/$key.pub"
+  done
+  run ./setup-ssh-from-1password.sh --profile work-2025-client-2 --no-input
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Stow-managed 1Password agent config includes vault"* ]]
+  cmp "$TEST_DIR/original-agent.toml" "$HOME/.config/1Password/ssh/agent.toml"
+}
+
 @test "SSH setup: dry-run shows available items" {
   cd "$TEST_DIR"
   cp "${BATS_TEST_DIRNAME}/../setup-ssh-from-1password.sh" .
