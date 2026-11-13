@@ -65,6 +65,8 @@
   # Portable shim (git/.local/bin/op-ssh-sign) picks the right 1Password
   # install path for macOS or Linux, so this one line works on both.
   program = ~/.local/bin/op-ssh-sign
+  # Public keys trusted when verifying SSH signatures (git log --show-signature).
+  allowedSignersFile = ~/.config/git/allowed_signers
 
 [init]
   defaultBranch = main
