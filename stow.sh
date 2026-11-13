@@ -109,7 +109,7 @@ parse_args() {
         shift
         ;;
       --backup-dir)
-        if [[ $# -lt 2 || -z "$2" ]]; then
+        if [[ $# -lt 2 || -z "$2" || "$2" == -* ]]; then
           error "--backup-dir requires a path"
           usage 1
         fi

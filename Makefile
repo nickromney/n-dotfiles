@@ -89,7 +89,10 @@ help: ## Show this help message
 ##@ Install
 
 .PHONY: install
-install: $(INSTALL_TARGETS) ## Apply the host-appropriate package, stow, and mise layers
+install: ## Apply the host-appropriate package, stow, and mise layers
+	@for target in $(INSTALL_TARGETS); do \
+		$(MAKE) $$target || exit $$?; \
+	done
 
 .PHONY: brewfile-install
 brewfile-install: ## Install packages from the Brewfile (Brewfile.posix on Linux)
@@ -142,7 +145,8 @@ linux-install: ## Install Linux dotfiles and mise tools without Homebrew
 		echo "$(RED)linux-install is for Linux; use make install on macOS$(NC)"; \
 		exit 1; \
 	fi
-	@$(MAKE) stow-install mise-install
+	@$(MAKE) stow-install
+	@$(MAKE) mise-install
 
 .PHONY: omarchy-setup
 omarchy-setup: ## Run the idempotent Arch/Omarchy setup flow

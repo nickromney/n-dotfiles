@@ -32,7 +32,7 @@ if ($zscaler_cert_dir | path exists) {
     if ($zscaler_ca_bundle | path exists) {
         $env.AWS_CA_BUNDLE = $zscaler_ca_bundle
         $env.CURL_CA_BUNDLE = $zscaler_ca_bundle
-        $env.GIT_SSL_CAPATH = $zscaler_ca_bundle
+        $env.GIT_SSL_CAINFO = $zscaler_ca_bundle
         $env.NODE_EXTRA_CA_CERTS = $zscaler_ca_bundle
         $env.SSL_CERT_FILE = $zscaler_ca_bundle
     }

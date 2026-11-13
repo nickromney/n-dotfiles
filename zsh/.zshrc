@@ -249,7 +249,7 @@ declare -a early_paths=(
 )
 
 for path_entry in "${early_paths[@]}"; do
-  if [ -d "$path_entry" ] && ! echo "$PATH" | grep -q "$path_entry"; then
+  if [ -d "$path_entry" ] && [[ ":$PATH:" != *":$path_entry:"* ]]; then
     export PATH="$path_entry:$PATH"
   fi
 done
@@ -346,7 +346,7 @@ if [ -d "$ZSCALER_CERT_DIR" ]; then
   # Only set environment variables if certificate files exist
   [ -f "$ZSCALER_CA_BUNDLE" ] && export AWS_CA_BUNDLE="$ZSCALER_CA_BUNDLE"
   [ -f "$ZSCALER_CA_BUNDLE" ] && export CURL_CA_BUNDLE="$ZSCALER_CA_BUNDLE"
-  [ -f "$ZSCALER_CA_BUNDLE" ] && export GIT_SSL_CAPATH="$ZSCALER_CA_BUNDLE"
+  [ -f "$ZSCALER_CA_BUNDLE" ] && export GIT_SSL_CAINFO="$ZSCALER_CA_BUNDLE"
   [ -f "$ZSCALER_CA_BUNDLE" ] && export NODE_EXTRA_CA_CERTS="$ZSCALER_CA_BUNDLE"
   [ -f "$AZURE_CA_CERT" ] && export REQUESTS_CA_BUNDLE="$AZURE_CA_CERT"
   [ -f "$ZSCALER_CA_BUNDLE" ] && export SSL_CERT_FILE="$ZSCALER_CA_BUNDLE"
@@ -395,7 +395,7 @@ declare -a paths=(
 )
 
 for path_entry in "${paths[@]}"; do
-  if [ -d "$path_entry" ] && ! echo "$PATH" | grep -q "$path_entry"; then
+  if [ -d "$path_entry" ] && [[ ":$PATH:" != *":$path_entry:"* ]]; then
     export PATH="$path_entry:$PATH"
   fi
 done

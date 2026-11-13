@@ -6,12 +6,22 @@ This directory contains my ZSH shell configuration files, managed with GNU Stow.
 
 ### Measuring Startup Time
 
+The `-i -c` commands measure the shortened command-mode startup path, which
+skips interactive tool initialization. The opt-in Bats check retains a 125 ms
+budget for that path; it is sensitive to machine load and installed tools.
+
 ```bash
-# Quick measurement (5 runs)
+# Opt-in command-mode budget check
+DOTFILES_BENCHMARK=1 bats --show-output-of-passing-tests --filter "opt-in command-mode startup" _test/shell-configs.bats
+
+# Quick command-mode measurement (5 runs)
 for i in {1..5}; do /usr/bin/time zsh -i -c exit 2>&1; done
 
-# Detailed benchmark with hyperfine (recommended)
+# Detailed command-mode benchmark with hyperfine
 hyperfine --warmup 3 --runs 10 'zsh -i -c exit'
+
+# Full interactive initialization with exit supplied on stdin
+hyperfine --warmup 3 --runs 10 'printf "exit\n" | zsh -i'
 
 # Profile what's taking time (creates ~/.zsh_profile.log)
 # Add to top of .zshrc: zmodload zsh/zprof

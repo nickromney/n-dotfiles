@@ -449,3 +449,30 @@ EOF
   [[ "$output" != *"packages already up to date"* ]]
   [[ "$output" != *"upgrades completed"* ]]
 }
+
+@test "parallel install waits for stow before installing mise tools" {
+  cat > stow.sh <<'EOF'
+#!/usr/bin/env bash
+sleep 0.2
+touch "$TEST_DIR/stow-complete"
+EOF
+  cat > "$TEST_DIR/mocks/mise" <<'EOF'
+#!/usr/bin/env bash
+[[ -f "$TEST_DIR/stow-complete" ]]
+EOF
+  chmod +x stow.sh "$TEST_DIR/mocks/mise"
+  run make -j4 install
+  [ "$status" -eq 0 ]
+}
+
+@test "install stops before mise when stow fails even with keep-going" {
+  printf '#!/usr/bin/env bash\nexit 42\n' > stow.sh
+  cat > "$TEST_DIR/mocks/mise" <<'EOF'
+#!/usr/bin/env bash
+touch "$TEST_DIR/mise-ran"
+EOF
+  chmod +x stow.sh "$TEST_DIR/mocks/mise"
+  run make -k install
+  [ "$status" -ne 0 ]
+  [ ! -e "$TEST_DIR/mise-ran" ]
+}

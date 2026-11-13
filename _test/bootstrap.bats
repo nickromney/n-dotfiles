@@ -77,3 +77,22 @@ teardown() {
   [ "$status" -eq 1 ]
   [[ "$output" == *"--install-1password and --skip-1password cannot be used together"* ]]
 }
+
+@test "bootstrap: non-interactive default excludes 1Password from Brewfile" {
+  run env HOME="$TEST_HOME" OSTYPE="darwin22" PATH="$MOCK_BIN_DIR:/usr/bin:/bin" \
+    "$BOOTSTRAP_SCRIPT" --dry-run --no-input --skip-stow --skip-borders --skip-mise
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"HOMEBREW_BUNDLE_CASK_SKIP=1password 1password-cli brew bundle"* ]]
+  [[ "$output" == *"Skipping 1Password installation (non-interactive mode)"* ]]
+}
+
+@test "bootstrap: explicit 1Password install uses Brewfile once" {
+  run env HOME="$TEST_HOME" OSTYPE="darwin22" PATH="$MOCK_BIN_DIR:/usr/bin:/bin" \
+    "$BOOTSTRAP_SCRIPT" --dry-run --install-1password --skip-stow --skip-borders --skip-mise
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"brew bundle --file"* ]]
+  [[ "$output" != *"HOMEBREW_BUNDLE_CASK_SKIP="* ]]
+  [[ "$output" != *"brew install --cask 1password"* ]]
+}
