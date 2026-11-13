@@ -59,7 +59,7 @@ paths=(
 )
 
 for path_entry in "${paths[@]}"; do
-  if [ -d "$path_entry" ] && ! echo "$PATH" | grep -q "$path_entry"; then
+  if [ -d "$path_entry" ] && [[ ":$PATH:" != *":$path_entry:"* ]]; then
     export PATH="$path_entry:$PATH"
   fi
 done

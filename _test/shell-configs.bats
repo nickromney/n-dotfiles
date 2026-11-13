@@ -377,7 +377,35 @@ EOF
   [ "$output" = "0" ]
 }
 
-@test "zshrc: startup time under 125ms" {
+@test "zshrc: interactive startup caches tool initialization and activates mise each time" {
+  local zdotdir="$HOME/zdotdir"
+  mkdir -p "$zdotdir" "$HOME/.local/bin"
+  ln -s "$DOTFILES_DIR/zsh/.zshrc" "$zdotdir/.zshrc"
+  ln -s "$DOTFILES_DIR/zsh/.zshenv" "$zdotdir/.zshenv"
+
+  cat > "$HOME/.local/bin/starship" <<'EOF'
+#!/bin/sh
+printf '%s\n' called >> "$HOME/starship-calls"
+EOF
+  cat > "$HOME/.local/bin/mise" <<'EOF'
+#!/bin/sh
+printf '%s\n' called >> "$HOME/mise-calls"
+EOF
+  chmod +x "$HOME/.local/bin/starship" "$HOME/.local/bin/mise"
+
+  for _ in 1 2; do
+    run env HOME="$HOME" DOTFILES_DIR="$DOTFILES_DIR" ZDOTDIR="$zdotdir" \
+      TERM=xterm-256color PATH=/usr/bin:/bin zsh -i <<< 'exit'
+    [ "$status" -eq 0 ]
+  done
+
+  [ "$(wc -l < "$HOME/starship-calls" | tr -d ' ')" -eq 1 ]
+  [ "$(wc -l < "$HOME/mise-calls" | tr -d ' ')" -eq 2 ]
+}
+
+@test "zshrc: opt-in command-mode startup benchmark under 125ms" {
+  [[ "${DOTFILES_BENCHMARK:-}" == "1" ]] || skip "Set DOTFILES_BENCHMARK=1 to run the load-sensitive benchmark"
+
   # Detect a suitable 'time' command with -p (POSIX) support
   local -a time_cmd=()
   if command -v gtime >/dev/null 2>&1 && gtime -p true 2>/dev/null; then
@@ -404,7 +432,7 @@ EOF
     zsh -i -c exit
   )
 
-  # Warm caches first so we measure the steady-state startup path.
+  # Warm the command-mode startup path before measuring.
   run "${zsh_cmd[@]}"
   [ "$status" -eq 0 ]
 
@@ -431,6 +459,7 @@ EOF
   # Assert under 125ms
   [ "$avg_ms" -lt 125 ]
 }
+
 
 # ============================================================================
 # Common Tests (both bash and zsh)
@@ -544,4 +573,15 @@ EOF
     echo \$HISTSIZE
   ")
   [ "$result" -eq 100000 ]
+}
+
+@test "shell configs add user bin when PATH contains a longer matching directory" {
+  mkdir -p "$HOME/.local/bin" "$HOME/.local/bin-extra"
+  for shell in bash zsh; do
+    command -v "$shell" >/dev/null || continue
+    # shellcheck disable=SC2016 # Variables are expanded in the child shell.
+    run env PATH="$HOME/.local/bin-extra:/usr/bin:/bin" "$shell" -c 'source "$DOTFILES_DIR/$1/.$1rc" >/dev/null 2>&1; printf "%s" "$PATH"' _ "$shell"
+    [ "$status" -eq 0 ]
+    [[ ":$output:" == *":$HOME/.local/bin:"* ]]
+  done
 }

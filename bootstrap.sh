@@ -214,7 +214,7 @@ should_install_1password() {
 }
 
 install_1password_if_requested() {
-  if ! should_install_1password; then
+  if [[ "$SKIP_1PASSWORD" == "true" || "$SKIP_BREWFILE" != "true" ]]; then
     return 0
   fi
 
@@ -288,6 +288,9 @@ main() {
 
   install_homebrew_if_needed
   ensure_brew_on_path
+  if ! should_install_1password; then
+    SKIP_1PASSWORD=true
+  fi
   run_brewfile_if_needed
   run_stow_if_needed
   run_borders_if_needed

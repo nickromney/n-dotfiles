@@ -134,6 +134,17 @@ teardown() {
   [[ "$output" == *"--dry-run and --backup-conflicts cannot be used together"* ]]
 }
 
+@test "stow rejects an option in place of the backup directory" {
+  printf '%s\n' 'repository zsh config' > "$TEST_REPO/zsh/.zshrc"
+  printf '%s\n' 'unmanaged zsh config' > "$TEST_HOME/.zshrc"
+
+  run env HOME="$TEST_HOME" "$TEST_REPO/stow.sh" --backup-conflicts --backup-dir --restow zsh
+
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"--backup-dir requires a path"* ]]
+  [ "$(cat "$TEST_HOME/.zshrc")" = "unmanaged zsh config" ]
+}
+
 @test "stow detects all conflicts before changing any package" {
   mkdir -p "$TEST_REPO/aerospace/.config/aerospace"
   printf '%s\n' 'aerospace config' > "$TEST_REPO/aerospace/.config/aerospace/aerospace.toml"
