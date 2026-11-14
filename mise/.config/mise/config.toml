@@ -12,6 +12,11 @@
 # Apply with: mise install
 # Update with: make update-all (from the repository root)
 
+[settings]
+# Wait seven days before selecting a release for a version range or `latest`.
+# Exact version pins are exempt from the cooldown.
+minimum_release_age = "7d"
+
 [tools]
 # Runtimes
 node = "26.12.1"
