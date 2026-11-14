@@ -1,6 +1,9 @@
 #!/usr/bin/env bats
 
 setup() {
+  # Git hooks export GIT_DIR and friends; clear them so git acts on this checkout and the fixtures, not the pushed repo.
+  # shellcheck disable=SC2046
+  unset $(git rev-parse --local-env-vars)
   SCRIPT="$BATS_TEST_DIRNAME/../scripts/cleanup-storage.sh"
   TEST_TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/storage-project-cleanup.XXXXXX")"
   TEST_TMP_DIR="$(cd "$TEST_TMP_DIR" && pwd -P)"

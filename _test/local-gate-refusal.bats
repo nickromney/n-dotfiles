@@ -1,6 +1,9 @@
 #!/usr/bin/env bats
 # Full-gate refusals must not run any producer or masquerade as executed checks.
 setup() {
+  # Git hooks export GIT_DIR and friends; clear them so git acts on this checkout and the fixtures, not the pushed repo.
+  # shellcheck disable=SC2046
+  unset $(git rev-parse --local-env-vars)
   GATE_ROOT="$(git -C "$BATS_TEST_DIRNAME" rev-parse --show-toplevel)"
   GATE="$GATE_ROOT/scripts/hooks/run-local-ci.sh"
   export PRODUCER_MARKER="$BATS_TEST_TMPDIR/producer-called"
