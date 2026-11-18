@@ -7,6 +7,8 @@ Usage: find-pipeline-runs.sh [--help]
 
 Find Azure DevOps build and YAML pipeline runs queued by a user on a UTC day.
 Requires Azure CLI with the azure-devops extension, and jq.
+Sign in with az login --allow-no-subscriptions or supply an Azure DevOps PAT
+through AZURE_DEVOPS_EXT_PAT.
 
 Required environment variables:
   ORG          Azure DevOps organisation name
@@ -61,6 +63,15 @@ next_day="$(jq -ner --arg day "$DAY" '
   die 'MANUAL_ONLY must be true or false.'
 
 ORG_URL="https://dev.azure.com/$ORG"
+
+if ! az devops project list \
+  --organization "$ORG_URL" \
+  --top 1 \
+  --output none; then
+  die "Cannot verify Azure DevOps access to '$ORG'. Check the organisation name and access. Sign in with 'az login --allow-no-subscriptions' or set AZURE_DEVOPS_EXT_PAT to an Azure DevOps PAT."
+fi
+
+printf 'Azure DevOps organisation access verified.\n' >&2
 
 if ! az devops project show \
   --organization "$ORG_URL" \

@@ -3,8 +3,9 @@
 ## find-pipeline-runs
 
 Find Azure DevOps build and YAML pipeline runs queued by a colleague on a UTC
-date. The script checks for the `azure-devops` extension and uses your Azure CLI
-sign-in to verify project access and query builds. Install `az` and `jq` first.
+date. The script checks for the `azure-devops` extension, then verifies that the
+CLI can access the organisation before it looks up the project or queries
+builds. Install `az` and `jq` first.
 
 Install the extension, check its version, and sign in with your Microsoft Entra
 account. [Azure DevOps CLI quickstart](https://learn.microsoft.com/en-us/azure/devops/cli/)
@@ -12,8 +13,12 @@ account. [Azure DevOps CLI quickstart](https://learn.microsoft.com/en-us/azure/d
 ```bash
 az extension add --name azure-devops
 az extension show --name azure-devops --query version -o tsv
-az login
+az login --allow-no-subscriptions
 ```
+
+If you use an Azure DevOps personal access token, enter it at the prompt from
+`az devops login --organization "https://dev.azure.com/$ORG"`, or export it in
+`AZURE_DEVOPS_EXT_PAT` for non-interactive use. [Azure DevOps CLI PAT authentication](https://learn.microsoft.com/en-us/azure/devops/cli/log-in-via-pat)
 
 To update an existing installation, run `az extension update --name azure-devops`.
 The script passes the organisation and project explicitly, so CLI defaults are
