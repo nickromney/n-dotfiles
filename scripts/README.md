@@ -117,6 +117,27 @@ Project modes need Python 3.9+ and Git. They cannot be mixed with the global
 targets, `--report`, `--list` or the interactive chooser. Repeat a project flag
 to select separate roots; overlapping roots are rejected before changes.
 
+Use Docker volume mode to see total and reclaimable volume space on the
+current local Docker engine. The preview lists unused volumes and the
+containers that hold any attached volumes. The script can show the cleanup
+plan if the usage report times out, but it needs a complete volume and
+attachment inventory before it deletes anything. After a purge, it reports
+Docker volume usage again.
+
+```bash
+./scripts/cleanup-storage.sh --docker-volumes
+./scripts/cleanup-storage.sh --docker-volumes --execute --no-input
+```
+
+To include attached volumes, add `--remove-volume-containers` to the preview.
+Review the named containers before adding `--execute`. This permanently
+deletes the volumes and the writable layers of the containers that hold them.
+
+```bash
+./scripts/cleanup-storage.sh --docker-volumes --remove-volume-containers --dry-run
+./scripts/cleanup-storage.sh --docker-volumes --remove-volume-containers --execute --no-input
+```
+
 ## audit-github-repos
 
 Compare a GitHub owner's repositories with local clones, then report upstream

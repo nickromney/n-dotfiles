@@ -126,3 +126,114 @@ teardown() { rm -rf "$TEST_TMP_DIR"; }
   [ "$status" -ne 0 ]
   [ -f "$TEST_TMP_DIR/unrelated/cache/keep" ]
 }
+
+mock_docker() {
+  export DOCKER_CALLS="$TEST_TMP_DIR/docker-calls"
+  mkdir -p "$TEST_TMP_DIR/bin"
+  cat > "$TEST_TMP_DIR/bin/docker" <<'MOCK'
+#!/usr/bin/env bash
+set -eu
+printf '%s\n' "$*" >> "$DOCKER_CALLS"
+case "$1 $2" in
+  'context show') echo dev; exit ;;
+  'context inspect') echo "${TEST_DOCKER_ENDPOINT:-unix:///tmp/dev-docker.sock}"; exit ;;
+esac
+[[ "$1" == --host && "$2" == 'unix:///tmp/dev-docker.sock' ]] || exit 99
+shift 2
+case "$1 $2" in
+  'system df')
+    if [[ "${TEST_DOCKER_DF_TIMEOUT:-}" == 1 ]]; then
+      exit 124
+    fi
+    echo 'Docker volumes: 2GB total, 1GB reclaimable'
+    ;;
+  'volume ls') printf 'unused-cache\nattached-data\n' ;;
+  'container ls')
+    if [[ " $* " == *' volume=attached-data '* ]]; then
+      if [[ "${TEST_DOCKER_INVENTORY_TIMEOUT:-}" == 1 ]]; then
+        exit 124
+      fi
+      echo 'deadbeef app'
+    fi
+    ;;
+  'container rm'|'volume rm') ;;
+  *) exit 99 ;;
+esac
+MOCK
+  chmod +x "$TEST_TMP_DIR/bin/docker"
+  export PATH="$TEST_TMP_DIR/bin:$PATH"
+}
+
+@test "Docker volume preview reports usage and shows attached volumes without deleting" {
+  mock_docker
+  run "$REPO_ROOT/scripts/cleanup-storage.sh" --docker-volumes
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"2GB total, 1GB reclaimable"* ]]
+  [[ "$output" == *"Remove volume: unused-cache"* ]]
+  [[ "$output" == *"Keep attached volume: attached-data"* ]]
+  [[ "$output" == *"app"* ]]
+  calls=$(cat "$DOCKER_CALLS")
+  [[ "$calls" != *' volume rm '* && "$calls" != *' container rm '* ]]
+}
+
+@test "Docker volume execution removes unused volumes and keeps attached containers" {
+  mock_docker
+  run "$REPO_ROOT/scripts/cleanup-storage.sh" --docker-volumes --execute --no-input
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Keep attached volume: attached-data"* ]]
+  [[ "$output" == *"Docker volume usage after cleanup"* ]]
+  calls=$(cat "$DOCKER_CALLS")
+  [[ "$calls" == *' volume rm -- unused-cache'$'\n'*' system df '* ]]
+  [[ "$calls" != *' container rm '* ]]
+}
+
+@test "an incomplete Docker attachment inventory stops execution before deletion" {
+  mock_docker
+  run env TEST_DOCKER_INVENTORY_TIMEOUT=1 "$REPO_ROOT/scripts/cleanup-storage.sh" \
+    --docker-volumes --remove-volume-containers --execute
+
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"Cannot check which containers use Docker volume attached-data"* ]]
+  calls=$(cat "$DOCKER_CALLS")
+  [[ "$calls" != *' volume rm '* && "$calls" != *' container rm '* ]]
+}
+
+@test "a Docker disk usage timeout still allows a preview from the volume inventory" {
+  mock_docker
+  run env TEST_DOCKER_DF_TIMEOUT=1 "$REPO_ROOT/scripts/cleanup-storage.sh" --docker-volumes
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Docker volume usage report timed out"* ]]
+  [[ "$output" == *"Remove volume: unused-cache"* ]]
+  calls=$(cat "$DOCKER_CALLS")
+  [[ "$calls" != *' volume rm '* && "$calls" != *' container rm '* ]]
+}
+
+@test "Docker only removes volume-holding containers when attachment removal is explicit" {
+  mock_docker
+  run "$REPO_ROOT/scripts/cleanup-storage.sh" --docker-volumes --remove-volume-containers --dry-run
+  [ "$status" -eq 0 ]
+  calls=$(cat "$DOCKER_CALLS")
+  [[ "$calls" != *' volume rm '* && "$calls" != *' container rm '* ]]
+
+  run "$REPO_ROOT/scripts/cleanup-storage.sh" --docker-volumes --remove-volume-containers --execute
+  [ "$status" -eq 0 ]
+  calls=$(cat "$DOCKER_CALLS")
+  [[ "$calls" == *' container rm --force -- deadbeef'*$'\n'*' volume rm -- unused-cache attached-data'$'\n'* ]]
+}
+
+@test "Docker cleanup refuses a remote context and stays separate from global cleanup" {
+  mock_docker
+  run "$REPO_ROOT/scripts/cleanup-storage.sh" --docker-volumes --all --execute
+  [ "$status" -ne 0 ]
+  [ ! -e "$DOCKER_CALLS" ]
+  [ -d "$XDG_CACHE_HOME/selenium" ]
+
+  run env TEST_DOCKER_ENDPOINT=ssh://remote "$REPO_ROOT/scripts/cleanup-storage.sh" --docker-volumes --execute
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"requires a local Unix socket"* ]]
+  calls=$(cat "$DOCKER_CALLS")
+  [[ "$calls" != *' --host '* && "$calls" != *' volume rm '* ]]
+}
