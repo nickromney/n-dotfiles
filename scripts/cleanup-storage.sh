@@ -12,6 +12,8 @@ NO_INPUT=false
 ARG_COUNT=$#
 PROJECT_SCOPE=false
 PROJECT_ARGS=()
+DOCKER_VOLUMES=false
+REMOVE_VOLUME_CONTAINERS=false
 
 usage() {
   cat <<'HELP'
@@ -34,7 +36,7 @@ volumes and chat history are excluded from --all. Optional named targets:
 
 Options:
   -d, --dry-run       Preview paths and sizes (default)
-      --execute       Apply an explicit global or project selection
+      --execute       Apply an explicit cleanup selection
       --all           Clear the defined rebuildable cache set
       --target NAME   Select a catalog target (repeatable; see --list)
       --list          Show every target and its path; do not delete
@@ -47,6 +49,10 @@ Options:
                       Archive and retire standalone checkouts (repeatable)
       --archive-root PATH
                       Recovery directory required by --retire-checkouts
+      --docker-volumes
+                      Report Docker volume usage and select unused local volumes
+      --remove-volume-containers
+                      Include attached volumes and remove their containers
   -h, --help          Show this help with examples
 
 Run as your login user, without sudo. HOME and XDG_CACHE_HOME must be absolute.
@@ -65,6 +71,9 @@ Examples:
   scripts/cleanup-storage.sh --project-caches ~/Developer/personal --dry-run
   scripts/cleanup-storage.sh --project-caches /path/to/review-workspace/implementation --execute --no-input
   scripts/cleanup-storage.sh --retire-checkouts /path/to/review-workspace/implementation --archive-root /path/to/recovery --dry-run
+  scripts/cleanup-storage.sh --docker-volumes
+  scripts/cleanup-storage.sh --docker-volumes --execute --no-input
+  scripts/cleanup-storage.sh --docker-volumes --remove-volume-containers --dry-run
 
 Project scopes need Python 3.9+ and Git. Close tools using selected projects.
 Only ignored rebuildable caches are cleared. Tracked/nonignored untracked paths,
@@ -73,8 +82,110 @@ Retirement preserves complete Git history, staged/unstaged/untracked files and
 ignored noncache data in verified recovery archives before removing checkouts.
 Linked worktrees and external Git object stores must be handled separately.
 Project scopes are separate from --all, --target, --report and --list.
+Docker volume cleanup uses the current Docker context and requires a local
+Unix socket. Keep Docker workloads idle during cleanup. Attached volumes and
+their containers require --remove-volume-containers. Execution permanently
+deletes the selected volumes and the writable layers of any removed containers.
 HELP
 }
+
+bounded_docker_read() {
+  local seconds=$1 pid started
+  shift
+  if command -v timeout >/dev/null; then
+    timeout -k 1 "$seconds" "$@"
+    return
+  fi
+  if command -v gtimeout >/dev/null; then
+    gtimeout -k 1 "$seconds" "$@"
+    return
+  fi
+
+  "$@" </dev/null &
+  pid=$!
+  started=$SECONDS
+  while kill -0 "$pid" 2>/dev/null; do
+    if (( SECONDS - started >= seconds )); then
+      kill -KILL "$pid" 2>/dev/null || true
+      wait "$pid" 2>/dev/null || true
+      return 124
+    fi
+    sleep 0.1
+  done
+  wait "$pid"
+}
+
+print_docker_volume_usage() {
+  local summary status=0
+  summary=$(bounded_docker_read 20 "$@" system df --format '{{if eq .Type "Local Volumes"}}Docker volumes: {{.Size}} total, {{.Reclaimable}} reclaimable{{end}}' |
+    sed '/^$/d') || status=$?
+  if (( status == 124 || status == 137 )); then
+    printf 'Docker volume usage report timed out.\n' >&2
+  elif (( status != 0 )) || [[ -z "$summary" ]]; then
+    printf 'Docker volume usage report unavailable.\n' >&2
+  else
+    printf '%s\n' "$summary"
+  fi
+}
+
+cleanup_docker_volumes() {
+  local context endpoint volumes volume references container_id container_name
+  local -a docker_cli selected=() containers=()
+  command -v docker >/dev/null || { echo "Docker CLI is required" >&2; return 1; }
+  context=$(docker context show)
+  endpoint=$(docker context inspect "$context" --format '{{.Endpoints.docker.Host}}')
+  if [[ "$endpoint" != unix:///* ]]; then
+    printf 'Docker volume cleanup requires a local Unix socket. Check context %s.\n' "$context" >&2
+    return 1
+  fi
+
+  docker_cli=(docker --host "$endpoint")
+  printf 'Docker context: %s (%s)\n' "$context" "$endpoint"
+  print_docker_volume_usage "${docker_cli[@]}"
+
+  if ! volumes=$(bounded_docker_read 10 "${docker_cli[@]}" volume ls --quiet --filter driver=local); then
+    printf 'Cannot list local Docker volumes. Check the Docker daemon and retry.\n' >&2
+    return 1
+  fi
+  if [[ -z "$volumes" ]]; then
+    printf 'No local Docker volumes found.\n'
+    return
+  fi
+
+  while IFS= read -r volume; do
+    if ! references=$(bounded_docker_read 10 "${docker_cli[@]}" container ls --all --no-trunc --filter "volume=$volume" --format '{{.ID}} {{.Names}}'); then
+      printf 'Cannot check which containers use Docker volume %s. Check the Docker daemon and retry.\n' "$volume" >&2
+      return 1
+    fi
+    if [[ -n "$references" ]] && ! "$REMOVE_VOLUME_CONTAINERS"; then
+      printf 'Keep attached volume: %s\n' "$volume"
+    else
+      printf 'Remove volume: %s\n' "$volume"
+      selected+=("$volume")
+    fi
+    while read -r container_id container_name; do
+      [[ -n "$container_id" ]] || continue
+      printf '  Referenced by container: %s\n' "$container_name"
+      if "$REMOVE_VOLUME_CONTAINERS" && [[ " ${containers[*]-} " != *" $container_id "* ]]; then
+        containers+=("$container_id")
+      fi
+    done <<< "$references"
+  done <<< "$volumes"
+
+  if "$DRY_RUN"; then
+    printf '[dry-run] No changes made. Use --execute to apply this selection.\n'
+    return
+  fi
+  if (( ${#containers[@]} )); then
+    "${docker_cli[@]}" container rm --force -- "${containers[@]}"
+  fi
+  if (( ${#selected[@]} )); then
+    "${docker_cli[@]}" volume rm -- "${selected[@]}"
+    printf 'Docker volume usage after cleanup\n'
+    print_docker_volume_usage "${docker_cli[@]}"
+  fi
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -h|--help) usage; exit 0 ;;
@@ -95,6 +206,8 @@ while [[ $# -gt 0 ]]; do
       TARGETS+=("$2"); shift 2 ;;
     --interactive) INTERACTIVE=true; shift ;;
     --no-input) NO_INPUT=true; shift ;;
+    --docker-volumes) DOCKER_VOLUMES=true; shift ;;
+    --remove-volume-containers) REMOVE_VOLUME_CONTAINERS=true; shift ;;
     --project-caches|--retire-checkouts|--archive-root)
       if [[ $# -lt 2 || -z "$2" || "$2" == -* ]]; then
         echo "$1 requires a path" >&2; exit 1
@@ -119,11 +232,21 @@ fi
 if "$PROJECT_SCOPE" && { "$ALL" || [[ ${#TARGETS[@]} -gt 0 ]]; }; then
   echo "Use project scopes separately from --all or --target" >&2; exit 1
 fi
-if ! "$DRY_RUN" && ! "$ALL" && ! "$PROJECT_SCOPE" && [[ ${#TARGETS[@]} -eq 0 ]]; then
-  echo "--execute requires --all, --target NAME or an explicit project scope" >&2; exit 1
+if "$REMOVE_VOLUME_CONTAINERS" && ! "$DOCKER_VOLUMES"; then
+  echo "--remove-volume-containers requires --docker-volumes" >&2; exit 1
+fi
+if "$DOCKER_VOLUMES" && { "$INTERACTIVE" || "$REPORT" || "$LIST" || "$ALL" || "$PROJECT_SCOPE" || [[ ${#TARGETS[@]} -gt 0 ]]; }; then
+  echo "Use --docker-volumes separately from other storage modes" >&2; exit 1
+fi
+if ! "$DRY_RUN" && ! "$ALL" && ! "$PROJECT_SCOPE" && ! "$DOCKER_VOLUMES" && [[ ${#TARGETS[@]} -eq 0 ]]; then
+  echo "--execute requires --all, --target NAME, --docker-volumes or an explicit project scope" >&2; exit 1
 fi
 if [[ "$(id -u)" -eq 0 ]]; then
   echo "Run as your login user, without sudo" >&2; exit 1
+fi
+if "$DOCKER_VOLUMES"; then
+  cleanup_docker_volumes
+  exit 0
 fi
 CACHE_ROOT="${XDG_CACHE_HOME:-$HOME/.cache}"
 if [[ "$HOME" != /* || "$HOME" == / || "$CACHE_ROOT" != /* || "$CACHE_ROOT" == / ]]; then

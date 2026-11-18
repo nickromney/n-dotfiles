@@ -1,5 +1,47 @@
 # Scripts
 
+## find-pipeline-runs
+
+Find Azure DevOps build and YAML pipeline runs queued by a colleague on a UTC
+date. The script checks for the `azure-devops` extension, then verifies that the
+CLI can access the organisation before it looks up the project or queries
+builds. Install `az` and `jq` first.
+
+Install the extension, check its version, and sign in with your Microsoft Entra
+account. [Azure DevOps CLI quickstart](https://learn.microsoft.com/en-us/azure/devops/cli/)
+
+```bash
+az extension add --name azure-devops
+az extension show --name azure-devops --query version -o tsv
+az login --allow-no-subscriptions
+```
+
+If you use an Azure DevOps personal access token, enter it at the prompt from
+`az devops login --organization "https://dev.azure.com/$ORG"`, or export it in
+`AZURE_DEVOPS_EXT_PAT` for non-interactive use. [Azure DevOps CLI PAT authentication](https://learn.microsoft.com/en-us/azure/devops/cli/log-in-via-pat)
+
+To update an existing installation, run `az extension update --name azure-devops`.
+The script passes the organisation and project explicitly, so CLI defaults are
+optional.
+
+```bash
+export ORG="my-organisation"
+export PROJECT="my-project"
+export USER_EMAIL="colleague@company.com"
+export DAY="2026-11-17"
+
+./scripts/find-pipeline-runs.sh
+```
+
+The script matches the email against the run requester's identity, ignoring
+case. Results include the queue time, pipeline name, run ID, result or status,
+and URL. Set `MANUAL_ONLY=false` to include other trigger reasons.
+
+The script reads one page. It exits with an error if the response reaches
+1,000 runs or the CLI supplies a continuation token. Results cover only the
+runs your credentials can see, so project access alone cannot establish
+visibility of every pipeline. [Builds List API](https://learn.microsoft.com/en-us/rest/api/azure/devops/build/builds/list?view=azure-devops-rest-7.1)
+
 ## update-all
 
 Update the repo-managed toolchain and dependencies with a seven-day cooldown
@@ -74,6 +116,27 @@ git -C /path/to/restored-checkout status
 Project modes need Python 3.9+ and Git. They cannot be mixed with the global
 targets, `--report`, `--list` or the interactive chooser. Repeat a project flag
 to select separate roots; overlapping roots are rejected before changes.
+
+Use Docker volume mode to see total and reclaimable volume space on the
+current local Docker engine. The preview lists unused volumes and the
+containers that hold any attached volumes. The script can show the cleanup
+plan if the usage report times out, but it needs a complete volume and
+attachment inventory before it deletes anything. After a purge, it reports
+Docker volume usage again.
+
+```bash
+./scripts/cleanup-storage.sh --docker-volumes
+./scripts/cleanup-storage.sh --docker-volumes --execute --no-input
+```
+
+To include attached volumes, add `--remove-volume-containers` to the preview.
+Review the named containers before adding `--execute`. This permanently
+deletes the volumes and the writable layers of the containers that hold them.
+
+```bash
+./scripts/cleanup-storage.sh --docker-volumes --remove-volume-containers --dry-run
+./scripts/cleanup-storage.sh --docker-volumes --remove-volume-containers --execute --no-input
+```
 
 ## audit-github-repos
 
