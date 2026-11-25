@@ -307,7 +307,59 @@ def cache_plan(roots, skipped=None):
     return plan
 
 
-def execute_cache_cleanup(plan):
+def human_size(kib):
+    size = float(kib)
+    for unit in ("KiB", "MiB", "GiB"):
+        if size < 1024 or unit == "GiB":
+            return "{:.0f} {}".format(size, unit) if unit == "KiB" else "{:.1f} {}".format(size, unit)
+        size /= 1024
+
+
+def display_path(path, roots):
+    for root in roots:
+        if path == root:
+            return path.name
+        if root in path.parents:
+            return path.relative_to(root).as_posix()
+    return str(path)
+
+
+def print_cache_summary(plan, skipped, roots, execute, top=3, small_kib=1024):
+    prefix = "" if execute else "[dry-run] "
+    by_owner = {}
+    for row in plan:
+        by_owner.setdefault(row["owner"], []).append(row)
+    total = sum(row["kib"] for row in plan)
+    print("{}{} caches in {} repos, {}".format(
+        prefix, len(plan), len(by_owner), human_size(total)), flush=True)
+    owners = sorted(by_owner.items(), key=lambda item: (-sum(r["kib"] for r in item[1]), str(item[0])))
+    small = [rows for _, rows in owners if sum(r["kib"] for r in rows) < small_kib]
+    for owner, rows in owners:
+        owner_kib = sum(row["kib"] for row in rows)
+        if owner_kib < small_kib:
+            continue
+        rows = sorted(rows, key=lambda row: (-row["kib"], str(row["path"])))
+        names = [row["path"].relative_to(owner).as_posix() for row in rows[:top]]
+        if len(rows) > top:
+            names.append("+{} more".format(len(rows) - top))
+        print("  {:>9}  {} ({}): {}".format(
+            human_size(owner_kib), display_path(owner, roots), len(rows), ", ".join(names)), flush=True)
+    if small:
+        print("  {:>9}  {} smaller repos".format(
+            human_size(sum(r["kib"] for rows in small for r in rows)), len(small)), flush=True)
+    if skipped:
+        reasons = {}
+        for _, reason in skipped:
+            label = reason.split(":", 1)[0]
+            reasons[label] = reasons.get(label, 0) + 1
+        print("Kept {}: {}".format(len(skipped), "; ".join(
+            "{} {}".format(count, label) for label, count in
+            sorted(reasons.items(), key=lambda item: (-item[1], item[0])))), flush=True)
+    if not execute:
+        print("Use --verbose to list every directory.", flush=True)
+
+
+def execute_cache_cleanup(plan, verbose=False):
     # Validate the complete plan again before the first deletion.
     owners = {row["owner"] for row in plan}
     fresh_candidates = {owner: set(cache_candidates(owner)) for owner in owners}
@@ -320,7 +372,10 @@ def execute_cache_cleanup(plan):
         if not disposable(row["owner"], row["path"], build=".build" in row["path"].parts):
             raise RuntimeError("Cache is no longer disposable: " + str(row["path"]))
         shutil.rmtree(row["path"])
-        print("Removed cache: " + str(row["path"]), flush=True)
+        if verbose:
+            print("Removed cache: " + str(row["path"]), flush=True)
+    print("Removed {} caches, {}".format(
+        len(plan), human_size(sum(row["kib"] for row in plan))), flush=True)
 
 
 def retained_git_path(path, root, excluded):
@@ -582,6 +637,7 @@ def main(argv=None):
     mode.add_argument("--retire-checkouts", type=Path, action="append", metavar="ROOT")
     parser.add_argument("--archive-root", type=Path, metavar="PATH")
     parser.add_argument("--execute", action="store_true", help="apply the displayed cleanup; default is preview")
+    parser.add_argument("--verbose", action="store_true", help="list every cache directory and kept path")
     args = parser.parse_args(argv)
     if args.retire_checkouts and args.archive_root is None:
         parser.error("--retire-checkouts requires --archive-root")
@@ -594,15 +650,18 @@ def main(argv=None):
     if args.project_caches:
         skipped = []
         plan = cache_plan(roots, skipped=skipped)
-        for path, reason in skipped:
-            print("[keep] {} ({})".format(path, reason), flush=True)
-        for row in plan:
-            print("{}Cache: {} ({} KiB allocated; Git owner: {})".format(
-                "" if args.execute else "[dry-run] ", row["path"], row["kib"], row["owner"]), flush=True)
-        print("{} cache directories; {} KiB allocated".format(
-            len(plan), sum(row["kib"] for row in plan)), flush=True)
+        if args.verbose:
+            for path, reason in skipped:
+                print("[keep] {} ({})".format(path, reason), flush=True)
+            for row in plan:
+                print("{}Cache: {} ({} KiB allocated; Git owner: {})".format(
+                    "" if args.execute else "[dry-run] ", row["path"], row["kib"], row["owner"]), flush=True)
+            print("{} cache directories; {} KiB allocated".format(
+                len(plan), sum(row["kib"] for row in plan)), flush=True)
+        else:
+            print_cache_summary(plan, skipped, roots, args.execute)
         if args.execute:
-            execute_cache_cleanup(plan)
+            execute_cache_cleanup(plan, verbose=args.verbose)
     else:
         destination = checked_path(args.archive_root, must_exist=False)
         for requested in roots:

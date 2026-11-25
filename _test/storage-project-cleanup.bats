@@ -73,6 +73,41 @@ restore_archive() {
   [ -f "$repo/README.md" ]
 }
 
+@test "project cache preview summarises per repo by size and lists every path only with --verbose" {
+  local root="$TEST_TMP_DIR/projects" big="$TEST_TMP_DIR/projects/big" tiny="$TEST_TMP_DIR/projects/tiny"
+  new_repo "$big"
+  new_repo "$tiny"
+  mkdir -p "$big/node_modules/package" "$big/.venv" "$big/web/node_modules" "$big/docs/node_modules" "$big/api/node_modules"
+  dd if=/dev/zero of="$big/node_modules/package/blob" bs=1024 count=2048 2>/dev/null
+  put_file "$big/.venv/pyvenv.cfg"
+  put_file "$big/web/node_modules/a.js"
+  put_file "$big/docs/node_modules/a.js"
+  put_file "$big/api/node_modules/a.js"
+  ignored_cache "$tiny"
+  put_file "$TEST_TMP_DIR/projects/copied/.git" 'gitdir: ../missing'
+  run "$SCRIPT" --dry-run --project-caches "$root" --no-input
+  assert_success
+  [[ "$output" == *"[dry-run] 6 caches in 2 repos, "* ]] || { printf '%s\n' "$output"; return 1; }
+  [[ "$output" == *"  big (5): node_modules, "*", +2 more"* ]] || { printf '%s\n' "$output"; return 1; }
+  [[ "$output" == *" 1 smaller repos"* ]]
+  [[ "$output" == *"Kept 1: 1 Git pointer target missing"* ]]
+  [[ "$output" != *"$big/"* ]]
+  [ "$(printf '%s\n' "$output" | wc -l | tr -d ' ')" -eq 5 ]
+  run "$SCRIPT" --dry-run --project-caches "$root" --verbose --no-input
+  assert_success
+  [[ "$output" == *"[dry-run] Cache: $big/web/node_modules"* ]]
+  [[ "$output" == *"[dry-run] Cache: $tiny/node_modules"* ]]
+  [[ "$output" == *"[keep] $root/copied"* ]]
+  run "$SCRIPT" --execute --project-caches "$root" --no-input
+  assert_success
+  [[ "$output" == *"Removed 6 caches, "* ]]
+  [[ "$output" != *"Removed cache: "* ]]
+  [ ! -e "$big/node_modules" ]
+  [ ! -e "$tiny/node_modules" ]
+  run "$SCRIPT" --dry-run --all --verbose --no-input
+  assert_refused
+}
+
 @test "project caches remove ignored dependencies but retain data and build evidence and repeat safely" {
   local repo="$TEST_TMP_DIR/projects/app with spaces"
   new_repo "$repo"
@@ -113,7 +148,7 @@ restore_archive() {
   git -C "$untracked" add .gitignore
   git -C "$untracked" commit -qm 'do not ignore dependencies'
   ignored_cache "$untracked"
-  run "$SCRIPT" --execute --project-caches "$tracked" --project-caches "$untracked" --no-input
+  run "$SCRIPT" --execute --project-caches "$tracked" --project-caches "$untracked" --verbose --no-input
   assert_success
   [ -f "$tracked/node_modules/handwritten.js" ]
   [ -f "$tracked/node_modules/package/index.js" ]
@@ -192,7 +227,7 @@ restore_archive() {
   new_repo "$real"
   ignored_cache "$repo"
   ignored_cache "$real"
-  run "$SCRIPT" --dry-run --project-caches "$repo" --no-input
+  run "$SCRIPT" --dry-run --project-caches "$repo" --verbose --no-input
   assert_success
   [[ "$output" == *"$repo/node_modules"* ]]
   [[ "$output" == *"$real/node_modules"* ]]
@@ -214,12 +249,12 @@ restore_archive() {
   new_repo "$repo"
   git -C "$repo" worktree add -q -b preview "$worktree"
   ignored_cache "$worktree"
-  run "$SCRIPT" --dry-run --project-caches "$repo" --no-input
+  run "$SCRIPT" --dry-run --project-caches "$repo" --verbose --no-input
   assert_success
   [[ "$output" == *"$worktree/node_modules"* ]]
   put_file "$repo/broken/.git" 'gitdir: /no/such/location'
   ignored_cache "$repo/broken"
-  run "$SCRIPT" --execute --project-caches "$repo" --no-input
+  run "$SCRIPT" --execute --project-caches "$repo" --verbose --no-input
   assert_success
   [[ "$output" == *"[keep] $repo/broken (Git pointer target missing: /no/such/location)"* ]]
   [ ! -e "$worktree/node_modules" ]
@@ -233,7 +268,7 @@ restore_archive() {
   ignored_cache "$repo"
   put_file "$copied/.git" 'gitdir: ../../../.git/modules/libs/plugin'
   put_file "$copied/node_modules/package/index.js" 'fixture data must survive'
-  run "$SCRIPT" --execute --project-caches "$root" --no-input
+  run "$SCRIPT" --execute --project-caches "$root" --verbose --no-input
   assert_success
   [[ "$output" == *"[keep] $copied (Git pointer target missing:"* ]]
   [ ! -e "$repo/node_modules" ]
@@ -261,7 +296,7 @@ restore_archive() {
   put_file "$fake/node_modules/package/index.js" 'fixture data must survive'
   new_repo "$repo"
   ignored_cache "$repo"
-  run "$SCRIPT" --dry-run --project-caches "$root" --no-input
+  run "$SCRIPT" --dry-run --project-caches "$root" --verbose --no-input
   assert_success
   [[ "$output" == *"$repo/node_modules"* ]]
   [[ "$output" != *"Cache: $fake/node_modules"* ]]

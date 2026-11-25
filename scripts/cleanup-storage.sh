@@ -14,6 +14,7 @@ PROJECT_SCOPE=false
 PROJECT_ARGS=()
 DOCKER_VOLUMES=false
 REMOVE_VOLUME_CONTAINERS=false
+VERBOSE=false
 
 usage() {
   cat <<'HELP'
@@ -49,6 +50,7 @@ Options:
                       Archive and retire standalone checkouts (repeatable)
       --archive-root PATH
                       Recovery directory required by --retire-checkouts
+      --verbose       List every project cache directory instead of a per-repo summary
       --docker-volumes
                       Report Docker volume usage and select unused local volumes
       --remove-volume-containers
@@ -213,6 +215,7 @@ while [[ $# -gt 0 ]]; do
         echo "$1 requires a path" >&2; exit 1
       fi
       PROJECT_SCOPE=true; PROJECT_ARGS+=("$1" "$2"); shift 2 ;;
+    --verbose) VERBOSE=true; shift ;;
     *) echo "Unknown argument: $1" >&2; exit 1 ;;
   esac
 done
@@ -231,6 +234,9 @@ if "$ALL" && [[ ${#TARGETS[@]} -gt 0 ]]; then
 fi
 if "$PROJECT_SCOPE" && { "$ALL" || [[ ${#TARGETS[@]} -gt 0 ]]; }; then
   echo "Use project scopes separately from --all or --target" >&2; exit 1
+fi
+if "$VERBOSE" && ! "$PROJECT_SCOPE"; then
+  echo "--verbose is only used with --project-caches or --retire-checkouts" >&2; exit 1
 fi
 if "$REMOVE_VOLUME_CONTAINERS" && ! "$DOCKER_VOLUMES"; then
   echo "--remove-volume-containers requires --docker-volumes" >&2; exit 1
@@ -256,6 +262,7 @@ if "$PROJECT_SCOPE"; then
   command -v python3 >/dev/null 2>&1 || { echo "Project cleanup requires Python 3.9+" >&2; exit 1; }
   script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   if ! "$DRY_RUN"; then PROJECT_ARGS+=(--execute); fi
+  if "$VERBOSE"; then PROJECT_ARGS+=(--verbose); fi
   exec python3 "$script_dir/cleanup_storage_projects.py" "${PROJECT_ARGS[@]}"
 fi
 if [[ "$(uname -s)" == Darwin ]]; then
