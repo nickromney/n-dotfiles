@@ -209,7 +209,7 @@ restore_archive() {
   [ -f "$fake/node_modules/package/index.js" ]
 }
 
-@test "discovery retains linked worktrees and refuses malformed Git pointers" {
+@test "discovery retains linked worktrees and keeps dangling Git pointers untouched" {
   local repo="$TEST_TMP_DIR/projects/outer" worktree="$TEST_TMP_DIR/projects/outer/worktree"
   new_repo "$repo"
   git -C "$repo" worktree add -q -b preview "$worktree"
@@ -218,9 +218,41 @@ restore_archive() {
   assert_success
   [[ "$output" == *"$worktree/node_modules"* ]]
   put_file "$repo/broken/.git" 'gitdir: /no/such/location'
+  ignored_cache "$repo/broken"
+  run "$SCRIPT" --execute --project-caches "$repo" --no-input
+  assert_success
+  [[ "$output" == *"[keep] $repo/broken (Git pointer target missing: /no/such/location)"* ]]
+  [ ! -e "$worktree/node_modules" ]
+  [ -f "$repo/broken/node_modules/package/index.js" ]
+  [ -f "$repo/broken/.git" ]
+}
+
+@test "a copied-out submodule with a relative dangling pointer is kept while siblings are cleaned" {
+  local root="$TEST_TMP_DIR/projects" repo="$TEST_TMP_DIR/projects/real" copied="$TEST_TMP_DIR/projects/extracted/theme/libs/plugin"
+  new_repo "$repo"
+  ignored_cache "$repo"
+  put_file "$copied/.git" 'gitdir: ../../../.git/modules/libs/plugin'
+  put_file "$copied/node_modules/package/index.js" 'fixture data must survive'
+  run "$SCRIPT" --execute --project-caches "$root" --no-input
+  assert_success
+  [[ "$output" == *"[keep] $copied (Git pointer target missing:"* ]]
+  [ ! -e "$repo/node_modules" ]
+  [ -f "$copied/node_modules/package/index.js" ]
+  run "$SCRIPT" --dry-run --retire-checkouts "$copied" --archive-root "$TEST_TMP_DIR/archives" --no-input
+  assert_success
+  [[ "$output" == *"[keep] $copied"* ]]
+  [ ! -e "$TEST_TMP_DIR/archives" ]
+}
+
+@test "discovery refuses a Git pointer file without a gitdir line" {
+  local repo="$TEST_TMP_DIR/projects/outer"
+  new_repo "$repo"
+  ignored_cache "$repo"
+  put_file "$repo/broken/.git" 'not a pointer'
   run "$SCRIPT" --execute --project-caches "$repo" --no-input
   assert_refused
-  [ -f "$worktree/node_modules/package/index.js" ]
+  [[ "$output" == *"Invalid Git pointer: $repo/broken/.git"* ]]
+  [ -f "$repo/node_modules/package/index.js" ]
 }
 
 @test "discovery preserves standalone non-repository markers and visits valid siblings" {

@@ -163,7 +163,18 @@ def cache_container(parent, name):
             or (parent.name == ".cache" and name == "uv"))
 
 
-def discover_git_roots(root):
+def missing_pointer_target(marker):
+    """Return the missing gitdir target of a .git pointer file, or None if it exists."""
+    content = marker.read_text(errors="replace").strip()
+    if not content.startswith("gitdir: "):
+        raise RuntimeError("Invalid Git pointer: " + str(marker))
+    target = Path(content[len("gitdir: "):])
+    if not target.is_absolute():
+        target = marker.parent / target
+    return None if target.is_dir() else target
+
+
+def discover_git_roots(root, skipped=None):
     found = []
     for folder, directories, files in os.walk(root, followlinks=False):
         parent = Path(folder)
@@ -171,6 +182,14 @@ def discover_git_roots(root):
         if ".git" in directories or ".git" in files:
             if marker.is_symlink():
                 raise RuntimeError("Symlinked Git directory: " + str(marker))
+            if marker.is_file():
+                missing = missing_pointer_target(marker)
+                if missing is not None:
+                    # A copied-out submodule or pruned worktree: not inspectable, so keep it all.
+                    if skipped is not None:
+                        skipped.append((parent, "Git pointer target missing: " + str(missing)))
+                    directories[:] = []
+                    continue
             if parent != root and marker.is_dir():
                 output = git(parent, "rev-parse", "--show-toplevel", allow_nonrepository=True)
                 if output is None or Path(os.fsdecode(output).strip()) in parent.parents:
@@ -275,7 +294,7 @@ def allocated_kib(path):
 def cache_plan(roots, skipped=None):
     plan = []
     for requested in roots:
-        repositories = discover_git_roots(requested)
+        repositories = discover_git_roots(requested, skipped=skipped)
         if not repositories:
             raise RuntimeError("No Git checkouts found under " + str(requested))
         for repository in repositories:
@@ -426,10 +445,10 @@ def archive_paths(root, destination):
             destination / (name + ".tar.gz.partial"))
 
 
-def retirement_plan(roots, destination):
+def retirement_plan(roots, destination, skipped=None):
     checkouts = []
     for requested in roots:
-        discovered = discover_git_roots(requested)
+        discovered = discover_git_roots(requested, skipped=skipped)
         # An outer archive preserves nested source repositories and their Git data.
         checkouts.extend(path for path in discovered
                          if not any(other in path.parents for other in discovered))
@@ -589,7 +608,10 @@ def main(argv=None):
         for requested in roots:
             if destination == requested or requested in destination.parents:
                 raise RuntimeError("Archive root is inside a selected discovery root")
-        plan = retirement_plan(roots, destination)
+        skipped = []
+        plan = retirement_plan(roots, destination, skipped=skipped)
+        for path, reason in skipped:
+            print("[keep] {} ({})".format(path, reason), flush=True)
         if not plan:
             print("Nothing to retire: selected directories contain no Git checkouts", flush=True)
         for item in plan:
